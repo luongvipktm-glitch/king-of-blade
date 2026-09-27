@@ -1153,6 +1153,15 @@
 
     </div>
 
+
+    <button id="daily-quest-button" onclick="toggleDailyQuestPanel()">📋 DAILY QUEST [R]</button>
+    <div id="daily-quest-panel">
+        <h2>📋 NHIỆM VỤ HẰNG NGÀY</h2>
+        <div id="daily-quest-timer">Nhiệm vụ mới sau 24 giờ</div>
+        <div id="daily-quest-list"></div>
+        <button id="daily-quest-close" onclick="toggleDailyQuestPanel(false)">ĐÓNG</button>
+    </div>
+
     <div id="error-glitch-overlay" style="display:none;position:fixed;inset:0;z-index:99999;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,0,0,.10) 0 2px,rgba(0,255,255,.08) 2px 4px,rgba(0,0,0,.18) 4px 7px);mix-blend-mode:screen;animation:errorGlitch .08s infinite;">
         <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:monospace;font-size:clamp(28px,6vw,90px);font-weight:900;color:#fff;text-shadow:4px 0 #f00,-4px 0 #0ff;transform:skewX(-8deg);">
             ERROR // SYSTEM GLITCH
@@ -1719,6 +1728,12 @@
                 let errorGlitchNextAttackTime = 0;
                 let errorGlitchDamageApplied = false;
                 let waitingForNewBoss = false;
+                let dailyQuestData = null;
+                let dailyQuestPanelOpen = false;
+                let dailyLegendaryDrafted = 0;
+                let dailyBossDefeats = 0;
+                let dailySupremeDefeats = 0;
+                let dailyDinoDefeats = 0;
                 let rainbowHaloGroup = null;
                 let glitchCodeFloor = null;
 
@@ -6368,6 +6383,7 @@
                     ) {
 
                         inventory.legendary++;
+                        dailyLegendaryDrafted++;
 
                         showToast(
                             currentLang === 'vi'
@@ -8388,6 +8404,8 @@
                                     'none';
 
                                 gameStage = 4;
+                                dailyBossDefeats++;
+                                saveCurrentAccount();
 
                                 showToast(
                                     currentLang === 'vi'
@@ -8584,6 +8602,7 @@
                                 supremeBossActive = false;
 
                                 supremeBossDefeated = true;
+                                dailySupremeDefeats++;
 
                                 universeWorldUnlocked = true;
 
@@ -8940,6 +8959,7 @@
                             if (cosmicDinoHP <= 0n) {
 
                                 cosmicDinoDefeated = true;
+                                dailyDinoDefeats++;
                                 cosmicDinoActive = false;
                                 cosmicDinoHP = COSMIC_DINO_MAX_HP;
 
@@ -9764,6 +9784,11 @@
                         errorGlitchFinalClicks: errorGlitchFinalClicks,
                         errorGlitchFinalActive: errorGlitchFinalActive,
                         waitingForNewBoss: waitingForNewBoss,
+                        dailyQuestData: dailyQuestData,
+                        dailyLegendaryDrafted: dailyLegendaryDrafted,
+                        dailyBossDefeats: dailyBossDefeats,
+                        dailySupremeDefeats: dailySupremeDefeats,
+                        dailyDinoDefeats: dailyDinoDefeats,
                         errorGlitchHits: errorGlitchHits,
                         errorGlitchFinalClicks: errorGlitchFinalClicks,
                         errorGlitchFinalActive: errorGlitchFinalActive,
@@ -9960,6 +9985,13 @@
                     errorGlitchFinalClicks = Math.max(0, Math.min(ERROR_GLITCH_FINAL_CLICKS, Number(data.errorGlitchFinalClicks) || 0));
                     errorGlitchFinalActive = !!data.errorGlitchFinalActive;
                     waitingForNewBoss = !!data.waitingForNewBoss;
+                    dailyQuestData = data.dailyQuestData || null;
+                    dailyLegendaryDrafted = Math.max(0, Number(data.dailyLegendaryDrafted) || 0);
+                    dailyBossDefeats = Math.max(0, Number(data.dailyBossDefeats) || 0);
+                    dailySupremeDefeats = Math.max(0, Number(data.dailySupremeDefeats) || 0);
+                    dailyDinoDefeats = Math.max(0, Number(data.dailyDinoDefeats) || 0);
+                    ensureDailyQuests();
+                    updateDailyQuestUI();
 
                     if (hasHackSword)
                         hasGoDSword = godSwordCount > 0;
@@ -11171,11 +11203,18 @@
                             return;
                         }
 
+                        if (e.key.toLowerCase() === 'r' && !e.repeat && waitingForNewBoss) {
+                            toggleDailyQuestPanel();
+                            return;
+                        }
+
                         if (e.key.toLowerCase() === 'y' && !e.repeat)
                             togglePasswordModal();
 
                     }
                 );
+
+                setInterval(() => { if (waitingForNewBoss) updateDailyQuestUI(); }, 1000);
 
                 window.addEventListener(
                     'beforeunload',
@@ -11215,6 +11254,150 @@
                     },
                     1000
                 );
+
+                const DAILY_QUEST_COUNT = 9;
+                const DAILY_QUEST_DURATION = 24 * 60 * 60 * 1000;
+
+                function makeDailyQuestTasks() {
+                    return [
+                        { id:'draft999', name:'Draft 999 kiếm Legendary', target:999, type:'draft', reward:{type:'god', count:1}, targetStage:1 },
+                        { id:'kill999', name:'Tiêu diệt 999 quái thường', target:999, type:'kills', reward:{type:'legendary', count:5}, targetStage:1 },
+                        { id:'boss1', name:'Hạ Boss Ma Vương 1 lần', target:1, type:'boss', key:'boss', reward:{type:'rare', count:20}, targetStage:3 },
+                        { id:'final1', name:'Hạ Final Boss 1 lần', target:1, type:'boss', key:'final', reward:{type:'epic', count:10}, targetStage:5 },
+                        { id:'supreme1', name:'Hạ Đại Boss Tối Thượng 1 lần', target:1, type:'boss', key:'supreme', reward:{type:'legendary', count:10}, targetStage:6 },
+                        { id:'universe9', name:'Hạ 9 Boss Vũ Trụ', target:9, type:'boss', key:'universe', reward:{type:'god', count:1}, targetStage:7 },
+                        { id:'cosmic9', name:'Hạ 9 Boss Cosmic', target:9, type:'boss', key:'cosmic', reward:{type:'hack', count:1}, targetStage:8 },
+                        { id:'atomic1', name:'Hạ Boss Nguyên Tử 1 lần', target:1, type:'boss', key:'atomic', reward:{type:'hack', count:3}, targetStage:9 },
+                        { id:'dino1', name:'Hạ Boss Khủng Long Vũ Trụ 1 lần', target:1, type:'boss', key:'dino', reward:{type:'error', count:1}, targetStage:10 }
+                    ];
+                }
+
+                function ensureDailyQuests() {
+                    const now = Date.now();
+                    if (!dailyQuestData || !dailyQuestData.createdAt || now - dailyQuestData.createdAt >= DAILY_QUEST_DURATION || !Array.isArray(dailyQuestData.tasks) || dailyQuestData.tasks.length !== DAILY_QUEST_COUNT) {
+                        dailyQuestData = {
+                            createdAt: now,
+                            tasks: makeDailyQuestTasks().map(q => ({...q, claimed:false,
+                                base: q.type === 'draft' ? dailyLegendaryDrafted :
+                                    q.type === 'kills' ? killCount :
+                                    q.key === 'universe' ? universeBossKillCount :
+                                    q.key === 'cosmic' ? cosmicBossKillCount :
+                                    q.key === 'final' ? finalBossKillCount :
+                                    q.key === 'supreme' ? dailySupremeDefeats :
+                                    q.key === 'atomic' ? atomicBossKillCount :
+                                    q.key === 'dino' ? dailyDinoDefeats :
+                                    q.key === 'boss' ? dailyBossDefeats : 0
+                            }))
+                        };
+                    }
+                }
+
+                function getDailyQuestProgress(q) {
+                    if (!q) return 0;
+                    let current = 0;
+                    if (q.type === 'draft') current = dailyLegendaryDrafted;
+                    else if (q.type === 'kills') current = killCount;
+                    else if (q.key === 'universe') current = universeBossKillCount;
+                    else if (q.key === 'cosmic') current = cosmicBossKillCount;
+                    else if (q.key === 'final') current = finalBossKillCount;
+                    else if (q.key === 'supreme') current = dailySupremeDefeats;
+                    else if (q.key === 'atomic') current = atomicBossKillCount;
+                    else if (q.key === 'dino') current = dailyDinoDefeats;
+                    else if (q.key === 'boss') current = dailyBossDefeats;
+                    return Math.max(0, Math.min(q.target, current - (q.base || 0)));
+                }
+
+                function dailyQuestRewardText(r) {
+                    if (r.type === 'god') return `⚔️ GoD Sword x${r.count}`;
+                    if (r.type === 'hack') return `🌀 Hack Sword x${r.count}`;
+                    if (r.type === 'error') return `💻 Error Sword x${r.count}`;
+                    return `⚔️ ${r.type.toUpperCase()} x${r.count}`;
+                }
+
+                function claimDailyQuest(index) {
+                    ensureDailyQuests();
+                    const q = dailyQuestData.tasks[index];
+                    if (!q || q.claimed || getDailyQuestProgress(q) < q.target) return;
+                    q.claimed = true;
+                    const r = q.reward;
+                    if (r.type === 'common' || r.type === 'rare' || r.type === 'epic' || r.type === 'legendary') inventory[r.type] += r.count;
+                    else if (r.type === 'god') { godSwordCount += r.count; hasGoDSword = true; }
+                    else if (r.type === 'hack') { hackSwordCount += r.count; hasHackSword = true; }
+                    else if (r.type === 'error') { hasGlitchSword = true; }
+                    updateInventoryUI();
+                    updatePlayerSwordVisual();
+                    refreshPlayerMaxHP();
+                    showToast(currentLang === 'vi' ? `🎁 NHẬN THƯỞNG: ${dailyQuestRewardText(r)}` : `🎁 REWARD: ${dailyQuestRewardText(r)}`);
+                    saveCurrentAccount();
+                    updateDailyQuestUI();
+                }
+
+                function travelToDailyQuest(index) {
+                    ensureDailyQuests();
+                    const q = dailyQuestData.tasks[index];
+                    if (!q) return;
+                    dailyQuestPanelOpen = false;
+                    document.getElementById('daily-quest-panel').style.display = 'none';
+                    waitingForNewBoss = false;
+                    if (glitchCodeFloor) glitchCodeFloor.visible = false;
+                    if (rainbowHaloGroup) rainbowHaloGroup.visible = false;
+                    setBossArenaSkybox(q.targetStage >= 5 && q.targetStage !== 11);
+                    finalBossActive = false; supremeBossActive = false; universeBossActive = false; cosmicBossActive = false; atomicBossActive = false; cosmicDinoActive = false;
+                    redMonster.visible = false; octopusMonster.visible = false; bossMonster.visible = false;
+                    finalBossMonster.visible = false; universeBossMonster.visible = false;
+                    cosmicBossMonster.visible = false; atomicBossMonster.visible = false; cosmicDinoMonster.visible = false;
+                    errorBossMonster.visible = false;
+                    if (q.targetStage === 1) {
+                        gameStage = 1; redMonster.visible = true; playerGroup.position.set(0,0,8);
+                    } else if (q.targetStage === 3) {
+                        gameStage = 3; bossHP = currentBossMaxHP; bossMonster.visible = true; bossMonster.position.set(0,0,-7); playerGroup.position.set(0,0,7);
+                    } else if (q.targetStage === 5) {
+                        gameStage = 5; finalBossActive = true; finalBossHP = finalBossMaxHP; finalBossMonster.visible = true; finalBossMonster.position.set(0,0,-6); playerGroup.position.set(0,0,6);
+                    } else if (q.targetStage === 6) {
+                        gameStage = 6; supremeBossActive = true; supremeBossHP = supremeBossMaxHP; finalBossMonster.visible = true; finalBossMonster.scale.set(7,7,7); finalBossMonster.position.set(0,0,-7); playerGroup.position.set(0,0,7);
+                    } else if (q.targetStage === 7) {
+                        gameStage = 7; universeBossActive = true; universeBossHP = universeBossMaxHP; universeBossMonster.visible = true; universeBossMonster.position.set(0,0,-7); universeBossMonster.scale.set(10,10,10); playerGroup.position.set(0,0,7); universeFloor.visible = true;
+                    } else if (q.targetStage === 8) {
+                        gameStage = 8; cosmicBossActive = true; cosmicBossHP = COSMIC_BOSS_MAX_HP; cosmicBossMonster.visible = true; cosmicBossMonster.position.set(0,0,-7); cosmicBossMonster.scale.set(10,10,10); playerGroup.position.set(0,0,7); universeFloor.visible = true;
+                    } else if (q.targetStage === 9) {
+                        gameStage = 9; atomicBossActive = true; atomicBossHP = atomicBossMaxHP; atomicBossMonster.visible = true; atomicBossMonster.position.set(0,2.2,-7); playerGroup.position.set(0,0,7); universeFloor.visible = true;
+                    } else if (q.targetStage === 10) {
+                        gameStage = 10; cosmicDinoActive = true; cosmicDinoHP = COSMIC_DINO_MAX_HP; cosmicDinoMonster.visible = true; cosmicDinoMonster.position.set(0,0,-7); playerGroup.position.set(0,0,7); universeFloor.visible = true;
+                    }
+                    document.getElementById('boss-hp-bar').style.display = 'block';
+                    showToast(currentLang === 'vi' ? `🧭 ĐANG DI CHUYỂN ĐẾN: ${q.name}` : `🧭 TRAVELLING TO: ${q.name}`);
+                    saveCurrentAccount();
+                }
+
+                function updateDailyQuestUI() {
+                    ensureDailyQuests();
+                    const btn = document.getElementById('daily-quest-button');
+                    const panel = document.getElementById('daily-quest-panel');
+                    const list = document.getElementById('daily-quest-list');
+                    if (!btn || !panel || !list) return;
+                    btn.style.display = waitingForNewBoss ? 'block' : 'none';
+                    if (!waitingForNewBoss) { panel.style.display = 'none'; dailyQuestPanelOpen = false; return; }
+                    const remain = Math.max(0, DAILY_QUEST_DURATION - (Date.now() - dailyQuestData.createdAt));
+                    const h = Math.floor(remain / 3600000);
+                    const m = Math.floor((remain % 3600000) / 60000);
+                    const sec = Math.floor((remain % 60000) / 1000);
+                    document.getElementById('daily-quest-timer').innerText = `Nhiệm vụ mới sau ${h} giờ ${m} phút ${sec} giây`;
+                    list.innerHTML = dailyQuestData.tasks.map((q,i) => {
+                        const progress = getDailyQuestProgress(q);
+                        const done = progress >= q.target;
+                        const claimText = q.claimed ? 'ĐÃ NHẬN' : done ? 'NHẬN KIẾM' : 'CHƯA XONG';
+                        return `<div class="daily-quest-row ${done ? 'done' : ''}"><div><div class="daily-quest-name">${i+1}. ${q.name}</div><div>${progress}/${q.target}</div><div class="daily-quest-reward">${dailyQuestRewardText(q.reward)}</div></div><button onclick="travelToDailyQuest(${i})">🧭 ĐI ĐẾN</button><button class="${q.claimed ? 'claimed' : ''}" ${q.claimed || !done ? 'disabled' : ''} onclick="claimDailyQuest(${i})">${claimText}</button></div>`;
+                    }).join('');
+                }
+
+                window.toggleDailyQuestPanel = function(force) {
+                    if (!waitingForNewBoss) return;
+                    dailyQuestPanelOpen = typeof force === 'boolean' ? force : !dailyQuestPanelOpen;
+                    const panel = document.getElementById('daily-quest-panel');
+                    if (panel) panel.style.display = dailyQuestPanelOpen ? 'block' : 'none';
+                    updateDailyQuestUI();
+                    if (panel && dailyQuestPanelOpen) panel.style.display = 'block';
+                };
 
                 function resetErrorBossFromBeginning(reason) {
                     glitchBullets.forEach(b => scene.remove(b));
@@ -11281,6 +11464,8 @@
                 function startCodeWaitingWorld() {
                     document.getElementById('victory-screen').style.display = 'none';
                     waitingForNewBoss = true;
+                    ensureDailyQuests();
+                    updateDailyQuestUI();
                     gameStage = 11;
                     errorBossActive = false;
                     errorBossMonster.visible = false;
@@ -11333,6 +11518,7 @@
                         errorGlitchWorldActive = false;
                         errorGlitchWorldWon = false;
                         waitingForNewBoss = false;
+                        updateDailyQuestUI();
                         errorMapExpanded = false;
                         setErrorMapExpanded(false);
                         removeErrorLaser();
@@ -11392,7 +11578,6 @@
                 function animate() {
 
                     updateErrorTitleReward();
-
                     requestAnimationFrame(
                         animate
                     );
