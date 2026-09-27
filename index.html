@@ -4019,8 +4019,8 @@
                     errorBossMoveTarget.copy(playerGroup.position);
                     showToast(
                         currentLang === 'vi'
-                        ? '⚠️ 0,99% — ERROR ĐANG RƯỢT ĐUỔI! MAP ĐÃ MỞ RỘNG!'
-                        : '⚠️ 0.99% — ERROR IS CHASING YOU! THE MAP EXPANDED!'
+                        ? '⚠️ 0.9% — ERROR ĐANG RƯỢT ĐUỔI! MAP ĐÃ MỞ RỘNG!'
+                        : '⚠️ 0.9% — ERROR IS CHASING YOU! THE MAP EXPANDED!'
                     );
                 }
 
@@ -4030,9 +4030,9 @@
                         return;
                     }
 
-                    if (!errorChaseTriggered && t >= errorNextChaseCheckTime) {
+                    if (!errorChaseActive && t >= errorNextChaseCheckTime) {
                         errorNextChaseCheckTime = t + 1000;
-                        if (Math.random() < 0.0099) triggerErrorChase();
+                        if (Math.random() < 0.009) triggerErrorChase();
                     }
 
                     if (errorChaseActive) {
@@ -6749,19 +6749,6 @@
                     function() {
 
                         if (
-                            hasGlitchSword
-                        ) {
-
-                            showToast(
-                                currentLang === 'vi'
-                                ? "⚡ BẠN ĐÃ CÓ KIẾM GLICH!"
-                                : "⚡ YOU ALREADY HAVE THE GLICH SWORD!"
-                            );
-
-                            return;
-                        }
-
-                        if (
                             godSwordCount < 3
                         ) {
 
@@ -6807,7 +6794,7 @@
                             'val-sword'
                         ).innerText =
                             hasGlitchSword
-                            ? `GLICH (x${GLITCH_SWORD_DMG_MULTIPLIER} DMG)`
+                            ? `Error Sword (x${GLITCH_SWORD_DMG_MULTIPLIER} DMG)`
                             : `Hack Lv.2 (x${HACK_SWORD_DMG_MULTIPLIER} DMG) ${hackSwordCount}/${GLITCH_SWORD_COUNT_NEEDED}`;
 
                         document.getElementById(
@@ -6820,8 +6807,8 @@
                         showToast(
                             hasGlitchSword
                             ? (currentLang === 'vi'
-                                ? "⚡ ĐỦ 20 KIẾM HACK LV.2! NHẬN KIẾM GLICH (x101 DMG)! ERROR: +15% SỐ MŨ MỖI ĐÁNH!"
-                                : "⚡ 20 HACK LV.2 SWORDS COMPLETE! YOU GOT THE GLICH SWORD (x101 DMG)! ERROR: +15% EXPONENT PER HIT!")
+                                ? "⚡ ĐỦ 20 KIẾM HACK LV.2! NHẬN ERROR SWORD (x101 DMG)!"
+                                : "⚡ 20 HACK LV.2 SWORDS COMPLETE! YOU GOT ERROR SWORD (x101 DMG)!")
                             : (currentLang === 'vi'
                                 ? `🌀 HỢP 3 GoD LV.1 THÀNH CÔNG! NHẬN KIẾM HACK LV.2 (x10 DMG)! ${hackSwordCount}/20`
                                 : `🌀 3 GoD LV.1 FUSED! GOT HACK LV.2 (x10 DMG)! ${hackSwordCount}/20`)
@@ -10537,6 +10524,8 @@
                                     collectGameState()
                                 )
                             );
+
+                            savePowerByName();
 
                         } catch(e) {}
 
