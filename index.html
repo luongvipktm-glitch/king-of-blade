@@ -1699,8 +1699,13 @@
                 const ERROR_BOSS_DAMAGE_PER_CLICK = 1;
                 const ERROR_GLITCH_HITS_TO_FINAL = 89;
                 const ERROR_GLITCH_FINAL_CLICKS = 1000;
-                const ERROR_GLITCH_FINAL_TIME = 101000;
+                const ERROR_GLITCH_FINAL_TIME = 60000;
                 const ERROR_GLITCH_POWER_REMAIN = 0.000000001;
+                const ERROR_GLITCH_BOSS_SPEED_MULTIPLIER = 100;
+                const ERROR_GLITCH_BOSS_SPEED = 12;
+                const ERROR_GLITCH_BOSS_SCALE = 0.18;
+                let glitchBullets = [];
+                let glitchAimActive = false;
                 let errorBossDamagePercent = 0;
                 let errorGlitchPhase = false;
                 let errorGlitchHits = 0;
@@ -8866,8 +8871,10 @@
                                         errorFloor.visible = false;
                                         if (glitchCodeFloor) glitchCodeFloor.visible = false;
                                         errorBossMonster.visible = true;
-                                        errorBossMonster.scale.set(10, 10, 10);
-                                        errorBossMonster.position.set(0, 5, -35);
+                                        errorBossMonster.scale.set(ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE);
+                                        errorBossMonster.position.set(0, 2, -35);
+                                        errorBossMonster.userData.glitchTarget = new THREE.Vector3(0, 2, -35);
+                                        errorBossMonster.userData.glitchNextMove = performance.now();
                                         setErrorMapExpanded(false);
                                         document.body.style.cursor = 'crosshair';
 
@@ -8879,49 +8886,11 @@
 
                                         showToast(
                                             currentLang === 'vi'
-                                            ? '⚠️ THẾ GIỚI GLITCH! BOSS BIẾN THÀNH NGƯỜI KHỔNG LỒ — 89 PHÁT ĐỂ ĐẾN ĐÒN KẾT LIỄU!'
-                                            : '⚠️ GLITCH WORLD! THE BOSS BECOMES A GIANT HUMAN — 89 HITS TO REACH THE FINISHING BLOW!'
+                                            ? '⚠️ THẾ GIỚI GLITCH! BOSS SIÊU NHỎ — PHẢI NGẮM VÀ BẮN TRÚNG! 89 PHÁT ĐỂ ĐẾN ĐÒN KẾT LIỄU!'
+                                            : '⚠️ GLITCH WORLD! THE BOSS IS TINY — AIM AND HIT IT! 89 HITS TO REACH THE FINISHING BLOW!'
                                         );
                                     }
 
-                                } else {
-
-                                    power = Math.max(1, power * 1.03);
-
-                                    if (!errorGlitchFinalActive) {
-                                        errorGlitchHits = Math.min(ERROR_GLITCH_HITS_TO_FINAL, errorGlitchHits + 1);
-                                        errorBossDamagePercent = Math.min(99, 10 + errorGlitchHits);
-
-                                        if (errorGlitchHits >= ERROR_GLITCH_HITS_TO_FINAL) {
-                                            errorGlitchFinalActive = true;
-                                            errorGlitchFinalClicks = 0;
-                                            errorGlitchFinalStart = performance.now();
-                                            showToast(
-                                                currentLang === 'vi'
-                                                ? '💀 BOSS CÒN 1%! CLICK 1000 LẦN TRONG 101 GIÂY ĐỂ KẾT LIỄU!'
-                                                : '💀 BOSS HAS 1% LEFT! CLICK 1000 TIMES IN 101 SECONDS TO FINISH IT!'
-                                            );
-                                        }
-                                    } else {
-                                        errorGlitchFinalClicks++;
-                                        if (errorGlitchFinalClicks >= ERROR_GLITCH_FINAL_CLICKS) {
-                                            winErrorGlitchBoss();
-                                            return;
-                                        }
-                                    }
-
-                                    document.getElementById('val-power').innerText = formatPowerDisplay();
-                                    showDmgPopup(errorGlitchFinalActive ? `${errorGlitchFinalClicks}/1000` : `-${errorBossDamagePercent}%`);
-
-                                    document.getElementById('boss-hp-inner').style.width = Math.max(1, 100 - errorBossDamagePercent) + '%';
-                                    document.getElementById('boss-hp-text').innerText = errorGlitchFinalActive
-                                        ? `KẾT LIỄU: ${errorGlitchFinalClicks}/1000`
-                                        : `10^${formatExponentValue(errorBossHPExponent)} HP`;
-                                    document.getElementById('boss-hp-percent').innerText = errorGlitchFinalActive
-                                        ? `Đã tiêu diệt: 99% • ${Math.max(0, (ERROR_GLITCH_FINAL_TIME - (performance.now() - errorGlitchFinalStart)) / 1000).toFixed(1)}s`
-                                        : `Đã tiêu diệt: ${errorBossDamagePercent}% • ${errorGlitchHits}/89`;
-
-                                    saveCurrentAccount();
                                 }
                             }
 
@@ -9240,6 +9209,90 @@
 
                 }
 
+                function createGlitchBullet() {
+                    const mouse = window.__glitchMouse || { x: 0, y: 0 };
+                    const ndc = new THREE.Vector2(mouse.x, mouse.y);
+                    const raycaster = new THREE.Raycaster();
+                    raycaster.setFromCamera(ndc, camera);
+                    const direction = raycaster.ray.direction.clone().normalize();
+                    const start = raycaster.ray.origin.clone();
+                    const bullet = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.11, 8, 8),
+                        new THREE.MeshBasicMaterial({ color: 0xffffff })
+                    );
+                    bullet.position.copy(start);
+                    bullet.userData.velocity = direction.multiplyScalar(4.8);
+                    bullet.userData.life = 120;
+                    scene.add(bullet);
+                    glitchBullets.push(bullet);
+                    return bullet;
+                }
+
+                function glitchBulletHitBoss(bullet) {
+                    if (!errorBossMonster.visible || !errorGlitchWorldActive) return false;
+                    const bossPos = new THREE.Vector3();
+                    errorBossMonster.getWorldPosition(bossPos);
+                    const radius = 0.9;
+                    return bullet.position.distanceTo(bossPos) <= radius;
+                }
+
+                function shootGlitchBullet() {
+                    if (!errorGlitchWorldActive || !errorBossActive || !errorGlitchPhase) return;
+                    createGlitchBullet();
+                    power = Math.max(1, power * 1.03);
+                    document.getElementById('val-power').innerText = formatPowerDisplay();
+                }
+
+                function updateGlitchBullets() {
+                    for (let i = glitchBullets.length - 1; i >= 0; i--) {
+                        const bullet = glitchBullets[i];
+                        bullet.position.add(bullet.userData.velocity);
+                        bullet.userData.life--;
+                        let hit = glitchBulletHitBoss(bullet);
+                        if (hit) {
+                            if (!errorGlitchFinalActive) {
+                                errorGlitchHits = Math.min(ERROR_GLITCH_HITS_TO_FINAL, errorGlitchHits + 1);
+                                errorBossDamagePercent = Math.min(99, 10 + errorGlitchHits);
+                                showDmgPopup(`-${errorBossDamagePercent}%`);
+                                if (errorGlitchHits >= ERROR_GLITCH_HITS_TO_FINAL) {
+                                    errorGlitchFinalActive = true;
+                                    errorGlitchFinalClicks = 0;
+                                    errorGlitchFinalStart = performance.now();
+                                    showToast(currentLang === 'vi'
+                                        ? '💀 BOSS CÒN 1%! NGẮM VÀ BẮN 1000 LẦN TRONG 60 GIÂY ĐỂ KẾT LIỄU!'
+                                        : '💀 BOSS HAS 1% LEFT! AIM AND SHOOT 1000 TIMES IN 60 SECONDS TO FINISH IT!');
+                                }
+                            }
+                            scene.remove(bullet);
+                            glitchBullets.splice(i, 1);
+                            continue;
+                        }
+                        if (bullet.userData.life <= 0) {
+                            scene.remove(bullet);
+                            glitchBullets.splice(i, 1);
+                        }
+                    }
+                    if (errorGlitchFinalActive) {
+                        const remaining = Math.max(0, ERROR_GLITCH_FINAL_TIME - (performance.now() - errorGlitchFinalStart));
+                        document.getElementById('boss-hp-percent').innerText = `Đã tiêu diệt: 99% • KẾT LIỄU ${errorGlitchFinalClicks}/1000 • ${(remaining / 1000).toFixed(1)}s`;
+                        document.getElementById('boss-hp-text').innerText = `KẾT LIỄU: ${errorGlitchFinalClicks}/1000`;
+                        if (remaining <= 0) {
+                            power = Math.max(1, power * ERROR_GLITCH_POWER_REMAIN);
+                            errorPowerExponent = Math.max(1, errorPowerExponent * ERROR_GLITCH_POWER_REMAIN);
+                            errorDamageExponent = Math.max(1, errorDamageExponent * ERROR_GLITCH_POWER_REMAIN);
+                            resetErrorBossFromBeginning(currentLang === 'vi'
+                                ? '⏰ HẾT 60 GIÂY! BẠN THUA — POWER BỊ TRỪ 99,9999999%! BOSS ERROR QUAY LẠI TỪ ĐẦU!'
+                                : '⏰ 60 SECONDS ARE OVER! YOU LOSE — POWER REDUCED BY 99.9999999%! ERROR BOSS RESTARTED!');
+                        }
+                    }
+                }
+
+                window.__glitchMouse = { x: 0, y: 0 };
+                window.addEventListener('mousemove', e => {
+                    window.__glitchMouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+                    window.__glitchMouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+                });
+
                 /* =========================
                    ATTACK (click chuột)
                 ========================= */
@@ -9263,6 +9316,18 @@
                             isLoginOpen
                         )
                             return;
+
+                        if (gameStage === 11 && errorGlitchWorldActive && errorGlitchPhase) {
+                            if (errorGlitchFinalActive) {
+                                errorGlitchFinalClicks++;
+                                if (errorGlitchFinalClicks >= ERROR_GLITCH_FINAL_CLICKS) {
+                                    winErrorGlitchBoss();
+                                    return;
+                                }
+                            }
+                            shootGlitchBullet();
+                            return;
+                        }
 
                         performAttack(false);
 
@@ -11150,6 +11215,8 @@
                 );
 
                 function resetErrorBossFromBeginning(reason) {
+                    glitchBullets.forEach(b => scene.remove(b));
+                    glitchBullets = [];
                     errorBossDamagePercent = 0;
                     errorGlitchPhase = false;
                     errorGlitchHits = 0;
@@ -11379,8 +11446,8 @@
                                 errorDamageExponent = Math.max(1, errorDamageExponent * ERROR_GLITCH_POWER_REMAIN);
                                 resetErrorBossFromBeginning(
                                     currentLang === 'vi'
-                                    ? '⏰ HẾT 101 GIÂY! BẠN THUA — POWER BỊ TRỪ 99,9999999%! BOSS ERROR QUAY LẠI TỪ ĐẦU!'
-                                    : '⏰ 101 SECONDS ARE OVER! YOU LOSE — POWER REDUCED BY 99.9999999%! ERROR BOSS RESTARTED!'
+                                    ? '⏰ HẾT 60 GIÂY! BẠN THUA — POWER BỊ TRỪ 99,9999999%! BOSS ERROR QUAY LẠI TỪ ĐẦU!'
+                                    : '⏰ 60 SECONDS ARE OVER! YOU LOSE — POWER REDUCED BY 99.9999999%! ERROR BOSS RESTARTED!'
                                 );
                             }
                         }
@@ -11388,22 +11455,23 @@
                         const moveTarget = errorBossMonster.userData.glitchTarget || new THREE.Vector3();
                         if (!errorBossMonster.userData.glitchTarget) errorBossMonster.userData.glitchTarget = moveTarget;
                         if (now >= (errorBossMonster.userData.glitchNextMove || 0)) {
-                            const half = 70;
+                            const half = 80;
                             moveTarget.set(
                                 THREE.MathUtils.randFloat(-half, half),
-                                THREE.MathUtils.randFloat(5, 13),
+                                THREE.MathUtils.randFloat(1.5, 4.5),
                                 THREE.MathUtils.randFloat(-half, half)
                             );
-                            errorBossMonster.userData.glitchNextMove = now + THREE.MathUtils.randFloat(180, 520);
+                            errorBossMonster.userData.glitchNextMove = now + THREE.MathUtils.randFloat(70, 180);
                         }
                         const dx = moveTarget.x - errorBossMonster.position.x;
                         const dz = moveTarget.z - errorBossMonster.position.z;
                         const d = Math.max(0.001, Math.hypot(dx, dz));
-                        const burst = 1.8;
+                        const burst = ERROR_GLITCH_BOSS_SPEED;
                         errorBossMonster.position.x += dx / d * Math.min(burst, d);
                         errorBossMonster.position.z += dz / d * Math.min(burst, d);
-                        errorBossMonster.position.y += (moveTarget.y - errorBossMonster.position.y) * 0.08;
+                        errorBossMonster.position.y += (moveTarget.y - errorBossMonster.position.y) * 0.3;
                         errorBossMonster.rotation.y = Math.atan2(playerGroup.position.x - errorBossMonster.position.x, playerGroup.position.z - errorBossMonster.position.z);
+                        updateGlitchBullets();
                     }
 
                     if (!errorGlitchLaunchActive || !errorGlitchPhase) {
