@@ -1701,8 +1701,8 @@
                 const ERROR_GLITCH_FINAL_CLICKS = 1000;
                 const ERROR_GLITCH_FINAL_TIME = 60000;
                 const ERROR_GLITCH_POWER_REMAIN = 0.000000001;
-                const ERROR_GLITCH_BOSS_SPEED_MULTIPLIER = 100;
-                const ERROR_GLITCH_BOSS_SPEED = 12;
+                const ERROR_GLITCH_BOSS_SPEED_MULTIPLIER = 10;
+                const ERROR_GLITCH_BOSS_SPEED = 1.2;
                 const ERROR_GLITCH_BOSS_SCALE = 0.18;
                 let glitchBullets = [];
                 let glitchAimActive = false;
@@ -9232,12 +9232,13 @@
                     if (!errorBossMonster.visible || !errorGlitchWorldActive) return false;
                     const bossPos = new THREE.Vector3();
                     errorBossMonster.getWorldPosition(bossPos);
-                    const radius = 0.9;
-                    return bullet.position.distanceTo(bossPos) <= radius;
+                    const box = new THREE.Box3().setFromObject(errorBossMonster);
+                    box.expandByScalar(0.18);
+                    return box.containsPoint(bullet.position);
                 }
 
                 function shootGlitchBullet() {
-                    if (!errorGlitchWorldActive || !errorBossActive || !errorGlitchPhase) return;
+                    if (!errorGlitchWorldActive || !errorBossActive || !errorGlitchPhase || errorGlitchFinalActive) return;
                     createGlitchBullet();
                     power = Math.max(1, power * 1.03);
                     document.getElementById('val-power').innerText = formatPowerDisplay();
@@ -9324,6 +9325,7 @@
                                     winErrorGlitchBoss();
                                     return;
                                 }
+                                return;
                             }
                             shootGlitchBullet();
                             return;
