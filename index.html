@@ -691,6 +691,9 @@
         <div id="boss-hp-text" style="font-size:11px;margin-top:2px;">
             2000000 / 2000000
         </div>
+        <div id="boss-hp-percent" style="font-size:11px;margin-top:2px;color:#ffd700;">
+            Đã tiêu diệt: 0%
+        </div>
 
     </div>
 
@@ -894,6 +897,22 @@
 
         </div>
 
+        <div class="item-row">
+
+            <span>
+                ⚡ Error Sword
+                (<span id="inv-error">0</span>)
+                [Lv.3]
+            </span>
+
+            <div>
+                <span style="font-size:10px;color:#ff3355;">
+                    x101 DMG
+                </span>
+            </div>
+
+        </div>
+
         <div
             style="
                 background:rgba(255,255,255,0.08);
@@ -929,10 +948,10 @@
                 color:#aaa;
             "
             class="lang-txt"
-            data-vi="Bấm [TAB] để đóng | Bấm [V] đổi ngôn ngữ | Bấm [G] gộp 2 Legendary Lv.2 thành GoD Lv.1, đủ 3 GoD Lv.1 gộp thành Hack Lv.2"
-            data-en="Press [TAB] to close | Press [V] change language | Press [G] to fuse 2 Legendary Lv.2 into GoD Lv.1, 3 GoD Lv.1 into Hack Lv.2"
+            data-vi="Bấm [TAB] để đóng | Bấm [V] đổi ngôn ngữ | Bấm [G] gộp 2 Legendary Lv.2 thành GoD Lv.1, đủ 3 GoD Lv.1 thành Hack, đủ 20 Hack thành Error Sword"
+            data-en="Press [TAB] to close | Press [V] change language | Press [G] to fuse 2 Legendary Lv.2 into GoD Lv.1, 3 GoD Lv.1 into Hack, 20 Hack into Error Sword"
         >
-            Bấm [TAB] để đóng | Bấm [V] đổi ngôn ngữ | Bấm [G] gộp 2 Legendary Lv.2 thành GoD Lv.1, đủ 3 GoD Lv.1 gộp thành Hack Lv.2
+            Bấm [TAB] để đóng | Bấm [V] đổi ngôn ngữ | Bấm [G] gộp 2 Legendary Lv.2 thành GoD Lv.1, đủ 3 GoD Lv.1 thành Hack, đủ 20 Hack thành Error Sword
         </div>
 
     </div>
@@ -1578,8 +1597,8 @@
                 }
 
                 function increaseErrorPowerByTenPercentExponent() {
-                    errorPowerExponent *= hasGlitchSword ? 1.15 : 1.10;
-                    errorDamageExponent *= hasGlitchSword ? 1.15 : 1.10;
+                    errorPowerExponent *= hasGlitchSword ? ERROR_POWER_RATE : 1.10;
+                    errorDamageExponent *= hasGlitchSword ? ERROR_POWER_RATE : 1.10;
                     return errorPowerExponent;
                 }
 
@@ -1675,6 +1694,15 @@
                 const GLITCH_SWORD_DMG_MULTIPLIER = 101;
 
                 const GLITCH_SWORD_COUNT_NEEDED = 20;
+
+                const ERROR_POWER_RATE = 1.20;
+                const ERROR_BOSS_DAMAGE_PER_CLICK = 1;
+                let errorBossDamagePercent = 0;
+                let errorGlitchPhase = false;
+                let errorGlitchLaunchActive = false;
+                let errorGlitchLaunchStart = 0;
+                let errorGlitchNextAttackTime = 0;
+                let errorGlitchDamageApplied = false;
 
                 let gameStage = 1;
 
@@ -3484,14 +3512,17 @@
                         legendarySwordGroup.visible =
                             equippedItemType === 'legendary' &&
                             !hasGoDSword &&
-                            !hasHackSword;
+                            !hasHackSword &&
+                            !hasGlitchSword;
 
                         godSwordGroup.visible =
                             hasGoDSword &&
-                            !hasHackSword;
+                            !hasHackSword &&
+                            !hasGlitchSword;
 
                         hackSwordGroup.visible =
-                            hasHackSword;
+                            hasHackSword ||
+                            hasGlitchSword;
 
                         if (
                             !legendarySwordGroup.visible &&
@@ -6399,7 +6430,16 @@
 
                     if (invHack)
                         invHack.innerText =
-                            hasHackSword ? 1 : 0;
+                            hackSwordCount;
+
+                    const invError =
+                        document.getElementById(
+                            'inv-error'
+                        );
+
+                    if (invError)
+                        invError.innerText =
+                            hasGlitchSword ? 1 : 0;
 
                     const lvlGod =
                         document.getElementById(
@@ -6647,19 +6687,6 @@
                     function() {
 
                         if (
-                            hasHackSword
-                        ) {
-
-                            showToast(
-                                currentLang === 'vi'
-                                ? "🌀 BẠN ĐÃ CÓ KIẾM HACK LV.2 RỒI!"
-                                : "🌀 YOU ALREADY HAVE THE HACK LV.2 SWORD!"
-                            );
-
-                            return;
-                        }
-
-                        if (
                             itemLevels.legendary < 2
                         ) {
 
@@ -6762,7 +6789,6 @@
                         }
 
                         godSwordCount -= 3;
-
                         hackSwordCount += 1;
 
                         hasGoDSword =
@@ -6775,19 +6801,38 @@
                             hackSwordCount >=
                             GLITCH_SWORD_COUNT_NEEDED
                         ) {
+
+                            hackSwordCount -=
+                                GLITCH_SWORD_COUNT_NEEDED;
+
                             hasGlitchSword = true;
+                            hasHackSword =
+                                hackSwordCount > 0;
+
+                            showToast(
+                                currentLang === 'vi'
+                                ? '⚡ ĐỦ 20 KIẾM HACK! ĐÃ KẾT HỢP THÀNH ERROR SWORD (x101 DMG)!'
+                                : '⚡ 20 HACK SWORDS FUSED INTO ERROR SWORD (x101 DMG)!'
+                            );
+
+                        } else {
+
+                            showToast(
+                                currentLang === 'vi'
+                                ? `🌀 GỘP 3 GoD LV.1 THÀNH CÔNG! HACK: ${hackSwordCount}/20`
+                                : `🌀 3 GoD LV.1 FUSED! HACK: ${hackSwordCount}/20`
+                            );
+
                         }
 
                         refreshPlayerMaxHP();
 
-                        swordMat.color.set(
-                            'white'
-                        );
+                        swordMat.color.set('white');
 
                         swordGroup.scale.set(
-                            1.8,
-                            2.0,
-                            1.8
+                            hasGlitchSword ? 2.2 : 1.8,
+                            hasGlitchSword ? 2.4 : 2.0,
+                            hasGlitchSword ? 2.2 : 1.8
                         );
 
                         document.getElementById(
@@ -6800,22 +6845,13 @@
                         document.getElementById(
                             'val-sword'
                         ).style.color =
-                            '#00ffff';
+                            hasGlitchSword
+                            ? '#ff3355'
+                            : '#00ffff';
 
                         playGoDFusionSound();
-
-                        showToast(
-                            hasGlitchSword
-                            ? (currentLang === 'vi'
-                                ? "⚡ ĐỦ 20 KIẾM HACK LV.2! NHẬN ERROR SWORD (x101 DMG)!"
-                                : "⚡ 20 HACK LV.2 SWORDS COMPLETE! YOU GOT ERROR SWORD (x101 DMG)!")
-                            : (currentLang === 'vi'
-                                ? `🌀 HỢP 3 GoD LV.1 THÀNH CÔNG! NHẬN KIẾM HACK LV.2 (x10 DMG)! ${hackSwordCount}/20`
-                                : `🌀 3 GoD LV.1 FUSED! GOT HACK LV.2 (x10 DMG)! ${hackSwordCount}/20`)
-                        );
-
+                        updatePlayerSwordVisual();
                         updateInventoryUI();
-
                         saveCurrentAccount();
                     };
 
@@ -6887,8 +6923,7 @@
                             claimGoDTitle();
 
                         } else if (
-                            godSwordCount >= 3 &&
-                            !hasHackSword
+                            godSwordCount >= 3
                         ) {
 
                             fuseHackSword();
@@ -8206,6 +8241,13 @@
                                 ).style.display =
                                     'block';
 
+                                document.getElementById(
+                                    'boss-hp-percent'
+                                ).innerText =
+                                    currentLang === 'vi'
+                                    ? 'Đã tiêu diệt: 0%'
+                                    : 'Destroyed: 0%';
+
                                 showToast(
                                     currentLang === 'vi'
                                     ? `⚠️ BOSS MA VƯƠNG (${currentBossMaxHP.toLocaleString()} HP) XUẤT HIỆN!`
@@ -8256,6 +8298,13 @@
                                 'boss-hp-text'
                             ).innerText =
                                 `${formatNum(bossHP)} / ${formatNum(currentBossMaxHP)}`;
+
+                            document.getElementById(
+                                'boss-hp-percent'
+                            ).innerText =
+                                currentLang === 'vi'
+                                ? `Đã tiêu diệt: ${(100 - hpPercent).toFixed(2)}%`
+                                : `Destroyed: ${(100 - hpPercent).toFixed(2)}%`;
 
                             if (
                                 bossHP <= 0
@@ -8731,67 +8780,117 @@
                             gameStage === 11
                         ) {
 
-                            /*
-                               BOSS ERROR: MỖI ĐÒN ĐÁNH (click) = +10% POWER
-                               Không cộng theo thời gian, không cộng khi AFK.
-                            */
                             if (errorBossActive && !isAfk) {
 
-                                if (errorLaserActive && errorLaser && !errorLaserHitLock) {
-                                    const cam = camera.position;
-                                    const laserDist = errorLaser.position.distanceTo(playerGroup.position.clone().setY(errorLaser.position.y));
-                                    if (laserDist < 18) {
-                                        errorLaserHitLock = true;
-                                        const heart = errorBossMonster.position.clone();
-                                        heart.y += 1.4;
-                                        const heartDist = errorLaser.position.distanceTo(heart);
-                                        removeErrorLaser();
+                                if (!errorGlitchPhase) {
 
-                                        if (heartDist < 3.2 && !errorReverseForm) {
-                                            errorReverseForm = true;
-                                            setErrorSkinTexture(true);
-                                            showToast(
-                                                currentLang === 'vi'
-                                                ? '💔 you can\'t win — ERROR ĐÃ ĐẢO NGƯỢC THÀNH RORRE!'
-                                                : '💔 you can\'t win — ERROR HAS REVERSED INTO RORRE!'
+                                    errorBossDamagePercent =
+                                        Math.min(
+                                            10,
+                                            errorBossDamagePercent +
+                                            ERROR_BOSS_DAMAGE_PER_CLICK
+                                        );
+
+                                    increaseErrorPowerByTenPercentExponent();
+
+                                    showDmgPopup(
+                                        formatErrorDamageDisplay()
+                                    );
+
+                                    if (errorBossDamagePercent >= 10) {
+
+                                        errorBossDamagePercent = 10;
+                                        errorGlitchPhase = true;
+                                        errorBossActive = true;
+                                        errorGlitchLaunchActive = false;
+                                        errorGlitchDamageApplied = false;
+                                        errorGlitchNextAttackTime =
+                                            performance.now() + 900;
+
+                                        const glitch =
+                                            document.getElementById(
+                                                'error-glitch-overlay'
                                             );
-                                        } else {
-                                            showToast(
-                                                currentLang === 'vi'
-                                                ? '🎯 BẮN TRÚNG CHỮ ERROR! TIẾP TỤC CHIẾN ĐẤU!'
-                                                : '🎯 ERROR LETTER HIT! CONTINUE THE FIGHT!'
-                                            );
+
+                                        if (glitch) {
+                                            glitch.style.display = 'block';
+                                            errorGlitchUntil =
+                                                performance.now() + 5000;
                                         }
+
+                                        showToast(
+                                            currentLang === 'vi'
+                                            ? '⚠️ ĐÃ PHÁ HỦY 10% BOSS ERROR! BOSS CHUYỂN SANG DẠNG GLITCH — KHÔNG THỂ ĐÁNH TIẾP!'
+                                            : '⚠️ 10% OF ERROR BOSS DESTROYED! ERROR ENTERS GLITCH FORM — YOU CANNOT DAMAGE IT ANYMORE!'
+                                        );
+
+                                    } else {
+
+                                        showToast(
+                                            currentLang === 'vi'
+                                            ? `💻 ĐÁNH BOSS ERROR! ĐÃ TIÊU DIỆT ${errorBossDamagePercent}% — +10% POWER!`
+                                            : `💻 HIT ERROR BOSS! ${errorBossDamagePercent}% DESTROYED — +10% POWER!`
+                                        );
+
                                     }
+
+                                } else {
+
+                                    power =
+                                        Math.max(
+                                            1,
+                                            power * 1.03
+                                        );
+
+                                    document.getElementById(
+                                        'val-power'
+                                    ).innerText =
+                                        formatNum(power);
+
+                                    showDmgPopup('+3% POWER');
+
+                                    showToast(
+                                        currentLang === 'vi'
+                                        ? '⚡ ERROR GLITCH! +3% POWER — KHÔNG THỂ GÂY SÁT THƯƠNG BOSS!'
+                                        : '⚡ ERROR GLITCH! +3% POWER — BOSS CANNOT BE DAMAGED!'
+                                    );
                                 }
-
-                                increaseErrorPowerByTenPercentExponent();
-
-                                showDmgPopup(
-                                    formatErrorDamageDisplay()
-                                );
 
                                 document.getElementById(
                                     'val-power'
                                 ).innerText =
                                     formatPowerDisplay();
 
+                                document.getElementById(
+                                    'boss-hp-inner'
+                                ).style.width =
+                                    Math.max(
+                                        0,
+                                        100 - errorBossDamagePercent
+                                    ) + '%';
+
+                                document.getElementById(
+                                    'boss-hp-text'
+                                ).innerText =
+                                    `10^${formatExponentValue(errorBossHPExponent)} HP`;
+
+                                document.getElementById(
+                                    'boss-hp-percent'
+                                ).innerText =
+                                    currentLang === 'vi'
+                                    ? `Đã tiêu diệt: ${errorBossDamagePercent}%`
+                                    : `Destroyed: ${errorBossDamagePercent}%`;
+
                                 const glitch =
                                     document.getElementById(
                                         'error-glitch-overlay'
                                     );
 
-                                if (glitch) {
+                                if (glitch && !errorGlitchPhase) {
                                     glitch.style.display = 'block';
                                     errorGlitchUntil =
                                         performance.now() + 1000;
                                 }
-
-                                showToast(
-                                    currentLang === 'vi'
-                                    ? '💻 ĐÁNH BOSS ERROR! +10% POWER MỖI ĐÒN!'
-                                    : '💻 HIT ERROR BOSS! +10% POWER PER HIT!'
-                                );
 
                                 saveCurrentAccount();
                             }
@@ -8873,6 +8972,11 @@
                                 errorBossActive = true;
                                 errorBossDefeated = false;
                                 errorBossHPExponent = ERROR_BOSS_HP_EXPONENT;
+                                errorBossDamagePercent = 0;
+                                errorGlitchPhase = false;
+                                errorGlitchLaunchActive = false;
+                                errorGlitchDamageApplied = false;
+                                errorGlitchNextAttackTime = performance.now() + 1500;
                                 errorPowerExponent = Math.max(
                                     1,
                                     getPowerExponent()
@@ -8919,7 +9023,14 @@
                                 document.getElementById(
                                     'boss-hp-text'
                                 ).innerText =
-                                    '10^9999999999 / 10^9999999999';
+                                    '10^9999999999 HP';
+
+                                document.getElementById(
+                                    'boss-hp-percent'
+                                ).innerText =
+                                    currentLang === 'vi'
+                                    ? 'Đã tiêu diệt: 0%'
+                                    : 'Destroyed: 0%';
 
                                 showToast(
                                     currentLang === 'vi'
@@ -9541,6 +9652,9 @@
 
                         hasGlitchSword: hasGlitchSword,
 
+                        errorBossDamagePercent: errorBossDamagePercent,
+                        errorGlitchPhase: errorGlitchPhase,
+
                         isCosmicSkinOn: isCosmicSkinOn,
 
                         inventory: {
@@ -9720,7 +9834,15 @@
 
                     hasGlitchSword =
                         data.hasGlitchSword ||
-                        hackSwordCount >= GLITCH_SWORD_COUNT_NEEDED;
+                        false;
+
+                    errorBossDamagePercent =
+                        (typeof data.errorBossDamagePercent === 'number')
+                        ? Math.max(0, Math.min(10, data.errorBossDamagePercent))
+                        : 0;
+
+                    errorGlitchPhase =
+                        data.errorGlitchPhase || false;
 
                     if (hasHackSword)
                         hasGoDSword = godSwordCount > 0;
@@ -9957,7 +10079,27 @@
 
                     skinMat.needsUpdate = true;
 
-                    if (hasHackSword && (gameStage === 7 || gameStage === 8 || universeWorldUnlocked)) {
+                    if (hasGlitchSword) {
+
+                        swordMat.color.set('white');
+
+                        swordGroup.scale.set(
+                            2.2,
+                            2.4,
+                            2.2
+                        );
+
+                        document.getElementById(
+                            'val-sword'
+                        ).innerText =
+                            `Error Sword (x${GLITCH_SWORD_DMG_MULTIPLIER} DMG)`;
+
+                        document.getElementById(
+                            'val-sword'
+                        ).style.color =
+                            '#ff3355';
+
+                    } else if (hasHackSword && (gameStage === 7 || gameStage === 8 || universeWorldUnlocked)) {
 
                         swordMat.color.set('white');
 
@@ -11056,10 +11198,71 @@
                     animateErrorBoss(performance.now());
                     updateRealism();
 
-                    jumpVelocity -= 0.014;
-                    playerGroup.position.y += jumpVelocity;
+                    if (
+                        gameStage === 11 &&
+                        errorGlitchPhase &&
+                        errorBossActive
+                    ) {
 
-                    if (playerGroup.position.y <= 0) {
+                        const now = performance.now();
+
+                        if (
+                            !errorGlitchLaunchActive &&
+                            now >= errorGlitchNextAttackTime
+                        ) {
+                            errorGlitchLaunchActive = true;
+                            errorGlitchLaunchStart = now;
+                            errorGlitchDamageApplied = false;
+                        }
+
+                        if (errorGlitchLaunchActive) {
+
+                            const elapsed =
+                                now - errorGlitchLaunchStart;
+
+                            const duration = 1800;
+                            const progress =
+                                Math.min(1, elapsed / duration);
+
+                            playerGroup.position.y =
+                                Math.sin(progress * Math.PI) * 22;
+
+                            if (
+                                progress >= 0.5 &&
+                                !errorGlitchDamageApplied
+                            ) {
+                                errorGlitchDamageApplied = true;
+                                playerHP =
+                                    Math.max(
+                                        0,
+                                        playerHP - 500000000
+                                    );
+                                updatePlayerHPUI();
+
+                                showToast(
+                                    currentLang === 'vi'
+                                    ? '💥 ERROR GLITCH NÉM BẠN LÊN TRỜI! -500m MÁU!'
+                                    : '💥 ERROR GLITCH LAUNCHED YOU! -500m HP!'
+                                );
+
+                                saveCurrentAccount();
+                            }
+
+                            if (progress >= 1) {
+                                playerGroup.position.y = 0;
+                                errorGlitchLaunchActive = false;
+                                errorGlitchNextAttackTime =
+                                    now + 1200 + Math.random() * 1800;
+                            }
+                        }
+                    }
+
+                    if (!errorGlitchLaunchActive) {
+                        jumpVelocity -= 0.014;
+                        playerGroup.position.y += jumpVelocity;
+                    }
+
+                    if (!errorGlitchLaunchActive && playerGroup.position.y <= 0) {
                         playerGroup.position.y = 0;
                         jumpVelocity = 0;
                         wasJumping = false;
