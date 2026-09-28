@@ -436,13 +436,6 @@
             text-align: center;
         }
 
-        #login-gate { position:fixed; inset:0; background:radial-gradient(circle at center,rgba(35,10,60,.98),rgba(3,0,8,.99)); display:flex; align-items:center; justify-content:center; z-index:100000; color:#fff; }
-        #login-gate-box { width:min(430px,92vw); padding:28px; text-align:center; border:2px solid #ffd700; border-radius:18px; background:rgba(8,4,18,.96); box-shadow:0 0 35px rgba(255,215,0,.35); }
-        #login-gate-box h1 { margin:0 0 8px; color:#ffd700; font-size:28px; }
-        #login-gate-box input { width:100%; padding:12px; margin-top:10px; border:1px solid #a335ee; border-radius:8px; background:#090411; color:#fff; outline:none; font-size:15px; }
-        #login-gate-box button { width:100%; padding:12px; margin-top:12px; border:0; border-radius:8px; background:linear-gradient(90deg,#a335ee,#ff00aa); color:#fff; font-weight:900; cursor:pointer; }
-        #login-gate-status { min-height:20px; margin-top:10px; color:#ff6666; font-size:13px; }
-
         #error-no h1 {
             font-size: 120px;
             margin: 0;
@@ -517,18 +510,6 @@
 </head>
 
 <body>
-
-    <div id="login-gate">
-        <div id="login-gate-box">
-            <h1>🔐 MYSTIC TEMPLE 3D</h1>
-            <p style="color:#ccc;margin:0 0 10px;">Nhập đúng tên và mật khẩu để vào game.</p>
-            <input id="gate-login-name" type="text" placeholder="Tên tài khoản" autocomplete="username">
-            <input id="gate-login-pass" type="password" placeholder="Mật khẩu" autocomplete="current-password">
-            <button type="button" onclick="loginFromGate()">VÀO GAME</button>
-            <div id="login-gate-status"></div>
-            <div style="font-size:11px;color:#888;margin-top:8px;">Tài khoản chưa có dữ liệu sẽ được tạo ở lần đăng nhập đầu tiên.</div>
-        </div>
-    </div>
 
     <div id="error-no">
         <h1>NO</h1>
@@ -1681,7 +1662,7 @@
 
                 let currentAccountPass = null;
 
-                let isAuthenticated = false;
+                let isAuthenticated = true;
                 let isGameLoading = false;
                 let gameLoadingTimer = null;
                 let afkCornerActive = false;
@@ -1691,7 +1672,7 @@
                 const AFK_POWER_TICK_MS = 1000;
                 const ATTACK_ANIMATION_SPEED = 8.5;
 
-                let isLoginOpen = true;
+                let isLoginOpen = false;
 
                 let equippedItemType = null;
 
@@ -7565,8 +7546,6 @@
                     'keydown',
                     e => {
 
-                        if(!isAuthenticated)return;
-
                         if (
                             e.target &&
                             (e.target.tagName === 'INPUT' ||
@@ -9368,8 +9347,6 @@
 
                         initAudio();
 
-                        if(!isAuthenticated)return;
-
                         if (
                             isGameEnded ||
                             isInvOpen ||
@@ -10977,24 +10954,6 @@
                     return true;
                 }
 
-                function accountNameAlreadyExists(name){
-                    const prefix='mystic_temple_save_'+name.trim().toLowerCase()+'_';
-                    for(let i=0;i<localStorage.length;i++){
-                        const key=localStorage.key(i);
-                        if(key && key.indexOf(prefix)===0) return true;
-                    }
-                    return false;
-                }
-
-                window.loginFromGate=function(){
-                    const name=document.getElementById('gate-login-name').value.trim();
-                    const pass=document.getElementById('gate-login-pass').value.trim();
-                    const status=document.getElementById('login-gate-status');
-                    if(!name||!pass){status.innerText=currentLang==='vi'?'❌ HÃY NHẬP ĐỦ TÊN VÀ MẬT KHẨU!':'❌ ENTER BOTH NAME AND PASSWORD!';return;}
-                    document.getElementById('login-name').value=name; document.getElementById('login-pass').value=pass; document.getElementById('login-input').value=name+'/'+pass;
-                    loginAccount(true);
-                };
-
                 function loginAccountCore(fromGate) {
 
                         if (currentAccountName) {
@@ -11070,20 +11029,6 @@
                                 key
                             );
 
-                        if (!saved && accountNameAlreadyExists(name)) {
-                            const badStatus = document.getElementById('login-status');
-                            badStatus.innerText = currentLang === 'vi'
-                                ? '❌ SAI MẬT KHẨU! TÊN NÀY ĐÃ ĐƯỢC ĐĂNG KÝ.'
-                                : '❌ WRONG PASSWORD! THIS NAME IS ALREADY REGISTERED.';
-                            const gateStatus = document.getElementById('login-gate-status');
-                            if (gateStatus) gateStatus.innerText = badStatus.innerText;
-                            isGameLoading=false;
-                            const loadingEl=document.getElementById('game-loading');
-                            if(loadingEl)loadingEl.style.display='none';
-                            if(gameLoadingTimer)clearInterval(gameLoadingTimer);
-                            return;
-                        }
-
                         if (saved) {
 
                             try {
@@ -11129,9 +11074,6 @@
                         currentAccountPass =
                             pass;
 
-                        isAuthenticated=true; isLoginOpen=false;
-                        const gate=document.getElementById('login-gate'); if(gate)gate.style.display='none';
-                        const gateStatus=document.getElementById('login-gate-status'); if(gateStatus)gateStatus.innerText='';
 
                         const savedPowerRecord =
                             loadPowerRecordByName(name);
@@ -11548,10 +11490,7 @@
                 let jumpVelocity = 0;
                 let wasJumping = false;
 
-                document.getElementById('gate-login-name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('gate-login-pass').focus();});
-                document.getElementById('gate-login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')loginFromGate();});
                 document.getElementById('login-modal').style.display='none';
-                document.getElementById('login-gate').style.display='flex';
 
                 function animate() {
 
