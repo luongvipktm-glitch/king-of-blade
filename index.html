@@ -436,6 +436,13 @@
             text-align: center;
         }
 
+        #login-gate { position:fixed; inset:0; background:radial-gradient(circle at center,rgba(35,10,60,.98),rgba(3,0,8,.99)); display:flex; align-items:center; justify-content:center; z-index:100000; color:#fff; }
+        #login-gate-box { width:min(430px,92vw); padding:28px; text-align:center; border:2px solid #ffd700; border-radius:18px; background:rgba(8,4,18,.96); box-shadow:0 0 35px rgba(255,215,0,.35); }
+        #login-gate-box h1 { margin:0 0 8px; color:#ffd700; font-size:28px; }
+        #login-gate-box input { width:100%; padding:12px; margin-top:10px; border:1px solid #a335ee; border-radius:8px; background:#090411; color:#fff; outline:none; font-size:15px; }
+        #login-gate-box button { width:100%; padding:12px; margin-top:12px; border:0; border-radius:8px; background:linear-gradient(90deg,#a335ee,#ff00aa); color:#fff; font-weight:900; cursor:pointer; }
+        #login-gate-status { min-height:20px; margin-top:10px; color:#ff6666; font-size:13px; }
+
         #error-no h1 {
             font-size: 120px;
             margin: 0;
@@ -510,6 +517,18 @@
 </head>
 
 <body>
+
+    <div id="login-gate">
+        <div id="login-gate-box">
+            <h1>🔐 MYSTIC TEMPLE 3D</h1>
+            <p style="color:#ccc;margin:0 0 10px;">Nhập đúng tên và mật khẩu để vào game.</p>
+            <input id="gate-login-name" type="text" placeholder="Tên tài khoản" autocomplete="username">
+            <input id="gate-login-pass" type="password" placeholder="Mật khẩu" autocomplete="current-password">
+            <button type="button" onclick="loginFromGate()">VÀO GAME</button>
+            <div id="login-gate-status"></div>
+            <div style="font-size:11px;color:#888;margin-top:8px;">Tài khoản chưa có dữ liệu sẽ được tạo ở lần đăng nhập đầu tiên.</div>
+        </div>
+    </div>
 
     <div id="error-no">
         <h1>NO</h1>
@@ -1085,7 +1104,7 @@
         >
 
         <input
-            type="text"
+            type="password"
             id="login-pass"
             placeholder="Mật khẩu"
             autocomplete="off"
@@ -1662,7 +1681,15 @@
 
                 let currentAccountPass = null;
 
-                let isLoginOpen = false;
+                let isAuthenticated = false;
+                let afkCornerActive = false;
+                let afkCornerIndex = -1;
+                let afkLastTick = performance.now();
+                const AFK_CORNER_RADIUS = 2.5;
+                const AFK_POWER_TICK_MS = 1000;
+                const ATTACK_ANIMATION_SPEED = 8.5;
+
+                let isLoginOpen = true;
 
                 let equippedItemType = null;
 
@@ -3546,10 +3573,36 @@
                     1.35
                 );
 
+                function makeBladeTexture(label,bg,fg,repeatX){
+                    const c=document.createElement('canvas'); c.width=256; c.height=512;
+                    const g=c.getContext('2d'); g.fillStyle=bg; g.fillRect(0,0,c.width,c.height);
+                    g.strokeStyle='rgba(255,255,255,.28)'; g.lineWidth=6; g.strokeRect(8,8,240,496);
+                    g.fillStyle=fg; g.font='900 48px monospace'; g.textAlign='center'; g.textBaseline='middle';
+                    g.translate(128,256); g.rotate(-Math.PI/2); g.fillText(label,0,0);
+                    const tex=new THREE.CanvasTexture(c); tex.encoding=THREE.sRGBEncoding; tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(repeatX||1,1); return tex;
+                }
+                const hackPatternTexture=makeBladeTexture('<@>','#121225','#66ffff',2);
+                const errorLabelTexture=makeBladeTexture('ERROR','#240008','#ff3355',1);
+                const errorBlade=new THREE.Mesh(new THREE.BoxGeometry(.18,2.9,.10),new THREE.MeshStandardMaterial({map:errorLabelTexture,color:0xff3355,emissive:0x550011,emissiveIntensity:2.8,metalness:.95,roughness:.08}));
+                errorBlade.position.y=1.45;
+                const errorGuard=new THREE.Mesh(new THREE.BoxGeometry(.72,.12,.16),new THREE.MeshStandardMaterial({color:0x111111,emissive:0xff0033,emissiveIntensity:1.5,metalness:.8}));
+                errorGuard.position.y=.1;
+                const errorGem=new THREE.Mesh(new THREE.OctahedronGeometry(.13,0),new THREE.MeshStandardMaterial({color:0xff0033,emissive:0xff0033,emissiveIntensity:3,metalness:.8}));
+                errorGem.position.y=-.1;
+                const errorSwordGroup=new THREE.Group(); errorSwordGroup.add(errorBlade,errorGuard,errorGem); errorSwordGroup.scale.set(1.12,1.12,1.12);
+                const hackRune=new THREE.Mesh(new THREE.BoxGeometry(.22,2.2,.02),new THREE.MeshBasicMaterial({map:hackPatternTexture,transparent:true}));
+                hackRune.position.z=.18; hackSwordGroup.add(hackRune);
+                const legendaryDetailMat=new THREE.MeshStandardMaterial({color:0xffd700,emissive:0x8a5a00,emissiveIntensity:.8,metalness:.95,roughness:.12});
+                const legendaryTip=new THREE.Mesh(new THREE.OctahedronGeometry(.13,0),legendaryDetailMat); legendaryTip.position.set(0,1.72,0);
+                const legendaryCenter=new THREE.Mesh(new THREE.BoxGeometry(.08,1.1,.09),legendaryDetailMat); legendaryCenter.position.set(0,.85,.06);
+                const legendaryGem=new THREE.Mesh(new THREE.OctahedronGeometry(.09,0),new THREE.MeshStandardMaterial({color:0xfff3a0,emissive:0xffd700,emissiveIntensity:2.5})); legendaryGem.position.set(0,.12,.1);
+                legendarySwordGroup.add(legendaryTip,legendaryCenter,legendaryGem);
+
                 swordGroup.add(
                     legendarySwordGroup,
                     godSwordGroup,
-                    hackSwordGroup
+                    hackSwordGroup,
+                    errorSwordGroup
                 );
 
                 swordGroup.position.set(
@@ -3579,7 +3632,10 @@
                             !hasGlitchSword;
 
                         hackSwordGroup.visible =
-                            hasHackSword ||
+                            hasHackSword &&
+                            !hasGlitchSword;
+
+                        errorSwordGroup.visible =
                             hasGlitchSword;
 
                         if (
@@ -4660,6 +4716,7 @@
                             a = k < 0.35 ? -0.45 - (k / 0.35) * 1.9 : -2.35 + ((k - 0.35) / 0.65) * 2.6;
                         }
                         P.armR.shoulder.rotation.x = a;
+                        P.armR.shoulder.rotation.z = 0.08 + Math.sin(k * Math.PI * 2) * 0.62;
                         P.armR.elbow.rotation.x = -0.35;
                     } else {
                         P.armR.shoulder.rotation.x = swing * 0.8;
@@ -4845,7 +4902,7 @@
 
                     const moveAmt = Math.min(1, realisticSpeedSmooth / 3);
                     blockyWalkPhase += dt * (4 + Math.min(realisticSpeedSmooth, 14) * 0.9) * (moveAmt > 0.05 ? 1 : 0);
-                    if (blockyAttackT < 1) blockyAttackT = Math.min(1, blockyAttackT + dt * 3.2);
+                    if (blockyAttackT < 1) blockyAttackT = Math.min(1, blockyAttackT + dt * ATTACK_ANIMATION_SPEED);
 
                     animateBlocky(blockyP, blockyWalkPhase, moveAmt, t, {
                         holdSword: swordGroup.visible !== false &&
@@ -7025,11 +7082,9 @@
 
                     };
 
-                window.toggleLogin =
-                    function() {
-
-                        isLoginOpen =
-                            !isLoginOpen;
+                window.toggleLogin=function(){
+                    if(!isAuthenticated){isLoginOpen=true;document.getElementById('login-modal').style.display='block';return;}
+                    isLoginOpen=!isLoginOpen;
 
                         document.getElementById(
                             'login-modal'
@@ -7507,6 +7562,8 @@
                 window.addEventListener(
                     'keydown',
                     e => {
+
+                        if(!isAuthenticated)return;
 
                         if (
                             e.target &&
@@ -8076,7 +8133,6 @@
 
                         if (!isAfk) {
                             playBeepSound();
-                            createSwordEnergyShot();
                         }
 
                         let itemBonusMultiplier =
@@ -9309,6 +9365,8 @@
                             return;
 
                         initAudio();
+
+                        if(!isAuthenticated)return;
 
                         if (
                             isGameEnded ||
@@ -10917,8 +10975,25 @@
                     return true;
                 }
 
-                window.loginAccount =
-                    function() {
+                function accountNameAlreadyExists(name){
+                    const prefix='mystic_temple_save_'+name.trim().toLowerCase()+'_';
+                    for(let i=0;i<localStorage.length;i++){
+                        const key=localStorage.key(i);
+                        if(key && key.indexOf(prefix)===0) return true;
+                    }
+                    return false;
+                }
+
+                window.loginFromGate=function(){
+                    const name=document.getElementById('gate-login-name').value.trim();
+                    const pass=document.getElementById('gate-login-pass').value.trim();
+                    const status=document.getElementById('login-gate-status');
+                    if(!name||!pass){status.innerText=currentLang==='vi'?'❌ HÃY NHẬP ĐỦ TÊN VÀ MẬT KHẨU!':'❌ ENTER BOTH NAME AND PASSWORD!';return;}
+                    document.getElementById('login-name').value=name; document.getElementById('login-pass').value=pass; document.getElementById('login-input').value=name+'/'+pass;
+                    loginAccount(true);
+                };
+
+                window.loginAccount=function(fromGate) {
 
                         if (currentAccountName) {
                             saveCurrentAccount();
@@ -10947,16 +11022,6 @@
 
                         if (changeAccountPassword(raw))
                             return;
-
-                        if (raw.trim() === 'vv/6726') {
-
-                            document.getElementById(
-                                'login-status'
-                            ).innerText =
-                                "can`t login";
-
-                            return;
-                        }
 
                         const parts =
                             raw.split('/');
@@ -10993,6 +11058,16 @@
                             localStorage.getItem(
                                 key
                             );
+
+                        if (!saved && accountNameAlreadyExists(name)) {
+                            const badStatus = document.getElementById('login-status');
+                            badStatus.innerText = currentLang === 'vi'
+                                ? '❌ SAI MẬT KHẨU! TÊN NÀY ĐÃ ĐƯỢC ĐĂNG KÝ.'
+                                : '❌ WRONG PASSWORD! THIS NAME IS ALREADY REGISTERED.';
+                            const gateStatus = document.getElementById('login-gate-status');
+                            if (gateStatus) gateStatus.innerText = badStatus.innerText;
+                            return;
+                        }
 
                         if (saved) {
 
@@ -11038,6 +11113,10 @@
 
                         currentAccountPass =
                             pass;
+
+                        isAuthenticated=true; isLoginOpen=false;
+                        const gate=document.getElementById('login-gate'); if(gate)gate.style.display='none';
+                        const gateStatus=document.getElementById('login-gate-status'); if(gateStatus)gateStatus.innerText='';
 
                         const savedPowerRecord =
                             loadPowerRecordByName(name);
@@ -11209,6 +11288,7 @@
                 setInterval(
                     () => {
 
+                        if(!isAuthenticated)return;
                         checkCosmicLevel1000();
                         saveCurrentAccount();
 
@@ -11381,6 +11461,26 @@
 
                     };
 
+                function getAFKCornerIndex(){
+                    const half=(gameStage===11&&errorMapExpanded)?ERROR_MAP_CHASE_SIZE*.5-8:16;
+                    const corners=[[-half,-half],[half,-half],[-half,half],[half,half]];
+                    for(let i=0;i<corners.length;i++){
+                        const dx=playerGroup.position.x-corners[i][0],dz=playerGroup.position.z-corners[i][1];
+                        if(Math.hypot(dx,dz)<=AFK_CORNER_RADIUS)return i;
+                    }
+                    return -1;
+                }
+                function updateAFKPower(t){
+                    if(!isAuthenticated)return;
+                    const idx=getAFKCornerIndex();
+                    if(idx<0){afkCornerActive=false;afkCornerIndex=-1;afkLastTick=t;return;}
+                    if(!afkCornerActive||afkCornerIndex!==idx){afkCornerActive=true;afkCornerIndex=idx;afkLastTick=t;showToast(currentLang==='vi'?'🟢 AFK ĐÃ KÍCH HOẠT Ở GÓC MAP!':'🟢 AFK ACTIVATED AT MAP CORNER!');}
+                    if(t-afkLastTick<AFK_POWER_TICK_MS)return;
+                    const ticks=Math.floor((t-afkLastTick)/AFK_POWER_TICK_MS); afkLastTick+=ticks*AFK_POWER_TICK_MS;
+                    for(let i=0;i<ticks;i++){performAttack(true);performAttack(true);}
+                    document.getElementById('val-power').innerText=formatPowerDisplay(); saveCurrentAccount();
+                }
+
                 /* =========================
                    GAME LOOP
                 ========================= */
@@ -11388,6 +11488,11 @@
                 let walkTime = 0;
                 let jumpVelocity = 0;
                 let wasJumping = false;
+
+                document.getElementById('gate-login-name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('gate-login-pass').focus();});
+                document.getElementById('gate-login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')loginFromGate();});
+                document.getElementById('login-modal').style.display='none';
+                document.getElementById('login-gate').style.display='flex';
 
                 function animate() {
 
@@ -11430,6 +11535,7 @@
 
                     animateErrorBoss(performance.now());
                     updateRealism();
+                    updateAFKPower(performance.now());
 
                     if (
                         gameStage === 11 &&
