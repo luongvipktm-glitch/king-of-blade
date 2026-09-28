@@ -1085,7 +1085,7 @@
         >
 
         <input
-            type="password"
+            type="text"
             id="login-pass"
             placeholder="Mật khẩu"
             autocomplete="off"
@@ -1661,16 +1661,6 @@
                 let currentAccountName = null;
 
                 let currentAccountPass = null;
-
-                let isAuthenticated = true;
-                let isGameLoading = false;
-                let gameLoadingTimer = null;
-                let afkCornerActive = false;
-                let afkCornerIndex = -1;
-                let afkLastTick = performance.now();
-                const AFK_CORNER_RADIUS = 2.5;
-                const AFK_POWER_TICK_MS = 1000;
-                const ATTACK_ANIMATION_SPEED = 8.5;
 
                 let isLoginOpen = false;
 
@@ -2872,6 +2862,138 @@
                 glitchCodeFloor.visible = false;
                 scene.add(glitchCodeFloor);
 
+                /* =========================
+                   WORLD ARENAS MỞ RỘNG
+                   Stage 3  = Địa ngục 144x144
+                   Stage 5/6 = Hố đen vũ trụ
+                   Stage 7/8/9 = Các hành tinh
+                   Stage 10 = Rừng T-Rex
+                ========================= */
+                const expandedWorlds = new THREE.Group();
+                scene.add(expandedWorlds);
+
+                const hellWorld = new THREE.Group();
+                const hellFloor = new THREE.Mesh(
+                    new THREE.PlaneGeometry(144, 144),
+                    new THREE.MeshStandardMaterial({ color: 0x260707, roughness: 0.96, emissive: 0x190000, emissiveIntensity: 0.35 })
+                );
+                hellFloor.rotation.x = -Math.PI / 2;
+                hellFloor.position.y = 0.01;
+                hellWorld.add(hellFloor);
+                for (let i = 0; i < 70; i++) {
+                    const rock = new THREE.Mesh(
+                        new THREE.DodecahedronGeometry(0.5 + Math.random() * 1.8, 0),
+                        new THREE.MeshStandardMaterial({ color: 0x120808, roughness: 1 })
+                    );
+                    rock.position.set((Math.random() - 0.5) * 138, 0.2 + Math.random() * 1.5, (Math.random() - 0.5) * 138);
+                    rock.scale.y = 0.4 + Math.random() * 1.8;
+                    hellWorld.add(rock);
+                }
+                for (let i = 0; i < 22; i++) {
+                    const lava = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.8 + Math.random() * 1.8, 1.2 + Math.random() * 2.2, 0.15, 8),
+                        new THREE.MeshBasicMaterial({ color: 0xff2410 })
+                    );
+                    lava.position.set((Math.random() - 0.5) * 135, 0.08, (Math.random() - 0.5) * 135);
+                    hellWorld.add(lava);
+                }
+                expandedWorlds.add(hellWorld);
+
+                const blackHoleWorld = new THREE.Group();
+                const blackHoleFloor = new THREE.Mesh(
+                    new THREE.PlaneGeometry(220, 220),
+                    new THREE.MeshBasicMaterial({ color: 0x010107 })
+                );
+                blackHoleFloor.rotation.x = -Math.PI / 2;
+                blackHoleFloor.position.y = 0.015;
+                blackHoleWorld.add(blackHoleFloor);
+                for (let i = 0; i < 24; i++) {
+                    const hole = new THREE.Mesh(
+                        new THREE.CircleGeometry(3 + Math.random() * 5, 32),
+                        new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.95 })
+                    );
+                    hole.rotation.x = -Math.PI / 2;
+                    hole.position.set((Math.random() - 0.5) * 205, 0.03, (Math.random() - 0.5) * 205);
+                    blackHoleWorld.add(hole);
+                    const ring = new THREE.Mesh(
+                        new THREE.TorusGeometry(3.5 + Math.random() * 3, 0.08, 8, 32),
+                        new THREE.MeshBasicMaterial({ color: 0x5420ff, transparent: true, opacity: 0.6 })
+                    );
+                    ring.rotation.x = Math.PI / 2;
+                    ring.position.copy(hole.position);
+                    blackHoleWorld.add(ring);
+                }
+                expandedWorlds.add(blackHoleWorld);
+
+                const planetWorld = new THREE.Group();
+                const planetFloor = new THREE.Mesh(
+                    new THREE.PlaneGeometry(190, 190),
+                    new THREE.MeshStandardMaterial({ color: 0x10182a, roughness: 0.82, metalness: 0.15 })
+                );
+                planetFloor.rotation.x = -Math.PI / 2;
+                planetFloor.position.y = 0.02;
+                planetWorld.add(planetFloor);
+                for (let i = 0; i < 18; i++) {
+                    const planet = new THREE.Mesh(
+                        new THREE.SphereGeometry(2 + Math.random() * 5, 18, 12),
+                        new THREE.MeshStandardMaterial({ color: [0x315a8a,0x6b3f7e,0x8a6331,0x3b7b5a][i % 4], roughness: 0.8 })
+                    );
+                    planet.position.set((Math.random() - 0.5) * 175, 2 + Math.random() * 12, (Math.random() - 0.5) * 175);
+                    planet.userData.spin = 0.002 + Math.random() * 0.01;
+                    planetWorld.add(planet);
+                }
+                for (let i = 0; i < 80; i++) {
+                    const star = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.04 + Math.random() * 0.08, 6, 6),
+                        new THREE.MeshBasicMaterial({ color: 0xffffff })
+                    );
+                    star.position.set((Math.random() - 0.5) * 185, 3 + Math.random() * 20, (Math.random() - 0.5) * 185);
+                    planetWorld.add(star);
+                }
+                expandedWorlds.add(planetWorld);
+
+                const forestWorld = new THREE.Group();
+                const forestFloor = new THREE.Mesh(
+                    new THREE.PlaneGeometry(170, 170),
+                    new THREE.MeshStandardMaterial({ color: 0x173b18, roughness: 1 })
+                );
+                forestFloor.rotation.x = -Math.PI / 2;
+                forestFloor.position.y = 0.02;
+                forestWorld.add(forestFloor);
+                for (let i = 0; i < 120; i++) {
+                    const tree = new THREE.Group();
+                    const trunk = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.22, 0.4, 2.5 + Math.random() * 3, 7),
+                        new THREE.MeshStandardMaterial({ color: 0x4a2a16, roughness: 1 })
+                    );
+                    trunk.position.y = 1.3;
+                    const crown = new THREE.Mesh(
+                        new THREE.ConeGeometry(1.2 + Math.random() * 1.3, 3 + Math.random() * 3, 7),
+                        new THREE.MeshStandardMaterial({ color: 0x145b22, roughness: 1 })
+                    );
+                    crown.position.y = 3.5;
+                    tree.add(trunk, crown);
+                    tree.position.set((Math.random() - 0.5) * 162, 0, (Math.random() - 0.5) * 162);
+                    forestWorld.add(tree);
+                }
+                expandedWorlds.add(forestWorld);
+
+                function setExpandedWorld(stage) {
+                    hellWorld.visible = stage === 3;
+                    blackHoleWorld.visible = stage === 5 || stage === 6;
+                    planetWorld.visible = stage === 7 || stage === 8 || stage === 9;
+                    forestWorld.visible = stage === 10;
+                    if (stage === 3 || stage === 5 || stage === 6 || stage === 7 || stage === 8 || stage === 9 || stage === 10) {
+                        platformGroup.visible = false;
+                        universeFloor.visible = false;
+                    } else if (stage === 11) {
+                        platformGroup.visible = false;
+                        universeFloor.visible = false;
+                    } else {
+                        platformGroup.visible = true;
+                    }
+                }
+
                 rainbowHaloGroup = new THREE.Group();
                 const haloColors = [0xff0000,0xff8800,0xffff00,0x00ff66,0x00aaff,0x3355ff,0xcc33ff];
                 haloColors.forEach((c, i) => {
@@ -3483,6 +3605,98 @@
                     1.45
                 );
 
+                const legendaryMarkGroup = new THREE.Group();
+                const legendaryMarkMat = new THREE.MeshBasicMaterial({
+                    color: 0x050505,
+                    transparent: true,
+                    opacity: 0.95
+                });
+                ['<@>', '@<', '<>', '@@'].forEach((txt, i) => {
+                    const c = document.createElement('canvas');
+                    c.width = 180; c.height = 80;
+                    const g = c.getContext('2d');
+                    g.clearRect(0, 0, c.width, c.height);
+                    g.fillStyle = '#050505';
+                    g.font = 'bold 42px monospace';
+                    g.textAlign = 'center';
+                    g.textBaseline = 'middle';
+                    g.fillText(txt, 90, 40);
+                    const tex = new THREE.CanvasTexture(c);
+                    const mark = new THREE.Mesh(
+                        new THREE.PlaneGeometry(0.48, 0.22),
+                        new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false })
+                    );
+                    mark.position.set((i % 2 ? 0.09 : -0.09), 0.48 + i * 0.23, 0.041);
+                    mark.rotation.z = (i % 2 ? -0.12 : 0.12);
+                    legendaryMarkGroup.add(mark);
+                });
+                legendarySwordGroup.add(legendaryMarkGroup);
+
+                const rareSwordGroup = new THREE.Group();
+                const rareStoneMat = new THREE.MeshStandardMaterial({
+                    color: 0x6f7680,
+                    roughness: 0.92,
+                    metalness: 0.05
+                });
+                const rareStoneBlade = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.18, 1.7, 0.10),
+                    rareStoneMat
+                );
+                rareStoneBlade.position.y = 0.82;
+                rareStoneBlade.rotation.z = 0.025;
+                rareSwordGroup.add(rareStoneBlade);
+                for (let i = 0; i < 9; i++) {
+                    const chip = new THREE.Mesh(
+                        new THREE.TetrahedronGeometry(0.055, 0),
+                        rareStoneMat
+                    );
+                    chip.position.set((Math.random() - 0.5) * 0.12, 0.25 + Math.random() * 1.2, 0.065);
+                    chip.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+                    rareSwordGroup.add(chip);
+                }
+                const fireMat = new THREE.MeshBasicMaterial({
+                    color: 0xff4b16,
+                    transparent: true,
+                    opacity: 0.82,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                for (let i = 0; i < 7; i++) {
+                    const flame = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.07 + Math.random() * 0.04, 0.25 + Math.random() * 0.2, 5),
+                        fireMat
+                    );
+                    flame.position.set((Math.random() - 0.5) * 0.24, 0.3 + i * 0.22, 0.10);
+                    flame.rotation.z = (Math.random() - 0.5) * 0.7;
+                    rareSwordGroup.add(flame);
+                }
+                rareSwordGroup.add(swordGuard.clone(), swordHandle.clone());
+                rareSwordGroup.scale.set(1.45, 1.45, 1.45);
+
+                const commonSwordGroup = new THREE.Group();
+                const woodBladeMat = new THREE.MeshStandardMaterial({
+                    color: 0x8b5a2b,
+                    roughness: 0.95,
+                    metalness: 0.0
+                });
+                const woodBlade = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.17, 1.65, 0.11),
+                    woodBladeMat
+                );
+                woodBlade.position.y = 0.82;
+                commonSwordGroup.add(woodBlade);
+                for (let i = 0; i < 6; i++) {
+                    const grain = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.025, 1.35, 0.006),
+                        new THREE.MeshBasicMaterial({ color: 0x4a2b12 })
+                    );
+                    grain.position.set(-0.045 + i * 0.018, 0.82 + (i % 2) * 0.03, 0.058);
+                    grain.rotation.z = (i % 2 ? 0.04 : -0.04);
+                    commonSwordGroup.add(grain);
+                }
+                commonSwordGroup.add(swordGuard.clone(), swordHandle.clone());
+                commonSwordGroup.scale.set(1.45, 1.45, 1.45);
+
                 const godBladeMat =
                     new THREE.MeshStandardMaterial({
                         color: 0xffffff,
@@ -3545,43 +3759,62 @@
                 const hackSwordGroup =
                     new THREE.Group();
 
-                hackSwordGroup.add(
-                    cosmicBlade,
-                    cosmicCore
+                const laserBladeMat = new THREE.MeshBasicMaterial({
+                    color: 0x66eaff,
+                    transparent: true,
+                    opacity: 0.95,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                const laserBlade = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.075, 0.11, 3.25, 12),
+                    laserBladeMat
                 );
-
-                hackSwordGroup.scale.set(
-                    1.35,
-                    1.35,
-                    1.35
+                laserBlade.position.y = 1.42;
+                const laserCore = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.025, 0.04, 3.4, 10),
+                    new THREE.MeshBasicMaterial({ color: 0xffffff })
                 );
+                laserCore.position.y = 1.42;
+                const laserGuard = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.65, 0.10, 0.13),
+                    new THREE.MeshBasicMaterial({ color: 0x00ffff })
+                );
+                laserGuard.position.y = 0.08;
+                hackSwordGroup.add(laserBlade, laserCore, laserGuard, swordHandle.clone());
+                hackSwordGroup.scale.set(1.15, 1.15, 1.15);
 
-                function makeBladeTexture(label,bg,fg,repeatX){
-                    const c=document.createElement('canvas'); c.width=256; c.height=512;
-                    const g=c.getContext('2d'); g.fillStyle=bg; g.fillRect(0,0,c.width,c.height);
-                    g.strokeStyle='rgba(255,255,255,.28)'; g.lineWidth=6; g.strokeRect(8,8,240,496);
-                    g.fillStyle=fg; g.font='900 48px monospace'; g.textAlign='center'; g.textBaseline='middle';
-                    g.translate(128,256); g.rotate(-Math.PI/2); g.fillText(label,0,0);
-                    const tex=new THREE.CanvasTexture(c); tex.encoding=THREE.sRGBEncoding; tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(repeatX||1,1); return tex;
-                }
-                const hackPatternTexture=makeBladeTexture('<@>','#121225','#66ffff',2);
-                const errorLabelTexture=makeBladeTexture('ERROR','#240008','#ff3355',1);
-                const errorBlade=new THREE.Mesh(new THREE.BoxGeometry(.18,2.9,.10),new THREE.MeshStandardMaterial({map:errorLabelTexture,color:0xff3355,emissive:0x550011,emissiveIntensity:2.8,metalness:.95,roughness:.08}));
-                errorBlade.position.y=1.45;
-                const errorGuard=new THREE.Mesh(new THREE.BoxGeometry(.72,.12,.16),new THREE.MeshStandardMaterial({color:0x111111,emissive:0xff0033,emissiveIntensity:1.5,metalness:.8}));
-                errorGuard.position.y=.1;
-                const errorGem=new THREE.Mesh(new THREE.OctahedronGeometry(.13,0),new THREE.MeshStandardMaterial({color:0xff0033,emissive:0xff0033,emissiveIntensity:3,metalness:.8}));
-                errorGem.position.y=-.1;
-                const errorSwordGroup=new THREE.Group(); errorSwordGroup.add(errorBlade,errorGuard,errorGem); errorSwordGroup.scale.set(1.12,1.12,1.12);
-                const hackRune=new THREE.Mesh(new THREE.BoxGeometry(.22,2.2,.02),new THREE.MeshBasicMaterial({map:hackPatternTexture,transparent:true}));
-                hackRune.position.z=.18; hackSwordGroup.add(hackRune);
-                const legendaryDetailMat=new THREE.MeshStandardMaterial({color:0xffd700,emissive:0x8a5a00,emissiveIntensity:.8,metalness:.95,roughness:.12});
-                const legendaryTip=new THREE.Mesh(new THREE.OctahedronGeometry(.13,0),legendaryDetailMat); legendaryTip.position.set(0,1.72,0);
-                const legendaryCenter=new THREE.Mesh(new THREE.BoxGeometry(.08,1.1,.09),legendaryDetailMat); legendaryCenter.position.set(0,.85,.06);
-                const legendaryGem=new THREE.Mesh(new THREE.OctahedronGeometry(.09,0),new THREE.MeshStandardMaterial({color:0xfff3a0,emissive:0xffd700,emissiveIntensity:2.5})); legendaryGem.position.set(0,.12,.1);
-                legendarySwordGroup.add(legendaryTip,legendaryCenter,legendaryGem);
+                const errorSwordGroup = new THREE.Group();
+                const errorTextCanvas = document.createElement('canvas');
+                errorTextCanvas.width = 512; errorTextCanvas.height = 180;
+                const errorTextCtx = errorTextCanvas.getContext('2d');
+                errorTextCtx.clearRect(0, 0, 512, 180);
+                errorTextCtx.font = '900 105px monospace';
+                errorTextCtx.textAlign = 'center';
+                errorTextCtx.textBaseline = 'middle';
+                errorTextCtx.fillStyle = '#ff1738';
+                errorTextCtx.shadowColor = '#ff1738';
+                errorTextCtx.shadowBlur = 22;
+                errorTextCtx.fillText('ERROR', 256, 90);
+                const errorTextTex = new THREE.CanvasTexture(errorTextCanvas);
+                const errorTextSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+                    map: errorTextTex,
+                    transparent: true,
+                    depthWrite: false
+                }));
+                errorTextSprite.scale.set(2.9, 1.05, 1);
+                errorTextSprite.position.y = 1.25;
+                const errorHandle = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.065, 0.065, 0.52, 12),
+                    new THREE.MeshStandardMaterial({ color: 0x080808, metalness: 0.6, roughness: 0.25 })
+                );
+                errorHandle.position.y = -0.2;
+                errorSwordGroup.add(errorTextSprite, errorHandle);
+                errorSwordGroup.scale.set(1.15, 1.15, 1.15);
 
                 swordGroup.add(
+                    commonSwordGroup,
+                    rareSwordGroup,
                     legendarySwordGroup,
                     godSwordGroup,
                     hackSwordGroup,
@@ -3597,39 +3830,20 @@
                 swordGroup.rotation.x =
                     Math.PI / 3;
 
+                commonSwordGroup.visible = false;
+                rareSwordGroup.visible = false;
                 godSwordGroup.visible = false;
                 hackSwordGroup.visible = false;
+                errorSwordGroup.visible = false;
 
                 window.updatePlayerSwordVisual =
                     function() {
-
-                        legendarySwordGroup.visible =
-                            equippedItemType === 'legendary' &&
-                            !hasGoDSword &&
-                            !hasHackSword &&
-                            !hasGlitchSword;
-
-                        godSwordGroup.visible =
-                            hasGoDSword &&
-                            !hasHackSword &&
-                            !hasGlitchSword;
-
-                        hackSwordGroup.visible =
-                            hasHackSword &&
-                            !hasGlitchSword;
-
-                        errorSwordGroup.visible =
-                            hasGlitchSword;
-
-                        if (
-                            !legendarySwordGroup.visible &&
-                            !godSwordGroup.visible &&
-                            !hackSwordGroup.visible
-                        ) {
-                            legendarySwordGroup.visible =
-                                equippedItemType !== null;
-                        }
-
+                        commonSwordGroup.visible = equippedItemType === 'common' && !hasGoDSword && !hasHackSword && !hasGlitchSword;
+                        rareSwordGroup.visible = equippedItemType === 'rare' && !hasGoDSword && !hasHackSword && !hasGlitchSword;
+                        legendarySwordGroup.visible = equippedItemType === 'legendary' && !hasGoDSword && !hasHackSword && !hasGlitchSword;
+                        godSwordGroup.visible = hasGoDSword && !hasHackSword && !hasGlitchSword;
+                        hackSwordGroup.visible = hasHackSword && !hasGlitchSword;
+                        errorSwordGroup.visible = hasGlitchSword;
                     };
 
                 playerGroup.add(
@@ -4699,7 +4913,6 @@
                             a = k < 0.35 ? -0.45 - (k / 0.35) * 1.9 : -2.35 + ((k - 0.35) / 0.65) * 2.6;
                         }
                         P.armR.shoulder.rotation.x = a;
-                        P.armR.shoulder.rotation.z = 0.08 + Math.sin(k * Math.PI * 2) * 0.62;
                         P.armR.elbow.rotation.x = -0.35;
                     } else {
                         P.armR.shoulder.rotation.x = swing * 0.8;
@@ -4885,7 +5098,7 @@
 
                     const moveAmt = Math.min(1, realisticSpeedSmooth / 3);
                     blockyWalkPhase += dt * (4 + Math.min(realisticSpeedSmooth, 14) * 0.9) * (moveAmt > 0.05 ? 1 : 0);
-                    if (blockyAttackT < 1) blockyAttackT = Math.min(1, blockyAttackT + dt * ATTACK_ANIMATION_SPEED);
+                    if (blockyAttackT < 1) blockyAttackT = Math.min(1, blockyAttackT + dt * 3.2);
 
                     animateBlocky(blockyP, blockyWalkPhase, moveAmt, t, {
                         holdSword: swordGroup.visible !== false &&
@@ -7065,9 +7278,11 @@
 
                     };
 
-                window.toggleLogin=function(){
-                    if(!isAuthenticated){isLoginOpen=true;document.getElementById('login-modal').style.display='block';return;}
-                    isLoginOpen=!isLoginOpen;
+                window.toggleLogin =
+                    function() {
+
+                        isLoginOpen =
+                            !isLoginOpen;
 
                         document.getElementById(
                             'login-modal'
@@ -8114,6 +8329,7 @@
 
                         if (!isAfk) {
                             playBeepSound();
+                            createSwordEnergyShot();
                         }
 
                         let itemBonusMultiplier =
@@ -10372,8 +10588,15 @@
                     cosmicDinoMonster.visible =
                         (gameStage === 10 && cosmicDinoActive && !cosmicDinoDefeated);
 
-                    universeFloor.visible =
-                        (gameStage === 7 || gameStage === 8 || gameStage === 9 || gameStage === 10);
+                    setExpandedWorld(gameStage);
+                    universeFloor.visible = false;
+                    if (gameStage === 11) {
+                        platformGroup.visible = false;
+                        hellWorld.visible = false;
+                        blackHoleWorld.visible = false;
+                        planetWorld.visible = false;
+                        forestWorld.visible = false;
+                    }
 
                     if (gameStage === 8) {
 
@@ -10403,9 +10626,9 @@
                             if (nowTime >= dinoNextMoveTime) {
 
                                 dinoMoveTarget.set(
-                                    -12 + Math.random() * 24,
+                                    -72 + Math.random() * 144,
                                     0,
-                                    -12 + Math.random() * 24
+                                    -72 + Math.random() * 144
                                 );
 
                                 dinoNextMoveTime =
@@ -10427,10 +10650,10 @@
                                 moveDirection.normalize();
 
                                 cosmicDinoMonster.position.x +=
-                                    moveDirection.x * 0.12;
+                                    moveDirection.x * 0.25;
 
                                 cosmicDinoMonster.position.z +=
-                                    moveDirection.z * 0.12;
+                                    moveDirection.z * 0.25;
 
                                 cosmicDinoMonster.rotation.y =
                                     Math.atan2(
@@ -10442,18 +10665,18 @@
 
                             cosmicDinoMonster.position.x =
                                 Math.max(
-                                    -13,
+                                    -80,
                                     Math.min(
-                                        13,
+                                        80,
                                         cosmicDinoMonster.position.x
                                     )
                                 );
 
                             cosmicDinoMonster.position.z =
                                 Math.max(
-                                    -13,
+                                    -80,
                                     Math.min(
-                                        13,
+                                        80,
                                         cosmicDinoMonster.position.z
                                     )
                                 );
@@ -10954,7 +11177,8 @@
                     return true;
                 }
 
-                function loginAccountCore(fromGate) {
+                window.loginAccount =
+                    function() {
 
                         if (currentAccountName) {
                             saveCurrentAccount();
@@ -10981,11 +11205,16 @@
                                 ? `${accountNameInput}/${accountPassInput}`
                                 : '');
 
-                        if (changeAccountPassword(raw)) {
-                            isGameLoading=false;
-                            const loadingEl=document.getElementById('game-loading');
-                            if(loadingEl)loadingEl.style.display='none';
-                            if(gameLoadingTimer)clearInterval(gameLoadingTimer);
+                        if (changeAccountPassword(raw))
+                            return;
+
+                        if (raw.trim() === 'vv/6726') {
+
+                            document.getElementById(
+                                'login-status'
+                            ).innerText =
+                                "can`t login";
+
                             return;
                         }
 
@@ -11005,10 +11234,6 @@
                                 ? "❌ SAI ĐỊNH DẠNG! DÙNG: tên/mã"
                                 : "❌ WRONG FORMAT! USE: name/code";
 
-                            isGameLoading=false;
-                            const loadingEl=document.getElementById('game-loading');
-                            if(loadingEl)loadingEl.style.display='none';
-                            if(gameLoadingTimer)clearInterval(gameLoadingTimer);
                             return;
                         }
 
@@ -11074,7 +11299,6 @@
                         currentAccountPass =
                             pass;
 
-
                         const savedPowerRecord =
                             loadPowerRecordByName(name);
 
@@ -11130,51 +11354,7 @@
                         document.getElementById(
                             'login-status'
                         ).innerText = '';
-
-                        finishGameLoading();
-                    }
-
-                function showGameLoading(){
-                    isGameLoading=true;
-                    const el=document.getElementById('game-loading');
-                    const bar=document.getElementById('game-loading-inner');
-                    const pct=document.getElementById('game-loading-percent');
-                    const txt=document.getElementById('game-loading-text');
-                    if(el)el.style.display='flex';
-                    if(bar)bar.style.width='12%';
-                    if(pct)pct.innerText='12%';
-                    if(txt)txt.innerText=currentLang==='vi'?'Đang tải dữ liệu tài khoản và chuẩn bị thế giới...':'Loading account data and preparing the world...';
-                    if(gameLoadingTimer)clearInterval(gameLoadingTimer);
-                    let progress=12;
-                    gameLoadingTimer=setInterval(()=>{
-                        if(!isGameLoading){clearInterval(gameLoadingTimer);gameLoadingTimer=null;return;}
-                        progress=Math.min(82,progress+Math.random()*8);
-                        if(bar)bar.style.width=progress.toFixed(0)+'%';
-                        if(pct)pct.innerText=progress.toFixed(0)+'%';
-                    },180);
-                }
-
-                function finishGameLoading(){
-                    const bar=document.getElementById('game-loading-inner');
-                    const pct=document.getElementById('game-loading-percent');
-                    if(bar)bar.style.width='100%';
-                    if(pct)pct.innerText='100%';
-                    requestAnimationFrame(()=>{
-                        requestAnimationFrame(()=>{
-                            isGameLoading=false;
-                            if(gameLoadingTimer)clearInterval(gameLoadingTimer);
-                            gameLoadingTimer=null;
-                            const el=document.getElementById('game-loading');
-                            if(el)el.style.display='none';
-                        });
-                    });
-                }
-
-                window.loginAccount=function(fromGate){
-                    if(isGameLoading)return;
-                    showGameLoading();
-                    setTimeout(()=>loginAccountCore(fromGate),60);
-                };
+                    };
 
                 window.changePasswordFromMenu =
                     function() {
@@ -11289,7 +11469,6 @@
                 setInterval(
                     () => {
 
-                        if(!isAuthenticated)return;
                         checkCosmicLevel1000();
                         saveCurrentAccount();
 
@@ -11462,26 +11641,6 @@
 
                     };
 
-                function getAFKCornerIndex(){
-                    const half=(gameStage===11&&errorMapExpanded)?ERROR_MAP_CHASE_SIZE*.5-8:16;
-                    const corners=[[-half,-half],[half,-half],[-half,half],[half,half]];
-                    for(let i=0;i<corners.length;i++){
-                        const dx=playerGroup.position.x-corners[i][0],dz=playerGroup.position.z-corners[i][1];
-                        if(Math.hypot(dx,dz)<=AFK_CORNER_RADIUS)return i;
-                    }
-                    return -1;
-                }
-                function updateAFKPower(t){
-                    if(!isAuthenticated)return;
-                    const idx=getAFKCornerIndex();
-                    if(idx<0){afkCornerActive=false;afkCornerIndex=-1;afkLastTick=t;return;}
-                    if(!afkCornerActive||afkCornerIndex!==idx){afkCornerActive=true;afkCornerIndex=idx;afkLastTick=t;showToast(currentLang==='vi'?'🟢 AFK ĐÃ KÍCH HOẠT Ở GÓC MAP!':'🟢 AFK ACTIVATED AT MAP CORNER!');}
-                    if(t-afkLastTick<AFK_POWER_TICK_MS)return;
-                    const ticks=Math.floor((t-afkLastTick)/AFK_POWER_TICK_MS); afkLastTick+=ticks*AFK_POWER_TICK_MS;
-                    for(let i=0;i<ticks;i++){performAttack(true);performAttack(true);}
-                    document.getElementById('val-power').innerText=formatPowerDisplay(); saveCurrentAccount();
-                }
-
                 /* =========================
                    GAME LOOP
                 ========================= */
@@ -11490,8 +11649,6 @@
                 let jumpVelocity = 0;
                 let wasJumping = false;
 
-                document.getElementById('login-modal').style.display='none';
-
                 function animate() {
 
                     updateErrorTitleReward();
@@ -11499,10 +11656,6 @@
                     requestAnimationFrame(
                         animate
                     );
-
-                    if (isGameLoading) {
-                        return;
-                    }
 
                     if (rainbowHaloGroup && rainbowHaloGroup.visible) {
                         rainbowHaloGroup.position.set(playerGroup.position.x, playerGroup.position.y + 3.2, playerGroup.position.z);
@@ -11537,7 +11690,6 @@
 
                     animateErrorBoss(performance.now());
                     updateRealism();
-                    updateAFKPower(performance.now());
 
                     if (
                         gameStage === 11 &&
@@ -11595,8 +11747,11 @@
                         wasJumping = false;
                     }
 
+                    const baseMoveSpeed = 0.12;
                     const speed =
-                        0.12;
+                        (gameStage === 7 || gameStage === 8 || gameStage === 9)
+                        ? baseMoveSpeed * 3
+                        : baseMoveSpeed;
 
                     let isMoving =
                         false;
@@ -11696,6 +11851,21 @@
                             playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -half, half);
                             playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -half, half);
                         }
+                    } else if (gameStage === 3) {
+                        playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -70, 70);
+                        playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -70, 70);
+                    } else if (gameStage === 5 || gameStage === 6) {
+                        playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -108, 108);
+                        playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -108, 108);
+                    } else if (gameStage === 7 || gameStage === 8 || gameStage === 9) {
+                        playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -93, 93);
+                        playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -93, 93);
+                    } else if (gameStage === 10) {
+                        playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -83, 83);
+                        playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -83, 83);
+                    } else if (gameStage === 1 || gameStage === 2 || gameStage === 4) {
+                        playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -17, 17);
+                        playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -17, 17);
                     }
 
                     if (isMoving && !wasJumping) {
