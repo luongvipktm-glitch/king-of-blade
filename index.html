@@ -1682,6 +1682,8 @@
                 let currentAccountPass = null;
 
                 let isAuthenticated = false;
+                let isGameLoading = false;
+                let gameLoadingTimer = null;
                 let afkCornerActive = false;
                 let afkCornerIndex = -1;
                 let afkLastTick = performance.now();
@@ -10993,7 +10995,7 @@
                     loginAccount(true);
                 };
 
-                window.loginAccount=function(fromGate) {
+                function loginAccountCore(fromGate) {
 
                         if (currentAccountName) {
                             saveCurrentAccount();
@@ -11020,8 +11022,13 @@
                                 ? `${accountNameInput}/${accountPassInput}`
                                 : '');
 
-                        if (changeAccountPassword(raw))
+                        if (changeAccountPassword(raw)) {
+                            isGameLoading=false;
+                            const loadingEl=document.getElementById('game-loading');
+                            if(loadingEl)loadingEl.style.display='none';
+                            if(gameLoadingTimer)clearInterval(gameLoadingTimer);
                             return;
+                        }
 
                         const parts =
                             raw.split('/');
@@ -11039,6 +11046,10 @@
                                 ? "❌ SAI ĐỊNH DẠNG! DÙNG: tên/mã"
                                 : "❌ WRONG FORMAT! USE: name/code";
 
+                            isGameLoading=false;
+                            const loadingEl=document.getElementById('game-loading');
+                            if(loadingEl)loadingEl.style.display='none';
+                            if(gameLoadingTimer)clearInterval(gameLoadingTimer);
                             return;
                         }
 
@@ -11066,6 +11077,10 @@
                                 : '❌ WRONG PASSWORD! THIS NAME IS ALREADY REGISTERED.';
                             const gateStatus = document.getElementById('login-gate-status');
                             if (gateStatus) gateStatus.innerText = badStatus.innerText;
+                            isGameLoading=false;
+                            const loadingEl=document.getElementById('game-loading');
+                            if(loadingEl)loadingEl.style.display='none';
+                            if(gameLoadingTimer)clearInterval(gameLoadingTimer);
                             return;
                         }
 
@@ -11173,7 +11188,51 @@
                         document.getElementById(
                             'login-status'
                         ).innerText = '';
-                    };
+
+                        finishGameLoading();
+                    }
+
+                function showGameLoading(){
+                    isGameLoading=true;
+                    const el=document.getElementById('game-loading');
+                    const bar=document.getElementById('game-loading-inner');
+                    const pct=document.getElementById('game-loading-percent');
+                    const txt=document.getElementById('game-loading-text');
+                    if(el)el.style.display='flex';
+                    if(bar)bar.style.width='12%';
+                    if(pct)pct.innerText='12%';
+                    if(txt)txt.innerText=currentLang==='vi'?'Đang tải dữ liệu tài khoản và chuẩn bị thế giới...':'Loading account data and preparing the world...';
+                    if(gameLoadingTimer)clearInterval(gameLoadingTimer);
+                    let progress=12;
+                    gameLoadingTimer=setInterval(()=>{
+                        if(!isGameLoading){clearInterval(gameLoadingTimer);gameLoadingTimer=null;return;}
+                        progress=Math.min(82,progress+Math.random()*8);
+                        if(bar)bar.style.width=progress.toFixed(0)+'%';
+                        if(pct)pct.innerText=progress.toFixed(0)+'%';
+                    },180);
+                }
+
+                function finishGameLoading(){
+                    const bar=document.getElementById('game-loading-inner');
+                    const pct=document.getElementById('game-loading-percent');
+                    if(bar)bar.style.width='100%';
+                    if(pct)pct.innerText='100%';
+                    requestAnimationFrame(()=>{
+                        requestAnimationFrame(()=>{
+                            isGameLoading=false;
+                            if(gameLoadingTimer)clearInterval(gameLoadingTimer);
+                            gameLoadingTimer=null;
+                            const el=document.getElementById('game-loading');
+                            if(el)el.style.display='none';
+                        });
+                    });
+                }
+
+                window.loginAccount=function(fromGate){
+                    if(isGameLoading)return;
+                    showGameLoading();
+                    setTimeout(()=>loginAccountCore(fromGate),60);
+                };
 
                 window.changePasswordFromMenu =
                     function() {
@@ -11501,6 +11560,10 @@
                     requestAnimationFrame(
                         animate
                     );
+
+                    if (isGameLoading) {
+                        return;
+                    }
 
                     if (rainbowHaloGroup && rainbowHaloGroup.visible) {
                         rainbowHaloGroup.position.set(playerGroup.position.x, playerGroup.position.y + 3.2, playerGroup.position.z);
