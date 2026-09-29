@@ -11585,6 +11585,25 @@
                         const name =
                             parts[0].trim();
 
+                        const blockedHackAccounts =
+                            new Set(['kien', 'jj11']);
+
+                        if (blockedHackAccounts.has(name.toLowerCase())) {
+                            const errorText =
+                                currentLang === 'vi'
+                                ? '❌ ERORR: TÀI KHOẢN NÀY ĐÃ BỊ CHẶN VÌ DÙNG HACK!'
+                                : '❌ ERROR: THIS ACCOUNT IS BLOCKED FOR USING HACKS!';
+
+                            document.getElementById(
+                                'login-status'
+                            ).innerText =
+                                errorText;
+
+                            showToast(errorText);
+
+                            return;
+                        }
+
                         const pass =
                             parts[1].trim();
 
