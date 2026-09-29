@@ -495,6 +495,36 @@
                 font-size: 60px;
             }
         }
+        #hack-screen {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100000;
+            background: #000;
+            color: #fff;
+            font-family: monospace;
+            font-size: clamp(26px, 5vw, 76px);
+            font-weight: 900;
+            text-align: center;
+            text-shadow: 4px 0 #00ffff, -4px 0 #ff0033;
+            pointer-events: none;
+        }
+
+        #hack-screen.hack-shake {
+            display: flex;
+            animation: hackShake 0.16s steps(2, end) 2;
+        }
+
+        @keyframes hackShake {
+            0% { transform: translate(0,0); filter: none; }
+            25% { transform: translate(-14px, 4px); filter: contrast(2); }
+            50% { transform: translate(13px, -5px); filter: hue-rotate(90deg); }
+            75% { transform: translate(-9px, 3px); filter: contrast(2); }
+            100% { transform: translate(0,0); filter: none; }
+        }
+
     @keyframes errorGlitch {
                 0% { transform:translate(0,0); filter:contrast(1); }
                 25% { transform:translate(-8px,2px); filter:contrast(2); }
@@ -522,6 +552,10 @@
     <div id="toast"></div>
 
     <div id="dmg-popup"></div>
+
+    <div id="hack-screen">
+        HACK YOUR COMPUTER FINALLY
+    </div>
 
     <div
         id="gate-msg"
@@ -558,6 +592,16 @@
         style="border-color:#00ff66;color:#ffffff;box-shadow:0 0 18px rgba(0,255,102,0.8);"
     >
         ⚛️ BOSS HẠT NGUYÊN TỬ ĐÃ MỞ KHÓA! NHẤN [H] ĐỂ ĐỐI ĐẦU!
+    </div>
+
+    <div
+        id="electron-world-msg"
+        class="lang-txt"
+        data-vi="⚡ THẾ GIỚI ELECTRON ĐÃ MỞ KHÓA! NHẤN [D] ĐỂ VÀO!"
+        data-en="⚡ ELECTRON WORLD UNLOCKED! PRESS [D] TO ENTER!"
+        style="border-color:#008cff;color:#ffffff;box-shadow:0 0 18px rgba(0,140,255,0.8);display:none;"
+    >
+        ⚡ THẾ GIỚI ELECTRON ĐÃ MỞ KHÓA! NHẤN [D] ĐỂ VÀO!
     </div>
 
     <div
@@ -1719,6 +1763,24 @@
                 let errorGlitchNextAttackTime = 0;
                 let errorGlitchDamageApplied = false;
                 let waitingForNewBoss = false;
+                let electronWorldUnlocked = false;
+                let electronBossActive = false;
+                let electronBossDefeated = false;
+                let electronBossHits = 0;
+                let electronBossOrbitAngle = 0;
+                let electronBlackHoles = [];
+                let electronStars = [];
+                let electronWorld = null;
+                let electronBossMonster = null;
+                let electronHomeY = 2.5;
+                const ELECTRON_BOSS_EHP = 10.5;
+                const ELECTRON_PULL_DAMAGE = 500000000;
+                const ELECTRON_PULL_INTERVAL = 900;
+                let electronNextPullTime = 0;
+                let electronLastRegenTime = 0;
+                let electronPullUntil = 0;
+                let electronPullHole = null;
+                let electronHackUnlocked = false;
                 let rainbowHaloGroup = null;
                 let glitchCodeFloor = null;
 
@@ -1983,6 +2045,9 @@
                 const PLAYER_BASE_HP = 1000000;
 
                 function getPlayerMaxHP() {
+
+                    if (gameStage === 12)
+                        return 1500000000;
 
                     if (
                         (hasGoDSword || hasHackSword) &&
@@ -2978,12 +3043,117 @@
                 }
                 expandedWorlds.add(forestWorld);
 
+                 /* =========================
+                    ELECTRON WORLD
+                 ========================= */
+                 electronWorld = new THREE.Group();
+
+                 const electronSky = new THREE.Mesh(
+                     new THREE.SphereGeometry(420, 32, 16),
+                     new THREE.MeshBasicMaterial({
+                         color: 0x02030a,
+                         side: THREE.BackSide
+                     })
+                 );
+                 electronWorld.add(electronSky);
+
+                 const electronStarMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                 for (let i = 0; i < 110; i++) {
+                     const star = new THREE.Mesh(
+                         new THREE.SphereGeometry(0.035 + Math.random() * 0.09, 5, 5),
+                         electronStarMat
+                     );
+                     star.position.set(
+                         (Math.random() - 0.5) * 360,
+                         8 + Math.random() * 160,
+                         (Math.random() - 0.5) * 360
+                     );
+                     star.userData.orbitSpeed = 0.00015 + Math.random() * 0.00045;
+                     star.userData.orbitRadius = Math.hypot(star.position.x, star.position.z);
+                     star.userData.orbitAngle = Math.atan2(star.position.z, star.position.x);
+                     electronStars.push(star);
+                     electronWorld.add(star);
+                 }
+
+                 for (let i = 0; i < 6; i++) {
+                     const hole = new THREE.Group();
+                     const core = new THREE.Mesh(
+                         new THREE.SphereGeometry(1.4 + Math.random() * 1.3, 20, 14),
+                         new THREE.MeshBasicMaterial({ color: 0x000000 })
+                     );
+                     const ring = new THREE.Mesh(
+                         new THREE.TorusGeometry(2.4 + Math.random() * 1.6, 0.16, 8, 32),
+                         new THREE.MeshBasicMaterial({
+                             color: i % 2 ? 0x6b42ff : 0x168cff,
+                             transparent: true,
+                             opacity: 0.72
+                         })
+                     );
+                     ring.rotation.x = Math.PI / 2;
+                     hole.add(core, ring);
+                     hole.position.set(
+                         (Math.random() - 0.5) * 250,
+                         0.6,
+                         (Math.random() - 0.5) * 250
+                     );
+                     hole.userData.pullRadius = 5.5;
+                     hole.userData.phase = Math.random() * Math.PI * 2;
+                     electronBlackHoles.push(hole);
+                     electronWorld.add(hole);
+                 }
+
+                 const electronOrbit = new THREE.Group();
+                 const electronMat = new THREE.MeshStandardMaterial({
+                     color: 0x168cff,
+                     emissive: 0x003d99,
+                     emissiveIntensity: 1.7,
+                     metalness: 0.25,
+                     roughness: 0.28
+                 });
+                 const electronBody = new THREE.Mesh(
+                     new THREE.SphereGeometry(2.5, 28, 20),
+                     electronMat
+                 );
+                 electronOrbit.add(electronBody);
+
+                 const electronRing1 = new THREE.Mesh(
+                     new THREE.TorusGeometry(3.4, 0.08, 10, 64),
+                     new THREE.MeshBasicMaterial({
+                         color: 0x42b8ff,
+                         transparent: true,
+                         opacity: 0.8
+                     })
+                 );
+                 electronRing1.rotation.x = Math.PI / 2.5;
+                 electronOrbit.add(electronRing1);
+
+                 const electronRing2 = electronRing1.clone();
+                 electronRing2.rotation.x = -Math.PI / 2.5;
+                 electronRing2.rotation.z = Math.PI / 2;
+                 electronOrbit.add(electronRing2);
+
+                 electronBossMonster = electronOrbit;
+                 electronBossMonster.position.set(0, electronHomeY, -14);
+                 electronBossMonster.visible = false;
+                 electronWorld.add(electronBossMonster);
+
+                 const electronSun = new THREE.Mesh(
+                     new THREE.SphereGeometry(3.8, 20, 16),
+                     new THREE.MeshBasicMaterial({ color: 0x243cff })
+                 );
+                 electronSun.position.set(0, 1.5, 0);
+                 electronWorld.add(electronSun);
+
+                 electronWorld.visible = false;
+                 expandedWorlds.add(electronWorld);
+
                 function setExpandedWorld(stage) {
                     hellWorld.visible = stage === 3;
                     blackHoleWorld.visible = stage === 5 || stage === 6;
                     planetWorld.visible = stage === 7 || stage === 8 || stage === 9;
                     forestWorld.visible = stage === 10;
-                    if (stage === 3 || stage === 5 || stage === 6 || stage === 7 || stage === 8 || stage === 9 || stage === 10) {
+                    if (electronWorld) electronWorld.visible = stage === 12;
+                    if (stage === 3 || stage === 5 || stage === 6 || stage === 7 || stage === 8 || stage === 9 || stage === 10 || stage === 12) {
                         platformGroup.visible = false;
                         universeFloor.visible = false;
                     } else if (stage === 11) {
@@ -7738,6 +7908,10 @@
 
                             openCosmicDinoBossByCommand();
 
+                        } else if (command === '//hack' && errorGlitchWorldWon) {
+
+                            triggerElectronHack();
+
                         } else {
 
                             showToast(
@@ -7852,6 +8026,16 @@
 
                             toggleLogin();
 
+                        }
+
+                        if (
+                            k === 'd' &&
+                            electronWorldUnlocked &&
+                            !electronBossActive &&
+                            !electronBossDefeated &&
+                            !isGameEnded
+                        ) {
+                            enterElectronWorld();
                         }
 
                         if (k === 'd') {
@@ -9571,6 +9755,11 @@
                         )
                             return;
 
+                        if (gameStage === 12 && electronBossActive && !electronBossDefeated) {
+                            hitElectronBoss();
+                            return;
+                        }
+
                         if (gameStage === 11 && errorGlitchWorldActive && errorGlitchPhase) {
                             if (errorGlitchFinalActive) {
                                 errorGlitchFinalClicks++;
@@ -10111,6 +10300,12 @@
                         errorPowerExponent: errorPowerExponent,
                         errorDamageExponent: errorDamageExponent,
 
+                        electronWorldUnlocked: electronWorldUnlocked,
+                        electronBossActive: electronBossActive,
+                        electronBossDefeated: electronBossDefeated,
+                        electronBossHits: electronBossHits,
+                        electronHackUnlocked: electronHackUnlocked,
+
                         playerHP: playerHP,
 
                         playerMaxHP: playerMaxHP,
@@ -10213,6 +10408,12 @@
                     errorGlitchFinalClicks = Math.max(0, Math.min(ERROR_GLITCH_FINAL_CLICKS, Number(data.errorGlitchFinalClicks) || 0));
                     errorGlitchFinalActive = !!data.errorGlitchFinalActive;
                     waitingForNewBoss = !!data.waitingForNewBoss;
+
+                    electronWorldUnlocked = !!data.electronWorldUnlocked;
+                    electronBossActive = !!data.electronBossActive;
+                    electronBossDefeated = !!data.electronBossDefeated;
+                    electronBossHits = Math.max(0, Math.min(ELECTRON_BOSS_EHP, Number(data.electronBossHits) || 0));
+                    electronHackUnlocked = !!data.electronHackUnlocked;
 
                     if (hasHackSword)
                         hasGoDSword = godSwordCount > 0;
@@ -10588,9 +10789,14 @@
                     cosmicDinoMonster.visible =
                         (gameStage === 10 && cosmicDinoActive && !cosmicDinoDefeated);
 
+                    if (electronBossMonster) {
+                        electronBossMonster.visible =
+                            (gameStage === 12 && electronBossActive && !electronBossDefeated);
+                    }
+
                     setExpandedWorld(gameStage);
                     universeFloor.visible = false;
-                    if (gameStage === 11) {
+                    if (gameStage === 11 || gameStage === 12) {
                         platformGroup.visible = false;
                         hellWorld.visible = false;
                         blackHoleWorld.visible = false;
@@ -10710,7 +10916,7 @@
                     document.getElementById(
                         'boss-hp-bar'
                     ).style.display =
-                        (gameStage === 3 || gameStage === 5 || gameStage === 6 || (gameStage === 7 && !universeBossDefeated) || (gameStage === 8 && !cosmicBossDefeated) || (gameStage === 9 && atomicBossActive && !atomicBossDefeated))
+                        (gameStage === 3 || gameStage === 5 || gameStage === 6 || (gameStage === 7 && !universeBossDefeated) || (gameStage === 8 && !cosmicBossDefeated) || (gameStage === 9 && atomicBossActive && !atomicBossDefeated) || (gameStage === 12 && electronBossActive && !electronBossDefeated))
                         ? 'block'
                         : 'none';
 
@@ -10762,6 +10968,29 @@
                             'boss-hp-text'
                         ).innerText =
                             `${formatNum(cosmicBossHP)} / ${formatNum(COSMIC_BOSS_MAX_HP)}`;
+
+                    } else if (gameStage === 12) {
+
+                        document.getElementById(
+                            'boss-title'
+                        ).innerText =
+                            currentLang === 'vi'
+                            ? '⚡ BOSS ELECTRON (10e MÁU) • POWER 10e1885.245'
+                            : '⚡ ELECTRON BOSS (10e HP) • POWER 10e1885.245';
+
+                        const electronRemaining =
+                            Math.max(0, ELECTRON_BOSS_EHP - electronBossHits);
+                        const electronHpPercent =
+                            Math.max(0, (electronRemaining / ELECTRON_BOSS_EHP) * 100);
+
+                        document.getElementById('boss-hp-inner').style.width =
+                            electronHpPercent + '%';
+
+                        document.getElementById('boss-hp-text').innerText =
+                            `${electronRemaining.toFixed(1)}e / ${ELECTRON_BOSS_EHP}e`;
+
+                        document.getElementById('boss-hp-percent').innerText =
+                            `Đã tiêu diệt: ${((electronBossHits / ELECTRON_BOSS_EHP) * 100).toFixed(1)}% • ${electronBossHits.toFixed(1)}/10.5 click-equivalent`;
 
                     } else if (gameStage === 11) {
 
@@ -11510,8 +11739,144 @@
                     saveCurrentAccount();
                 }
 
+                function triggerElectronHack() {
+                    if (!errorGlitchWorldWon || electronWorldUnlocked) return;
+
+                    electronHackUnlocked = true;
+                    electronWorldUnlocked = true;
+                    waitingForNewBoss = true;
+
+                    const screen = document.getElementById('hack-screen');
+                    if (!screen) return;
+
+                    screen.classList.remove('hack-shake');
+                    void screen.offsetWidth;
+                    screen.classList.add('hack-shake');
+
+                    showToast(
+                        currentLang === 'vi'
+                        ? '⚡ //HACK ĐÃ ĐƯỢC XÁC NHẬN!'
+                        : '⚡ //HACK ACCEPTED!'
+                    );
+
+                    setTimeout(() => {
+                        screen.classList.remove('hack-shake');
+
+                        const msg = document.getElementById('electron-world-msg');
+                        if (msg) msg.style.display = 'block';
+
+                        const cmd = document.getElementById('boss-command');
+                        if (cmd) {
+                            cmd.style.display = 'block';
+                            const input = document.getElementById('boss-command-input');
+                            if (input) input.placeholder = 'Nhập //boss hoặc //hack rồi Enter';
+                        }
+
+                        showToast(
+                            currentLang === 'vi'
+                            ? '🌌 MÀN HÌNH ĐÃ TRỞ LẠI! THẾ GIỚI ELECTRON ĐÃ MỞ — NHẤN D!'
+                            : '🌌 SCREEN RESTORED! ELECTRON WORLD UNLOCKED — PRESS D!'
+                        );
+
+                        saveCurrentAccount();
+                    }, 650);
+                }
+
+                function enterElectronWorld() {
+                    if (!electronWorldUnlocked || electronBossDefeated) return;
+
+                    document.getElementById('electron-world-msg').style.display = 'none';
+                    document.getElementById('victory-screen').style.display = 'none';
+                    document.getElementById('boss-command').style.display = 'none';
+
+                    gameStage = 12;
+                    waitingForNewBoss = false;
+                    electronBossActive = true;
+                    electronBossDefeated = false;
+                    electronBossHits = 0;
+                    electronNextPullTime = performance.now() + 1200;
+                    electronLastRegenTime = performance.now();
+
+                    setExpandedWorld(12);
+
+                    electronBossMonster.visible = true;
+                    electronBossMonster.position.set(14, electronHomeY, 0);
+                    electronBossOrbitAngle = 0;
+
+                    playerGroup.position.set(0, 0, 24);
+                    refreshPlayerMaxHP();
+                    playerHP = playerMaxHP;
+                    updatePlayerHPUI();
+
+                    document.getElementById('boss-hp-bar').style.display = 'block';
+                    document.getElementById('boss-title').innerText =
+                        '⚡ BOSS ELECTRON — 10e MÁU';
+                    document.getElementById('boss-hp-inner').style.width = '100%';
+                    document.getElementById('boss-hp-text').innerText =
+                        '10e HP = 10 × 10^googolplexian = 10 × 101010010^(10^100)';
+                    document.getElementById('boss-hp-percent').innerText =
+                        'Đã tiêu diệt: 0% • 10.5 click-equivalent';
+
+                    showToast(
+                        currentLang === 'vi'
+                        ? '⚡ ELECTRON ĐÃ XUẤT HIỆN! XANH, QUAY QUANH TÂM VŨ TRỤ — KHÔNG GIỚI HẠN BIÊN!'
+                        : '⚡ ELECTRON HAS APPEARED! BLUE, ORBITING THE COSMIC CORE — NO WORLD BORDER!'
+                    );
+
+                    saveCurrentAccount();
+                }
+
+                function hitElectronBoss() {
+                    if (gameStage !== 12 || !electronBossActive || electronBossDefeated)
+                        return;
+
+                    const nextHit = Math.min(
+                        ELECTRON_BOSS_EHP,
+                        electronBossHits < 10 ? electronBossHits + 1 : electronBossHits + 0.5
+                    );
+
+                    electronBossHits = nextHit;
+
+                    const remaining = Math.max(0, ELECTRON_BOSS_EHP - electronBossHits);
+                    const percent = Math.min(100, (electronBossHits / ELECTRON_BOSS_EHP) * 100);
+
+                    document.getElementById('boss-hp-inner').style.width =
+                        Math.max(0, 100 - percent) + '%';
+
+                    document.getElementById('boss-hp-text').innerText =
+                        remaining > 0
+                        ? `${remaining.toFixed(1)}e HP`
+                        : '0e HP';
+
+                    document.getElementById('boss-hp-percent').innerText =
+                        `Đã tiêu diệt: ${percent.toFixed(1)}% • ${electronBossHits.toFixed(1)}/10.5 click-equivalent`;
+
+                    showDmgPopup(
+                        electronBossHits >= 10
+                        ? '0.5e'
+                        : '1e'
+                    );
+
+                    if (electronBossHits >= ELECTRON_BOSS_EHP) {
+                        electronBossDefeated = true;
+                        electronBossActive = false;
+                        electronBossMonster.visible = false;
+                        document.getElementById('boss-hp-bar').style.display = 'none';
+                        document.getElementById('electron-world-msg').style.display = 'none';
+
+                        showToast(
+                            currentLang === 'vi'
+                            ? '⚡ ELECTRON ĐÃ BỊ TIÊU DIỆT! 10.5 CLICK-EQUIVALENT HOÀN TẤT!'
+                            : '⚡ ELECTRON DEFEATED! 10.5 CLICK-EQUIVALENT COMPLETED!'
+                        );
+
+                        saveCurrentAccount();
+                    }
+                }
+
                 function winErrorGlitchBoss() {
                     if (errorGlitchWorldWon) return;
+
                     errorGlitchWorldWon = true;
                     errorGlitchFinalActive = false;
                     errorBossActive = false;
@@ -11520,21 +11885,39 @@
                     hasErrorTitle = true;
                     errorBossMonster.visible = false;
                     errorFloor.visible = false;
+                    electronWorldUnlocked = false;
+                    electronHackUnlocked = false;
+                    waitingForNewBoss = true;
+                    if (glitchCodeFloor) glitchCodeFloor.visible = true;
+                    setErrorMapExpanded(false);
+                    playerGroup.position.set(0, 0, 0);
+
                     document.getElementById('boss-hp-bar').style.display = 'none';
+
                     if (rainbowHaloGroup) {
                         rainbowHaloGroup.visible = true;
                         rainbowHaloGroup.position.copy(playerGroup.position);
                         rainbowHaloGroup.position.y = 3.2;
                     }
-                    document.getElementById('win-title').innerText = '🌈 HALO CẦU VỒNG';
-                    document.getElementById('win-desc').innerText = currentLang === 'vi'
-                        ? '✨ BẠN ĐÃ KẾT LIỄU BOSS ERROR! HALO CẦU VỒNG ĐÃ XUẤT HIỆN. BẠN CÓ MUỐN CHỜ BOSS MỚI KHÔNG?'
-                        : '✨ YOU FINISHED THE ERROR BOSS! THE RAINBOW HALO HAS APPEARED. DO YOU WANT TO WAIT FOR A NEW BOSS?';
-                    const btn = document.getElementById('play-again-btn');
-                    btn.innerText = currentLang === 'vi' ? 'OK — CHỜ BOSS MỚI' : 'OK — WAIT FOR NEW BOSS';
-                    btn.onclick = startCodeWaitingWorld;
-                    document.getElementById('victory-screen').style.display = 'flex';
-                    showToast(currentLang === 'vi' ? '🌈 BOSS ERROR ĐÃ BỊ KẾT LIỄU!' : '🌈 ERROR BOSS DEFEATED!');
+
+                    document.getElementById('victory-screen').style.display = 'none';
+
+                    const cmd = document.getElementById('boss-command');
+                    if (cmd) {
+                        cmd.style.display = 'block';
+                        const input = document.getElementById('boss-command-input');
+                        if (input) {
+                            input.placeholder = 'Sau Glich: nhập //hack rồi Enter';
+                            input.value = '';
+                        }
+                    }
+
+                    showToast(
+                        currentLang === 'vi'
+                        ? '🌈 GLICH ĐÃ BỊ TIÊU DIỆT! NHẬP //HACK ĐỂ TIẾP TỤC...'
+                        : '🌈 GLICH DEFEATED! ENTER //HACK TO CONTINUE...'
+                    );
+
                     saveCurrentAccount();
                 }
 
@@ -11591,6 +11974,13 @@
                         errorGlitchFinalActive = false;
                         errorGlitchFinalStart = 0;
                         errorGlitchWorldActive = false;
+                        electronWorldUnlocked = false;
+                        electronBossActive = false;
+                        electronBossDefeated = false;
+                        electronBossHits = 0;
+                        electronHackUnlocked = false;
+                        electronPullUntil = 0;
+                        electronPullHole = null;
                         errorGlitchWorldWon = false;
                         waitingForNewBoss = false;
                         errorMapExpanded = false;
@@ -11689,6 +12079,116 @@
                     }
 
                     animateErrorBoss(performance.now());
+
+                    if (gameStage === 12 && electronWorld) {
+                        const nowElectron = performance.now();
+
+                        electronBossOrbitAngle += 0.006;
+
+                        if (electronBossMonster && electronBossActive) {
+                            const orbitRadius = 14;
+                            electronBossMonster.position.x = Math.cos(electronBossOrbitAngle) * orbitRadius;
+                            electronBossMonster.position.z = Math.sin(electronBossOrbitAngle) * orbitRadius;
+                            electronBossMonster.position.y =
+                                electronHomeY + Math.sin(nowElectron * 0.0018) * 0.8;
+                            electronBossMonster.rotation.y += 0.012;
+                            electronBossMonster.rotation.x =
+                                Math.sin(nowElectron * 0.0012) * 0.18;
+                        }
+
+                        electronStars.forEach(star => {
+                            star.userData.orbitAngle += star.userData.orbitSpeed;
+                            const r = star.userData.orbitRadius;
+                            star.position.x = Math.cos(star.userData.orbitAngle) * r;
+                            star.position.z = Math.sin(star.userData.orbitAngle) * r;
+                            star.rotation.y += 0.01;
+                        });
+
+                        electronBlackHoles.forEach((hole, index) => {
+                            hole.rotation.y += 0.003 + index * 0.0004;
+                            const pulse = 1 + Math.sin(nowElectron * 0.003 + hole.userData.phase) * 0.08;
+                            hole.scale.setScalar(pulse);
+                        });
+
+                        if (
+                            electronBossActive &&
+                            nowElectron >= electronNextPullTime
+                        ) {
+                            electronNextPullTime = nowElectron + ELECTRON_PULL_INTERVAL;
+
+                            for (const hole of electronBlackHoles) {
+                                const dx = hole.position.x - playerGroup.position.x;
+                                const dz = hole.position.z - playerGroup.position.z;
+                                const dist = Math.hypot(dx, dz);
+
+                                if (dist <= 12 && Math.random() < 0.01) {
+                                    electronPullHole = hole;
+                                    electronPullUntil = nowElectron + 420;
+
+                                    playerGroup.position.x += dx * 0.18;
+                                    playerGroup.position.z += dz * 0.18;
+                                    playerGroup.position.y = 1.2;
+
+                                    playerHP = Math.max(
+                                        0,
+                                        playerHP - ELECTRON_PULL_DAMAGE
+                                    );
+                                    lastDamageTakenTime = nowElectron;
+                                    updatePlayerHPUI();
+
+                                    showDmgPopup('-500m HP');
+
+                                    if (playerHP <= 0) {
+                                        playerHP = playerMaxHP;
+                                        power = Math.max(1, power * 0.9);
+                                        document.getElementById('val-power').innerText = formatNum(power);
+                                        showToast(
+                                            currentLang === 'vi'
+                                            ? '🕳️ HỐ ĐEN HÚT BẠN! -500m HP — MÁU ĐÃ HỒI ĐẦY!'
+                                            : '🕳️ BLACK HOLE PULLED YOU! -500m HP — HP RESTORED!'
+                                        );
+                                        saveCurrentAccount();
+                                    } else {
+                                        showToast(
+                                            currentLang === 'vi'
+                                            ? '🕳️ HỐ ĐEN HÚT LÊN! -500m HP'
+                                            : '🕳️ BLACK HOLE PULL! -500m HP'
+                                        );
+                                    }
+
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (electronPullUntil > nowElectron && electronPullHole) {
+                            const dx = electronPullHole.position.x - playerGroup.position.x;
+                            const dz = electronPullHole.position.z - playerGroup.position.z;
+                            const d = Math.max(0.001, Math.hypot(dx, dz));
+
+                            playerGroup.position.x += (dx / d) * 0.055;
+                            playerGroup.position.z += (dz / d) * 0.055;
+                            playerGroup.position.y =
+                                0.9 + Math.sin((nowElectron - electronPullUntil) * 0.02) * 0.45;
+                        } else if (electronPullUntil !== 0 && !wasJumping) {
+                            playerGroup.position.y = 0;
+                            electronPullHole = null;
+                        }
+
+                        if (
+                            playerHP < playerMaxHP &&
+                            nowElectron - electronLastRegenTime >= 1000 &&
+                            nowElectron - lastDamageTakenTime > 1200
+                        ) {
+                            electronLastRegenTime = nowElectron;
+                            playerHP = Math.min(
+                                playerMaxHP,
+                                playerHP + playerMaxHP * 0.02
+                            );
+                            updatePlayerHPUI();
+                        }
+                    }
+
                     updateRealism();
 
                     if (
@@ -12827,4 +13327,6 @@
     </script>
 
 </body>
-</html>
+</html
+                        if (electronBossMonster) electronBossMonster.visible = false;
+                         document.getElementById('electron-world-msg').style.display = 'none';>
