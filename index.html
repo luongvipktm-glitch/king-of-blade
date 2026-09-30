@@ -8648,36 +8648,26 @@
                             createSwordEnergyShot();
                         }
 
-                        let itemBonusMultiplier =
-                            1;
+                        let itemBonusMultiplier = 1;
 
-                        if (
-                            equippedItemType
-                        ) {
-
-                            const lvl =
-                                itemLevels[
-                                    equippedItemType
-                                ];
-
-                            if (
-                                equippedItemType ===
-                                'legendary'
-                            ) {
-
-                                itemBonusMultiplier =
-                                    1 +
-                                    (lvl * 2.0);
-
-                            } else {
-
-                                itemBonusMultiplier =
-                                    1 +
-                                    ((lvl - 1) *
-                                    0.25);
-
-                            }
-
+                        if (equippedItemType === 'common') {
+                            const lvl = Math.max(1, Number(itemLevels.common) || 1);
+                            itemBonusMultiplier = 1.7 * (1 + ((lvl - 1) * 0.25));
+                        } else if (equippedItemType === 'rare') {
+                            const lvl = Math.max(1, Number(itemLevels.rare) || 1);
+                            itemBonusMultiplier = 2 * (1 + ((lvl - 1) * 0.25));
+                        } else if (equippedItemType === 'epic') {
+                            const lvl = Math.max(1, Number(itemLevels.epic) || 1);
+                            itemBonusMultiplier = 2.5 * (1 + ((lvl - 1) * 0.25));
+                        } else if (equippedItemType === 'legendary') {
+                            const lvl = Math.max(1, Number(itemLevels.legendary) || 1);
+                            itemBonusMultiplier = 3 * (1 + ((lvl - 1) * 0.25));
+                        } else if (hasGoDSword) {
+                            itemBonusMultiplier = GOD_SWORD_DMG_MULTIPLIER;
+                        } else if (hasHackSword) {
+                            itemBonusMultiplier = HACK_SWORD_DMG_MULTIPLIER;
+                        } else if (hasGlitchSword) {
+                            itemBonusMultiplier = GLITCH_SWORD_DMG_MULTIPLIER;
                         }
 
                         let savedPowerForDamage = power;
@@ -8688,7 +8678,6 @@
                         }
                         if (!Number.isFinite(savedPowerForDamage)) savedPowerForDamage = Number.MAX_VALUE;
 
-                        const swordDamage = Math.max(1, Number(swordDmgs[swordLevel]) || 1);
                         const safeDamageMultiply = (a, b) => {
                             if (!Number.isFinite(a) || !Number.isFinite(b)) return Number.MAX_VALUE;
                             if (a <= 0 || b <= 0) return 1;
@@ -8699,9 +8688,8 @@
                         let totalDmg =
                             safeDamageMultiply(
                                 savedPowerForDamage,
-                                swordDamage
-                            ) *
-                            itemBonusMultiplier;
+                                itemBonusMultiplier
+                            );
 
                         if (!Number.isFinite(totalDmg) || totalDmg > Number.MAX_VALUE)
                             totalDmg = Number.MAX_VALUE;
@@ -8710,38 +8698,6 @@
 
                         if (!isAfk && gameStage !== 11 && gameStage !== 12) {
                             applyWorldClickPowerGain();
-                        }
-
-                        if (
-                            hasGlitchSword
-                        ) {
-
-                            totalDmg =
-                                Math.floor(
-                                    totalDmg *
-                                    GLITCH_SWORD_DMG_MULTIPLIER
-                                );
-
-                        } else if (
-                            hasHackSword
-                        ) {
-
-                            totalDmg =
-                                Math.floor(
-                                    totalDmg *
-                                    HACK_SWORD_DMG_MULTIPLIER
-                                );
-
-                        } else if (
-                            hasGoDSword
-                        ) {
-
-                            totalDmg =
-                                Math.floor(
-                                    totalDmg *
-                                    GOD_SWORD_DMG_MULTIPLIER
-                                );
-
                         }
 
                         /*
@@ -8916,6 +8872,8 @@
                         } else if (
                             gameStage === 3
                         ) {
+
+                            power += 10000;
 
                             bossHP -=
                                 totalDmg;
