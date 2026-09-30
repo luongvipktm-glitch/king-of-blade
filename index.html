@@ -8605,6 +8605,11 @@
                         return '+10 POWER';
                     }
 
+                    if (gameStage === 3) {
+                        power += 10000;
+                        return '+10K POWER';
+                    }
+
                     if (gameStage === 2) {
                         power += 10000;
                         return '+10K POWER';
@@ -8784,10 +8789,6 @@
                             killCount +=
                                 monstersKilledInOneHit;
 
-                            power +=
-                                monstersKilledInOneHit *
-                                2;
-
                             checkUpgradeSword();
 
                             if (
@@ -8918,14 +8919,6 @@
 
                             bossHP -=
                                 totalDmg;
-
-                            power +=
-                                Math.max(
-                                    1,
-                                    Math.floor(
-                                        totalDmg / 500
-                                    )
-                                );
 
                             document.getElementById(
                                 'val-power'
