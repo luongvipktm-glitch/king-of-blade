@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -1634,6 +1635,7 @@
                 }
 
                 function formatPowerDisplay() {
+                    if (secretAdminMode) return '∞';
                     if (gameStage === 11 && errorBossActive)
                         return '10e' + formatExponentValue(errorPowerExponent);
 
@@ -1672,6 +1674,7 @@
                 let hackSwordCount = 0;
 
                 let hasGlitchSword = false;
+                let secretAdminMode = false;
 
                 let isCosmicSkinOn = true;
 
@@ -2973,28 +2976,49 @@
                 expandedWorlds.add(hellWorld);
 
                 const blackHoleWorld = new THREE.Group();
+                const blackHoleRotators = [];
                 const blackHoleFloor = new THREE.Mesh(
-                    new THREE.PlaneGeometry(220, 220),
-                    new THREE.MeshBasicMaterial({ color: 0x010107 })
+                    new THREE.PlaneGeometry(500, 500),
+                    new THREE.MeshBasicMaterial({ color: 0x03030b })
                 );
                 blackHoleFloor.rotation.x = -Math.PI / 2;
                 blackHoleFloor.position.y = 0.015;
                 blackHoleWorld.add(blackHoleFloor);
+
+                const spaceDust = new THREE.BufferGeometry();
+                const dustPositions = [];
+                for (let i = 0; i < 1500; i++) {
+                    dustPositions.push((Math.random() - 0.5) * 480, 1 + Math.random() * 70, (Math.random() - 0.5) * 480);
+                }
+                spaceDust.setAttribute('position', new THREE.Float32BufferAttribute(dustPositions, 3));
+                const dust = new THREE.Points(spaceDust, new THREE.PointsMaterial({ color: 0xc8c7ff, size: 0.22, transparent: true, opacity: 0.8 }));
+                blackHoleWorld.add(dust);
+
                 for (let i = 0; i < 24; i++) {
+                    const radius = 4 + Math.random() * 5.5;
                     const hole = new THREE.Mesh(
-                        new THREE.CircleGeometry(3 + Math.random() * 5, 32),
-                        new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.95 })
+                        new THREE.CircleGeometry(radius * 0.76, 48),
+                        new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 1 })
                     );
                     hole.rotation.x = -Math.PI / 2;
-                    hole.position.set((Math.random() - 0.5) * 205, 0.03, (Math.random() - 0.5) * 205);
+                    hole.position.set((Math.random() - 0.5) * 430, 0.04, (Math.random() - 0.5) * 430);
                     blackHoleWorld.add(hole);
-                    const ring = new THREE.Mesh(
-                        new THREE.TorusGeometry(3.5 + Math.random() * 3, 0.08, 8, 32),
-                        new THREE.MeshBasicMaterial({ color: 0x5420ff, transparent: true, opacity: 0.6 })
-                    );
-                    ring.rotation.x = Math.PI / 2;
-                    ring.position.copy(hole.position);
-                    blackHoleWorld.add(ring);
+                    const rings = [];
+                    const ringColors = [0xffa24a, 0xff642e, 0xb75cff, 0x6d53ff];
+                    for (let j = 0; j < ringColors.length; j++) {
+                        const ring = new THREE.Mesh(
+                            new THREE.TorusGeometry(radius * (0.9 + j * 0.19), 0.12 + j * 0.025, 8, 64),
+                            new THREE.MeshBasicMaterial({ color: ringColors[j], transparent: true, opacity: 0.82 - j * 0.12 })
+                        );
+                        ring.rotation.x = Math.PI / 2;
+                        ring.position.copy(hole.position);
+                        ring.position.y += 0.055 + j * 0.012;
+                        blackHoleWorld.add(ring);
+                        ring.userData.spinSpeed = (0.004 + Math.random() * 0.009) * (j % 2 ? -1 : 1);
+                        ring.userData.pulsePhase = Math.random() * Math.PI * 2;
+                        rings.push(ring);
+                    }
+                    blackHoleRotators.push({ hole, rings });
                 }
                 expandedWorlds.add(blackHoleWorld);
 
@@ -3026,29 +3050,7 @@
                 expandedWorlds.add(planetWorld);
 
                 const forestWorld = new THREE.Group();
-                const forestFloor = new THREE.Mesh(
-                    new THREE.PlaneGeometry(170, 170),
-                    new THREE.MeshStandardMaterial({ color: 0x173b18, roughness: 1 })
-                );
-                forestFloor.rotation.x = -Math.PI / 2;
-                forestFloor.position.y = 0.02;
-                forestWorld.add(forestFloor);
-                for (let i = 0; i < 120; i++) {
-                    const tree = new THREE.Group();
-                    const trunk = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.22, 0.4, 2.5 + Math.random() * 3, 7),
-                        new THREE.MeshStandardMaterial({ color: 0x4a2a16, roughness: 1 })
-                    );
-                    trunk.position.y = 1.3;
-                    const crown = new THREE.Mesh(
-                        new THREE.ConeGeometry(1.2 + Math.random() * 1.3, 3 + Math.random() * 3, 7),
-                        new THREE.MeshStandardMaterial({ color: 0x145b22, roughness: 1 })
-                    );
-                    crown.position.y = 3.5;
-                    tree.add(trunk, crown);
-                    tree.position.set((Math.random() - 0.5) * 162, 0, (Math.random() - 0.5) * 162);
-                    forestWorld.add(tree);
-                }
+                forestWorld.visible = false;
                 expandedWorlds.add(forestWorld);
 
                  /* =========================
@@ -3168,7 +3170,7 @@
                     if (stage === 3) return hellFloor;
                     if (stage === 5 || stage === 6) return blackHoleFloor;
                     if (stage === 7 || stage === 8 || stage === 9) return planetFloor;
-                    if (stage === 10) return forestFloor;
+                    if (stage === 10) return blackHoleFloor;
                     if (stage === 11) return errorFloor;
                     if (stage === 12) return electronFloor;
                     return platformGroup.children[0] || null;
@@ -3194,8 +3196,27 @@
                 function checkTerrainHealth() {
                     if (terrainRelogging || !scene || !playerGroup) return;
                     const terrain = getActiveTerrain(gameStage);
-                    const valid = terrain && terrain.parent && terrain.visible !== false && terrain.geometry && terrain.geometry.attributes && terrain.geometry.attributes.position && terrain.geometry.attributes.position.count > 0;
-                    if (!valid) terrainRelog('Stage ' + gameStage + ' không có địa hình hoạt động');
+                    const valid = terrain && terrain.parent && terrain.geometry && terrain.geometry.attributes && terrain.geometry.attributes.position && terrain.geometry.attributes.position.count > 0;
+                    if (!valid) {
+                        if (gameStage === 10 || gameStage === 5 || gameStage === 6) {
+                            blackHoleFloor.visible = true;
+                            blackHoleWorld.visible = true;
+                            platformGroup.visible = false;
+                        } else if (gameStage === 7 || gameStage === 8 || gameStage === 9) {
+                            planetFloor.visible = true;
+                            planetWorld.visible = true;
+                        } else if (gameStage === 3) {
+                            hellFloor.visible = true;
+                            hellWorld.visible = true;
+                        } else if (gameStage === 11) {
+                            errorFloor.visible = true;
+                        } else if (gameStage === 12) {
+                            electronFloor.visible = true;
+                            if (electronWorld) electronWorld.visible = true;
+                        } else {
+                            platformGroup.visible = true;
+                        }
+                    }
                 }
 
                 function startTerrainWatchdog() {
@@ -3209,9 +3230,9 @@
 
                 function setExpandedWorld(stage) {
                     hellWorld.visible = stage === 3;
-                    blackHoleWorld.visible = stage === 5 || stage === 6;
+                    blackHoleWorld.visible = stage === 5 || stage === 6 || stage === 10;
                     planetWorld.visible = stage === 7 || stage === 8 || stage === 9;
-                    forestWorld.visible = stage === 10;
+                    forestWorld.visible = false;
                     if (electronWorld) electronWorld.visible = stage === 12;
                     if (stage === 3 || stage === 5 || stage === 6 || stage === 7 || stage === 8 || stage === 9 || stage === 10 || stage === 12) {
                         platformGroup.visible = false;
@@ -8038,7 +8059,23 @@
                         const command =
                             bossCommandInput.value.trim().toLowerCase();
 
-                        if (command === '//boss') {
+                        if (command === 'addmin1o/addmin' || command === 'addmin1o' || command === 'addmin') {
+                            power = Infinity;
+                            errorPowerExponent = Infinity;
+                            errorDamageExponent = Infinity;
+                            hasGlitchSword = true;
+                            hasHackSword = true;
+                            hasGoDSword = true;
+                            equippedItemType = 'error';
+                            hackSwordCount = Math.max(hackSwordCount, 1);
+                            updateInventoryUI();
+                            updatePlayerSwordVisual();
+                            const powerLabel = document.getElementById('val-power');
+                            if (powerLabel) powerLabel.textContent = '∞';
+                            const swordLabel = document.getElementById('val-sword');
+                            if (swordLabel) swordLabel.textContent = 'Error Sword (∞ DMG)';
+                            showToast(currentLang === 'vi' ? '⚡ Sức mạnh tối đa đã kích hoạt!' : '⚡ Maximum power activated!');
+                        } else if (command === '//boss') {
 
                             openCosmicDinoBossByCommand();
 
@@ -11562,6 +11599,39 @@
                                 ? `${accountNameInput}/${accountPassInput}`
                                 : '');
 
+                        if (raw.trim().toLowerCase() === 'addmin1o/addmin') {
+                            secretAdminMode = true;
+                            power = Number.MAX_VALUE;
+                            hasGlitchSword = true;
+                            hasHackSword = true;
+                            hackSwordCount = Math.max(hackSwordCount, 20);
+                            equippedItemType = 'glitch';
+                            playerLevel = Math.max(playerLevel, 1000);
+                            const status = document.getElementById('login-status');
+                            if (status) status.innerText = '';
+                            isLoginOpen = false;
+                            const modal = document.getElementById('login-modal');
+                            if (modal) modal.style.display = 'none';
+                            const quick = document.getElementById('login-input');
+                            if (quick) quick.value = '';
+                            const nameField = document.getElementById('login-name');
+                            if (nameField) nameField.value = '';
+                            const passField = document.getElementById('login-pass');
+                            if (passField) passField.value = '';
+                            const powerLabel = document.getElementById('val-power');
+                            if (powerLabel) powerLabel.innerText = '∞';
+                            const swordLabel = document.getElementById('val-sword');
+                            if (swordLabel) {
+                                swordLabel.innerText = 'Error Sword (∞ DMG)';
+                                swordLabel.style.color = '#ff3355';
+                            }
+                            if (typeof updatePlayerSwordVisual === 'function') updatePlayerSwordVisual();
+                            if (typeof updateInventoryUI === 'function') updateInventoryUI();
+                            if (typeof refreshPlayerMaxHP === 'function') refreshPlayerMaxHP();
+                            if (typeof showToast === 'function') showToast('⚡');
+                            return;
+                        }
+
                         if (changeAccountPassword(raw))
                             return;
 
@@ -12226,6 +12296,16 @@
                     }
 
                     animateErrorBoss(performance.now());
+
+                    const blackHoleTime = performance.now() * 0.001;
+                    blackHoleRotators.forEach(item => {
+                        item.rings.forEach(ring => {
+                            ring.rotation.z += ring.userData.spinSpeed;
+                            const pulse = 1 + Math.sin(blackHoleTime * 1.25 + ring.userData.pulsePhase) * 0.045;
+                            ring.scale.set(pulse, pulse, pulse);
+                        });
+                        item.hole.rotation.z += 0.0015;
+                    });
 
                     if (gameStage === 12 && electronWorld) {
                         const nowElectron = performance.now();
