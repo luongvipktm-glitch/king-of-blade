@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -2365,7 +2366,7 @@
                     );
                 }
 
-                // Expanded temple map pillars (shared world for red mob + boss 1)
+                // Expanded temple map pillars (stage 1–2 temple; boss 1 uses hell world)
                 for (
                     let x = -40;
                     x <= 40;
@@ -9056,9 +9057,9 @@
 
                                 bossMonster.visible =
                                     true;
-                                // Shared world: red mob remains on the same expanded map
+                                // Mob đỏ chỉ ở đầu game (stage 1), không chung với boss
                                 redMonster.visible =
-                                    true;
+                                    false;
                                 bossMonster.position.set(0, 0, BOSS1_PATROL_Z);
                                 boss1PatrolDir = 1;
 
@@ -9086,16 +9087,7 @@
                             gameStage === 3
                         ) {
 
-                            // Shared world: vẫn farm mob đỏ khi đang đánh boss 1
-                            if (redMonster.visible) {
-                                let monstersKilledInOneHit = Math.max(1, Math.floor(totalDmg / redMonsterHP));
-                                if (monstersKilledInOneHit > 999) monstersKilledInOneHit = 999;
-                                killCount = Math.min(999, killCount + monstersKilledInOneHit);
-                                document.getElementById('val-kills').innerText = killCount;
-                                handleItemDrop();
-                                checkUpgradeSword();
-                            }
-
+                            // Mob đỏ chỉ xuất hiện ở stage 1 — không farm chung với boss
                             power += 10000;
 
                             bossHP -=
@@ -11093,7 +11085,7 @@
                     }
 
                     redMonster.visible =
-                        (gameStage === 1 || gameStage === 3);
+                        (gameStage === 1);
 
                     octopusMonster.visible =
                         (gameStage === 2);
