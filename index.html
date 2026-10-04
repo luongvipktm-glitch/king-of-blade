@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -1751,8 +1752,8 @@
                 const ERROR_GLITCH_FINAL_TIME = 60000;
                 const ERROR_GLITCH_POWER_REMAIN = 0.000000001;
                 const ERROR_GLITCH_BOSS_SPEED_MULTIPLIER = 10;
-                const ERROR_GLITCH_BOSS_SPEED = 1.2;
-                const ERROR_GLITCH_BOSS_SCALE = 0.18;
+                const ERROR_GLITCH_BOSS_SPEED = 0.24; // ~2x player base speed (0.12)
+                const ERROR_GLITCH_BOSS_SCALE = 0.27; // 1.5x previous (was 0.18)
                 let glitchBullets = [];
                 let glitchAimActive = false;
                 let errorBossDamagePercent = 0;
@@ -2300,9 +2301,9 @@
                 const floorMesh =
                     new THREE.Mesh(
                         new THREE.BoxGeometry(
-                            36,
+                            90,
                             2,
-                            36
+                            90
                         ),
                         stoneMat
                     );
@@ -2364,44 +2365,24 @@
                     );
                 }
 
+                // Expanded temple map pillars (shared world for red mob + boss 1)
                 for (
-                    let x = -15;
-                    x <= 15;
-                    x += 7.5
+                    let x = -40;
+                    x <= 40;
+                    x += 10
                 ) {
-
-                    createPillar(
-                        x,
-                        -15
-                    );
-
-                    createPillar(
-                        x,
-                        15
-                    );
-
+                    createPillar(x, -40);
+                    createPillar(x, 40);
                 }
-
                 for (
-                    let z = -7.5;
-                    z <= 7.5;
-                    z += 7.5
+                    let z = -30;
+                    z <= 30;
+                    z += 10
                 ) {
-
-                    if (z !== 0) {
-
-                        createPillar(
-                            -15,
-                            z
-                        );
-
-                        createPillar(
-                            15,
-                            z
-                        );
-
+                    if (Math.abs(z) > 5) {
+                        createPillar(-40, z);
+                        createPillar(40, z);
                     }
-
                 }
 
                 /* =========================
@@ -3209,7 +3190,9 @@
                             hellFloor.visible = true;
                             hellWorld.visible = true;
                         } else if (gameStage === 11) {
-                            errorFloor.visible = true;
+                            errorFloor.visible = false;
+                            universeFloor.visible = true;
+                            blackHoleWorld.visible = true;
                         } else if (gameStage === 12) {
                             electronFloor.visible = true;
                             if (electronWorld) electronWorld.visible = true;
@@ -3230,18 +3213,20 @@
 
                 function setExpandedWorld(stage) {
                     hellWorld.visible = stage === 3;
-                    blackHoleWorld.visible = stage === 5 || stage === 6 || stage === 10;
+                    blackHoleWorld.visible = stage === 5 || stage === 6 || stage === 10 || stage === 11;
                     planetWorld.visible = stage === 7 || stage === 8 || stage === 9;
                     forestWorld.visible = false;
                     if (electronWorld) electronWorld.visible = stage === 12;
-                    if (stage === 3 || stage === 5 || stage === 6 || stage === 7 || stage === 8 || stage === 9 || stage === 10 || stage === 12) {
+                    if (stage === 3 || stage === 5 || stage === 6 || stage === 7 || stage === 8 || stage === 9 || stage === 10 || stage === 11 || stage === 12) {
                         platformGroup.visible = false;
-                        universeFloor.visible = false;
-                    } else if (stage === 11) {
-                        platformGroup.visible = false;
-                        universeFloor.visible = false;
+                        // Error world (stage 11) keeps universe / black-hole terrain — no forest, no code-floor switch
+                        universeFloor.visible = (stage === 11);
+                        if (stage === 11) {
+                            errorFloor.visible = false;
+                        }
                     } else {
                         platformGroup.visible = true;
+                        universeFloor.visible = false;
                     }
                 }
 
@@ -4593,28 +4578,14 @@
                 }
 
                 function chooseErrorBossRoamTarget() {
-                    const half = (errorMapExpanded ? ERROR_MAP_CHASE_SIZE : ERROR_MAP_NORMAL_SIZE) * 0.5 - 45;
-                    errorBossMoveTarget.set(
-                        THREE.MathUtils.randFloat(-half, half),
-                        4.4,
-                        THREE.MathUtils.randFloat(-half, half)
-                    );
-                    errorBossNextMoveTime = performance.now() + THREE.MathUtils.randFloat(2200, 5200);
+                    // Boss Error stands still at fixed spawn — no roaming.
+                    errorBossMoveTarget.set(0, 4.4, -10);
+                    errorBossNextMoveTime = performance.now() + 999999;
                 }
 
                 function triggerErrorChase() {
-                    if (errorChaseTriggered || !errorBossActive) return;
-                    errorChaseTriggered = true;
-                    errorChaseActive = true;
-                    errorChaseEndTime = performance.now() + 6500;
-                    errorNextChaseCheckTime = performance.now() + 1000;
-                    setErrorMapExpanded(true);
-                    errorBossMoveTarget.copy(playerGroup.position);
-                    showToast(
-                        currentLang === 'vi'
-                        ? '⚠️ 0.9% — ERROR ĐANG RƯỢT ĐUỔI! MAP ĐÃ MỞ RỘNG!'
-                        : '⚠️ 0.9% — ERROR IS CHASING YOU! THE MAP EXPANDED!'
-                    );
+                    // Boss Error stands still — chase disabled.
+                    return;
                 }
 
                 function updateErrorChaseAndLaser(t) {
@@ -4627,41 +4598,11 @@
                         return;
                     }
 
-                    if (!errorChaseActive && t >= errorNextChaseCheckTime) {
-                        errorNextChaseCheckTime = t + 1000;
-                        if (Math.random() < 0.009) triggerErrorChase();
-                    }
-
-                    if (errorChaseActive) {
-                        errorBossMoveTarget.copy(playerGroup.position);
-                        const dx = playerGroup.position.x - errorBossMonster.position.x;
-                        const dz = playerGroup.position.z - errorBossMonster.position.z;
-                        const len = Math.max(0.001, Math.hypot(dx, dz));
-                        errorBossMonster.position.x += dx / len * 0.28;
-                        errorBossMonster.position.z += dz / len * 0.28;
-                        if (t >= errorChaseEndTime) {
-                            errorChaseActive = false;
-                            chooseErrorBossRoamTarget();
-                            createErrorLaser();
-                            showToast(
-                                currentLang === 'vi'
-                                ? '💻 ERROR ĐÃ BẮN CHỮ LASER! BẮN TRÚNG CHỮ ĐỂ TIẾP TỤC!'
-                                : '💻 ERROR FIRED A LETTER LASER! HIT THE LETTER TO CONTINUE!'
-                            );
-                        }
-                    } else if (!errorLaserActive) {
-                        if (t >= errorBossNextMoveTime) chooseErrorBossRoamTarget();
-                        const dx = errorBossMoveTarget.x - errorBossMonster.position.x;
-                        const dz = errorBossMoveTarget.z - errorBossMonster.position.z;
-                        const len = Math.hypot(dx, dz);
-                        if (len > 0.5) {
-                            const step = Math.min(errorBossRoamSpeed, len);
-                            errorBossMonster.position.x += dx / len * step;
-                            errorBossMonster.position.z += dz / len * step;
-                        } else {
-                            chooseErrorBossRoamTarget();
-                        }
-                    }
+                    // Boss Error stands still in place — no chase, no roam.
+                    // Player only needs to click to attack (no aiming required).
+                    errorBossMonster.position.x = 0;
+                    errorBossMonster.position.z = -10;
+                    // Keep slight hover from animateErrorBoss (y is set there)
 
                     if (errorLaserActive && errorLaser) {
                         const target = playerGroup.position.clone();
@@ -4771,9 +4712,10 @@
                     if (!errorBossMonster.visible) return;
 
                     if (errorGlitchPhase) {
+                        // Boss Glitch: keep small scale (ERROR_GLITCH_BOSS_SCALE).
+                        // Movement handled in main animate loop. Only light idle rotation here.
                         errorBossMonster.rotation.x = Math.sin(t * 0.004) * 0.04;
                         errorBossMonster.rotation.z = Math.cos(t * 0.003) * 0.04;
-                        errorBossMonster.scale.set(10, 10, 10);
                         return;
                     }
 
@@ -4781,7 +4723,10 @@
                     errorSkinTexture.offset.y = (t * 0.00025) % 1;
                     errorSkinTexture.offset.x = (Math.random() < 0.03) ? Math.random() : errorSkinTexture.offset.x;
 
-                    // Đứng lơ lửng, tay chân đung đưa nhẹ
+                    // Boss Error: đứng yên tại chỗ, chỉ bob nhẹ — không di chuyển
+                    errorBossMonster.position.x = 0;
+                    errorBossMonster.position.z = -10;
+                    errorBossMonster.scale.set(1.3, 1.3, 1.3);
                     errorBossMonster.position.y = 4.4 + Math.sin(t * 0.0015) * 0.25;
                     errorArmL.rotation.x = Math.sin(t * 0.0012) * 0.15;
                     errorArmR.rotation.x = -Math.sin(t * 0.0012) * 0.15;
@@ -4967,20 +4912,21 @@
                 // Mặt con trai: mắt trắng 100%, lông mày, miệng
                 const playerFaceTexture = pixelTexture(g => {
                     g.clearRect(0, 0, 16, 16);
-                    g.fillStyle = '#2a211c'; g.fillRect(3, 5, 4, 1); g.fillRect(9, 5, 4, 1);
-                    g.fillStyle = '#ffffff'; g.fillRect(3, 7, 3, 3); g.fillRect(10, 7, 3, 3);
-                    g.fillStyle = 'rgba(120,50,40,0.75)'; g.fillRect(6, 13, 4, 1);
+                    // Glowing cyan-white cosmic eyes
+                    g.fillStyle = '#a8f0ff'; g.fillRect(2, 6, 5, 4); g.fillRect(9, 6, 5, 4);
+                    g.fillStyle = '#ffffff'; g.fillRect(3, 7, 3, 2); g.fillRect(10, 7, 3, 2);
+                    g.fillStyle = '#4de8ff'; g.fillRect(4, 7, 1, 1); g.fillRect(11, 7, 1, 1);
                 });
 
                 // Mặt con gái: mắt trắng 100%, lông mi, má hồng, môi hồng
                 const girlFaceTexture = pixelTexture(g => {
                     g.clearRect(0, 0, 16, 16);
-                    g.fillStyle = '#1a1210';
-                    g.fillRect(3, 6, 3, 1); g.fillRect(10, 6, 3, 1);
-                    g.fillRect(2, 5, 1, 1); g.fillRect(13, 5, 1, 1);
-                    g.fillStyle = '#ffffff'; g.fillRect(3, 7, 3, 3); g.fillRect(10, 7, 3, 3);
-                    g.fillStyle = 'rgba(255,110,140,0.55)'; g.fillRect(2, 11, 2, 1); g.fillRect(12, 11, 2, 1);
-                    g.fillStyle = '#e0457a'; g.fillRect(6, 13, 4, 1); g.fillRect(7, 12, 2, 1);
+                    // Glowing eyes + soft blush for girl cosmic
+                    g.fillStyle = '#d8f8ff'; g.fillRect(2, 6, 5, 4); g.fillRect(9, 6, 5, 4);
+                    g.fillStyle = '#ffffff'; g.fillRect(3, 7, 3, 2); g.fillRect(10, 7, 3, 2);
+                    g.fillStyle = '#7af0ff'; g.fillRect(4, 7, 1, 1); g.fillRect(11, 7, 1, 1);
+                    g.fillStyle = 'rgba(255,120,200,0.5)'; g.fillRect(2, 11, 2, 1); g.fillRect(12, 11, 2, 1);
+                    g.fillStyle = '#ff6ec7'; g.fillRect(6, 13, 4, 1);
                 });
 
                 // Mặt boss Error: chỉ có mắt trắng bóc, không có miệng
@@ -5073,24 +5019,28 @@
 
                     if (withHair) {
                         if (female) {
-                            // Tóc con gái dễ thương: mái gọn, tóc dài hai bên và nơ
-                            mk(roundedBox(0.74, 0.14, 0.7, 0.06), mats.hair, 0, 0.8, 0, P.head);
-                            mk(box(0.72, 0.16, 0.08), mats.hair, 0, 0.70, 0.31, P.head);
-                            mk(box(0.22, 0.18, 0.08), mats.hair, -0.25, 0.63, 0.31, P.head);
-                            mk(box(0.22, 0.18, 0.08), mats.hair, 0.25, 0.63, 0.31, P.head);
-                            mk(box(0.74, 0.95, 0.08), mats.hair, 0, 0.33, -0.34, P.head);
-                            mk(box(0.08, 0.72, 0.5), mats.hair, -0.37, 0.4, -0.08, P.head);
-                            mk(box(0.08, 0.72, 0.5), mats.hair, 0.37, 0.4, -0.08, P.head);
-                            mk(box(0.12, 0.12, 0.08), mats.bow, -0.43, 0.72, 0.22, P.head);
-                            mk(box(0.12, 0.12, 0.08), mats.bow, 0.43, 0.72, 0.22, P.head);
-                            mk(box(0.10, 0.10, 0.08), mats.bow, 0, 0.72, 0.22, P.head);
+                            // Tóc cosmic girl: dài, spiky, nơ phát sáng
+                            mk(roundedBox(0.76, 0.18, 0.72, 0.08), mats.hair, 0, 0.84, 0, P.head);
+                            mk(box(0.74, 0.20, 0.10), mats.hair, 0, 0.72, 0.32, P.head);
+                            mk(box(0.22, 0.30, 0.14), mats.hair, -0.24, 0.90, 0.08, P.head);
+                            mk(box(0.22, 0.32, 0.14), mats.hair, 0.24, 0.92, 0.06, P.head);
+                            mk(box(0.18, 0.36, 0.14), mats.hair, 0.0, 0.98, -0.04, P.head);
+                            mk(box(0.76, 1.15, 0.10), mats.hair, 0, 0.28, -0.36, P.head);
+                            mk(box(0.10, 1.05, 0.52), mats.hair, -0.40, 0.28, -0.06, P.head);
+                            mk(box(0.10, 1.05, 0.52), mats.hair, 0.40, 0.28, -0.06, P.head);
+                            mk(box(0.14, 0.14, 0.09), mats.bow, -0.46, 0.78, 0.24, P.head);
+                            mk(box(0.14, 0.14, 0.09), mats.bow, 0.46, 0.78, 0.24, P.head);
+                            mk(box(0.12, 0.12, 0.09), mats.bow, 0, 0.78, 0.26, P.head);
                         } else {
-                            // Tóc con trai đều đặn: mái và phần tóc trên đầu cân đối
-                            mk(roundedBox(0.72, 0.14, 0.68, 0.06), mats.hair, 0, 0.80, 0, P.head);
-                            mk(box(0.70, 0.18, 0.08), mats.hair, 0, 0.70, 0.31, P.head);
-                            mk(box(0.70, 0.10, 0.52), mats.hair, -0.02, 0.66, -0.10, P.head);
-                            mk(box(0.08, 0.30, 0.46), mats.hair, -0.34, 0.58, -0.02, P.head);
-                            mk(box(0.08, 0.30, 0.46), mats.hair, 0.34, 0.58, -0.02, P.head);
+                            // Tóc cosmic boy: mái spiky + volume galaxy
+                            mk(roundedBox(0.74, 0.18, 0.70, 0.08), mats.hair, 0, 0.82, 0, P.head);
+                            mk(box(0.72, 0.22, 0.10), mats.hair, 0, 0.72, 0.32, P.head);
+                            mk(box(0.20, 0.28, 0.14), mats.hair, -0.22, 0.88, 0.10, P.head);
+                            mk(box(0.20, 0.30, 0.14), mats.hair, 0.22, 0.90, 0.08, P.head);
+                            mk(box(0.18, 0.34, 0.14), mats.hair, 0.0, 0.95, -0.05, P.head);
+                            mk(box(0.70, 0.12, 0.55), mats.hair, 0, 0.68, -0.12, P.head);
+                            mk(box(0.10, 0.36, 0.48), mats.hair, -0.36, 0.62, -0.02, P.head);
+                            mk(box(0.10, 0.36, 0.48), mats.hair, 0.36, 0.62, -0.02, P.head);
                         }
                     }
 
@@ -5132,6 +5082,48 @@
                     P.legL = makeLeg(-1);
                     P.legR = makeLeg(1);
 
+                    // ===== Orbital rings around head (cosmic style) =====
+                    const orbitGroup = new THREE.Group();
+                    orbitGroup.position.y = 0.55;
+                    P.head.add(orbitGroup);
+                    const orbitColors = [0xaa66ff, 0x66ccff, 0xff66ee];
+                    for (let i = 0; i < 3; i++) {
+                        const ring = new THREE.Mesh(
+                            new THREE.TorusGeometry(0.55 + i * 0.18, 0.018, 8, 48),
+                            new THREE.MeshBasicMaterial({
+                                color: orbitColors[i],
+                                transparent: true,
+                                opacity: 0.85,
+                                depthWrite: false
+                            })
+                        );
+                        ring.rotation.x = Math.PI / 2 + (i - 1) * 0.35;
+                        ring.rotation.z = i * 0.4;
+                        ring.userData.spin = 0.008 + i * 0.004;
+                        orbitGroup.add(ring);
+                        const planet = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.06 + i * 0.015, 10, 10),
+                            new THREE.MeshBasicMaterial({ color: orbitColors[i] })
+                        );
+                        planet.position.set(0.55 + i * 0.18, 0, 0);
+                        ring.add(planet);
+                    }
+                    P.orbitGroup = orbitGroup;
+
+                    const glowShell = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.55, 16, 12),
+                        new THREE.MeshBasicMaterial({
+                            color: 0x8844ff,
+                            transparent: true,
+                            opacity: 0.12,
+                            side: THREE.BackSide,
+                            depthWrite: false
+                        })
+                    );
+                    glowShell.position.y = 0.4;
+                    glowShell.scale.set(1.15, 1.35, 1.0);
+                    P.torso.add(glowShell);
+
                     root.userData.parts = P;
                     return root;
                 }
@@ -5145,6 +5137,12 @@
                     P.torso.scale.set(1 + breathe, 1 + breathe, 1 + breathe);
                     P.head.rotation.y = Math.sin(t * 0.6) * 0.08 * (1 - moveAmt);
                     P.head.rotation.x = -0.04 * moveAmt;
+                    if (P.orbitGroup) {
+                        P.orbitGroup.rotation.y += 0.012;
+                        P.orbitGroup.children.forEach((ring) => {
+                            if (ring.userData.spin) ring.rotation.z += ring.userData.spin;
+                        });
+                    }
 
                     P.legL.hip.rotation.x = swing;
                     P.legR.hip.rotation.x = -swing;
@@ -5186,31 +5184,161 @@
                         g.fillRect(Math.random() * 16 | 0, Math.random() * 16 | 0, 1, 1);
                     }
                 });
-                const blockyMats = {
-                    armor: new THREE.MeshStandardMaterial({ color: 0x5e5878, map: armorTex, metalness: 0.15, roughness: 0.6 }),
-                    armorLight: new THREE.MeshStandardMaterial({ color: 0x736c90, map: armorTex, metalness: 0.2, roughness: 0.55 }),
-                    armorDark: new THREE.MeshStandardMaterial({ color: 0x38344a, map: noiseTex, metalness: 0.1, roughness: 0.65 }),
-                    skin: skinMat, // dùng đúng làn da ban đầu của nhân vật
-                    boot: new THREE.MeshStandardMaterial({ color: 0x3d4230, map: noiseTex, roughness: 0.9, metalness: 0 }),
-                    sole: new THREE.MeshStandardMaterial({ color: 0x1c1c18, map: noiseTex, roughness: 0.95, metalness: 0 }),
-                    hair: new THREE.MeshStandardMaterial({ map: hairTexture, roughness: 0.95 }),
-                    bow: new THREE.MeshStandardMaterial({ color: 0xff4f9a, roughness: 0.6 })
-                };
+                // ===== COSMIC GALAXY TEXTURE (body like reference image) =====
+                function createGalaxyBodyTexture() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 512; canvas.height = 512;
+                    const ctx = canvas.getContext('2d');
+                    const g = ctx.createRadialGradient(256, 256, 10, 256, 256, 300);
+                    g.addColorStop(0, '#2b0b5e');
+                    g.addColorStop(0.25, '#4a1a9e');
+                    g.addColorStop(0.5, '#1a0a40');
+                    g.addColorStop(0.75, '#0a0420');
+                    g.addColorStop(1, '#030010');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(0, 0, 512, 512);
+                    // Nebula blobs
+                    const blobs = [
+                        [120,140,90,'rgba(180,40,255,0.35)'], [380,180,110,'rgba(60,120,255,0.3)'],
+                        [200,360,100,'rgba(255,60,180,0.28)'], [350,320,80,'rgba(100,200,255,0.25)'],
+                        [256,256,70,'rgba(255,255,255,0.12)']
+                    ];
+                    blobs.forEach(([x,y,r,c]) => {
+                        const ng = ctx.createRadialGradient(x,y,0,x,y,r);
+                        ng.addColorStop(0, c); ng.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = ng; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+                    });
+                    // Mini galaxies / swirls
+                    for (let i = 0; i < 8; i++) {
+                        const cx = 60 + Math.random()*400, cy = 60 + Math.random()*400;
+                        for (let a = 0; a < 40; a++) {
+                            const ang = a * 0.35 + i, rad = 4 + a * 0.9;
+                            const px = cx + Math.cos(ang)*rad, py = cy + Math.sin(ang)*rad*0.55;
+                            ctx.fillStyle = `rgba(200,180,255,${0.35*(1-a/40)})`;
+                            ctx.beginPath(); ctx.arc(px, py, 1.2, 0, Math.PI*2); ctx.fill();
+                        }
+                    }
+                    // Stars
+                    for (let i = 0; i < 500; i++) {
+                        const sx = Math.random()*512, sy = Math.random()*512;
+                        const size = Math.random()*1.8 + 0.2;
+                        const b = 0.4 + Math.random()*0.6;
+                        ctx.fillStyle = `rgba(255,255,255,${b})`;
+                        ctx.beginPath(); ctx.arc(sx, sy, size, 0, Math.PI*2); ctx.fill();
+                    }
+                    // Bright star sparks
+                    for (let i = 0; i < 30; i++) {
+                        const sx = Math.random()*512, sy = Math.random()*512;
+                        ctx.fillStyle = 'rgba(180,220,255,0.95)';
+                        ctx.beginPath(); ctx.arc(sx, sy, 2 + Math.random()*2, 0, Math.PI*2); ctx.fill();
+                    }
+                    const tex = new THREE.CanvasTexture(canvas);
+                    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                    tex.encoding = THREE.sRGBEncoding;
+                    return tex;
+                }
+                const galaxyBodyTex = createGalaxyBodyTexture();
 
-                // Tóc con gái màu nâu hạt dẻ
-                const girlHairTexture = pixelTexture(g => {
+                // Tóc galaxy tím-xanh
+                const cosmicHairTexture = pixelTexture(g => {
                     for (let y = 0; y < 16; y++)
                         for (let x = 0; x < 16; x++) {
-                            const v = 70 + Math.floor(Math.random() * 30);
-                            g.fillStyle = `rgb(${v + 20},${Math.floor(v * 0.6)},${Math.floor(v * 0.35)})`;
+                            const v = 40 + Math.floor(Math.random() * 80);
+                            const r = Math.min(255, v + 80), b = Math.min(255, v + 140), gg = Math.floor(v * 0.4);
+                            g.fillStyle = `rgb(${r},${gg},${b})`;
                             g.fillRect(x, y, 1, 1);
                         }
                 });
-                const girlMats = Object.assign({}, blockyMats, {
-                    hair: new THREE.MeshStandardMaterial({ map: girlHairTexture, roughness: 0.9 })
+                const girlCosmicHairTexture = pixelTexture(g => {
+                    for (let y = 0; y < 16; y++)
+                        for (let x = 0; x < 16; x++) {
+                            const v = 50 + Math.floor(Math.random() * 90);
+                            const r = Math.min(255, v + 100), b = Math.min(255, v + 160), gg = Math.floor(v * 0.35);
+                            g.fillStyle = `rgb(${r},${gg},${b})`;
+                            g.fillRect(x, y, 1, 1);
+                        }
                 });
 
-                Object.values(blockyMats).forEach(m => { if (m !== skinMat) m.envMapIntensity = 0.15; });
+                const cosmicBodyMat = new THREE.MeshStandardMaterial({
+                    map: galaxyBodyTex,
+                    color: 0xffffff,
+                    emissive: 0x3a00aa,
+                    emissiveIntensity: 0.85,
+                    metalness: 0.35,
+                    roughness: 0.35
+                });
+                const cosmicBodyMatLight = new THREE.MeshStandardMaterial({
+                    map: galaxyBodyTex,
+                    color: 0xccbbff,
+                    emissive: 0x5500cc,
+                    emissiveIntensity: 1.0,
+                    metalness: 0.4,
+                    roughness: 0.3
+                });
+                const cosmicBodyMatDark = new THREE.MeshStandardMaterial({
+                    map: galaxyBodyTex,
+                    color: 0x8866cc,
+                    emissive: 0x220066,
+                    emissiveIntensity: 0.6,
+                    metalness: 0.3,
+                    roughness: 0.4
+                });
+                const cosmicSkinMat = new THREE.MeshStandardMaterial({
+                    map: galaxyBodyTex,
+                    color: 0xaa88ff,
+                    emissive: 0x220044,
+                    emissiveIntensity: 0.5,
+                    metalness: 0.2,
+                    roughness: 0.45
+                });
+                const cosmicBootMat = new THREE.MeshStandardMaterial({
+                    map: galaxyBodyTex,
+                    color: 0x6644aa,
+                    emissive: 0x110033,
+                    emissiveIntensity: 0.7,
+                    metalness: 0.5,
+                    roughness: 0.3
+                });
+                const cosmicHairMat = new THREE.MeshStandardMaterial({
+                    map: cosmicHairTexture,
+                    color: 0xbb66ff,
+                    emissive: 0x6600ff,
+                    emissiveIntensity: 1.2,
+                    metalness: 0.3,
+                    roughness: 0.4
+                });
+                const cosmicBowMat = new THREE.MeshStandardMaterial({
+                    color: 0xff66cc,
+                    emissive: 0xff00aa,
+                    emissiveIntensity: 1.5,
+                    metalness: 0.4,
+                    roughness: 0.3
+                });
+
+                const blockyMats = {
+                    armor: cosmicBodyMat,
+                    armorLight: cosmicBodyMatLight,
+                    armorDark: cosmicBodyMatDark,
+                    skin: cosmicSkinMat,
+                    boot: cosmicBootMat,
+                    sole: cosmicBootMat,
+                    hair: cosmicHairMat,
+                    bow: cosmicBowMat
+                };
+
+                const girlMats = Object.assign({}, blockyMats, {
+                    hair: new THREE.MeshStandardMaterial({
+                        map: girlCosmicHairTexture,
+                        color: 0xff88ee,
+                        emissive: 0xaa00ff,
+                        emissiveIntensity: 1.35,
+                        metalness: 0.3,
+                        roughness: 0.35
+                    }),
+                    bow: cosmicBowMat
+                });
+
+                Object.values(blockyMats).forEach(m => { m.envMapIntensity = 0.4; });
                 // Màu hex là sRGB -> đổi sang tuyến tính để giáp tối / giày lính không bị bạc trắng
                 [blockyMats.armorDark, blockyMats.boot, blockyMats.sole].forEach(m => m.color.convertSRGBToLinear());
 
@@ -6876,6 +7004,17 @@
 
                 const bossMonster =
                     createStarterRobotBoss();
+
+                // Boss 1 patrol + arm-length attack range (shared world with red mob)
+                let boss1PatrolDir = 1;
+                let boss1PatrolSpeed = 0.09;
+                const BOSS1_PATROL_X_MIN = -32;
+                const BOSS1_PATROL_X_MAX = 32;
+                const BOSS1_PATROL_Z = -8;
+                // Arm reach ≈ arm length of robot boss (~1.4) + body half (~0.8) ≈ 3.2
+                const BOSS1_ARM_REACH = 3.2;
+                bossMonster.position.set(0, 0, BOSS1_PATROL_Z);
+                bossMonster.visible = false;
 
                 scene.add(
                     bossMonster
@@ -8917,6 +9056,11 @@
 
                                 bossMonster.visible =
                                     true;
+                                // Shared world: red mob remains on the same expanded map
+                                redMonster.visible =
+                                    true;
+                                bossMonster.position.set(0, 0, BOSS1_PATROL_Z);
+                                boss1PatrolDir = 1;
 
                                 document.getElementById(
                                     'boss-hp-bar'
@@ -8941,6 +9085,16 @@
                         } else if (
                             gameStage === 3
                         ) {
+
+                            // Shared world: vẫn farm mob đỏ khi đang đánh boss 1
+                            if (redMonster.visible) {
+                                let monstersKilledInOneHit = Math.max(1, Math.floor(totalDmg / redMonsterHP));
+                                if (monstersKilledInOneHit > 999) monstersKilledInOneHit = 999;
+                                killCount = Math.min(999, killCount + monstersKilledInOneHit);
+                                document.getElementById('val-kills').innerText = killCount;
+                                handleItemDrop();
+                                checkUpgradeSword();
+                            }
 
                             power += 10000;
 
@@ -9469,6 +9623,8 @@
                                         errorGlitchNextAttackTime = performance.now();
                                         errorFloor.visible = false;
                                         if (glitchCodeFloor) glitchCodeFloor.visible = false;
+                                        universeFloor.visible = true;
+                                        blackHoleWorld.visible = true;
                                         errorBossMonster.visible = true;
                                         errorBossMonster.scale.set(ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE);
                                         errorBossMonster.position.set(0, 2, -35);
@@ -9597,7 +9753,10 @@
                                 playerGroup.position.x = 0;
                                 playerGroup.position.z = 35;
 
-                                errorFloor.visible = true;
+                                errorFloor.visible = false;
+                                universeFloor.visible = true;
+                                blackHoleWorld.visible = true;
+                                setExpandedWorld(11);
                                 if (glitchCodeFloor) glitchCodeFloor.visible = false;
                                 if (rainbowHaloGroup) rainbowHaloGroup.visible = false;
                                 errorBossMonster.visible = true;
@@ -10756,9 +10915,15 @@
                             errorFloor.visible = false;
                             errorBossMonster.visible = false;
                         } else {
-                            errorFloor.visible = true;
+                            errorFloor.visible = false;
+                            universeFloor.visible = true;
+                            blackHoleWorld.visible = true;
                             errorBossMonster.visible = true;
-                            errorBossMonster.scale.set(errorGlitchPhase ? 10 : 1.3, errorGlitchPhase ? 10 : 1.3, errorGlitchPhase ? 10 : 1.3);
+                            errorBossMonster.scale.set(
+                                errorGlitchPhase ? ERROR_GLITCH_BOSS_SCALE : 1.3,
+                                errorGlitchPhase ? ERROR_GLITCH_BOSS_SCALE : 1.3,
+                                errorGlitchPhase ? ERROR_GLITCH_BOSS_SCALE : 1.3
+                            );
                         }
                         if (glitchCodeFloor) glitchCodeFloor.visible = waitingForNewBoss;
                         setErrorMapExpanded(errorMapExpanded);
@@ -10928,7 +11093,7 @@
                     }
 
                     redMonster.visible =
-                        (gameStage === 1);
+                        (gameStage === 1 || gameStage === 3);
 
                     octopusMonster.visible =
                         (gameStage === 2);
@@ -11942,7 +12107,9 @@
                     errorBossMonster.scale.set(1.3, 1.3, 1.3);
                     errorBossMonster.position.set(0, 4.4, -10);
                     errorBossMonster.visible = true;
-                    errorFloor.visible = true;
+                    errorFloor.visible = false;
+                    universeFloor.visible = true;
+                    blackHoleWorld.visible = true;
                     if (glitchCodeFloor) glitchCodeFloor.visible = false;
                     if (rainbowHaloGroup) rainbowHaloGroup.visible = false;
                     playerGroup.position.set(0, 0, 35);
@@ -12450,7 +12617,7 @@
                                 THREE.MathUtils.randFloat(1.5, 4.5),
                                 THREE.MathUtils.randFloat(-half, half)
                             );
-                            errorBossMonster.userData.glitchNextMove = now + THREE.MathUtils.randFloat(70, 180);
+                            errorBossMonster.userData.glitchNextMove = now + THREE.MathUtils.randFloat(800, 1600);
                         }
                         const dx = moveTarget.x - errorBossMonster.position.x;
                         const dz = moveTarget.z - errorBossMonster.position.z;
@@ -12460,6 +12627,8 @@
                         errorBossMonster.position.z += dz / d * Math.min(burst, d);
                         errorBossMonster.position.y += (moveTarget.y - errorBossMonster.position.y) * 0.3;
                         errorBossMonster.rotation.y = Math.atan2(playerGroup.position.x - errorBossMonster.position.x, playerGroup.position.z - errorBossMonster.position.z);
+                        // Keep Glitch boss distinctly small (never share Error boss scale)
+                        errorBossMonster.scale.set(ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE);
                         updateGlitchBullets();
                     }
 
@@ -12590,9 +12759,10 @@
                     } else if (gameStage === 10) {
                         playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -83, 83);
                         playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -83, 83);
-                    } else if (gameStage === 1 || gameStage === 2 || gameStage === 4) {
-                        playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -17, 17);
-                        playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -17, 17);
+                    } else if (gameStage === 1 || gameStage === 2 || gameStage === 3 || gameStage === 4) {
+                        // Expanded shared world (red mob + boss 1)
+                        playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -42, 42);
+                        playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -42, 42);
                     }
 
                     if (isMoving && !wasJumping) {
@@ -12687,23 +12857,8 @@
                     if (typeof updatePlayerSwordVisual === 'function')
                         updatePlayerSwordVisual();
 
-                    playerGroup.position.x =
-                        Math.max(
-                            -16,
-                            Math.min(
-                                16,
-                                playerGroup.position.x
-                            )
-                        );
+                    // Map bounds handled per-stage above (expanded temple for stage 1-4)
 
-                    playerGroup.position.z =
-                        Math.max(
-                            -16,
-                            Math.min(
-                                16,
-                                playerGroup.position.z
-                            )
-                        );
 
                     /* =========================
                        NPC ANIMATION
@@ -13134,36 +13289,25 @@
                     if (
                         bossMonster.visible
                     ) {
-
-                        bossMonster.rotation.y +=
-                            0.01;
-
-                        /*
-                           BOSS có thể di chuyển
-                           đuổi theo người chơi
-                        */
-
-                        const dxB =
-                            playerGroup.position.x -
-                            bossMonster.position.x;
-
-                        const dzB =
-                            playerGroup.position.z -
-                            bossMonster.position.z;
-
-                        const distB =
-                            Math.hypot(dxB, dzB);
-
-                        if (distB > 3) {
-
-                            bossMonster.position.x +=
-                                (dxB / distB) * 0.03;
-
-                            bossMonster.position.z +=
-                                (dzB / distB) * 0.03;
-
+                        // Boss 1: đi qua đi lại trên bản đồ (patrol), không chỉ đứng/đuổi
+                        bossMonster.position.z = BOSS1_PATROL_Z;
+                        bossMonster.position.x += boss1PatrolDir * boss1PatrolSpeed;
+                        if (bossMonster.position.x >= BOSS1_PATROL_X_MAX) {
+                            bossMonster.position.x = BOSS1_PATROL_X_MAX;
+                            boss1PatrolDir = -1;
+                        } else if (bossMonster.position.x <= BOSS1_PATROL_X_MIN) {
+                            bossMonster.position.x = BOSS1_PATROL_X_MIN;
+                            boss1PatrolDir = 1;
                         }
-
+                        // Xoay mặt theo hướng đi
+                        bossMonster.rotation.y = boss1PatrolDir > 0 ? Math.PI / 2 : -Math.PI / 2;
+                        // Nhẹ nhàng nhìn về player nếu gần (trong tầm tay)
+                        const dxNear = playerGroup.position.x - bossMonster.position.x;
+                        const dzNear = playerGroup.position.z - bossMonster.position.z;
+                        const distNear = Math.hypot(dxNear, dzNear);
+                        if (distNear <= BOSS1_ARM_REACH * 1.5) {
+                            bossMonster.rotation.y = Math.atan2(dxNear, dzNear);
+                        }
                     }
 
                     if (
@@ -13367,11 +13511,22 @@
                         lastBossAttackTime =
                             nowTime;
 
-                        const inCorner =
-                            Math.abs(playerGroup.position.x) > 13 &&
-                            Math.abs(playerGroup.position.z) > 13;
+                        // Stage 3 boss: chỉ đánh khi trong tầm tay (arm reach)
+                        // Các boss khác: miễn nhiễm nếu đứng góc (logic cũ)
+                        let canBeHitByBoss = true;
+                        if (gameStage === 3) {
+                            const dxArm = playerGroup.position.x - bossMonster.position.x;
+                            const dzArm = playerGroup.position.z - bossMonster.position.z;
+                            const distArm = Math.hypot(dxArm, dzArm);
+                            canBeHitByBoss = distArm <= BOSS1_ARM_REACH;
+                        } else {
+                            const inCorner =
+                                Math.abs(playerGroup.position.x) > 36 &&
+                                Math.abs(playerGroup.position.z) > 36;
+                            canBeHitByBoss = !inCorner;
+                        }
 
-                        if (!inCorner) {
+                        if (canBeHitByBoss) {
 
                             let bossDmg = 0;
 
@@ -13556,6 +13711,4 @@
     </script>
 
 </body>
-</html
-                        if (electronBossMonster) electronBossMonster.visible = false;
-                         document.getElementById('electron-world-msg').style.display = 'none';>
+</html>
