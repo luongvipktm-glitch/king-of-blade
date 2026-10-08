@@ -2,6 +2,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -177,33 +178,108 @@
 
         #boss-command {
             position: absolute;
-            bottom: 55px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 12px;
+            left: 12px;
+            right: auto;
+            transform: none;
             z-index: 25;
             display: none;
-            width: min(520px, 88vw);
-            background: rgba(5, 0, 15, 0.94);
-            border: 2px solid #ff00ff;
-            border-radius: 12px;
-            padding: 8px;
-            box-shadow: 0 0 18px rgba(255,0,255,0.55);
+            width: min(420px, calc(100vw - 24px));
+            background: rgba(0, 0, 0, 0.72);
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-radius: 2px;
+            padding: 0;
+            box-shadow: none;
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        #boss-command .mc-cmd-row {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            width: 100%;
+        }
+
+        #boss-command .mc-prefix {
+            flex: 0 0 auto;
+            padding: 8px 0 8px 10px;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: bold;
+            user-select: none;
+            pointer-events: none;
         }
 
         #boss-command input {
+            flex: 1 1 auto;
             width: 100%;
-            padding: 11px 14px;
-            border: 1px solid #ff00ff;
-            border-radius: 8px;
+            padding: 8px 10px 8px 4px;
+            border: none;
+            border-radius: 0;
             outline: none;
-            background: #08000f;
-            color: #fff;
-            font-size: 15px;
-            text-align: center;
+            background: transparent;
+            color: #ffffff;
+            font-size: 14px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            text-align: left;
+            caret-color: #ffffff;
         }
 
         #boss-command input::placeholder {
-            color: #aaa;
+            color: rgba(255, 255, 255, 0.45);
+            font-family: 'Consolas', 'Courier New', monospace;
+        }
+
+        #boss-command.admin-mode {
+            border-color: #ffd700;
+            background: rgba(0, 0, 0, 0.78);
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.25);
+        }
+
+        #boss-command.admin-mode .mc-prefix {
+            color: #ffd700;
+        }
+
+        #boss-command.admin-mode input {
+            color: #fff8d0;
+            caret-color: #ffd700;
+        }
+
+        #boss-command.admin-mode input::placeholder {
+            color: rgba(255, 215, 0, 0.45);
+        }
+
+        #mc-cmd-hint {
+            position: absolute;
+            bottom: 48px;
+            left: 12px;
+            right: auto;
+            transform: none;
+            z-index: 24;
+            display: none;
+            width: min(420px, calc(100vw - 24px));
+            background: rgba(0, 0, 0, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            padding: 5px 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 11px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            text-align: left;
+            pointer-events: none;
+        }
+
+        #mc-cmd-hint.admin-visible {
+            display: block;
+            border-color: rgba(255, 215, 0, 0.45);
+            color: #c8b060;
+        }
+
+        @media (max-width: 700px) {
+            #boss-command,
+            #mc-cmd-hint {
+                width: calc(100vw - 24px);
+            }
         }
 
         #instructions {
@@ -1175,13 +1251,20 @@
 
     </div>
 
+    <div id="mc-cmd-hint">
+        / //boss · //hack · [ADMIN] //end · //kill · //fly · //off
+    </div>
     <div id="boss-command">
-        <input
-            id="boss-command-input"
-            type="text"
-            placeholder="Nhập //boss rồi Enter"
-            autocomplete="off"
-        >
+        <div class="mc-cmd-row">
+            <span class="mc-prefix">&gt;</span>
+            <input
+                id="boss-command-input"
+                type="text"
+                placeholder="//command"
+                autocomplete="off"
+                spellcheck="false"
+            >
+        </div>
     </div>
 
     <div id="instructions" onclick="toggleLanguage()">
@@ -1678,6 +1761,8 @@
 
                 let hasGlitchSword = false;
                 let secretAdminMode = false;
+                let adminFlyMode = false;
+                let adminFlyY = 0;
 
                 let isCosmicSkinOn = true;
 
@@ -8848,6 +8933,235 @@
                     saveCurrentAccount();
                 }
 
+
+                function setAdminCommandUI(active) {
+                    const box = document.getElementById('boss-command');
+                    const hint = document.getElementById('mc-cmd-hint');
+                    const input = document.getElementById('boss-command-input');
+                    if (!box) return;
+                    if (active) {
+                        box.style.display = 'block';
+                        box.classList.add('admin-mode');
+                        if (hint) {
+                            hint.classList.add('admin-visible');
+                            hint.innerText = currentLang === 'vi'
+                                ? '> LỆNH ADMIN: //end | //kill | //fly | //off  ·  (cũng: //boss //hack)'
+                                : '> ADMIN CMDS: //end | //kill | //fly | //off  ·  (also: //boss //hack)';
+                        }
+                        if (input) input.placeholder = '//end  //kill  //fly  //off';
+                    } else {
+                        box.classList.remove('admin-mode');
+                        if (hint) hint.classList.remove('admin-visible');
+                    }
+                }
+
+                function adminTeleportToFinalWorld() {
+                    // Thế giới cuối = Electron World (stage 12)
+                    electronWorldUnlocked = true;
+                    electronHackUnlocked = true;
+                    errorGlitchWorldWon = true;
+                    waitingForNewBoss = false;
+                    electronBossDefeated = false;
+                    electronBossActive = true;
+                    electronBossHits = 0;
+                    gameStage = 12;
+                    errorBossActive = false;
+                    errorBossMonster.visible = false;
+                    errorFloor.visible = false;
+                    if (glitchCodeFloor) glitchCodeFloor.visible = false;
+                    if (rainbowHaloGroup) rainbowHaloGroup.visible = false;
+                    setExpandedWorld(12);
+                    if (electronBossMonster) {
+                        electronBossMonster.visible = true;
+                        electronBossMonster.position.set(14, electronHomeY, 0);
+                    }
+                    playerGroup.position.set(0, 0, 24);
+                    adminFlyMode = false;
+                    playerGroup.position.y = 0;
+                    jumpVelocity = 0;
+                    wasJumping = false;
+                    refreshPlayerMaxHP();
+                    playerHP = playerMaxHP;
+                    updatePlayerHPUI();
+                    document.getElementById('boss-hp-bar').style.display = 'block';
+                    document.getElementById('boss-title').innerText =
+                        currentLang === 'vi'
+                        ? '⚡ BOSS ELECTRON — THẾ GIỚI CUỐI'
+                        : '⚡ ELECTRON BOSS — FINAL WORLD';
+                    document.getElementById('boss-hp-inner').style.width = '100%';
+                    document.getElementById('boss-hp-text').innerText = '10.5e / 10.5e';
+                    document.getElementById('boss-hp-percent').innerText =
+                        currentLang === 'vi' ? 'Đã tiêu diệt: 0%' : 'Destroyed: 0%';
+                    document.getElementById('victory-screen').style.display = 'none';
+                    const msgs = ['electron-world-msg','gate-msg','final-boss-msg','supreme-boss-msg','universe-world-msg','atomic-boss-msg'];
+                    msgs.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.style.display = 'none';
+                    });
+                    showToast(
+                        currentLang === 'vi'
+                        ? '🌌 //end → ĐÃ DỊCH CHUYỂN TỚI THẾ GIỚI CUỐI (ELECTRON)!'
+                        : '🌌 //end → TELEPORTED TO FINAL WORLD (ELECTRON)!'
+                    );
+                    saveCurrentAccount();
+                }
+
+                function adminKillCurrentBoss() {
+                    let killed = false;
+                    const toastKill = (name) => {
+                        showToast(
+                            currentLang === 'vi'
+                            ? '💀 //kill → ĐÃ TIÊU DIỆT ' + name + '!'
+                            : '💀 //kill → KILLED ' + name + '!'
+                        );
+                    };
+
+                    if (gameStage === 1 && redMonster && redMonster.visible) {
+                        redMonsterHP = 0;
+                        redMonster.visible = false;
+                        killCount = Math.max(killCount, 999);
+                        document.getElementById('val-kills').innerText = killCount;
+                        killed = true;
+                        toastKill(currentLang === 'vi' ? 'QUÁI ĐỎ' : 'RED MOB');
+                    } else if (gameStage === 2 && octopusMonster && octopusMonster.visible) {
+                        octopusHP = 0;
+                        octopusMonster.visible = false;
+                        killed = true;
+                        toastKill(currentLang === 'vi' ? 'BẠCH TUỘC' : 'OCTOPUS');
+                    } else if (gameStage === 3 && bossMonster && bossMonster.visible) {
+                        bossHP = 0;
+                        bossMonster.visible = false;
+                        document.getElementById('boss-hp-inner').style.width = '0%';
+                        document.getElementById('boss-hp-text').innerText = '0 / ' + formatNum(currentBossMaxHP);
+                        gameStage = 4;
+                        killed = true;
+                        toastKill('BOSS MA VƯƠNG');
+                    } else if ((gameStage === 5 || finalBossActive) && finalBossMonster) {
+                        finalBossHP = 0;
+                        finalBossKillCount = FINAL_BOSS_KILLS_NEEDED;
+                        finalBossActive = false;
+                        finalBossMonster.visible = false;
+                        hasBossTitle = true;
+                        document.getElementById('boss-hp-bar').style.display = 'none';
+                        gameStage = 4;
+                        killed = true;
+                        toastKill(currentLang === 'vi' ? 'BOSS CUỐI' : 'FINAL BOSS');
+                    } else if (gameStage === 6 && supremeBossActive) {
+                        supremeBossHP = 0;
+                        supremeBossActive = false;
+                        supremeBossDefeated = true;
+                        if (finalBossMonster) finalBossMonster.visible = false;
+                        document.getElementById('boss-hp-bar').style.display = 'none';
+                        gameStage = 4;
+                        killed = true;
+                        toastKill(currentLang === 'vi' ? 'ĐẠI BOSS TỐI THƯỢNG' : 'ULTIMATE BOSS');
+                    } else if (gameStage === 7 && universeBossMonster) {
+                        universeBossHP = 0;
+                        universeBossKillCount = UNIVERSE_BOSS_KILLS_NEEDED;
+                        universeBossActive = false;
+                        universeBossDefeated = true;
+                        hasUniverseTitle = true;
+                        universeBossMonster.visible = false;
+                        document.getElementById('boss-hp-bar').style.display = 'none';
+                        killed = true;
+                        toastKill(currentLang === 'vi' ? 'BOSS VŨ TRỤ' : 'UNIVERSE BOSS');
+                    } else if (gameStage === 8) {
+                        cosmicBossHP = 0;
+                        cosmicBossKillCount = COSMIC_BOSS_KILLS_NEEDED;
+                        cosmicBossActive = false;
+                        cosmicBossDefeated = true;
+                        hasCosmicTitle = true;
+                        if (cosmicBossMonster) cosmicBossMonster.visible = false;
+                        if (oldCharacterBossMonster) oldCharacterBossMonster.visible = false;
+                        document.getElementById('boss-hp-bar').style.display = 'none';
+                        killed = true;
+                        toastKill(currentLang === 'vi' ? 'BOSS COSMIC' : 'COSMIC BOSS');
+                    } else if (gameStage === 9 && atomicBossActive) {
+                        atomicBossHP = 0;
+                        atomicBossActive = false;
+                        atomicBossDefeated = true;
+                        hasAtomicTitle = true;
+                        if (atomicBossMonster) atomicBossMonster.visible = false;
+                        document.getElementById('boss-hp-bar').style.display = 'none';
+                        killed = true;
+                        toastKill(currentLang === 'vi' ? 'BOSS HẠT NGUYÊN TỬ' : 'ATOMIC BOSS');
+                    } else if (gameStage === 10 && cosmicDinoActive) {
+                        cosmicDinoHP = 0n;
+                        cosmicDinoActive = false;
+                        cosmicDinoDefeated = true;
+                        if (cosmicDinoMonster) cosmicDinoMonster.visible = false;
+                        document.getElementById('boss-hp-bar').style.display = 'none';
+                        killed = true;
+                        toastKill(currentLang === 'vi' ? 'KHỦNG LONG COSMIC' : 'COSMIC DINO');
+                    } else if (gameStage === 11 && errorBossActive) {
+                        if (errorGlitchPhase) {
+                            winErrorGlitchBoss();
+                        } else {
+                            errorBossDefeated = true;
+                            errorBossActive = false;
+                            hasErrorTitle = true;
+                            errorBossKillCount++;
+                            errorBossMonster.visible = false;
+                            document.getElementById('boss-hp-bar').style.display = 'none';
+                            winErrorGlitchBoss();
+                        }
+                        killed = true;
+                        toastKill('ERROR / GLITCH BOSS');
+                    } else if (gameStage === 12 && electronBossActive) {
+                        electronBossHits = ELECTRON_BOSS_EHP;
+                        electronBossDefeated = true;
+                        electronBossActive = false;
+                        if (electronBossMonster) electronBossMonster.visible = false;
+                        document.getElementById('boss-hp-bar').style.display = 'none';
+                        killed = true;
+                        toastKill('ELECTRON BOSS');
+                    }
+
+                    if (!killed) {
+                        showToast(
+                            currentLang === 'vi'
+                            ? '❌ //kill: KHÔNG CÓ BOSS ĐANG ACTIVE TRONG THẾ GIỚI NÀY!'
+                            : '❌ //kill: NO ACTIVE BOSS IN THIS WORLD!'
+                        );
+                    } else {
+                        saveCurrentAccount();
+                    }
+                }
+
+                function adminEnableFly() {
+                    adminFlyMode = true;
+                    wasJumping = true;
+                    jumpVelocity = 0;
+                    if (playerGroup.position.y < 2) playerGroup.position.y = 4;
+                    adminFlyY = playerGroup.position.y;
+                    showToast(
+                        currentLang === 'vi'
+                        ? '🕊️ //fly → ĐÃ BẬT BAY! SPACE↑ / SHIFT↓ · //off để hạ'
+                        : '🕊️ //fly → FLY ON! SPACE↑ / SHIFT↓ · //off to land'
+                    );
+                }
+
+                function adminDisableFly() {
+                    if (!adminFlyMode) {
+                        showToast(
+                            currentLang === 'vi'
+                            ? 'ℹ️ //off: BẠN KHÔNG ĐANG BAY'
+                            : 'ℹ️ //off: YOU ARE NOT FLYING'
+                        );
+                        return;
+                    }
+                    adminFlyMode = false;
+                    jumpVelocity = 0;
+                    wasJumping = false;
+                    playerGroup.position.y = 0;
+                    showToast(
+                        currentLang === 'vi'
+                        ? '⬇️ //off → ĐÃ HẠ XUỐNG'
+                        : '⬇️ //off → LANDED'
+                    );
+                }
+
+
                 const bossCommandInput =
                     document.getElementById(
                         'boss-command-input'
@@ -8860,10 +9174,29 @@
                         if (e.key !== 'Enter')
                             return;
 
-                        const command =
-                            bossCommandInput.value.trim().toLowerCase();
+                        e.preventDefault();
 
-                        if (command === 'addmin1o/addmin' || command === 'addmin1o' || command === 'addmin') {
+                        let rawCmd =
+                            bossCommandInput.value.trim();
+
+                        // Minecraft-style: allow leading '/'
+                        if (rawCmd.startsWith('/') && !rawCmd.startsWith('//'))
+                            rawCmd = '/' + rawCmd; // keep single / as // for our cmds if user typed /end
+
+                        const command =
+                            rawCmd.toLowerCase().replace(/^\/+/, '//');
+
+                        // Normalize: user may type /end or //end
+                        const cmd =
+                            command.startsWith('//')
+                            ? command
+                            : ('//' + command.replace(/^\/+/, ''));
+
+                        const plain =
+                            rawCmd.toLowerCase().trim();
+
+                        if (plain === 'addmin1o/addmin' || plain === 'addmin1o' || plain === 'addmin') {
+                            secretAdminMode = true;
                             power = Infinity;
                             errorPowerExponent = Infinity;
                             errorDamageExponent = Infinity;
@@ -8873,26 +9206,54 @@
                             equippedItemType = 'error';
                             hackSwordCount = Math.max(hackSwordCount, 1);
                             updateInventoryUI();
-                            updatePlayerSwordVisual();
+                            if (typeof updatePlayerSwordVisual === 'function') updatePlayerSwordVisual();
                             const powerLabel = document.getElementById('val-power');
                             if (powerLabel) powerLabel.textContent = '∞';
                             const swordLabel = document.getElementById('val-sword');
-                            if (swordLabel) swordLabel.textContent = 'Error Sword (∞ DMG)';
-                            showToast(currentLang === 'vi' ? '⚡ Sức mạnh tối đa đã kích hoạt!' : '⚡ Maximum power activated!');
-                        } else if (command === '//boss') {
+                            if (swordLabel) {
+                                swordLabel.textContent = 'Error Sword (∞ DMG)';
+                                swordLabel.style.color = '#ff3355';
+                            }
+                            setAdminCommandUI(true);
+                            showToast(currentLang === 'vi' ? '⚡ ADMIN MODE + LỆNH MINECRAFT ĐÃ MỞ!' : '⚡ ADMIN MODE + MINECRAFT CMDS ON!');
+                        } else if (cmd === '//boss' || plain === '//boss') {
 
                             openCosmicDinoBossByCommand();
 
-                        } else if (command === '//hack' && errorGlitchWorldWon) {
+                        } else if ((cmd === '//hack' || plain === '//hack') && errorGlitchWorldWon) {
 
                             triggerElectronHack();
+
+                        } else if (secretAdminMode && (cmd === '//end' || plain === '//end' || plain === '/end')) {
+
+                            adminTeleportToFinalWorld();
+
+                        } else if (secretAdminMode && (cmd === '//kill' || plain === '//kill' || plain === '/kill')) {
+
+                            adminKillCurrentBoss();
+
+                        } else if (secretAdminMode && (cmd === '//fly' || plain === '//fly' || plain === '/fly')) {
+
+                            adminEnableFly();
+
+                        } else if (secretAdminMode && (cmd === '//off' || plain === '//off' || plain === '/off')) {
+
+                            adminDisableFly();
+
+                        } else if (!secretAdminMode && (plain === '//end' || plain === '//kill' || plain === '//fly' || plain === '//off' || plain === '/end' || plain === '/kill' || plain === '/fly' || plain === '/off')) {
+
+                            showToast(
+                                currentLang === 'vi'
+                                ? '🔒 LỆNH ADMIN! CẦN addmin1o/addmin TRƯỚC'
+                                : '🔒 ADMIN ONLY! LOGIN addmin1o/addmin FIRST'
+                            );
 
                         } else {
 
                             showToast(
                                 currentLang === 'vi'
-                                ? '❌ LỆNH KHÔNG HỢP LỆ!'
-                                : '❌ INVALID COMMAND!'
+                                ? '❌ LỆNH KHÔNG HỢP LỆ! Gõ //end //kill //fly //off'
+                                : '❌ INVALID COMMAND! Try //end //kill //fly //off'
                             );
 
                         }
@@ -8939,6 +9300,7 @@
                         if (
                             e.code === 'Space' &&
                             !e.repeat &&
+                            !adminFlyMode &&
                             playerGroup.position.y <= 0.02
                         ) {
                             jumpVelocity = 0.28;
@@ -12449,7 +12811,12 @@
                             if (typeof updatePlayerSwordVisual === 'function') updatePlayerSwordVisual();
                             if (typeof updateInventoryUI === 'function') updateInventoryUI();
                             if (typeof refreshPlayerMaxHP === 'function') refreshPlayerMaxHP();
-                            if (typeof showToast === 'function') showToast('⚡');
+                            if (typeof setAdminCommandUI === 'function') setAdminCommandUI(true);
+                            if (typeof showToast === 'function') showToast(
+                                currentLang === 'vi'
+                                ? '⚡ ADMIN MODE! Ô LỆNH MINECRAFT: //end //kill //fly //off'
+                                : '⚡ ADMIN MODE! MINECRAFT CMDS: //end //kill //fly //off'
+                            );
                             return;
                         }
 
@@ -13288,12 +13655,25 @@
                         updateGlitchBullets();
                     }
 
-                    if (!errorGlitchLaunchActive || !errorGlitchPhase) {
+                    if (adminFlyMode) {
+                        // Admin fly: no gravity, SPACE up / Shift down
+                        jumpVelocity = 0;
+                        wasJumping = true;
+                        if (keys[' '] || keys['space']) {
+                            playerGroup.position.y += 0.22;
+                        }
+                        if (keys['shift']) {
+                            playerGroup.position.y = Math.max(0.5, playerGroup.position.y - 0.22);
+                        }
+                        if (playerGroup.position.y < 0.5) playerGroup.position.y = 0.5;
+                        if (playerGroup.position.y > 80) playerGroup.position.y = 80;
+                        adminFlyY = playerGroup.position.y;
+                    } else if (!errorGlitchLaunchActive || !errorGlitchPhase) {
                         jumpVelocity -= 0.014;
                         playerGroup.position.y += jumpVelocity;
                     }
 
-                    if (!errorGlitchLaunchActive && playerGroup.position.y <= 0) {
+                    if (!adminFlyMode && !errorGlitchLaunchActive && playerGroup.position.y <= 0) {
                         playerGroup.position.y = 0;
                         jumpVelocity = 0;
                         wasJumping = false;
