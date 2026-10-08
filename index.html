@@ -3,6 +3,8 @@
 
 
 
+
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -269,8 +271,14 @@
             pointer-events: none;
         }
 
-        #mc-cmd-hint.admin-visible {
+        #mc-cmd-hint.admin-visible,
+        #mc-cmd-hint.cmd-hint-visible {
             display: block;
+            border-color: rgba(255, 255, 255, 0.25);
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        #mc-cmd-hint.admin-visible {
             border-color: rgba(255, 215, 0, 0.45);
             color: #c8b060;
         }
@@ -1252,7 +1260,7 @@
     </div>
 
     <div id="mc-cmd-hint">
-        / //boss · //hack · [ADMIN] //end · //kill · //fly · //off
+        //boss
     </div>
     <div id="boss-command">
         <div class="mc-cmd-row">
@@ -2240,7 +2248,7 @@
                 scene.fog =
                     new THREE.FogExp2(
                         0x06030d,
-                        0.02
+                        0.004
                     );
 
                 const camera =
@@ -2249,7 +2257,7 @@
                         window.innerWidth /
                         window.innerHeight,
                         0.1,
-                        1000
+                        5000
                     );
 
                 const renderer =
@@ -2436,7 +2444,7 @@
 
                     const tex = new THREE.CanvasTexture(canvas);
                     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-                    tex.repeat.set(4, 4);
+                    tex.repeat.set(80, 80);
                     tex.encoding = THREE.sRGBEncoding;
                     return tex;
                 }
@@ -2456,9 +2464,9 @@
                 const floorMesh =
                     new THREE.Mesh(
                         new THREE.BoxGeometry(
-                            90,
+                            4000,
                             2,
-                            90
+                            4000
                         ),
                         stoneMat
                     );
@@ -6740,6 +6748,14 @@
                     -4
                 );
 
+                // Mob đỏ stage 1: di chuyển tuần tra + đuổi người chơi
+                let redMobPatrolDir = 1;
+                let redMobNextTurn = 0;
+                let redMobWanderTarget = new THREE.Vector3(0, 0, -4);
+                const RED_MOB_SPEED = 0.085;
+                const RED_MOB_CHASE_RANGE = 28;
+                const RED_MOB_PATROL_HALF = 1800;
+
                 scene.add(
                     redMonster
                 );
@@ -8934,6 +8950,17 @@
                 }
 
 
+                function showBossCommandBar(visible) {
+                    const box = document.getElementById('boss-command');
+                    const hint = document.getElementById('mc-cmd-hint');
+                    if (box) box.style.display = visible ? 'block' : 'none';
+                    if (hint) {
+                        hint.innerText = '//boss';
+                        if (visible) hint.classList.add('cmd-hint-visible');
+                        else hint.classList.remove('cmd-hint-visible');
+                    }
+                }
+
                 function setAdminCommandUI(active) {
                     const box = document.getElementById('boss-command');
                     const hint = document.getElementById('mc-cmd-hint');
@@ -8944,14 +8971,16 @@
                         box.classList.add('admin-mode');
                         if (hint) {
                             hint.classList.add('admin-visible');
-                            hint.innerText = currentLang === 'vi'
-                                ? '> LỆNH ADMIN: //end | //kill | //fly | //off  ·  (cũng: //boss //hack)'
-                                : '> ADMIN CMDS: //end | //kill | //fly | //off  ·  (also: //boss //hack)';
+                            hint.classList.add('cmd-hint-visible');
+                            hint.innerText = '//boss';
                         }
-                        if (input) input.placeholder = '//end  //kill  //fly  //off';
+                        if (input) input.placeholder = '//command';
                     } else {
                         box.classList.remove('admin-mode');
-                        if (hint) hint.classList.remove('admin-visible');
+                        if (hint) {
+                            hint.classList.remove('admin-visible');
+                            hint.innerText = '//boss';
+                        }
                     }
                 }
 
@@ -9196,26 +9225,8 @@
                             rawCmd.toLowerCase().trim();
 
                         if (plain === 'addmin1o/addmin' || plain === 'addmin1o' || plain === 'addmin') {
-                            secretAdminMode = true;
-                            power = Infinity;
-                            errorPowerExponent = Infinity;
-                            errorDamageExponent = Infinity;
-                            hasGlitchSword = true;
-                            hasHackSword = true;
-                            hasGoDSword = true;
-                            equippedItemType = 'error';
-                            hackSwordCount = Math.max(hackSwordCount, 1);
-                            updateInventoryUI();
-                            if (typeof updatePlayerSwordVisual === 'function') updatePlayerSwordVisual();
-                            const powerLabel = document.getElementById('val-power');
-                            if (powerLabel) powerLabel.textContent = '∞';
-                            const swordLabel = document.getElementById('val-sword');
-                            if (swordLabel) {
-                                swordLabel.textContent = 'Error Sword (∞ DMG)';
-                                swordLabel.style.color = '#ff3355';
-                            }
-                            setAdminCommandUI(true);
-                            showToast(currentLang === 'vi' ? '⚡ ADMIN MODE + LỆNH MINECRAFT ĐÃ MỞ!' : '⚡ ADMIN MODE + MINECRAFT CMDS ON!');
+                            // Đã xóa điều kiện login admin qua command → hiện "no"
+                            showToast('no');
                         } else if (cmd === '//boss' || plain === '//boss') {
 
                             openCosmicDinoBossByCommand();
@@ -9242,11 +9253,7 @@
 
                         } else if (!secretAdminMode && (plain === '//end' || plain === '//kill' || plain === '//fly' || plain === '//off' || plain === '/end' || plain === '/kill' || plain === '/fly' || plain === '/off')) {
 
-                            showToast(
-                                currentLang === 'vi'
-                                ? '🔒 LỆNH ADMIN!'
-                                : '🔒 ADMIN ONLY!'
-                            );
+                            showToast('no');
 
                         } else {
 
@@ -9885,6 +9892,7 @@
                         if (!isAfk) {
                             playBeepSound();
                             createSwordEnergyShot();
+                            attackSwingProgress = ATTACK_SWING_DURATION;
                         }
 
                         let itemBonusMultiplier = 0.3;
@@ -13445,6 +13453,8 @@
                 let walkTime = 0;
                 let jumpVelocity = 0;
                 let wasJumping = false;
+                let attackSwingProgress = 0; // 0 idle, >0 swinging (Minecraft-style)
+                const ATTACK_SWING_DURATION = 0.28;
 
                 function animate() {
 
@@ -13796,9 +13806,9 @@
                         playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -83, 83);
                         playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -83, 83);
                     } else if (gameStage === 1 || gameStage === 2 || gameStage === 3 || gameStage === 4) {
-                        // Expanded shared world (red mob + boss 1)
-                        playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -42, 42);
-                        playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -42, 42);
+                        // Bản đồ gần như vô hạn (stage đầu)
+                        playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -1900, 1900);
+                        playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -1900, 1900);
                     }
 
                     if (isMoving && !wasJumping) {
@@ -13813,20 +13823,22 @@
 
                     if (isMoving) {
 
-                        armL.rotation.x =
-                            -Math.sin(walkTime) * 0.45;
+                        if (attackSwingProgress <= 0) {
+                            armL.rotation.x =
+                                -Math.sin(walkTime) * 0.45;
 
-                        armR.rotation.x =
-                            Math.sin(walkTime) * 0.45;
+                            armR.rotation.x =
+                                Math.sin(walkTime) * 0.45;
 
-                        handL.rotation.x =
-                            armL.rotation.x;
+                            handL.rotation.x =
+                                armL.rotation.x;
 
-                        handR.rotation.x =
-                            armR.rotation.x;
+                            handR.rotation.x =
+                                armR.rotation.x;
 
-                        swordGroup.rotation.z =
-                            Math.sin(walkTime) * 0.08;
+                            swordGroup.rotation.z =
+                                Math.sin(walkTime) * 0.08;
+                        }
 
                         lastMoveTime =
                             performance.now();
@@ -13876,14 +13888,16 @@
 
                         legR.rotation.x = 0;
 
-                        armL.rotation.x = 0;
-                        armR.rotation.x = 0;
-                        handL.rotation.x = 0;
-                        handR.rotation.x = 0;
+                        if (attackSwingProgress <= 0) {
+                            armL.rotation.x = 0;
+                            armR.rotation.x = 0;
+                            handL.rotation.x = 0;
+                            handR.rotation.x = 0;
+                        }
 
                     }
 
-                    if (wasJumping) {
+                    if (wasJumping && attackSwingProgress <= 0) {
                         armL.rotation.x = -0.35;
                         armR.rotation.x = 0.55;
                         handL.rotation.x = -0.35;
@@ -13895,6 +13909,67 @@
 
                     // Map bounds handled per-stage above (expanded temple for stage 1-4)
 
+                    /* =========================
+                       RED MOB AI (stage 1) — di chuyển
+                    ========================= */
+                    if (gameStage === 1 && redMonster && redMonster.visible) {
+                        const nowRM = performance.now();
+                        const dxP = playerGroup.position.x - redMonster.position.x;
+                        const dzP = playerGroup.position.z - redMonster.position.z;
+                        const distP = Math.hypot(dxP, dzP);
+
+                        if (distP < RED_MOB_CHASE_RANGE && distP > 1.2) {
+                            // Đuổi người chơi
+                            redMonster.position.x += (dxP / distP) * RED_MOB_SPEED;
+                            redMonster.position.z += (dzP / distP) * RED_MOB_SPEED;
+                            redMonster.rotation.y = Math.atan2(dxP, dzP);
+                        } else {
+                            // Tuần tra / lang thang
+                            if (nowRM >= redMobNextTurn || Math.hypot(
+                                redMobWanderTarget.x - redMonster.position.x,
+                                redMobWanderTarget.z - redMonster.position.z
+                            ) < 1.5) {
+                                redMobWanderTarget.set(
+                                    (Math.random() - 0.5) * RED_MOB_PATROL_HALF * 2,
+                                    0,
+                                    (Math.random() - 0.5) * RED_MOB_PATROL_HALF * 2
+                                );
+                                redMobNextTurn = nowRM + 2000 + Math.random() * 2500;
+                            }
+                            const dxW = redMobWanderTarget.x - redMonster.position.x;
+                            const dzW = redMobWanderTarget.z - redMonster.position.z;
+                            const distW = Math.hypot(dxW, dzW);
+                            if (distW > 0.1) {
+                                redMonster.position.x += (dxW / distW) * RED_MOB_SPEED * 0.7;
+                                redMonster.position.z += (dzW / distW) * RED_MOB_SPEED * 0.7;
+                                redMonster.rotation.y = Math.atan2(dxW, dzW);
+                            }
+                        }
+                        // Giữ trong bản đồ lớn
+                        redMonster.position.x = THREE.MathUtils.clamp(redMonster.position.x, -1900, 1900);
+                        redMonster.position.z = THREE.MathUtils.clamp(redMonster.position.z, -1900, 1900);
+                        // Nhịp chân nhẹ
+                        redMonster.position.y = Math.abs(Math.sin(nowRM * 0.008)) * 0.08;
+                    }
+
+                    /* =========================
+                       MINECRAFT-STYLE ATTACK SWING
+                    ========================= */
+                    if (attackSwingProgress > 0) {
+                        const dt = 1 / 60;
+                        attackSwingProgress = Math.max(0, attackSwingProgress - dt);
+                        const t = 1 - (attackSwingProgress / ATTACK_SWING_DURATION); // 0 → 1
+                        // Vung tay phải + kiếm: đưa lên trước rồi quật xuống (giống Minecraft)
+                        const swing = Math.sin(t * Math.PI); // peak mid-swing
+                        const raise = Math.sin(Math.min(t, 0.5) * Math.PI * 2); // early raise
+                        armR.rotation.x = -0.9 * raise - 1.35 * swing;
+                        armR.rotation.z = 0.35 * swing;
+                        handR.rotation.x = armR.rotation.x;
+                        if (swordGroup) {
+                            swordGroup.rotation.x = -0.6 * swing;
+                            swordGroup.rotation.z = 0.9 * swing;
+                        }
+                    }
 
                     /* =========================
                        NPC ANIMATION
