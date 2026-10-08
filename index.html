@@ -5,6 +5,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -1260,7 +1261,7 @@
     </div>
 
     <div id="mc-cmd-hint">
-        //boss
+        //boss · //hack
     </div>
     <div id="boss-command">
         <div class="mc-cmd-row">
@@ -1268,7 +1269,7 @@
             <input
                 id="boss-command-input"
                 type="text"
-                placeholder="//command"
+                placeholder="//boss · //hack"
                 autocomplete="off"
                 spellcheck="false"
             >
@@ -4835,18 +4836,29 @@
                 const cosmicDinoMonster =
                     new THREE.Group();
 
+                /* T-Rex cosmic: bipedal predator (không còn dáng vịt) */
                 const dinoBodyMat =
                     new THREE.MeshStandardMaterial({
-                        color: 0x35105f,
-                        emissive: 0x16002e,
-                        emissiveIntensity: 1.2,
-                        roughness: 0.35,
-                        metalness: 0.35
+                        color: 0x2a0a45,
+                        map: cosmicTexture,
+                        emissive: 0x1a0040,
+                        emissiveIntensity: 0.55,
+                        roughness: 0.55,
+                        metalness: 0.2
+                    });
+
+                const dinoDarkMat =
+                    new THREE.MeshStandardMaterial({
+                        color: 0x140820,
+                        emissive: 0x0a0018,
+                        emissiveIntensity: 0.35,
+                        roughness: 0.7,
+                        metalness: 0.15
                     });
 
                 const dinoGlowMat =
                     new THREE.MeshBasicMaterial({
-                        color: 0xff00ff
+                        color: 0xff44ff
                     });
 
                 const dinoEyeMat =
@@ -4854,130 +4866,209 @@
                         color: 0xffffff
                     });
 
-                const dinoBody =
+                const dinoToothMat =
+                    new THREE.MeshStandardMaterial({
+                        color: 0xf5f0e6,
+                        roughness: 0.4,
+                        metalness: 0.1
+                    });
+
+                // Thân ngang (horizontal torso) — đặc trưng T-Rex
+                const dinoTorso =
                     new THREE.Mesh(
-                        new THREE.SphereGeometry(2.5, 32, 24),
+                        new THREE.BoxGeometry(2.4, 2.6, 4.2),
                         dinoBodyMat
                     );
+                dinoTorso.position.set(0, 3.4, 0.2);
+                dinoTorso.castShadow = true;
+                cosmicDinoMonster.add(dinoTorso);
 
-                dinoBody.scale.set(1.35, 1, 1.7);
-                dinoBody.position.y = 2.1;
-                cosmicDinoMonster.add(dinoBody);
+                // Ngực / bụng dưới
+                const dinoBelly =
+                    new THREE.Mesh(
+                        new THREE.BoxGeometry(2.0, 1.4, 3.4),
+                        dinoDarkMat
+                    );
+                dinoBelly.position.set(0, 2.2, 0.15);
+                cosmicDinoMonster.add(dinoBelly);
 
+                // Cổ ngắn, dày, hơi hướng xuống trước
                 const dinoNeck =
                     new THREE.Mesh(
-                        new THREE.CylinderGeometry(1.15, 1.55, 3.4, 20),
+                        new THREE.CylinderGeometry(0.85, 1.15, 1.6, 10),
                         dinoBodyMat
                     );
-
-                dinoNeck.position.set(0, 4.1, -0.25);
-                dinoNeck.rotation.x = -0.35;
+                dinoNeck.position.set(0, 4.35, -2.15);
+                dinoNeck.rotation.x = 0.55;
                 cosmicDinoMonster.add(dinoNeck);
 
+                // Đầu to, dài mõm (hình hộp + thu nhỏ)
                 const dinoHead =
                     new THREE.Mesh(
-                        new THREE.SphereGeometry(1.8, 28, 22),
+                        new THREE.BoxGeometry(2.0, 1.7, 3.0),
                         dinoBodyMat
                     );
-
-                dinoHead.scale.set(1.25, 0.95, 1.5);
-                dinoHead.position.set(0, 5.8, -1.05);
+                dinoHead.position.set(0, 5.0, -3.6);
                 cosmicDinoMonster.add(dinoHead);
 
-                const dinoJaw =
+                // Mõm trên
+                const dinoSnout =
                     new THREE.Mesh(
-                        new THREE.BoxGeometry(2.5, 0.65, 2.2),
+                        new THREE.BoxGeometry(1.55, 0.85, 1.6),
                         dinoBodyMat
                     );
+                dinoSnout.position.set(0, 5.15, -5.2);
+                cosmicDinoMonster.add(dinoSnout);
 
-                dinoJaw.position.set(0, 4.95, -2.05);
+                // Hàm dưới
+                const dinoJaw =
+                    new THREE.Mesh(
+                        new THREE.BoxGeometry(1.45, 0.55, 2.4),
+                        dinoDarkMat
+                    );
+                dinoJaw.position.set(0, 4.25, -4.55);
                 cosmicDinoMonster.add(dinoJaw);
 
+                // Mắt trắng bóc hai bên đầu
                 const dinoEyeL =
                     new THREE.Mesh(
-                        new THREE.SphereGeometry(0.3, 16, 16),
+                        new THREE.SphereGeometry(0.28, 12, 12),
                         dinoEyeMat
                     );
-
                 const dinoEyeR = dinoEyeL.clone();
+                dinoEyeL.position.set(-1.05, 5.35, -3.15);
+                dinoEyeR.position.set(1.05, 5.35, -3.15);
+                cosmicDinoMonster.add(dinoEyeL, dinoEyeR);
 
-                dinoEyeL.position.set(-0.72, 6.1, -2.15);
-                dinoEyeR.position.set(0.72, 6.1, -2.15);
-
-                cosmicDinoMonster.add(
-                    dinoEyeL,
-                    dinoEyeR
-                );
-
-                const dinoHornL =
+                // Sừng / mào nhỏ trên đầu
+                const dinoCrest =
                     new THREE.Mesh(
-                        new THREE.ConeGeometry(0.45, 2.5, 12),
+                        new THREE.BoxGeometry(0.35, 0.7, 1.4),
                         dinoGlowMat
                     );
+                dinoCrest.position.set(0, 6.05, -3.4);
+                cosmicDinoMonster.add(dinoCrest);
 
-                const dinoHornR = dinoHornL.clone();
-
-                dinoHornL.position.set(-1.15, 7.25, -0.85);
-                dinoHornR.position.set(1.15, 7.25, -0.85);
-
-                dinoHornL.rotation.z = -0.25;
-                dinoHornR.rotation.z = 0.25;
-
-                cosmicDinoMonster.add(
-                    dinoHornL,
-                    dinoHornR
-                );
-
-                for (let i = 0; i < 7; i++) {
-
+                // Răng sắc
+                for (let i = 0; i < 8; i++) {
                     const tooth =
                         new THREE.Mesh(
-                            new THREE.ConeGeometry(0.13, 0.6, 8),
-                            dinoEyeMat
+                            new THREE.ConeGeometry(0.09, 0.42, 6),
+                            dinoToothMat
                         );
-
-                    tooth.position.set(
-                        -0.9 + i * 0.3,
-                        5.05,
-                        -3.05
-                    );
-
+                    tooth.position.set(-0.7 + i * 0.2, 4.55, -5.55 + (i % 2) * 0.15);
                     tooth.rotation.x = Math.PI;
-
                     cosmicDinoMonster.add(tooth);
                 }
 
-                for (let i = 0; i < 6; i++) {
+                // Tay nhỏ đặc trưng T-Rex
+                function makeTinyArm(side) {
+                    const arm = new THREE.Group();
+                    const upper = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.18, 0.22, 0.7, 8),
+                        dinoBodyMat
+                    );
+                    upper.position.y = -0.2;
+                    const forearm = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.12, 0.16, 0.55, 8),
+                        dinoDarkMat
+                    );
+                    forearm.position.set(0, -0.7, 0.1);
+                    forearm.rotation.x = 0.4;
+                    const claw = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.1, 0.35, 6),
+                        dinoToothMat
+                    );
+                    claw.position.set(0, -1.05, 0.25);
+                    claw.rotation.x = Math.PI;
+                    arm.add(upper, forearm, claw);
+                    arm.position.set(side * 1.35, 3.5, -1.2);
+                    arm.rotation.z = side * 0.35;
+                    arm.rotation.x = 0.25;
+                    cosmicDinoMonster.add(arm);
+                }
+                makeTinyArm(-1);
+                makeTinyArm(1);
 
+                // Chân sau to, chắc
+                function makeLeg(side) {
+                    const leg = new THREE.Group();
+                    const thigh = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.9, 1.8, 1.1),
+                        dinoBodyMat
+                    );
+                    thigh.position.y = 0;
+                    const shin = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.7, 1.6, 0.85),
+                        dinoDarkMat
+                    );
+                    shin.position.set(0, -1.55, 0.15);
+                    const foot = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.85, 0.35, 1.4),
+                        dinoDarkMat
+                    );
+                    foot.position.set(0, -2.45, 0.35);
+                    // móng
+                    for (let t = 0; t < 3; t++) {
+                        const claw = new THREE.Mesh(
+                            new THREE.ConeGeometry(0.1, 0.4, 6),
+                            dinoToothMat
+                        );
+                        claw.position.set(-0.25 + t * 0.25, -2.55, 0.95);
+                        claw.rotation.x = Math.PI / 2;
+                        leg.add(claw);
+                    }
+                    leg.add(thigh, shin, foot);
+                    leg.position.set(side * 0.95, 2.55, 1.0);
+                    cosmicDinoMonster.add(leg);
+                }
+                makeLeg(-1);
+                makeLeg(1);
+
+                // Đuôi dài cân bằng
+                const dinoTail1 =
+                    new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.9, 0.65, 2.4, 10),
+                        dinoBodyMat
+                    );
+                dinoTail1.position.set(0, 3.2, 2.6);
+                dinoTail1.rotation.x = Math.PI / 2;
+                dinoTail1.rotation.z = 0.12;
+                cosmicDinoMonster.add(dinoTail1);
+
+                const dinoTail2 =
+                    new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.65, 0.28, 2.8, 10),
+                        dinoDarkMat
+                    );
+                dinoTail2.position.set(0, 2.85, 4.9);
+                dinoTail2.rotation.x = Math.PI / 2;
+                dinoTail2.rotation.z = 0.18;
+                cosmicDinoMonster.add(dinoTail2);
+
+                // Gai lưng phát sáng vũ trụ
+                for (let i = 0; i < 5; i++) {
                     const spike =
                         new THREE.Mesh(
-                            new THREE.ConeGeometry(0.22, 1.2, 8),
+                            new THREE.ConeGeometry(0.18, 0.9, 7),
                             dinoGlowMat
                         );
-
-                    spike.position.set(
-                        -1.25 + i * 0.5,
-                        4.1,
-                        1.6
-                    );
-
-                    spike.rotation.x = -Math.PI / 2;
-
+                    spike.position.set(0, 5.0, -1.2 + i * 0.7);
                     cosmicDinoMonster.add(spike);
                 }
 
+                // Hào quang vũ trụ nhẹ
                 const dinoAura =
                     new THREE.Mesh(
-                        new THREE.SphereGeometry(5.5, 24, 20),
+                        new THREE.SphereGeometry(5.2, 20, 16),
                         new THREE.MeshBasicMaterial({
                             color: 0x8a00ff,
                             transparent: true,
-                            opacity: 0.12,
+                            opacity: 0.1,
                             side: THREE.BackSide
                         })
                     );
-
-                dinoAura.position.y = 3;
+                dinoAura.position.y = 3.2;
                 cosmicDinoMonster.add(dinoAura);
 
                 cosmicDinoMonster.position.set(0, 0, -8);
@@ -8739,6 +8830,55 @@
 
                 let cameraDistance = 10;
 
+                let isPointerLocked = false;
+
+                function isTypingTarget(el) {
+                    return el && (
+                        el.tagName === 'INPUT' ||
+                        el.tagName === 'TEXTAREA' ||
+                        el.isContentEditable
+                    );
+                }
+
+                function requestGamePointerLock() {
+                    const canvas = renderer && renderer.domElement;
+                    if (!canvas) return;
+                    if (document.pointerLockElement === canvas) return;
+                    try {
+                        canvas.requestPointerLock =
+                            canvas.requestPointerLock ||
+                            canvas.mozRequestPointerLock ||
+                            canvas.webkitRequestPointerLock;
+                        if (canvas.requestPointerLock)
+                            canvas.requestPointerLock();
+                    } catch (err) {}
+                }
+
+                function exitGamePointerLock() {
+                    if (document.exitPointerLock)
+                        document.exitPointerLock();
+                    else if (document.mozExitPointerLock)
+                        document.mozExitPointerLock();
+                    else if (document.webkitExitPointerLock)
+                        document.webkitExitPointerLock();
+                }
+
+                document.addEventListener('pointerlockchange', () => {
+                    const canvas = renderer && renderer.domElement;
+                    isPointerLocked = !!(canvas && document.pointerLockElement === canvas);
+                    isDragging = isPointerLocked;
+                    if (canvas) {
+                        canvas.style.cursor = isPointerLocked ? 'none' : 'default';
+                    }
+                });
+
+                document.addEventListener('mozpointerlockchange', () => {
+                    const canvas = renderer && renderer.domElement;
+                    isPointerLocked = !!(canvas && document.pointerLockElement === canvas);
+                    isDragging = isPointerLocked;
+                });
+
+                // Click canvas → lock mouse (Bloxd.io style)
                 window.addEventListener(
                     'mousedown',
                     e => {
@@ -8748,6 +8888,25 @@
                             'CANVAS'
                         )
                             return;
+
+                        if (isTypingTarget(document.activeElement))
+                            return;
+
+                        const loginOpen = document.getElementById('login-modal');
+                        const invOpen = document.getElementById('inventory-modal');
+                        const passOpen = document.getElementById('password-modal');
+                        const colorOpen = document.getElementById('color-modal');
+                        if (
+                            (loginOpen && loginOpen.style.display === 'flex') ||
+                            (invOpen && invOpen.style.display === 'flex') ||
+                            (passOpen && passOpen.style.display === 'flex') ||
+                            (colorOpen && colorOpen.style.display === 'flex')
+                        )
+                            return;
+
+                        if (!isPointerLocked) {
+                            requestGamePointerLock();
+                        }
 
                         isDragging = true;
 
@@ -8762,6 +8921,19 @@
                 window.addEventListener(
                     'mousemove',
                     e => {
+
+                        if (isPointerLocked) {
+                            const deltaX = e.movementX || 0;
+                            const deltaY = e.movementY || 0;
+
+                            cameraAngleX -= deltaX * 0.0025;
+                            cameraAngleY += deltaY * 0.0025;
+                            cameraAngleY = Math.max(
+                                0.12,
+                                Math.min(1.45, cameraAngleY)
+                            );
+                            return;
+                        }
 
                         if (!isDragging)
                             return;
@@ -8806,16 +8978,31 @@
                 window.addEventListener(
                     'mouseup',
                     () => {
-                        isDragging = false;
+                        if (!isPointerLocked)
+                            isDragging = false;
                     }
                 );
 
                 window.addEventListener(
                     'mouseleave',
                     () => {
-                        isDragging = false;
+                        if (!isPointerLocked)
+                            isDragging = false;
                     }
                 );
+
+                // ESC exits pointer lock (browser default) + blur command input
+                window.addEventListener('keydown', e => {
+                    if (e.key === 'Escape') {
+                        if (isPointerLocked) {
+                            isDragging = false;
+                        }
+                        const cmdInput = document.getElementById('boss-command-input');
+                        if (cmdInput && document.activeElement === cmdInput) {
+                            cmdInput.blur();
+                        }
+                    }
+                }, true);
 
                 /*
                    Zoom bằng bánh xe
@@ -8936,9 +9123,7 @@
                         'boss-hp-bar'
                     ).style.display = 'block';
 
-                    document.getElementById(
-                        'boss-command'
-                    ).style.display = 'block';
+                    showBossCommandBar(true);
 
                     showToast(
                         currentLang === 'vi'
@@ -8950,15 +9135,34 @@
                 }
 
 
+                function getPlayerCmdHintText() {
+                    return '//boss · //hack';
+                }
+
+                function getAdminCmdHintText() {
+                    return '//boss · //hack · //end · //kill · //fly · //off';
+                }
+
                 function showBossCommandBar(visible) {
                     const box = document.getElementById('boss-command');
                     const hint = document.getElementById('mc-cmd-hint');
+                    const input = document.getElementById('boss-command-input');
                     if (box) box.style.display = visible ? 'block' : 'none';
                     if (hint) {
-                        hint.innerText = '//boss';
-                        if (visible) hint.classList.add('cmd-hint-visible');
-                        else hint.classList.remove('cmd-hint-visible');
+                        hint.innerText = secretAdminMode
+                            ? getAdminCmdHintText()
+                            : getPlayerCmdHintText();
+                        // Luôn hiện gợi ý //boss · //hack ngay khi có thanh lệnh
+                        if (visible) {
+                            hint.classList.add('cmd-hint-visible');
+                            hint.style.display = 'block';
+                        } else {
+                            hint.classList.remove('cmd-hint-visible');
+                            hint.style.display = 'none';
+                        }
                     }
+                    if (visible && input && !input.placeholder)
+                        input.placeholder = '//boss · //hack';
                 }
 
                 function setAdminCommandUI(active) {
@@ -8972,14 +9176,14 @@
                         if (hint) {
                             hint.classList.add('admin-visible');
                             hint.classList.add('cmd-hint-visible');
-                            hint.innerText = '//boss';
+                            hint.innerText = getAdminCmdHintText();
                         }
                         if (input) input.placeholder = '//command';
                     } else {
                         box.classList.remove('admin-mode');
                         if (hint) {
                             hint.classList.remove('admin-visible');
-                            hint.innerText = '//boss';
+                            hint.innerText = getPlayerCmdHintText();
                         }
                     }
                 }
@@ -9253,15 +9457,24 @@
 
                         } else if (!secretAdminMode && (plain === '//end' || plain === '//kill' || plain === '//fly' || plain === '//off' || plain === '/end' || plain === '/kill' || plain === '/fly' || plain === '/off')) {
 
-                            showToast('no');
+                            // Player mode: silent for admin-only cmds
 
-                        } else {
+                        } else if (secretAdminMode) {
 
                             showToast(
                                 currentLang === 'vi'
                                 ? '❌ LỆNH KHÔNG HỢP LỆ! Gõ //end //kill //fly //off'
                                 : '❌ INVALID COMMAND! Try //end //kill //fly //off'
                             );
+
+                        } else {
+
+                            // Wrong cmd in player mode: no "wrong" toast, only show player hints
+                            const hint = document.getElementById('mc-cmd-hint');
+                            if (hint) {
+                                hint.innerText = getPlayerCmdHintText();
+                                hint.classList.add('cmd-hint-visible');
+                            }
 
                         }
 
@@ -10238,9 +10451,7 @@
                                     finalBossKillCount++;
 
 
-                                    document.getElementById(
-                                        'boss-command'
-                                    ).style.display = 'block';
+                                    showBossCommandBar(true);
 
                                     finalBossHP =
                                         finalBossMaxHP;
@@ -10737,9 +10948,7 @@
                                     'boss-hp-bar'
                                 ).style.display = 'none';
 
-                                document.getElementById(
-                                    'boss-command'
-                                ).style.display = 'none';
+                                showBossCommandBar(false);
 
                                 gameStage = 11;
                                 errorBossUnlocked = true;
@@ -10906,11 +11115,7 @@
                                     cosmicDinoUnlocked = true;
                                     cosmicDinoDefeated = false;
 
-                                    const commandBox =
-                                        document.getElementById('boss-command');
-
-                                    if (commandBox)
-                                        commandBox.style.display = 'block';
+                                    showBossCommandBar(true);
 
                                     gameStage = 4;
                                     playerGroup.position.x = 0;
@@ -11957,7 +12162,7 @@
                     }
 
                     if (cosmicDinoUnlocked) {
-                        document.getElementById('boss-command').style.display = 'block';
+                        showBossCommandBar(true);
                     }
 
                     refreshPlayerMaxHP();
@@ -13180,12 +13385,9 @@
                         const msg = document.getElementById('electron-world-msg');
                         if (msg) msg.style.display = 'block';
 
-                        const cmd = document.getElementById('boss-command');
-                        if (cmd) {
-                            cmd.style.display = 'block';
-                            const input = document.getElementById('boss-command-input');
-                            if (input) input.placeholder = 'Nhập //boss hoặc //hack rồi Enter';
-                        }
+                        showBossCommandBar(true);
+                        const input = document.getElementById('boss-command-input');
+                        if (input) input.placeholder = 'Nhập //boss hoặc //hack rồi Enter';
 
                         showToast(
                             currentLang === 'vi'
@@ -13202,7 +13404,7 @@
 
                     document.getElementById('electron-world-msg').style.display = 'none';
                     document.getElementById('victory-screen').style.display = 'none';
-                    document.getElementById('boss-command').style.display = 'none';
+                    showBossCommandBar(false);
 
                     gameStage = 12;
                     waitingForNewBoss = false;
@@ -13317,14 +13519,11 @@
 
                     document.getElementById('victory-screen').style.display = 'none';
 
-                    const cmd = document.getElementById('boss-command');
-                    if (cmd) {
-                        cmd.style.display = 'block';
-                        const input = document.getElementById('boss-command-input');
-                        if (input) {
-                            input.placeholder = 'Sau Glich: nhập //hack rồi Enter';
-                            input.value = '';
-                        }
+                    showBossCommandBar(true);
+                    const inputHack = document.getElementById('boss-command-input');
+                    if (inputHack) {
+                        inputHack.placeholder = 'Sau Glich: nhập //hack rồi Enter';
+                        inputHack.value = '';
                     }
 
                     showToast(
