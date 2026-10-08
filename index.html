@@ -1,6 +1,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -2172,7 +2173,7 @@
                     });
 
                 renderer.shadowMap.enabled = true;
-                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                renderer.shadowMap.type = THREE.BasicShadowMap; // nhẹ hơn PCFSoft
                 renderer.outputEncoding = THREE.sRGBEncoding;
                 renderer.toneMapping = THREE.ACESFilmicToneMapping;
                 renderer.toneMappingExposure = 1.05;
@@ -2182,10 +2183,11 @@
                     window.innerHeight
                 );
 
+                // Giảm pixel ratio để giảm lag (max 1.5)
                 renderer.setPixelRatio(
                     Math.min(
-                        window.devicePixelRatio,
-                        2
+                        window.devicePixelRatio || 1,
+                        1.5
                     )
                 );
 
@@ -2195,24 +2197,24 @@
 
                 const hemiLight =
                     new THREE.HemisphereLight(
-                        0x9db8ff,
-                        0x20150f,
-                        1.15
+                        0xb0c8ff,
+                        0x1a1025,
+                        1.35
                     );
 
                 scene.add(hemiLight);
 
                 scene.add(
                     new THREE.AmbientLight(
-                        0x3a2b5e,
-                        0.45
+                        0x4a3a7e,
+                        0.55
                     )
                 );
 
                 const dirLight =
                     new THREE.DirectionalLight(
-                        0x9966ff,
-                        1.8
+                        0xaa77ff,
+                        2.1
                     );
 
                 dirLight.position.set(
@@ -2222,24 +2224,26 @@
                 );
 
                 dirLight.castShadow = true;
-                dirLight.shadow.mapSize.width = 2048;
-                dirLight.shadow.mapSize.height = 2048;
+                dirLight.shadow.mapSize.width = 1024;  // giảm từ 2048 → 1024 chống lag
+                dirLight.shadow.mapSize.height = 1024;
                 dirLight.shadow.camera.near = 0.5;
-                dirLight.shadow.camera.far = 180;
-                dirLight.shadow.camera.left = -70;
-                dirLight.shadow.camera.right = 70;
-                dirLight.shadow.camera.top = 70;
-                dirLight.shadow.camera.bottom = -70;
+                dirLight.shadow.camera.far = 120;
+                dirLight.shadow.camera.left = -50;
+                dirLight.shadow.camera.right = 50;
+                dirLight.shadow.camera.top = 50;
+                dirLight.shadow.camera.bottom = -50;
+                dirLight.shadow.bias = -0.001;
 
                 scene.add(dirLight);
 
                 const moonLight =
                     new THREE.PointLight(
                         0x7aa2ff,
-                        2.2,
-                        55,
+                        1.6,
+                        40,
                         2
                     );
+                moonLight.castShadow = false; // tắt shadow point light để giảm lag
 
                 moonLight.position.set(
                     -8,
@@ -2253,7 +2257,7 @@
                 const starsGeo =
                     new THREE.BufferGeometry();
 
-                const starsCnt = 500;
+                const starsCnt = 220; // giảm số sao chống lag
 
                 const posArr =
                     new Float32Array(
@@ -2293,10 +2297,75 @@
                 const platformGroup =
                     new THREE.Group();
 
+                /* ===== UPGRADED TEMPLE FLOOR TEXTURE ===== */
+                function createTempleFloorTexture() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 512;
+                    canvas.height = 512;
+                    const ctx = canvas.getContext('2d');
+
+                    // Base deep purple-green stone
+                    const baseGrad = ctx.createLinearGradient(0, 0, 512, 512);
+                    baseGrad.addColorStop(0, '#1a0f2e');
+                    baseGrad.addColorStop(0.5, '#0f1a1a');
+                    baseGrad.addColorStop(1, '#1a0f2e');
+                    ctx.fillStyle = baseGrad;
+                    ctx.fillRect(0, 0, 512, 512);
+
+                    // Mystical tile pattern
+                    for (let y = 0; y < 8; y++) {
+                        for (let x = 0; x < 8; x++) {
+                            const px = x * 64, py = y * 64;
+                            const isAlt = (x + y) % 2 === 0;
+                            ctx.fillStyle = isAlt ? 'rgba(40,25,70,0.55)' : 'rgba(20,40,45,0.45)';
+                            ctx.fillRect(px + 2, py + 2, 60, 60);
+
+                            // Inner glow rune circle
+                            ctx.strokeStyle = 'rgba(100,255,220,0.18)';
+                            ctx.lineWidth = 1.5;
+                            ctx.beginPath();
+                            ctx.arc(px + 32, py + 32, 18, 0, Math.PI * 2);
+                            ctx.stroke();
+
+                            // Center crystal spark
+                            ctx.fillStyle = 'rgba(180,255,255,0.25)';
+                            ctx.beginPath();
+                            ctx.arc(px + 32, py + 32, 3, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+
+                    // Subtle noise / cracks
+                    for (let i = 0; i < 400; i++) {
+                        const nx = Math.random() * 512, ny = Math.random() * 512;
+                        ctx.fillStyle = `rgba(80,60,120,${0.05 + Math.random() * 0.1})`;
+                        ctx.fillRect(nx, ny, 1 + Math.random() * 2, 1 + Math.random() * 2);
+                    }
+
+                    // Border glow lines
+                    ctx.strokeStyle = 'rgba(163,53,238,0.35)';
+                    ctx.lineWidth = 3;
+                    for (let i = 0; i < 8; i++) {
+                        ctx.strokeRect(i * 64 + 1, i * 64 + 1, 62, 62);
+                    }
+
+                    const tex = new THREE.CanvasTexture(canvas);
+                    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                    tex.repeat.set(4, 4);
+                    tex.encoding = THREE.sRGBEncoding;
+                    return tex;
+                }
+
+                const templeFloorTex = createTempleFloorTexture();
+
                 const stoneMat =
                     new THREE.MeshStandardMaterial({
-                        color: 0x2f9e44,
-                        roughness: 1.0
+                        map: templeFloorTex,
+                        color: 0xffffff,
+                        roughness: 0.75,
+                        metalness: 0.15,
+                        emissive: 0x1a0033,
+                        emissiveIntensity: 0.25
                     });
 
                 const floorMesh =
@@ -2310,60 +2379,120 @@
                     );
 
                 floorMesh.position.y = -1;
+                floorMesh.receiveShadow = true;
 
                 platformGroup.add(
                     floorMesh
                 );
 
+                // Decorative edge rim around the temple platform
+                const rimMat = new THREE.MeshStandardMaterial({
+                    color: 0x6b2db5,
+                    emissive: 0x4a1a8a,
+                    emissiveIntensity: 0.6,
+                    metalness: 0.7,
+                    roughness: 0.3
+                });
+                const rimGeo = new THREE.BoxGeometry(92, 0.35, 1.2);
+                [-45.5, 45.5].forEach(z => {
+                    const rim = new THREE.Mesh(rimGeo, rimMat);
+                    rim.position.set(0, 0.1, z);
+                    platformGroup.add(rim);
+                });
+                const rimGeo2 = new THREE.BoxGeometry(1.2, 0.35, 90);
+                [-45.5, 45.5].forEach(x => {
+                    const rim = new THREE.Mesh(rimGeo2, rimMat);
+                    rim.position.set(x, 0.1, 0);
+                    platformGroup.add(rim);
+                });
+
                 const pillarMat =
                     new THREE.MeshStandardMaterial({
-                        color: 0x423a56,
-                        roughness: 0.6
+                        color: 0x2a1f3d,
+                        roughness: 0.45,
+                        metalness: 0.35,
+                        emissive: 0x1a0a30,
+                        emissiveIntensity: 0.2
                     });
 
                 const crystalMat =
-                    new THREE.MeshBasicMaterial({
-                        color: 0x00ffff
+                    new THREE.MeshStandardMaterial({
+                        color: 0x00ffff,
+                        emissive: 0x00ffff,
+                        emissiveIntensity: 1.2,
+                        transparent: true,
+                        opacity: 0.9,
+                        metalness: 0.6,
+                        roughness: 0.2
                     });
 
-                function createPillar(x,z) {
+                const crystalGlowMat =
+                    new THREE.MeshBasicMaterial({
+                        color: 0x88ffff,
+                        transparent: true,
+                        opacity: 0.35,
+                        depthWrite: false,
+                        blending: THREE.AdditiveBlending
+                    });
 
-                    const pillar =
-                        new THREE.Mesh(
-                            new THREE.CylinderGeometry(
-                                0.5,
-                                0.6,
-                                6,
-                                12
-                            ),
-                            pillarMat
-                        );
+                function createPillar(x, z) {
+                    const group = new THREE.Group();
 
-                    pillar.position.set(
-                        x,
-                        2,
-                        z
+                    // Base pedestal (low segments)
+                    const base = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.8, 0.95, 0.35, 6),
+                        pillarMat
                     );
+                    base.position.y = 0.18;
+                    base.castShadow = false;
+                    group.add(base);
 
-                    const crystal =
-                        new THREE.Mesh(
-                            new THREE.OctahedronGeometry(
-                                0.3
-                            ),
-                            crystalMat
-                        );
-
-                    crystal.position.set(
-                        0,
-                        1.5,
-                        0.55
+                    // Main shaft
+                    const pillar = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.4, 0.52, 5.2, 8),
+                        pillarMat
                     );
+                    pillar.position.y = 2.9;
+                    pillar.castShadow = false;
+                    group.add(pillar);
 
-                    pillar.add(crystal);
-
-                    platformGroup.add(
-                        pillar
+                    // One decorative band only (giảm geometry)
+                    const band = new THREE.Mesh(
+                        new THREE.TorusGeometry(0.46, 0.055, 6, 12),
+                        rimMat
                     );
+                    band.rotation.x = Math.PI / 2;
+                    band.position.y = 2.9;
+                    group.add(band);
+
+                    // Top capital
+                    const capital = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.65, 0.38, 0.3, 6),
+                        pillarMat
+                    );
+                    capital.position.y = 5.65;
+                    capital.castShadow = false;
+                    group.add(capital);
+
+                    // Glowing crystal on top (không dùng PointLight từng cột để tránh lag)
+                    const crystal = new THREE.Mesh(
+                        new THREE.OctahedronGeometry(0.32, 0), // low poly
+                        crystalMat
+                    );
+                    crystal.position.y = 6.2;
+                    crystal.castShadow = false;
+                    group.add(crystal);
+
+                    // Soft glow aura (chỉ mesh, không light)
+                    const glow = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.48, 8, 8),
+                        crystalGlowMat
+                    );
+                    glow.position.y = 6.2;
+                    group.add(glow);
+
+                    group.position.set(x, 0, z);
+                    platformGroup.add(group);
                 }
 
                 // Expanded temple map pillars (stage 1–2 temple; boss 1 uses hell world)
@@ -2747,74 +2876,92 @@
                 ========================= */
 
                 function createUniverseFloorTexture() {
-
-                    const canvas =
-                        document.createElement('canvas');
-
+                    const canvas = document.createElement('canvas');
                     canvas.width = 1024;
                     canvas.height = 1024;
+                    const ctx = canvas.getContext('2d');
 
-                    const ctx =
-                        canvas.getContext('2d');
-
-                    const gradient =
-                        ctx.createRadialGradient(
-                            512,
-                            512,
-                            20,
-                            512,
-                            512,
-                            700
-                        );
-
-                    gradient.addColorStop(0, '#26105c');
-                    gradient.addColorStop(0.35, '#0c1645');
-                    gradient.addColorStop(0.7, '#05051b');
-                    gradient.addColorStop(1, '#000000');
-
+                    // Deep space base with rich purple-blue
+                    const gradient = ctx.createRadialGradient(512, 420, 30, 512, 512, 720);
+                    gradient.addColorStop(0, '#3a1a7a');
+                    gradient.addColorStop(0.2, '#1a0a4a');
+                    gradient.addColorStop(0.45, '#0a0828');
+                    gradient.addColorStop(0.75, '#040218');
+                    gradient.addColorStop(1, '#010008');
                     ctx.fillStyle = gradient;
                     ctx.fillRect(0, 0, 1024, 1024);
 
-                    for (let i = 0; i < 900; i++) {
+                    // Large colorful nebulae
+                    const nebs = [
+                        [300, 280, 280, 'rgba(160,40,255,0.4)', 'rgba(80,20,160,0.12)'],
+                        [720, 360, 300, 'rgba(40,100,255,0.35)', 'rgba(20,50,140,0.1)'],
+                        [480, 700, 260, 'rgba(255,40,160,0.3)', 'rgba(140,20,80,0.1)'],
+                        [200, 650, 200, 'rgba(60,200,255,0.28)', 'rgba(20,100,160,0.08)'],
+                        [800, 200, 180, 'rgba(255,180,60,0.18)', 'rgba(160,100,20,0.05)'],
+                        [550, 200, 160, 'rgba(200,80,255,0.25)', 'rgba(100,30,140,0.08)']
+                    ];
+                    nebs.forEach(([x, y, r, c0, c1]) => {
+                        const ng = ctx.createRadialGradient(x, y, 0, x, y, r);
+                        ng.addColorStop(0, c0);
+                        ng.addColorStop(0.5, c1);
+                        ng.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = ng;
+                        ctx.beginPath();
+                        ctx.arc(x, y, r, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
 
-                        const x = Math.random() * 1024;
-                        const y = Math.random() * 1024;
-                        const r = Math.random() * 2.2 + 0.2;
+                    // Spiral galaxy cores on floor
+                    function floorSpiral(cx, cy, sc, rot) {
+                        const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, 16 * sc);
+                        core.addColorStop(0, '#fff6d0');
+                        core.addColorStop(0.3, '#d0a0ff');
+                        core.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = core;
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, 18 * sc, 0, Math.PI * 2);
+                        ctx.fill();
+                        for (let arm = 0; arm < 3; arm++) {
+                            for (let a = 0; a < 50; a++) {
+                                const ang = rot + arm * 2.094 + a * 0.14;
+                                const rad = (3 + a * 1.2) * sc;
+                                ctx.fillStyle = `rgba(180,160,255,${0.4 * (1 - a / 50)})`;
+                                ctx.beginPath();
+                                ctx.arc(cx + Math.cos(ang) * rad, cy + Math.sin(ang) * rad * 0.55, 1.5 * sc, 0, Math.PI * 2);
+                                ctx.fill();
+                            }
+                        }
+                    }
+                    floorSpiral(380, 320, 1.3, 0.4);
+                    floorSpiral(700, 600, 1.0, 1.5);
+                    floorSpiral(250, 700, 0.8, 2.2);
 
-                        ctx.fillStyle =
-                            `rgba(255,255,255,${0.25 + Math.random() * 0.75})`;
-
+                    // Dense stars
+                    for (let i = 0; i < 1400; i++) {
+                        const x = Math.random() * 1024, y = Math.random() * 1024;
+                        const r = Math.random() * 1.8 + 0.2;
+                        const b = 0.3 + Math.random() * 0.7;
+                        ctx.fillStyle = Math.random() < 0.15
+                            ? `rgba(180,200,255,${b})`
+                            : `rgba(255,255,255,${b})`;
                         ctx.beginPath();
                         ctx.arc(x, y, r, 0, Math.PI * 2);
                         ctx.fill();
                     }
 
-                    for (let i = 0; i < 30; i++) {
-
-                        const x = Math.random() * 1024;
-                        const y = Math.random() * 1024;
-                        const r = Math.random() * 90 + 25;
-
-                        const nebula =
-                            ctx.createRadialGradient(
-                                x,
-                                y,
-                                0,
-                                x,
-                                y,
-                                r
-                            );
-
-                        nebula.addColorStop(0, 'rgba(180,60,255,0.18)');
-                        nebula.addColorStop(1, 'rgba(0,0,0,0)');
-
-                        ctx.fillStyle = nebula;
+                    // Bright sparks
+                    for (let i = 0; i < 40; i++) {
+                        const x = Math.random() * 1024, y = Math.random() * 1024;
+                        const r = 1.5 + Math.random() * 2;
+                        ctx.fillStyle = 'rgba(220,240,255,0.95)';
                         ctx.beginPath();
                         ctx.arc(x, y, r, 0, Math.PI * 2);
                         ctx.fill();
                     }
 
-                    return new THREE.CanvasTexture(canvas);
+                    const tex = new THREE.CanvasTexture(canvas);
+                    tex.encoding = THREE.sRGBEncoding;
+                    return tex;
                 }
 
                 const universeFloorTexture =
@@ -2826,13 +2973,19 @@
                 universeFloorTexture.wrapT =
                     THREE.RepeatWrapping;
 
-                universeFloorTexture.repeat.set(2, 2);
+                universeFloorTexture.repeat.set(3, 3);
 
                 const universeFloor =
                     new THREE.Mesh(
-                        new THREE.PlaneGeometry(36, 36),
-                        new THREE.MeshBasicMaterial({
+                        new THREE.PlaneGeometry(120, 120),
+                        new THREE.MeshStandardMaterial({
                             map: universeFloorTexture,
+                            color: 0xffffff,
+                            emissive: 0x1a0840,
+                            emissiveMap: universeFloorTexture,
+                            emissiveIntensity: 0.55,
+                            roughness: 0.6,
+                            metalness: 0.15,
                             side: THREE.DoubleSide
                         })
                     );
@@ -2959,9 +3112,38 @@
 
                 const blackHoleWorld = new THREE.Group();
                 const blackHoleRotators = [];
+
+                // Beautiful cosmic floor for black hole zone
+                const bhFloorTex = (function() {
+                    const c = document.createElement('canvas');
+                    c.width = c.height = 512;
+                    const g = c.getContext('2d');
+                    const grd = g.createRadialGradient(256, 256, 10, 256, 256, 300);
+                    grd.addColorStop(0, '#12082a');
+                    grd.addColorStop(0.5, '#060318');
+                    grd.addColorStop(1, '#010008');
+                    g.fillStyle = grd;
+                    g.fillRect(0, 0, 512, 512);
+                    for (let i = 0; i < 800; i++) {
+                        g.fillStyle = `rgba(200,180,255,${0.15 + Math.random() * 0.5})`;
+                        g.fillRect(Math.random() * 512, Math.random() * 512, 1 + Math.random(), 1 + Math.random());
+                    }
+                    const t = new THREE.CanvasTexture(c);
+                    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+                    t.repeat.set(8, 8);
+                    return t;
+                })();
+
                 const blackHoleFloor = new THREE.Mesh(
                     new THREE.PlaneGeometry(500, 500),
-                    new THREE.MeshBasicMaterial({ color: 0x03030b })
+                    new THREE.MeshStandardMaterial({
+                        map: bhFloorTex,
+                        color: 0xffffff,
+                        emissive: 0x0a0420,
+                        emissiveMap: bhFloorTex,
+                        emissiveIntensity: 0.4,
+                        roughness: 0.7
+                    })
                 );
                 blackHoleFloor.rotation.x = -Math.PI / 2;
                 blackHoleFloor.position.y = 0.015;
@@ -2969,71 +3151,326 @@
 
                 const spaceDust = new THREE.BufferGeometry();
                 const dustPositions = [];
-                for (let i = 0; i < 1500; i++) {
+                const dustColors = [];
+                for (let i = 0; i < 1200; i++) {
                     dustPositions.push((Math.random() - 0.5) * 480, 1 + Math.random() * 70, (Math.random() - 0.5) * 480);
+                    const hue = Math.random();
+                    if (hue < 0.4) { dustColors.push(0.8, 0.7, 1); }
+                    else if (hue < 0.7) { dustColors.push(1, 0.85, 0.6); }
+                    else { dustColors.push(0.6, 0.85, 1); }
                 }
                 spaceDust.setAttribute('position', new THREE.Float32BufferAttribute(dustPositions, 3));
-                const dust = new THREE.Points(spaceDust, new THREE.PointsMaterial({ color: 0xc8c7ff, size: 0.22, transparent: true, opacity: 0.8 }));
+                spaceDust.setAttribute('color', new THREE.Float32BufferAttribute(dustColors, 3));
+                const dust = new THREE.Points(spaceDust, new THREE.PointsMaterial({
+                    size: 0.28, transparent: true, opacity: 0.85, vertexColors: true, depthWrite: false
+                }));
                 blackHoleWorld.add(dust);
 
-                for (let i = 0; i < 24; i++) {
-                    const radius = 4 + Math.random() * 5.5;
+                // Fewer but prettier black holes with glowing accretion disks
+                for (let i = 0; i < 12; i++) {
+                    const radius = 5 + Math.random() * 6;
+                    const holeGroup = new THREE.Group();
+                    holeGroup.position.set((Math.random() - 0.5) * 400, 0.04, (Math.random() - 0.5) * 400);
+
+                    // Event horizon
                     const hole = new THREE.Mesh(
-                        new THREE.CircleGeometry(radius * 0.76, 48),
-                        new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 1 })
+                        new THREE.CircleGeometry(radius * 0.7, 32),
+                        new THREE.MeshBasicMaterial({ color: 0x000000 })
                     );
                     hole.rotation.x = -Math.PI / 2;
-                    hole.position.set((Math.random() - 0.5) * 430, 0.04, (Math.random() - 0.5) * 430);
-                    blackHoleWorld.add(hole);
+                    holeGroup.add(hole);
+
+                    // Inner glow disk
+                    const innerGlow = new THREE.Mesh(
+                        new THREE.RingGeometry(radius * 0.7, radius * 0.95, 32),
+                        new THREE.MeshBasicMaterial({
+                            color: 0xff6622, transparent: true, opacity: 0.7, side: THREE.DoubleSide
+                        })
+                    );
+                    innerGlow.rotation.x = -Math.PI / 2;
+                    innerGlow.position.y = 0.02;
+                    holeGroup.add(innerGlow);
+
                     const rings = [];
-                    const ringColors = [0xffa24a, 0xff642e, 0xb75cff, 0x6d53ff];
-                    for (let j = 0; j < ringColors.length; j++) {
+                    const ringColors = [0xffaa44, 0xff6633, 0xcc55ff, 0x6644ff, 0x4488ff];
+                    for (let j = 0; j < 4; j++) {
                         const ring = new THREE.Mesh(
-                            new THREE.TorusGeometry(radius * (0.9 + j * 0.19), 0.12 + j * 0.025, 8, 64),
-                            new THREE.MeshBasicMaterial({ color: ringColors[j], transparent: true, opacity: 0.82 - j * 0.12 })
+                            new THREE.TorusGeometry(radius * (1.0 + j * 0.22), 0.1 + j * 0.03, 6, 40),
+                            new THREE.MeshBasicMaterial({
+                                color: ringColors[j],
+                                transparent: true,
+                                opacity: 0.75 - j * 0.12,
+                                side: THREE.DoubleSide
+                            })
                         );
-                        ring.rotation.x = Math.PI / 2;
-                        ring.position.copy(hole.position);
-                        ring.position.y += 0.055 + j * 0.012;
-                        blackHoleWorld.add(ring);
-                        ring.userData.spinSpeed = (0.004 + Math.random() * 0.009) * (j % 2 ? -1 : 1);
+                        ring.rotation.x = Math.PI / 2 + (Math.random() - 0.5) * 0.15;
+                        ring.position.y = 0.06 + j * 0.02;
+                        holeGroup.add(ring);
+                        ring.userData.spinSpeed = (0.005 + Math.random() * 0.01) * (j % 2 ? -1 : 1);
                         ring.userData.pulsePhase = Math.random() * Math.PI * 2;
                         rings.push(ring);
                     }
-                    blackHoleRotators.push({ hole, rings });
+                    blackHoleWorld.add(holeGroup);
+                    blackHoleRotators.push({ hole: holeGroup, rings });
                 }
                 expandedWorlds.add(blackHoleWorld);
 
                 const planetWorld = new THREE.Group();
+
+                // Nice textured planet ground
+                const planetFloorTex = (function() {
+                    const c = document.createElement('canvas');
+                    c.width = c.height = 512;
+                    const g = c.getContext('2d');
+                    g.fillStyle = '#0a1228';
+                    g.fillRect(0, 0, 512, 512);
+                    for (let i = 0; i < 20; i++) {
+                        const ng = g.createRadialGradient(
+                            Math.random() * 512, Math.random() * 512, 0,
+                            Math.random() * 512, Math.random() * 512, 60 + Math.random() * 80
+                        );
+                        ng.addColorStop(0, `rgba(${40 + Math.random()*40},${30+Math.random()*50},${80+Math.random()*60},0.35)`);
+                        ng.addColorStop(1, 'rgba(0,0,0,0)');
+                        g.fillStyle = ng;
+                        g.fillRect(0, 0, 512, 512);
+                    }
+                    for (let i = 0; i < 600; i++) {
+                        g.fillStyle = `rgba(150,160,220,${0.1 + Math.random() * 0.3})`;
+                        g.fillRect(Math.random() * 512, Math.random() * 512, 1, 1);
+                    }
+                    const t = new THREE.CanvasTexture(c);
+                    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+                    t.repeat.set(6, 6);
+                    return t;
+                })();
+
                 const planetFloor = new THREE.Mesh(
                     new THREE.PlaneGeometry(190, 190),
-                    new THREE.MeshStandardMaterial({ color: 0x10182a, roughness: 0.82, metalness: 0.15 })
+                    new THREE.MeshStandardMaterial({
+                        map: planetFloorTex,
+                        color: 0xffffff,
+                        emissive: 0x081020,
+                        emissiveMap: planetFloorTex,
+                        emissiveIntensity: 0.35,
+                        roughness: 0.75,
+                        metalness: 0.1
+                    })
                 );
                 planetFloor.rotation.x = -Math.PI / 2;
                 planetFloor.position.y = 0.02;
                 planetWorld.add(planetFloor);
-                for (let i = 0; i < 18; i++) {
+
+                // Beautiful planets with rings and varied colors
+                const planetPalettes = [
+                    { body: 0x4a8ad4, emissive: 0x1a3a6a, ring: 0xaaccff },
+                    { body: 0xc47a3a, emissive: 0x5a3010, ring: 0xffcc88 },
+                    { body: 0x8a5ab0, emissive: 0x3a1a50, ring: 0xddaaee },
+                    { body: 0x3aaa7a, emissive: 0x1a4a30, ring: 0xaaffee },
+                    { body: 0xd4556a, emissive: 0x5a1520, ring: 0xffaabb },
+                    { body: 0x6a90c0, emissive: 0x2a4060, ring: 0xcce0ff }
+                ];
+                for (let i = 0; i < 14; i++) {
+                    const pal = planetPalettes[i % planetPalettes.length];
+                    const size = 2.2 + Math.random() * 4.5;
+                    const pGroup = new THREE.Group();
                     const planet = new THREE.Mesh(
-                        new THREE.SphereGeometry(2 + Math.random() * 5, 18, 12),
-                        new THREE.MeshStandardMaterial({ color: [0x315a8a,0x6b3f7e,0x8a6331,0x3b7b5a][i % 4], roughness: 0.8 })
+                        new THREE.SphereGeometry(size, 16, 12),
+                        new THREE.MeshStandardMaterial({
+                            color: pal.body,
+                            emissive: pal.emissive,
+                            emissiveIntensity: 0.35,
+                            roughness: 0.55,
+                            metalness: 0.2
+                        })
                     );
-                    planet.position.set((Math.random() - 0.5) * 175, 2 + Math.random() * 12, (Math.random() - 0.5) * 175);
-                    planet.userData.spin = 0.002 + Math.random() * 0.01;
-                    planetWorld.add(planet);
+                    pGroup.add(planet);
+
+                    // Atmosphere glow
+                    const atmos = new THREE.Mesh(
+                        new THREE.SphereGeometry(size * 1.12, 12, 10),
+                        new THREE.MeshBasicMaterial({
+                            color: pal.ring,
+                            transparent: true,
+                            opacity: 0.12,
+                            side: THREE.BackSide,
+                            depthWrite: false
+                        })
+                    );
+                    pGroup.add(atmos);
+
+                    // Rings for some planets
+                    if (i % 2 === 0) {
+                        const ring = new THREE.Mesh(
+                            new THREE.TorusGeometry(size * 1.55, size * 0.06, 6, 32),
+                            new THREE.MeshBasicMaterial({
+                                color: pal.ring,
+                                transparent: true,
+                                opacity: 0.55,
+                                side: THREE.DoubleSide
+                            })
+                        );
+                        ring.rotation.x = Math.PI / 2.4;
+                        pGroup.add(ring);
+                    }
+
+                    pGroup.position.set(
+                        (Math.random() - 0.5) * 160,
+                        size + 1 + Math.random() * 10,
+                        (Math.random() - 0.5) * 160
+                    );
+                    pGroup.userData.spin = 0.003 + Math.random() * 0.008;
+                    planetWorld.add(pGroup);
                 }
-                for (let i = 0; i < 80; i++) {
+
+                // Floating stars / orbs
+                for (let i = 0; i < 60; i++) {
                     const star = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.04 + Math.random() * 0.08, 6, 6),
-                        new THREE.MeshBasicMaterial({ color: 0xffffff })
+                        new THREE.SphereGeometry(0.05 + Math.random() * 0.1, 6, 6),
+                        new THREE.MeshBasicMaterial({ color: [0xffffff, 0xaaccff, 0xffddaa][i % 3] })
                     );
-                    star.position.set((Math.random() - 0.5) * 185, 3 + Math.random() * 20, (Math.random() - 0.5) * 185);
+                    star.position.set((Math.random() - 0.5) * 180, 2 + Math.random() * 22, (Math.random() - 0.5) * 180);
                     planetWorld.add(star);
                 }
                 expandedWorlds.add(planetWorld);
 
+                /* ===== MYSTIC / COSMIC TREES ===== */
+                function createMysticTree(x, z, scale) {
+                    const group = new THREE.Group();
+                    const s = scale || (0.7 + Math.random() * 0.6);
+
+                    // Trunk
+                    const trunkMat = new THREE.MeshStandardMaterial({
+                        color: 0x3a2a18,
+                        roughness: 0.9,
+                        metalness: 0.05
+                    });
+                    const trunk = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.12 * s, 0.22 * s, 2.2 * s, 6),
+                        trunkMat
+                    );
+                    trunk.position.y = 1.1 * s;
+                    trunk.castShadow = false;
+                    group.add(trunk);
+
+                    // Secondary branch trunks
+                    for (let b = 0; b < 2; b++) {
+                        const br = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.05 * s, 0.09 * s, 0.9 * s, 5),
+                            trunkMat
+                        );
+                        br.position.set(
+                            (b === 0 ? -0.25 : 0.22) * s,
+                            (1.6 + b * 0.2) * s,
+                            0
+                        );
+                        br.rotation.z = (b === 0 ? 0.5 : -0.45);
+                        group.add(br);
+                    }
+
+                    // Foliage - glowing crystal-leaf clusters
+                    const leafColors = [0x44ffaa, 0x66ccff, 0xaa66ff, 0xff88cc, 0x88ff66];
+                    const leafColor = leafColors[Math.floor(Math.random() * leafColors.length)];
+                    const leafMat = new THREE.MeshStandardMaterial({
+                        color: leafColor,
+                        emissive: leafColor,
+                        emissiveIntensity: 0.45,
+                        roughness: 0.4,
+                        metalness: 0.15,
+                        transparent: true,
+                        opacity: 0.9
+                    });
+
+                    // Main canopy
+                    const canopy = new THREE.Mesh(
+                        new THREE.IcosahedronGeometry(0.85 * s, 1),
+                        leafMat
+                    );
+                    canopy.position.y = 2.5 * s;
+                    canopy.scale.y = 1.15;
+                    group.add(canopy);
+
+                    // Extra leaf blobs
+                    for (let i = 0; i < 3; i++) {
+                        const blob = new THREE.Mesh(
+                            new THREE.IcosahedronGeometry(0.4 * s + Math.random() * 0.25 * s, 0),
+                            leafMat
+                        );
+                        blob.position.set(
+                            (Math.random() - 0.5) * 1.2 * s,
+                            (2.1 + Math.random() * 0.8) * s,
+                            (Math.random() - 0.5) * 1.2 * s
+                        );
+                        group.add(blob);
+                    }
+
+                    // Glowing fruit / crystals hanging
+                    const fruitMat = new THREE.MeshBasicMaterial({
+                        color: 0xffeebb,
+                        transparent: true,
+                        opacity: 0.85
+                    });
+                    for (let i = 0; i < 3; i++) {
+                        const fruit = new THREE.Mesh(
+                            new THREE.OctahedronGeometry(0.08 * s, 0),
+                            fruitMat
+                        );
+                        fruit.position.set(
+                            (Math.random() - 0.5) * 0.8 * s,
+                            (1.8 + Math.random() * 0.6) * s,
+                            (Math.random() - 0.5) * 0.8 * s
+                        );
+                        group.add(fruit);
+                    }
+
+                    group.position.set(x, 0, z);
+                    group.userData.isTree = true;
+                    group.userData.baseY = 0;
+                    group.userData.ph = Math.random() * 6.28;
+                    return group;
+                }
+
                 const forestWorld = new THREE.Group();
+                // Ground for forest
+                const forestGround = new THREE.Mesh(
+                    new THREE.PlaneGeometry(100, 100),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x0a1a12,
+                        roughness: 0.9,
+                        emissive: 0x021208,
+                        emissiveIntensity: 0.3
+                    })
+                );
+                forestGround.rotation.x = -Math.PI / 2;
+                forestGround.position.y = 0.01;
+                forestWorld.add(forestGround);
+
+                // Scatter mystic trees
+                for (let i = 0; i < 35; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = 8 + Math.random() * 40;
+                    const tx = Math.cos(angle) * r;
+                    const tz = Math.sin(angle) * r;
+                    forestWorld.add(createMysticTree(tx, tz));
+                }
+                // Center ring of bigger trees
+                for (let i = 0; i < 8; i++) {
+                    const a = (i / 8) * Math.PI * 2;
+                    forestWorld.add(createMysticTree(Math.cos(a) * 12, Math.sin(a) * 12, 1.3));
+                }
                 forestWorld.visible = false;
                 expandedWorlds.add(forestWorld);
+
+                // Also plant some mystic trees around the main temple platform
+                for (let i = 0; i < 16; i++) {
+                    const angle = (i / 16) * Math.PI * 2;
+                    const r = 38 + (i % 3) * 3;
+                    const tree = createMysticTree(Math.cos(angle) * r, Math.sin(angle) * r, 0.85 + Math.random() * 0.4);
+                    platformGroup.add(tree);
+                }
+                // A few near corners
+                [[-30, -30], [30, -30], [-30, 30], [30, 30], [-20, 35], [20, 35]].forEach(([tx, tz]) => {
+                    platformGroup.add(createMysticTree(tx, tz, 1.0 + Math.random() * 0.3));
+                });
 
                  /* =========================
                     ELECTRON WORLD
@@ -4866,26 +5303,35 @@
                 }
                 applyCosmicScene(true);
 
-                // Pha lê bay lơ lửng
+                // Pha lê bay lơ lửng (đẹp hơn, nhiều màu)
                 const crystalGroup = new THREE.Group();
-                const floatCrystalMat = new THREE.MeshStandardMaterial({
-                    color: 0x9fd4ff, metalness: 0.1, roughness: 0.05,
-                    transparent: true, opacity: 0.55, envMapIntensity: 1.0,
-                    emissive: 0x3366aa, emissiveIntensity: 0.6
-                });
-                const floatCrystalPinkMat = floatCrystalMat.clone();
-                floatCrystalPinkMat.color.set(0xff5fb0);
-                floatCrystalPinkMat.emissive.set(0x551133);
-                for (let i = 0; i < 40; i++) {
-                    const geo = Math.random() < 0.6
-                        ? new THREE.OctahedronGeometry(0.08 + Math.random() * 0.18, 0)
-                        : new THREE.TetrahedronGeometry(0.08 + Math.random() * 0.18, 0);
-                    const m = new THREE.Mesh(geo, Math.random() < 0.15 ? floatCrystalPinkMat : floatCrystalMat);
-                    const a = Math.random() * Math.PI * 2, r = 9 + Math.random() * 20;
-                    m.position.set(Math.cos(a) * r, 1.5 + Math.random() * 9, Math.sin(a) * r - 6);
-                    m.scale.y = 1 + Math.random() * 0.8;
+                const crystalPalettes = [
+                    { c: 0x9fd4ff, e: 0x3388cc },
+                    { c: 0xff7acc, e: 0xaa2266 },
+                    { c: 0xaaffcc, e: 0x33aa66 },
+                    { c: 0xcc99ff, e: 0x6622aa },
+                    { c: 0xffdd88, e: 0xaa8833 }
+                ];
+                for (let i = 0; i < 28; i++) {
+                    const pal = crystalPalettes[i % crystalPalettes.length];
+                    const mat = new THREE.MeshStandardMaterial({
+                        color: pal.c,
+                        metalness: 0.25,
+                        roughness: 0.12,
+                        transparent: true,
+                        opacity: 0.7,
+                        emissive: pal.e,
+                        emissiveIntensity: 0.7
+                    });
+                    const geo = Math.random() < 0.55
+                        ? new THREE.OctahedronGeometry(0.1 + Math.random() * 0.2, 0)
+                        : new THREE.IcosahedronGeometry(0.09 + Math.random() * 0.16, 0);
+                    const m = new THREE.Mesh(geo, mat);
+                    const a = Math.random() * Math.PI * 2, r = 10 + Math.random() * 22;
+                    m.position.set(Math.cos(a) * r, 1.8 + Math.random() * 8, Math.sin(a) * r - 4);
+                    m.scale.y = 1.1 + Math.random() * 0.7;
                     m.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-                    m.userData.spin = (Math.random() - 0.5) * 1.2;
+                    m.userData.spin = (Math.random() - 0.5) * 1.0;
                     m.userData.baseY = m.position.y;
                     m.userData.ph = Math.random() * 6.28;
                     crystalGroup.add(m);
@@ -5188,51 +5634,124 @@
                 // ===== COSMIC GALAXY TEXTURE (body like reference image) =====
                 function createGalaxyBodyTexture() {
                     const canvas = document.createElement('canvas');
-                    canvas.width = 512; canvas.height = 512;
+                    canvas.width = 1024;
+                    canvas.height = 1024;
                     const ctx = canvas.getContext('2d');
-                    const g = ctx.createRadialGradient(256, 256, 10, 256, 256, 300);
-                    g.addColorStop(0, '#2b0b5e');
-                    g.addColorStop(0.25, '#4a1a9e');
-                    g.addColorStop(0.5, '#1a0a40');
-                    g.addColorStop(0.75, '#0a0420');
-                    g.addColorStop(1, '#030010');
+
+                    // Deep space base matching the reference image
+                    const g = ctx.createRadialGradient(512, 512, 20, 512, 512, 700);
+                    g.addColorStop(0, '#1a0a4a');
+                    g.addColorStop(0.2, '#2b0b6e');
+                    g.addColorStop(0.45, '#12082e');
+                    g.addColorStop(0.7, '#08041a');
+                    g.addColorStop(1, '#02000a');
                     ctx.fillStyle = g;
-                    ctx.fillRect(0, 0, 512, 512);
-                    // Nebula blobs
-                    const blobs = [
-                        [120,140,90,'rgba(180,40,255,0.35)'], [380,180,110,'rgba(60,120,255,0.3)'],
-                        [200,360,100,'rgba(255,60,180,0.28)'], [350,320,80,'rgba(100,200,255,0.25)'],
-                        [256,256,70,'rgba(255,255,255,0.12)']
+                    ctx.fillRect(0, 0, 1024, 1024);
+
+                    // Large vibrant nebula clouds (purple / pink / blue / gold like the image)
+                    const nebulae = [
+                        [280, 320, 220, 'rgba(180,40,255,0.45)', 'rgba(100,20,180,0.15)'],
+                        [720, 380, 260, 'rgba(40,120,255,0.4)', 'rgba(20,60,160,0.12)'],
+                        [400, 700, 240, 'rgba(255,50,180,0.38)', 'rgba(160,20,100,0.1)'],
+                        [680, 680, 200, 'rgba(80,220,255,0.35)', 'rgba(30,120,180,0.1)'],
+                        [512, 480, 180, 'rgba(255,200,80,0.22)', 'rgba(180,120,30,0.06)'],
+                        [180, 600, 160, 'rgba(120,60,255,0.3)', 'rgba(60,20,140,0.08)'],
+                        [850, 200, 150, 'rgba(255,80,200,0.28)', 'rgba(140,30,100,0.08)']
                     ];
-                    blobs.forEach(([x,y,r,c]) => {
-                        const ng = ctx.createRadialGradient(x,y,0,x,y,r);
-                        ng.addColorStop(0, c); ng.addColorStop(1, 'rgba(0,0,0,0)');
-                        ctx.fillStyle = ng; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+                    nebulae.forEach(([x, y, r, c0, c1]) => {
+                        const ng = ctx.createRadialGradient(x, y, 0, x, y, r);
+                        ng.addColorStop(0, c0);
+                        ng.addColorStop(0.55, c1);
+                        ng.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = ng;
+                        ctx.beginPath();
+                        ctx.arc(x, y, r, 0, Math.PI * 2);
+                        ctx.fill();
                     });
-                    // Mini galaxies / swirls
-                    for (let i = 0; i < 8; i++) {
-                        const cx = 60 + Math.random()*400, cy = 60 + Math.random()*400;
-                        for (let a = 0; a < 40; a++) {
-                            const ang = a * 0.35 + i, rad = 4 + a * 0.9;
-                            const px = cx + Math.cos(ang)*rad, py = cy + Math.sin(ang)*rad*0.55;
-                            ctx.fillStyle = `rgba(200,180,255,${0.35*(1-a/40)})`;
-                            ctx.beginPath(); ctx.arc(px, py, 1.2, 0, Math.PI*2); ctx.fill();
+
+                    // Spiral galaxies (clear arms like the reference)
+                    function drawSpiralGalaxy(cx, cy, scale, rot, colorCore, colorArm) {
+                        // Bright core
+                        const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, 18 * scale);
+                        core.addColorStop(0, '#fff8e0');
+                        core.addColorStop(0.25, colorCore);
+                        core.addColorStop(0.7, 'rgba(80,40,160,0.4)');
+                        core.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = core;
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, 22 * scale, 0, Math.PI * 2);
+                        ctx.fill();
+
+                        // Spiral arms
+                        for (let arm = 0; arm < 3; arm++) {
+                            for (let a = 0; a < 70; a++) {
+                                const ang = rot + arm * (Math.PI * 2 / 3) + a * 0.12;
+                                const rad = (4 + a * 1.35) * scale;
+                                const px = cx + Math.cos(ang) * rad;
+                                const py = cy + Math.sin(ang) * rad * 0.55;
+                                const alpha = 0.55 * (1 - a / 70);
+                                ctx.fillStyle = colorArm.replace('A', alpha.toFixed(3));
+                                ctx.beginPath();
+                                ctx.arc(px, py, (1.8 - a * 0.015) * scale, 0, Math.PI * 2);
+                                ctx.fill();
+                            }
                         }
                     }
-                    // Stars
-                    for (let i = 0; i < 500; i++) {
-                        const sx = Math.random()*512, sy = Math.random()*512;
-                        const size = Math.random()*1.8 + 0.2;
-                        const b = 0.4 + Math.random()*0.6;
+
+                    drawSpiralGalaxy(380, 280, 1.4, 0.3, '#ffd080', 'rgba(200,160,255,A)');
+                    drawSpiralGalaxy(680, 620, 1.1, 1.8, '#a0e0ff', 'rgba(120,180,255,A)');
+                    drawSpiralGalaxy(220, 720, 0.9, 0.9, '#ff90d0', 'rgba(255,120,200,A)');
+                    drawSpiralGalaxy(780, 280, 0.75, 2.4, '#e0c0ff', 'rgba(180,140,255,A)');
+                    drawSpiralGalaxy(520, 820, 0.65, 0.1, '#80ffd0', 'rgba(100,255,220,A)');
+
+                    // Dense star field
+                    for (let i = 0; i < 1200; i++) {
+                        const sx = Math.random() * 1024;
+                        const sy = Math.random() * 1024;
+                        const size = Math.random() * 1.6 + 0.15;
+                        const b = 0.35 + Math.random() * 0.65;
                         ctx.fillStyle = `rgba(255,255,255,${b})`;
-                        ctx.beginPath(); ctx.arc(sx, sy, size, 0, Math.PI*2); ctx.fill();
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, size, 0, Math.PI * 2);
+                        ctx.fill();
                     }
-                    // Bright star sparks
-                    for (let i = 0; i < 30; i++) {
-                        const sx = Math.random()*512, sy = Math.random()*512;
-                        ctx.fillStyle = 'rgba(180,220,255,0.95)';
-                        ctx.beginPath(); ctx.arc(sx, sy, 2 + Math.random()*2, 0, Math.PI*2); ctx.fill();
+
+                    // Bright star sparks with cross glow
+                    for (let i = 0; i < 45; i++) {
+                        const sx = Math.random() * 1024;
+                        const sy = Math.random() * 1024;
+                        const r = 1.5 + Math.random() * 2.5;
+                        ctx.fillStyle = 'rgba(200,230,255,0.95)';
+                        ctx.beginPath();
+                        ctx.arc(sx, sy, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Cross flare
+                        ctx.strokeStyle = 'rgba(180,220,255,0.55)';
+                        ctx.lineWidth = 0.8;
+                        ctx.beginPath();
+                        ctx.moveTo(sx - r * 3, sy); ctx.lineTo(sx + r * 3, sy);
+                        ctx.moveTo(sx, sy - r * 3); ctx.lineTo(sx, sy + r * 3);
+                        ctx.stroke();
                     }
+
+                    // Soft purple/blue energy veins
+                    ctx.strokeStyle = 'rgba(160,80,255,0.12)';
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i < 12; i++) {
+                        ctx.beginPath();
+                        const sx = Math.random() * 1024, sy = Math.random() * 1024;
+                        ctx.moveTo(sx, sy);
+                        for (let j = 0; j < 5; j++) {
+                            ctx.quadraticCurveTo(
+                                sx + (Math.random() - 0.5) * 180,
+                                sy + (Math.random() - 0.5) * 180,
+                                sx + (Math.random() - 0.5) * 280,
+                                sy + (Math.random() - 0.5) * 280
+                            );
+                        }
+                        ctx.stroke();
+                    }
+
                     const tex = new THREE.CanvasTexture(canvas);
                     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
                     tex.encoding = THREE.sRGBEncoding;
@@ -5263,57 +5782,68 @@
                 const cosmicBodyMat = new THREE.MeshStandardMaterial({
                     map: galaxyBodyTex,
                     color: 0xffffff,
-                    emissive: 0x3a00aa,
-                    emissiveIntensity: 0.85,
-                    metalness: 0.35,
-                    roughness: 0.35
+                    emissive: 0x4a10cc,
+                    emissiveMap: galaxyBodyTex,
+                    emissiveIntensity: 1.15,
+                    metalness: 0.45,
+                    roughness: 0.28,
+                    envMapIntensity: 1.2
                 });
                 const cosmicBodyMatLight = new THREE.MeshStandardMaterial({
                     map: galaxyBodyTex,
-                    color: 0xccbbff,
-                    emissive: 0x5500cc,
-                    emissiveIntensity: 1.0,
-                    metalness: 0.4,
-                    roughness: 0.3
+                    color: 0xddccff,
+                    emissive: 0x6611ee,
+                    emissiveMap: galaxyBodyTex,
+                    emissiveIntensity: 1.35,
+                    metalness: 0.5,
+                    roughness: 0.22,
+                    envMapIntensity: 1.3
                 });
                 const cosmicBodyMatDark = new THREE.MeshStandardMaterial({
                     map: galaxyBodyTex,
-                    color: 0x8866cc,
-                    emissive: 0x220066,
-                    emissiveIntensity: 0.6,
-                    metalness: 0.3,
-                    roughness: 0.4
+                    color: 0x9977dd,
+                    emissive: 0x330088,
+                    emissiveMap: galaxyBodyTex,
+                    emissiveIntensity: 0.95,
+                    metalness: 0.4,
+                    roughness: 0.32,
+                    envMapIntensity: 1.1
                 });
                 const cosmicSkinMat = new THREE.MeshStandardMaterial({
                     map: galaxyBodyTex,
-                    color: 0xaa88ff,
-                    emissive: 0x220044,
-                    emissiveIntensity: 0.5,
-                    metalness: 0.2,
-                    roughness: 0.45
+                    color: 0xbb99ff,
+                    emissive: 0x4400aa,
+                    emissiveMap: galaxyBodyTex,
+                    emissiveIntensity: 0.9,
+                    metalness: 0.3,
+                    roughness: 0.35,
+                    envMapIntensity: 1.15
                 });
                 const cosmicBootMat = new THREE.MeshStandardMaterial({
                     map: galaxyBodyTex,
-                    color: 0x6644aa,
-                    emissive: 0x110033,
-                    emissiveIntensity: 0.7,
-                    metalness: 0.5,
-                    roughness: 0.3
+                    color: 0x7755cc,
+                    emissive: 0x220055,
+                    emissiveMap: galaxyBodyTex,
+                    emissiveIntensity: 1.05,
+                    metalness: 0.55,
+                    roughness: 0.25,
+                    envMapIntensity: 1.2
                 });
                 const cosmicHairMat = new THREE.MeshStandardMaterial({
                     map: cosmicHairTexture,
-                    color: 0xbb66ff,
-                    emissive: 0x6600ff,
-                    emissiveIntensity: 1.2,
-                    metalness: 0.3,
-                    roughness: 0.4
+                    color: 0xcc88ff,
+                    emissive: 0x8800ff,
+                    emissiveIntensity: 1.6,
+                    metalness: 0.4,
+                    roughness: 0.3,
+                    envMapIntensity: 1.1
                 });
                 const cosmicBowMat = new THREE.MeshStandardMaterial({
-                    color: 0xff66cc,
-                    emissive: 0xff00aa,
-                    emissiveIntensity: 1.5,
-                    metalness: 0.4,
-                    roughness: 0.3
+                    color: 0xff77dd,
+                    emissive: 0xff22bb,
+                    emissiveIntensity: 1.8,
+                    metalness: 0.5,
+                    roughness: 0.25
                 });
 
                 const blockyMats = {
@@ -5375,6 +5905,135 @@
                 }
                 window.setPlayerGender = setPlayerGender;
                 setPlayerGender(playerGender);
+
+                /* ===== COSMIC ORBIT RINGS + PLANETS (like reference image) ===== */
+                const cosmicOrbitGroup = new THREE.Group();
+                playerGroup.add(cosmicOrbitGroup);
+
+                // Energy rings
+                const orbitRingMat = new THREE.MeshBasicMaterial({
+                    color: 0x88ccff,
+                    transparent: true,
+                    opacity: 0.55,
+                    side: THREE.DoubleSide,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                });
+                const orbitRingMat2 = new THREE.MeshBasicMaterial({
+                    color: 0xcc66ff,
+                    transparent: true,
+                    opacity: 0.4,
+                    side: THREE.DoubleSide,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                });
+
+                function makeOrbitRing(radius, tube, mat, tiltX, tiltZ) {
+                    const ring = new THREE.Mesh(
+                        new THREE.TorusGeometry(radius, tube, 6, 32), // giảm segments chống lag
+                        mat
+                    );
+                    ring.rotation.x = tiltX;
+                    ring.rotation.z = tiltZ;
+                    ring.userData.spin = 0.01 + Math.random() * 0.01;
+                    cosmicOrbitGroup.add(ring);
+                    return ring;
+                }
+
+                makeOrbitRing(1.4, 0.016, orbitRingMat, Math.PI / 2.4, 0.3);
+                makeOrbitRing(1.85, 0.012, orbitRingMat2, Math.PI / 2.1, -0.4);
+
+                // Orbiting planets (giảm số lượng + low poly chống lag)
+                const planetColors = [0x66aaff, 0xff88cc, 0xaaddff];
+                const cosmicPlanets = [];
+                for (let i = 0; i < 3; i++) {
+                    const size = 0.07 + i * 0.015;
+                    const planet = new THREE.Mesh(
+                        new THREE.SphereGeometry(size, 8, 8),
+                        new THREE.MeshBasicMaterial({
+                            color: planetColors[i]
+                        })
+                    );
+                    planet.userData = {
+                        radius: 1.3 + i * 0.35,
+                        speed: 0.45 + i * 0.12,
+                        angle: i * 2.1,
+                        yOff: (i - 1) * 0.35,
+                        yAmp: 0.18
+                    };
+                    cosmicOrbitGroup.add(planet);
+                    cosmicPlanets.push(planet);
+                }
+
+                // Soft outer glow aura
+                const auraMat = new THREE.MeshBasicMaterial({
+                    color: 0x8844ff,
+                    transparent: true,
+                    opacity: 0.12,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending,
+                    side: THREE.BackSide
+                });
+                const aura = new THREE.Mesh(
+                    new THREE.SphereGeometry(1.6, 24, 24),
+                    auraMat
+                );
+                aura.position.y = 1.3;
+                cosmicOrbitGroup.add(aura);
+
+                // Eye glow (chỉ mesh, không PointLight để chống lag)
+                function attachCosmicEyeGlow() {
+                    if (!blockyP || !blockyP.head) return;
+                    const olds = blockyP.head.children.filter(c => c.userData && c.userData.isEyeGlow);
+                    olds.forEach(o => blockyP.head.remove(o));
+
+                    [-0.14, 0.14].forEach(ex => {
+                        const glow = new THREE.Mesh(
+                            new THREE.CircleGeometry(0.09, 8),
+                            new THREE.MeshBasicMaterial({
+                                color: 0xaaddff,
+                                transparent: true,
+                                opacity: 0.85,
+                                depthWrite: false,
+                                blending: THREE.AdditiveBlending
+                            })
+                        );
+                        glow.position.set(ex, 0.44, 0.34);
+                        glow.userData.isEyeGlow = true;
+                        blockyP.head.add(glow);
+                    });
+                }
+                attachCosmicEyeGlow();
+
+                // Re-attach on gender change
+                const _origOnGender = window.__onGender;
+                window.__onGender = function(p) {
+                    if (_origOnGender) _origOnGender(p);
+                    attachCosmicEyeGlow();
+                };
+
+                // Animate orbits inside updateRealism or animate loop later
+                window.__updateCosmicOrbit = function(t) {
+                    if (!isCosmicSkinOn) {
+                        cosmicOrbitGroup.visible = false;
+                        return;
+                    }
+                    cosmicOrbitGroup.visible = true;
+                    cosmicOrbitGroup.children.forEach(c => {
+                        if (c.userData && c.userData.spin) {
+                            c.rotation.y += c.userData.spin;
+                        }
+                    });
+                    cosmicPlanets.forEach(p => {
+                        const d = p.userData;
+                        d.angle += d.speed * 0.016;
+                        p.position.x = Math.cos(d.angle) * d.radius;
+                        p.position.z = Math.sin(d.angle) * d.radius;
+                        p.position.y = 1.2 + d.yOff + Math.sin(t * 1.5 + d.angle) * d.yAmp;
+                        p.rotation.y += 0.02;
+                    });
+                    aura.material.opacity = 0.08 + Math.sin(t * 2) * 0.04;
+                };
 
                 playerGroup.remove(swordGroup);
                 blockySwordHolder.add(swordGroup);
@@ -5442,6 +6101,11 @@
                 function updateRealism() {
                     const dt = Math.min(realisticClock.getDelta(), 0.1);
                     const t = performance.now() / 1000;
+
+                    // Cosmic orbit rings + planets animation
+                    if (typeof window.__updateCosmicOrbit === 'function') {
+                        window.__updateCosmicOrbit(t);
+                    }
 
                     // Ẩn nhân vật cũ, đưa vòng halo lên trên đầu mới
                     for (const p of oldPlayerParts) p.visible = false;
@@ -12635,10 +13299,10 @@
                         wasJumping = false;
                     }
 
-                    const baseMoveSpeed = 0.12;
+                    const baseMoveSpeed = 0.36; // x3 tốc độ gốc (0.12 → 0.36)
                     const speed =
                         (gameStage === 7 || gameStage === 8 || gameStage === 9)
-                        ? baseMoveSpeed * 3
+                        ? baseMoveSpeed * 2.2
                         : baseMoveSpeed;
 
                     let isMoving =
