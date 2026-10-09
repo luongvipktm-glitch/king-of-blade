@@ -6,6 +6,8 @@
 
 
 
+
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -288,6 +290,96 @@
             #boss-command,
             #mc-cmd-hint {
                 width: calc(100vw - 24px);
+            }
+        }
+
+        /* ===== UPDATE PANEL (ESC, top-right) ===== */
+        #update-panel {
+            position: absolute;
+            top: 15px;
+            right: 90px;
+            z-index: 50;
+            display: none;
+            width: min(420px, calc(100vw - 110px));
+            background: linear-gradient(145deg, rgba(25, 12, 40, 0.96), rgba(10, 5, 20, 0.98));
+            border: 2px solid #ffd700;
+            border-radius: 16px;
+            box-shadow: 0 0 24px rgba(255, 215, 0, 0.35), 0 8px 32px rgba(0,0,0,0.5);
+            overflow: hidden;
+            font-family: 'Segoe UI', sans-serif;
+            pointer-events: auto;
+        }
+
+        #update-panel.show {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            animation: updateSlideIn 0.28s ease-out;
+        }
+
+        @keyframes updateSlideIn {
+            from { opacity: 0; transform: translateX(24px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        #update-panel .upd-art {
+            flex: 0 0 120px;
+            background: linear-gradient(160deg, #2a1540, #0d0818);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            border-right: 1px solid rgba(255,215,0,0.25);
+        }
+
+        #update-panel .upd-body {
+            flex: 1 1 auto;
+            padding: 14px 16px 16px;
+            color: #fff;
+        }
+
+        #update-panel .upd-ver {
+            font-size: 22px;
+            font-weight: 900;
+            color: #ffd700;
+            margin: 0 0 6px;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 10px rgba(255,215,0,0.45);
+        }
+
+        #update-panel .upd-desc {
+            font-size: 13px;
+            line-height: 1.55;
+            color: #e8e0f0;
+            margin: 0;
+        }
+
+        #update-panel .upd-close {
+            position: absolute;
+            top: 6px;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-size: 18px;
+            cursor: pointer;
+            line-height: 1;
+            padding: 2px 6px;
+        }
+
+        #update-panel .upd-close:hover {
+            color: #ffd700;
+        }
+
+        @media (max-width: 700px) {
+            #update-panel {
+                right: 12px;
+                top: 80px;
+                width: calc(100vw - 24px);
+            }
+            #update-panel .upd-art {
+                flex: 0 0 72px;
+                font-size: 32px;
             }
         }
 
@@ -701,6 +793,19 @@
         style="border-color:#00ffff;color:#00ffff;box-shadow:0 0 15px rgba(0,255,255,0.7);"
     >
         🌌 NHIỆM VỤ MỚI MỞ KHOÁ: ĐẠI BOSS TỐI THƯỢNG! NHẤN [D]!
+    </div>
+
+    <div id="update-panel" onclick="event.stopPropagation()">
+        <button type="button" class="upd-close" onclick="hideUpdatePanel()" title="Close">×</button>
+        <div class="upd-art">📷</div>
+        <div class="upd-body">
+            <div class="upd-ver">Version 1.20</div>
+            <p class="upd-desc lang-txt"
+               data-vi="Update góc nhìn: đã thêm nhiều hình ảnh hơn cho camera / góc nhìn! Nhấn ESC để ẩn. Admin: //speed (n) — tốc độ x10 đến x1m."
+               data-en="View update: more images added to the camera / view angle! Press ESC to hide. Admin: //speed (n) — speed x10 to x1m.">
+                Update góc nhìn: đã thêm nhiều hình ảnh hơn cho camera / góc nhìn! Nhấn ESC để ẩn. Admin: //speed (n) — tốc độ x10 đến x1m.
+            </p>
+        </div>
     </div>
 
     <div id="quick-actions">
@@ -1772,6 +1877,7 @@
                 let secretAdminMode = false;
                 let adminFlyMode = false;
                 let adminFlyY = 0;
+                let adminSpeedMultiplier = 1; // //speed n (x10 .. x1m)
 
                 let isCosmicSkinOn = true;
 
@@ -8830,7 +8936,21 @@
 
                 let cameraDistance = 10;
 
+                let isFirstPerson = true;
+
                 let isPointerLocked = false;
+
+                playerGroup.visible = false;
+
+                function toggleCameraView() {
+                    isFirstPerson = !isFirstPerson;
+                    playerGroup.visible = !isFirstPerson;
+                    showToast(
+                        currentLang === 'vi'
+                        ? (isFirstPerson ? '👁️ Góc nhìn thứ nhất' : '👤 Góc nhìn thứ ba')
+                        : (isFirstPerson ? '👁️ First-person view' : '👤 Third-person view')
+                    );
+                }
 
                 function isTypingTarget(el) {
                     return el && (
@@ -8991,7 +9111,7 @@
                     }
                 );
 
-                // ESC exits pointer lock (browser default) + blur command input
+                // ESC exits pointer lock (browser default) + blur command input + toggle update panel
                 window.addEventListener('keydown', e => {
                     if (e.key === 'Escape') {
                         if (isPointerLocked) {
@@ -9001,6 +9121,8 @@
                         if (cmdInput && document.activeElement === cmdInput) {
                             cmdInput.blur();
                         }
+                        // Hiện bảng cập nhật (kiểu Version) góc trên bên phải
+                        toggleUpdatePanel();
                     }
                 }, true);
 
@@ -9011,6 +9133,8 @@
                 window.addEventListener(
                     'wheel',
                     e => {
+
+                        if (isFirstPerson) return;
 
                         cameraDistance +=
                             e.deltaY * 0.01;
@@ -9140,7 +9264,7 @@
                 }
 
                 function getAdminCmdHintText() {
-                    return '//boss · //hack · //end · //kill · //fly · //off';
+                    return '//boss · //hack · //end · //kill · //fly · //off · //speed n';
                 }
 
                 function showBossCommandBar(visible) {
@@ -9395,7 +9519,60 @@
                 }
 
 
-                const bossCommandInput =
+                function parseAdminSpeedArg(raw) {
+                    if (!raw) return null;
+                    let s = String(raw).trim().toLowerCase().replace(/,/g, '');
+                    // allow forms: 10, 100, 1k, 10k, 100k, 1m, x10, *10
+                    s = s.replace(/^[x*]+/, '');
+                    let mult = 1;
+                    if (s.endsWith('m')) {
+                        mult = 1000000;
+                        s = s.slice(0, -1);
+                    } else if (s.endsWith('k')) {
+                        mult = 1000;
+                        s = s.slice(0, -1);
+                    }
+                    const n = Number(s);
+                    if (!Number.isFinite(n) || n <= 0) return null;
+                    const value = Math.floor(n * mult);
+                    // clamp x10 .. x1m
+                    if (value < 10) return null;
+                    if (value > 1000000) return 1000000;
+                    return value;
+                }
+
+                function showUpdatePanel() {
+                    const panel = document.getElementById('update-panel');
+                    if (!panel) return;
+                    // refresh lang text inside panel
+                    panel.querySelectorAll('.lang-txt').forEach(el => {
+                        const v = el.getAttribute('data-' + currentLang);
+                        if (v) el.innerText = v;
+                    });
+                    panel.classList.add('show');
+                    panel.style.display = 'flex';
+                }
+
+                function hideUpdatePanel() {
+                    const panel = document.getElementById('update-panel');
+                    if (!panel) return;
+                    panel.classList.remove('show');
+                    panel.style.display = 'none';
+                }
+
+                window.hideUpdatePanel = hideUpdatePanel;
+
+                function toggleUpdatePanel() {
+                    const panel = document.getElementById('update-panel');
+                    if (!panel) return;
+                    if (panel.classList.contains('show') || panel.style.display === 'flex') {
+                        hideUpdatePanel();
+                    } else {
+                        showUpdatePanel();
+                    }
+                }
+
+                                const bossCommandInput =
                     document.getElementById(
                         'boss-command-input'
                     );
@@ -9455,7 +9632,32 @@
 
                             adminDisableFly();
 
-                        } else if (!secretAdminMode && (plain === '//end' || plain === '//kill' || plain === '//fly' || plain === '//off' || plain === '/end' || plain === '/kill' || plain === '/fly' || plain === '/off')) {
+                        } else if (secretAdminMode && (cmd.startsWith('//speed') || plain.startsWith('//speed') || plain.startsWith('/speed'))) {
+
+                            const speedArgRaw = (plain.startsWith('/') ? plain : cmd)
+                                .replace(/^\/+speed\s*/i, '')
+                                .trim();
+                            const parsedSpeed = parseAdminSpeedArg(speedArgRaw);
+                            if (parsedSpeed === null) {
+                                showToast(
+                                    currentLang === 'vi'
+                                    ? '❌ //speed (n) — n từ 10 đến 1m (vd: //speed 10, //speed 100, //speed 1m)'
+                                    : '❌ //speed (n) — n from 10 to 1m (e.g. //speed 10, //speed 100, //speed 1m)'
+                                );
+                            } else {
+                                adminSpeedMultiplier = parsedSpeed;
+                                showToast(
+                                    currentLang === 'vi'
+                                    ? `⚡ //speed → TỐC ĐỘ x${formatNum(parsedSpeed)}`
+                                    : `⚡ //speed → SPEED x${formatNum(parsedSpeed)}`
+                                );
+                            }
+
+                        } else if (!secretAdminMode && (
+                            plain === '//end' || plain === '//kill' || plain === '//fly' || plain === '//off' ||
+                            plain.startsWith('//speed') || plain.startsWith('/speed') ||
+                            plain === '/end' || plain === '/kill' || plain === '/fly' || plain === '/off'
+                        )) {
 
                             // Player mode: silent for admin-only cmds
 
@@ -9463,8 +9665,8 @@
 
                             showToast(
                                 currentLang === 'vi'
-                                ? '❌ LỆNH KHÔNG HỢP LỆ! Gõ //end //kill //fly //off'
-                                : '❌ INVALID COMMAND! Try //end //kill //fly //off'
+                                ? '❌ LỆNH KHÔNG HỢP LỆ! Gõ //end //kill //fly //off //speed n'
+                                : '❌ INVALID COMMAND! Try //end //kill //fly //off //speed n'
                             );
 
                         } else {
@@ -9514,6 +9716,11 @@
 
                         const k =
                             e.key.toLowerCase();
+
+                        if (k === 'p' && !e.repeat) {
+                            e.preventDefault();
+                            toggleCameraView();
+                        }
 
                         keys[k] = true;
 
@@ -13889,10 +14096,15 @@
                     }
 
                     const baseMoveSpeed = 0.36; // x3 tốc độ gốc (0.12 → 0.36)
-                    const speed =
+                    const stageMul =
                         (gameStage === 7 || gameStage === 8 || gameStage === 9)
-                        ? baseMoveSpeed * 2.2
-                        : baseMoveSpeed;
+                        ? 2.2
+                        : 1;
+                    const adminMul =
+                        (secretAdminMode && adminSpeedMultiplier > 1)
+                        ? adminSpeedMultiplier
+                        : 1;
+                    const speed = baseMoveSpeed * stageMul * adminMul;
 
                     let isMoving =
                         false;
@@ -14567,31 +14779,47 @@
                        CAMERA
                     ========================= */
 
-                    const horizontalDistance =
-                        cameraDistance *
-                        Math.cos(cameraAngleY);
+                    if (isFirstPerson) {
+                        const eyeX = playerGroup.position.x;
+                        const eyeY = playerGroup.position.y + 2.05;
+                        const eyeZ = playerGroup.position.z;
+                        const pitch = 0.55 - cameraAngleY;
+                        const lookDistance = 20;
+                        const horizontalLook = Math.cos(pitch);
 
-                    camera.position.x =
-                        playerGroup.position.x +
-                        horizontalDistance *
-                        Math.sin(cameraAngleX);
+                        camera.position.set(eyeX, eyeY, eyeZ);
+                        camera.lookAt(
+                            eyeX - Math.sin(cameraAngleX) * horizontalLook * lookDistance,
+                            eyeY + Math.sin(pitch) * lookDistance,
+                            eyeZ - Math.cos(cameraAngleX) * horizontalLook * lookDistance
+                        );
+                    } else {
+                        const horizontalDistance =
+                            cameraDistance *
+                            Math.cos(cameraAngleY);
 
-                    camera.position.y =
-                        playerGroup.position.y +
-                        cameraDistance *
-                        Math.sin(cameraAngleY) +
-                        1;
+                        camera.position.x =
+                            playerGroup.position.x +
+                            horizontalDistance *
+                            Math.sin(cameraAngleX);
 
-                    camera.position.z =
-                        playerGroup.position.z +
-                        horizontalDistance *
-                        Math.cos(cameraAngleX);
+                        camera.position.y =
+                            playerGroup.position.y +
+                            cameraDistance *
+                            Math.sin(cameraAngleY) +
+                            1;
 
-                    camera.lookAt(
-                        playerGroup.position.x,
-                        playerGroup.position.y + 1,
-                        playerGroup.position.z
-                    );
+                        camera.position.z =
+                            playerGroup.position.z +
+                            horizontalDistance *
+                            Math.cos(cameraAngleX);
+
+                        camera.lookAt(
+                            playerGroup.position.x,
+                            playerGroup.position.y + 1,
+                            playerGroup.position.z
+                        );
+                    }
 
                     starField.rotation.y +=
                         0.0005;
