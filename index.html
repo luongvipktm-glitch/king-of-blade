@@ -9,6 +9,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -2985,82 +2986,196 @@
                 const gateGroup =
                     new THREE.Group();
 
-                const archPillar1 =
-                    new THREE.Mesh(
-                        new THREE.BoxGeometry(
-                            1.2,
-                            8,
-                            1.2
-                        ),
-                        pillarMat
+                // Ornate dark-purple stone for mystic gate
+                const gateStoneMat = new THREE.MeshStandardMaterial({
+                    color: 0x1a0f2e,
+                    roughness: 0.4,
+                    metalness: 0.55,
+                    emissive: 0x2a1050,
+                    emissiveIntensity: 0.35
+                });
+                const gateGoldMat = new THREE.MeshStandardMaterial({
+                    color: 0xffd700,
+                    roughness: 0.25,
+                    metalness: 0.9,
+                    emissive: 0xaa7700,
+                    emissiveIntensity: 0.45
+                });
+                const gateCyanMat = new THREE.MeshStandardMaterial({
+                    color: 0x00ffff,
+                    roughness: 0.2,
+                    metalness: 0.7,
+                    emissive: 0x00ffff,
+                    emissiveIntensity: 0.85
+                });
+
+                function makeGatePillar(x) {
+                    const g = new THREE.Group();
+                    // Base pedestal
+                    const base = new THREE.Mesh(
+                        new THREE.BoxGeometry(2.2, 0.55, 2.2),
+                        gateStoneMat
                     );
-
-                archPillar1.position.set(
-                    -4,
-                    3,
-                    -16
-                );
-
-                const archPillar2 =
-                    new THREE.Mesh(
-                        new THREE.BoxGeometry(
-                            1.2,
-                            8,
-                            1.2
-                        ),
-                        pillarMat
+                    base.position.y = 0.28;
+                    g.add(base);
+                    // Stepped base
+                    const base2 = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.7, 0.4, 1.7),
+                        gateGoldMat
                     );
-
-                archPillar2.position.set(
-                    4,
-                    3,
-                    -16
-                );
-
-                const archTop =
-                    new THREE.Mesh(
-                        new THREE.BoxGeometry(
-                            10,
-                            1.5,
-                            1.5
-                        ),
-                        pillarMat
+                    base2.position.y = 0.7;
+                    g.add(base2);
+                    // Main shaft
+                    const shaft = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.15, 7.2, 1.15),
+                        gateStoneMat
                     );
+                    shaft.position.y = 4.4;
+                    g.add(shaft);
+                    // Decorative bands
+                    [2.2, 4.4, 6.6].forEach(yy => {
+                        const band = new THREE.Mesh(
+                            new THREE.BoxGeometry(1.4, 0.22, 1.4),
+                            gateGoldMat
+                        );
+                        band.position.y = yy;
+                        g.add(band);
+                    });
+                    // Capital
+                    const cap = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.8, 0.5, 1.8),
+                        gateStoneMat
+                    );
+                    cap.position.y = 8.15;
+                    g.add(cap);
+                    // Crystal on top
+                    const crystal = new THREE.Mesh(
+                        new THREE.OctahedronGeometry(0.45, 0),
+                        gateCyanMat
+                    );
+                    crystal.position.y = 8.85;
+                    g.add(crystal);
+                    // Soft glow sphere
+                    const glow = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.7, 12, 12),
+                        new THREE.MeshBasicMaterial({
+                            color: 0x88ffff,
+                            transparent: true,
+                            opacity: 0.28,
+                            depthWrite: false,
+                            blending: THREE.AdditiveBlending
+                        })
+                    );
+                    glow.position.y = 8.85;
+                    g.add(glow);
+                    g.position.set(x, 0, -16);
+                    return g;
+                }
 
-                archTop.position.set(
-                    0,
-                    7.5,
-                    -16
+                const archPillar1 = makeGatePillar(-5.2);
+                const archPillar2 = makeGatePillar(5.2);
+
+                // Arch top beam
+                const archTop = new THREE.Mesh(
+                    new THREE.BoxGeometry(11.5, 1.1, 1.6),
+                    gateStoneMat
                 );
+                archTop.position.set(0, 8.6, -16);
+                // Gold trim on arch
+                const archTrim = new THREE.Mesh(
+                    new THREE.BoxGeometry(11.8, 0.28, 1.85),
+                    gateGoldMat
+                );
+                archTrim.position.set(0, 9.25, -16);
+                // Center keystone gem
+                const keystone = new THREE.Mesh(
+                    new THREE.OctahedronGeometry(0.55, 0),
+                    gateCyanMat
+                );
+                keystone.position.set(0, 9.7, -16);
 
+                // Portal energy plane (animated-looking cyan/magenta)
                 const gateLightMat =
                     new THREE.MeshBasicMaterial({
                         color: 0x00ffff,
                         transparent: true,
-                        opacity: 0.5
+                        opacity: 0.42,
+                        side: THREE.DoubleSide,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
                     });
-
                 const gateLight =
                     new THREE.Mesh(
-                        new THREE.PlaneGeometry(
-                            6.8,
-                            7
-                        ),
+                        new THREE.PlaneGeometry(8.4, 8.2),
                         gateLightMat
                     );
+                gateLight.position.set(0, 4.2, -15.7);
 
-                gateLight.position.set(
-                    0,
-                    3.5,
-                    -15.8
+                // Inner swirling ring
+                const portalRing = new THREE.Mesh(
+                    new THREE.TorusGeometry(3.6, 0.12, 10, 48),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xff00ff,
+                        transparent: true,
+                        opacity: 0.75,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    })
                 );
+                portalRing.position.set(0, 4.2, -15.55);
+                portalRing.userData.spin = true;
+
+                const portalRing2 = new THREE.Mesh(
+                    new THREE.TorusGeometry(2.6, 0.08, 8, 40),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x00ffff,
+                        transparent: true,
+                        opacity: 0.65,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    })
+                );
+                portalRing2.position.set(0, 4.2, -15.5);
+                portalRing2.userData.spin = true;
+
+                // Rune steps leading to gate
+                for (let s = 0; s < 3; s++) {
+                    const step = new THREE.Mesh(
+                        new THREE.BoxGeometry(7 - s * 0.6, 0.22, 1.2),
+                        s % 2 ? gateGoldMat : gateStoneMat
+                    );
+                    step.position.set(0, 0.12 + s * 0.22, -13.5 + s * 1.15);
+                    gateGroup.add(step);
+                }
+
+                // Floating rune orbs beside gate
+                [-6.5, 6.5].forEach((ox, i) => {
+                    const orb = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.28, 10, 10),
+                        new THREE.MeshBasicMaterial({
+                            color: i ? 0xffd700 : 0x00ffff,
+                            transparent: true,
+                            opacity: 0.9
+                        })
+                    );
+                    orb.position.set(ox, 3.5 + i * 0.8, -15.2);
+                    orb.userData.floatOrb = true;
+                    gateGroup.add(orb);
+                });
 
                 gateGroup.add(
                     archPillar1,
                     archPillar2,
                     archTop,
-                    gateLight
+                    archTrim,
+                    keystone,
+                    gateLight,
+                    portalRing,
+                    portalRing2
                 );
+                gateGroup.userData.portalRing = portalRing;
+                gateGroup.userData.portalRing2 = portalRing2;
+                gateGroup.userData.gateLight = gateLight;
 
                 platformGroup.add(
                     gateGroup
@@ -3204,38 +3319,46 @@
                     universeFloor
                 );
 
-                const errorFloorTextureCanvas =
-                    document.createElement('canvas');
-
-                errorFloorTextureCanvas.width = 256;
-                errorFloorTextureCanvas.height = 256;
-
-                const errorFloorCtx =
-                    errorFloorTextureCanvas.getContext('2d');
-
-                errorFloorCtx.fillStyle = '#030303';
-                errorFloorCtx.fillRect(0, 0, 256, 256);
-                errorFloorCtx.font = 'bold 18px monospace';
-                errorFloorCtx.fillStyle = '#00ff66';
-
-                for (let i = 0; i < 18; i++) {
-                    errorFloorCtx.fillText(
-                        ['ERROR','NULL','0xDEAD','GLITCH','SYSTEM'][i % 5],
-                        (i * 47) % 220,
-                        20 + ((i * 71) % 230)
-                    );
+                // ===== ERROR / GLITCH WORLD: chỉ toàn chữ GLITCH, không cây =====
+                function makeGlitchOnlyTexture(size, word, colors) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = size;
+                    canvas.height = size;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(0, 0, size, size);
+                    const words = [word, word, 'GLITCH', 'GL1TCH', 'GLITCH', 'GLlTCH'];
+                    for (let y = 14; y < size; y += 22) {
+                        for (let x = -40; x < size + 40; x += 78) {
+                            const w = words[Math.floor(Math.random() * words.length)];
+                            const c = colors[Math.floor(Math.random() * colors.length)];
+                            ctx.font = 'bold ' + (14 + (Math.random() < 0.2 ? 6 : 0)) + 'px monospace';
+                            ctx.fillStyle = c;
+                            ctx.globalAlpha = 0.55 + Math.random() * 0.45;
+                            ctx.fillText(w, x + (y % 3) * 4, y);
+                        }
+                    }
+                    ctx.globalAlpha = 1;
+                    // Big center watermark
+                    ctx.font = 'bold 72px monospace';
+                    ctx.fillStyle = 'rgba(0,255,100,0.18)';
+                    ctx.fillText(word, size * 0.15, size * 0.52);
+                    const tex = new THREE.CanvasTexture(canvas);
+                    tex.wrapS = THREE.RepeatWrapping;
+                    tex.wrapT = THREE.RepeatWrapping;
+                    return tex;
                 }
 
-                const errorFloorTexture =
-                    new THREE.CanvasTexture(errorFloorTextureCanvas);
-
-                errorFloorTexture.wrapS = THREE.RepeatWrapping;
-                errorFloorTexture.wrapT = THREE.RepeatWrapping;
-                errorFloorTexture.repeat.set(25, 25);
+                const errorFloorTexture = makeGlitchOnlyTexture(
+                    512,
+                    'GLITCH',
+                    ['#00ff66', '#00ff99', '#33ffaa', '#00cc55', '#66ffcc', '#00ff33']
+                );
+                errorFloorTexture.repeat.set(18, 18);
 
                 const errorFloor =
                     new THREE.Mesh(
-                        new THREE.PlaneGeometry(500, 500),
+                        new THREE.PlaneGeometry(600, 600),
                         new THREE.MeshBasicMaterial({
                             map: errorFloorTexture,
                             side: THREE.DoubleSide
@@ -3247,26 +3370,118 @@
                 errorFloor.visible = false;
                 scene.add(errorFloor);
 
+                // Glitch walls (box of floating text panels around arena)
+                const glitchWorldGroup = new THREE.Group();
+                glitchWorldGroup.visible = false;
+                scene.add(glitchWorldGroup);
+
+                const wallTex = makeGlitchOnlyTexture(
+                    512,
+                    'GLITCH',
+                    ['#00ff66', '#00ffaa', '#22ff88', '#00ee55']
+                );
+                wallTex.repeat.set(6, 4);
+                const wallMat = new THREE.MeshBasicMaterial({
+                    map: wallTex,
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.92
+                });
+                const wallH = 28;
+                const wallDist = 55;
+                // Giới hạn va chạm: người chơi không đi xuyên tường chữ GLITCH
+                const GLITCH_WALL_LIMIT = wallDist - 2.5; // ~52.5
+                // 4 walls
+                [
+                    [0, wallH / 2, -wallDist, 0],
+                    [0, wallH / 2, wallDist, Math.PI],
+                    [-wallDist, wallH / 2, 0, Math.PI / 2],
+                    [wallDist, wallH / 2, 0, -Math.PI / 2]
+                ].forEach(([wx, wy, wz, rotY]) => {
+                    const wall = new THREE.Mesh(
+                        new THREE.PlaneGeometry(wallDist * 2.1, wallH),
+                        wallMat.clone()
+                    );
+                    wall.position.set(wx, wy, wz);
+                    wall.rotation.y = rotY;
+                    glitchWorldGroup.add(wall);
+                });
+
+                // Floating GLITCH text sprites around the arena (no trees)
+                function makeGlitchSprite(label, color) {
+                    const c = document.createElement('canvas');
+                    c.width = 256; c.height = 64;
+                    const g = c.getContext('2d');
+                    g.clearRect(0, 0, 256, 64);
+                    g.font = 'bold 42px monospace';
+                    g.fillStyle = color;
+                    g.textAlign = 'center';
+                    g.textBaseline = 'middle';
+                    g.shadowColor = color;
+                    g.shadowBlur = 12;
+                    g.fillText(label, 128, 32);
+                    const t = new THREE.CanvasTexture(c);
+                    const mat = new THREE.SpriteMaterial({
+                        map: t,
+                        transparent: true,
+                        depthWrite: false,
+                        blending: THREE.AdditiveBlending
+                    });
+                    const spr = new THREE.Sprite(mat);
+                    spr.scale.set(8, 2, 1);
+                    return spr;
+                }
+                const glitchFloaters = [];
+                for (let i = 0; i < 36; i++) {
+                    const ang = (i / 36) * Math.PI * 2;
+                    const r = 18 + (i % 5) * 6;
+                    const spr = makeGlitchSprite(
+                        (i % 3 === 0) ? 'GLITCH' : ((i % 3 === 1) ? 'GL1TCH' : 'ERROR'),
+                        (i % 2 === 0) ? '#00ff66' : '#00ffcc'
+                    );
+                    spr.position.set(
+                        Math.cos(ang) * r,
+                        3 + (i % 4) * 2.5,
+                        Math.sin(ang) * r
+                    );
+                    spr.userData.baseY = spr.position.y;
+                    spr.userData.phase = Math.random() * Math.PI * 2;
+                    spr.userData.orbit = ang;
+                    spr.userData.orbitR = r;
+                    glitchWorldGroup.add(spr);
+                    glitchFloaters.push(spr);
+                }
+                // Giant center ring of GLITCH text on ground marker
+                for (let i = 0; i < 8; i++) {
+                    const ang = (i / 8) * Math.PI * 2;
+                    const spr = makeGlitchSprite('GLITCH', '#ff3355');
+                    spr.scale.set(12, 3, 1);
+                    spr.position.set(Math.cos(ang) * 9, 0.8, Math.sin(ang) * 9);
+                    spr.userData.baseY = 0.8;
+                    spr.userData.phase = i;
+                    glitchWorldGroup.add(spr);
+                    glitchFloaters.push(spr);
+                }
+
                 const glitchCodeCanvas = document.createElement('canvas');
                 glitchCodeCanvas.width = 1024;
                 glitchCodeCanvas.height = 1024;
                 const glitchCodeCtx = glitchCodeCanvas.getContext('2d');
-                glitchCodeCtx.fillStyle = '#000308';
+                glitchCodeCtx.fillStyle = '#000000';
                 glitchCodeCtx.fillRect(0, 0, 1024, 1024);
-                glitchCodeCtx.font = '16px monospace';
-                for (let y = 18; y < 1024; y += 22) {
-                    for (let x = 0; x < 1024; x += 150) {
-                        glitchCodeCtx.fillStyle = Math.random() < 0.55 ? '#00ff66' : '#00d9ff';
-                        const line = ['010101','ERROR','GLITCH','NULL','0xFF','<CODE>','101010','SYSTEM','VOID','STACK'][Math.floor(Math.random() * 10)];
-                        glitchCodeCtx.fillText(line + ' ' + Math.floor(Math.random() * 99999), x + Math.random() * 20, y);
+                glitchCodeCtx.font = 'bold 20px monospace';
+                for (let y = 18; y < 1024; y += 24) {
+                    for (let x = 0; x < 1024; x += 110) {
+                        glitchCodeCtx.fillStyle = Math.random() < 0.5 ? '#00ff66' : '#00ffaa';
+                        glitchCodeCtx.fillText('GLITCH', x + Math.random() * 10, y);
                     }
                 }
                 const glitchCodeTexture = new THREE.CanvasTexture(glitchCodeCanvas);
                 glitchCodeTexture.wrapS = THREE.RepeatWrapping;
                 glitchCodeTexture.wrapT = THREE.RepeatWrapping;
-                glitchCodeTexture.repeat.set(80, 500);
+                glitchCodeTexture.repeat.set(40, 40);
                 glitchCodeFloor = new THREE.Mesh(
-                    new THREE.PlaneGeometry(10000, 100000),
+                    new THREE.PlaneGeometry(800, 800),
                     new THREE.MeshBasicMaterial({ map: glitchCodeTexture, side: THREE.DoubleSide })
                 );
                 glitchCodeFloor.rotation.x = -Math.PI / 2;
@@ -3292,14 +3507,92 @@
                 hellFloor.rotation.x = -Math.PI / 2;
                 hellFloor.position.y = 0.01;
                 hellWorld.add(hellFloor);
-                for (let i = 0; i < 70; i++) {
-                    const rock = new THREE.Mesh(
-                        new THREE.DodecahedronGeometry(0.5 + Math.random() * 1.8, 0),
-                        new THREE.MeshStandardMaterial({ color: 0x120808, roughness: 1 })
+                // Climbable rock formations (stacked slabs + boulders you can jump onto)
+                function createClimbableRock(x, z) {
+                    const g = new THREE.Group();
+                    const rockMat = new THREE.MeshStandardMaterial({
+                        color: 0x3a2a22,
+                        roughness: 0.95,
+                        metalness: 0.05,
+                        emissive: 0x1a0a08,
+                        emissiveIntensity: 0.15
+                    });
+                    const mossMat = new THREE.MeshStandardMaterial({
+                        color: 0x1a3322,
+                        roughness: 0.9,
+                        emissive: 0x0a1a10,
+                        emissiveIntensity: 0.2
+                    });
+                    // Base wide platform (step 1)
+                    const baseH = 0.55 + Math.random() * 0.45;
+                    const base = new THREE.Mesh(
+                        new THREE.BoxGeometry(2.4 + Math.random() * 1.6, baseH, 2.2 + Math.random() * 1.4),
+                        rockMat
                     );
-                    rock.position.set((Math.random() - 0.5) * 138, 0.2 + Math.random() * 1.5, (Math.random() - 0.5) * 138);
-                    rock.scale.y = 0.4 + Math.random() * 1.8;
+                    base.position.y = baseH * 0.5;
+                    base.rotation.y = Math.random() * 0.6;
+                    g.add(base);
+                    // Mid ledge (step 2)
+                    const midH = 0.5 + Math.random() * 0.55;
+                    const mid = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.5 + Math.random(), midH, 1.4 + Math.random()),
+                        Math.random() < 0.4 ? mossMat : rockMat
+                    );
+                    mid.position.set(
+                        (Math.random() - 0.5) * 0.6,
+                        baseH + midH * 0.5,
+                        (Math.random() - 0.5) * 0.5
+                    );
+                    mid.rotation.y = Math.random() * 0.8;
+                    g.add(mid);
+                    // Top boulder (step 3 – climbable peak)
+                    const topR = 0.45 + Math.random() * 0.35;
+                    const top = new THREE.Mesh(
+                        new THREE.DodecahedronGeometry(topR, 0),
+                        rockMat
+                    );
+                    top.position.y = baseH + midH + topR * 0.7;
+                    top.scale.y = 0.7 + Math.random() * 0.4;
+                    g.add(top);
+                    // Extra side foothold
+                    if (Math.random() < 0.55) {
+                        const side = new THREE.Mesh(
+                            new THREE.BoxGeometry(0.9, 0.35, 0.8),
+                            mossMat
+                        );
+                        side.position.set(1.1, 0.35 + Math.random() * 0.4, (Math.random() - 0.5) * 0.8);
+                        g.add(side);
+                    }
+                    g.position.set(x, 0, z);
+                    g.userData.isClimbRock = true;
+                    g.userData.climbHeight = baseH + midH + topR * 0.9;
+                    return g;
+                }
+                const climbableRocks = [];
+                for (let i = 0; i < 42; i++) {
+                    const rx = (Math.random() - 0.5) * 130;
+                    const rz = (Math.random() - 0.5) * 130;
+                    // Keep center clear for boss fight
+                    if (Math.hypot(rx, rz) < 12) continue;
+                    const rock = createClimbableRock(rx, rz);
                     hellWorld.add(rock);
+                    climbableRocks.push(rock);
+                }
+                // A few tall stack formations near edges for epic climbs
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i / 8) * Math.PI * 2;
+                    const r = 48 + Math.random() * 18;
+                    const tall = createClimbableRock(Math.cos(angle) * r, Math.sin(angle) * r);
+                    // Extra height layers
+                    const extra = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.2, 1.1, 1.1),
+                        new THREE.MeshStandardMaterial({ color: 0x2e221c, roughness: 0.95 })
+                    );
+                    extra.position.y = (tall.userData.climbHeight || 2) + 0.55;
+                    tall.add(extra);
+                    tall.userData.climbHeight = (tall.userData.climbHeight || 2) + 1.1;
+                    hellWorld.add(tall);
+                    climbableRocks.push(tall);
                 }
                 for (let i = 0; i < 22; i++) {
                     const lava = new THREE.Mesh(
@@ -3537,90 +3830,125 @@
                 /* ===== MYSTIC / COSMIC TREES ===== */
                 function createMysticTree(x, z, scale) {
                     const group = new THREE.Group();
-                    const s = scale || (0.7 + Math.random() * 0.6);
+                    const s = scale || (0.85 + Math.random() * 0.7);
 
-                    // Trunk
+                    // Dark bark trunk with slight taper
                     const trunkMat = new THREE.MeshStandardMaterial({
-                        color: 0x3a2a18,
-                        roughness: 0.9,
-                        metalness: 0.05
+                        color: 0x2a1c10,
+                        roughness: 0.92,
+                        metalness: 0.02
                     });
                     const trunk = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.12 * s, 0.22 * s, 2.2 * s, 6),
+                        new THREE.CylinderGeometry(0.14 * s, 0.28 * s, 2.8 * s, 8),
                         trunkMat
                     );
-                    trunk.position.y = 1.1 * s;
+                    trunk.position.y = 1.4 * s;
                     trunk.castShadow = false;
                     group.add(trunk);
 
-                    // Secondary branch trunks
-                    for (let b = 0; b < 2; b++) {
+                    // Root flare at base
+                    const root = new THREE.Mesh(
+                        new THREE.CylinderGeometry(0.32 * s, 0.18 * s, 0.35 * s, 6),
+                        trunkMat
+                    );
+                    root.position.y = 0.15 * s;
+                    group.add(root);
+
+                    // 3-4 angled branches
+                    for (let b = 0; b < 4; b++) {
                         const br = new THREE.Mesh(
-                            new THREE.CylinderGeometry(0.05 * s, 0.09 * s, 0.9 * s, 5),
+                            new THREE.CylinderGeometry(0.04 * s, 0.09 * s, 1.1 * s, 5),
                             trunkMat
                         );
+                        const ang = (b / 4) * Math.PI * 2 + Math.random() * 0.4;
                         br.position.set(
-                            (b === 0 ? -0.25 : 0.22) * s,
-                            (1.6 + b * 0.2) * s,
-                            0
+                            Math.cos(ang) * 0.28 * s,
+                            (1.9 + (b % 2) * 0.35) * s,
+                            Math.sin(ang) * 0.28 * s
                         );
-                        br.rotation.z = (b === 0 ? 0.5 : -0.45);
+                        br.rotation.z = Math.cos(ang) * 0.55;
+                        br.rotation.x = Math.sin(ang) * 0.45;
                         group.add(br);
                     }
 
-                    // Foliage - glowing crystal-leaf clusters
-                    const leafColors = [0x44ffaa, 0x66ccff, 0xaa66ff, 0xff88cc, 0x88ff66];
-                    const leafColor = leafColors[Math.floor(Math.random() * leafColors.length)];
+                    // Layered glowing foliage (multiple soft spheres + icosa)
+                    const leafPalettes = [
+                        [0x2ecc71, 0x1abc9c, 0x16a085],
+                        [0x9b59b6, 0x8e44ad, 0x6c3483],
+                        [0x3498db, 0x2980b9, 0x1a5276],
+                        [0xe74c3c, 0xc0392b, 0x922b21],
+                        [0xf1c40f, 0xf39c12, 0xd68910],
+                        [0x1abc9c, 0x48c9b0, 0x0e6655]
+                    ];
+                    const pal = leafPalettes[Math.floor(Math.random() * leafPalettes.length)];
                     const leafMat = new THREE.MeshStandardMaterial({
-                        color: leafColor,
-                        emissive: leafColor,
-                        emissiveIntensity: 0.45,
-                        roughness: 0.4,
-                        metalness: 0.15,
+                        color: pal[0],
+                        emissive: pal[1],
+                        emissiveIntensity: 0.55,
+                        roughness: 0.35,
+                        metalness: 0.12,
                         transparent: true,
-                        opacity: 0.9
+                        opacity: 0.92
+                    });
+                    const leafMat2 = new THREE.MeshStandardMaterial({
+                        color: pal[2],
+                        emissive: pal[0],
+                        emissiveIntensity: 0.35,
+                        roughness: 0.4,
+                        metalness: 0.1,
+                        transparent: true,
+                        opacity: 0.85
                     });
 
-                    // Main canopy
+                    // Main dense canopy
                     const canopy = new THREE.Mesh(
-                        new THREE.IcosahedronGeometry(0.85 * s, 1),
+                        new THREE.IcosahedronGeometry(1.05 * s, 1),
                         leafMat
                     );
-                    canopy.position.y = 2.5 * s;
-                    canopy.scale.y = 1.15;
+                    canopy.position.y = 3.15 * s;
+                    canopy.scale.set(1.15, 1.0, 1.15);
                     group.add(canopy);
 
-                    // Extra leaf blobs
-                    for (let i = 0; i < 3; i++) {
+                    // Upper crown
+                    const crown = new THREE.Mesh(
+                        new THREE.IcosahedronGeometry(0.7 * s, 1),
+                        leafMat2
+                    );
+                    crown.position.y = 3.9 * s;
+                    group.add(crown);
+
+                    // Side foliage clusters
+                    for (let i = 0; i < 5; i++) {
                         const blob = new THREE.Mesh(
-                            new THREE.IcosahedronGeometry(0.4 * s + Math.random() * 0.25 * s, 0),
-                            leafMat
+                            new THREE.IcosahedronGeometry(0.38 * s + Math.random() * 0.28 * s, 0),
+                            i % 2 ? leafMat : leafMat2
                         );
+                        const a = (i / 5) * Math.PI * 2 + Math.random() * 0.5;
                         blob.position.set(
-                            (Math.random() - 0.5) * 1.2 * s,
-                            (2.1 + Math.random() * 0.8) * s,
-                            (Math.random() - 0.5) * 1.2 * s
+                            Math.cos(a) * (0.7 + Math.random() * 0.4) * s,
+                            (2.6 + Math.random() * 1.0) * s,
+                            Math.sin(a) * (0.7 + Math.random() * 0.4) * s
                         );
                         group.add(blob);
                     }
 
-                    // Glowing fruit / crystals hanging
-                    const fruitMat = new THREE.MeshBasicMaterial({
-                        color: 0xffeebb,
+                    // Soft glow orbs (fireflies / magic)
+                    const glowMat = new THREE.MeshBasicMaterial({
+                        color: 0xfff5c0,
                         transparent: true,
-                        opacity: 0.85
+                        opacity: 0.75
                     });
-                    for (let i = 0; i < 3; i++) {
-                        const fruit = new THREE.Mesh(
-                            new THREE.OctahedronGeometry(0.08 * s, 0),
-                            fruitMat
+                    for (let i = 0; i < 4; i++) {
+                        const orb = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.07 * s, 6, 6),
+                            glowMat
                         );
-                        fruit.position.set(
-                            (Math.random() - 0.5) * 0.8 * s,
-                            (1.8 + Math.random() * 0.6) * s,
-                            (Math.random() - 0.5) * 0.8 * s
+                        orb.position.set(
+                            (Math.random() - 0.5) * 1.4 * s,
+                            (2.2 + Math.random() * 1.6) * s,
+                            (Math.random() - 0.5) * 1.4 * s
                         );
-                        group.add(fruit);
+                        group.add(orb);
                     }
 
                     group.position.set(x, 0, z);
@@ -3631,47 +3959,98 @@
                 }
 
                 const forestWorld = new THREE.Group();
-                // Ground for forest
+                // Ground for forest — larger + richer moss texture feel
                 const forestGround = new THREE.Mesh(
-                    new THREE.PlaneGeometry(100, 100),
+                    new THREE.PlaneGeometry(220, 220),
                     new THREE.MeshStandardMaterial({
-                        color: 0x0a1a12,
-                        roughness: 0.9,
-                        emissive: 0x021208,
-                        emissiveIntensity: 0.3
+                        color: 0x0c1f14,
+                        roughness: 0.88,
+                        emissive: 0x031a0c,
+                        emissiveIntensity: 0.38
                     })
                 );
                 forestGround.rotation.x = -Math.PI / 2;
                 forestGround.position.y = 0.01;
                 forestWorld.add(forestGround);
 
-                // Scatter mystic trees
-                for (let i = 0; i < 35; i++) {
+                // Dense outer forest rings
+                for (let i = 0; i < 55; i++) {
                     const angle = Math.random() * Math.PI * 2;
-                    const r = 8 + Math.random() * 40;
+                    const r = 10 + Math.random() * 95;
                     const tx = Math.cos(angle) * r;
                     const tz = Math.sin(angle) * r;
-                    forestWorld.add(createMysticTree(tx, tz));
+                    forestWorld.add(createMysticTree(tx, tz, 0.9 + Math.random() * 0.8));
                 }
-                // Center ring of bigger trees
+                // Center ceremonial ring of tall trees
+                for (let i = 0; i < 12; i++) {
+                    const a = (i / 12) * Math.PI * 2;
+                    forestWorld.add(createMysticTree(Math.cos(a) * 14, Math.sin(a) * 14, 1.45));
+                }
+                // Inner smaller ring
                 for (let i = 0; i < 8; i++) {
-                    const a = (i / 8) * Math.PI * 2;
-                    forestWorld.add(createMysticTree(Math.cos(a) * 12, Math.sin(a) * 12, 1.3));
+                    const a = (i / 8) * Math.PI * 2 + 0.2;
+                    forestWorld.add(createMysticTree(Math.cos(a) * 7, Math.sin(a) * 7, 1.1));
                 }
                 forestWorld.visible = false;
                 expandedWorlds.add(forestWorld);
 
-                // Also plant some mystic trees around the main temple platform
-                for (let i = 0; i < 16; i++) {
-                    const angle = (i / 16) * Math.PI * 2;
-                    const r = 38 + (i % 3) * 3;
-                    const tree = createMysticTree(Math.cos(angle) * r, Math.sin(angle) * r, 0.85 + Math.random() * 0.4);
+                // Dense mystic trees filling ALL empty space around main temple platform
+                for (let i = 0; i < 48; i++) {
+                    const angle = (i / 48) * Math.PI * 2;
+                    const r = 42 + (i % 5) * 4 + Math.random() * 6;
+                    const tree = createMysticTree(
+                        Math.cos(angle) * r,
+                        Math.sin(angle) * r,
+                        0.95 + Math.random() * 0.55
+                    );
                     platformGroup.add(tree);
                 }
-                // A few near corners
-                [[-30, -30], [30, -30], [-30, 30], [30, 30], [-20, 35], [20, 35]].forEach(([tx, tz]) => {
-                    platformGroup.add(createMysticTree(tx, tz, 1.0 + Math.random() * 0.3));
+                // Outer wilderness belt (far from temple center)
+                for (let i = 0; i < 70; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = 55 + Math.random() * 90;
+                    platformGroup.add(createMysticTree(
+                        Math.cos(angle) * r,
+                        Math.sin(angle) * r,
+                        0.8 + Math.random() * 0.9
+                    ));
+                }
+                // Corner groves + path clusters
+                [[-32, -32], [32, -32], [-32, 32], [32, 32],
+                 [-22, 38], [22, 38], [-38, 18], [38, -18],
+                 [0, 48], [0, -48], [48, 0], [-48, 0]].forEach(([tx, tz]) => {
+                    platformGroup.add(createMysticTree(tx, tz, 1.15 + Math.random() * 0.4));
+                    platformGroup.add(createMysticTree(tx + 3.5, tz - 2, 0.9));
+                    platformGroup.add(createMysticTree(tx - 2.5, tz + 3, 1.05));
                 });
+
+                // Fill black-hole / universe empty space with mystic forest
+                for (let i = 0; i < 60; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = 25 + Math.random() * 200;
+                    const tx = Math.cos(angle) * r;
+                    const tz = Math.sin(angle) * r;
+                    if (Math.hypot(tx, tz) < 18) continue; // keep black-hole cores clear
+                    blackHoleWorld.add(createMysticTree(tx, tz, 0.9 + Math.random() * 0.85));
+                }
+                // Fill planet world empty ground with forest
+                for (let i = 0; i < 45; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = 15 + Math.random() * 85;
+                    planetWorld.add(createMysticTree(
+                        Math.cos(angle) * r,
+                        Math.sin(angle) * r,
+                        0.85 + Math.random() * 0.75
+                    ));
+                }
+                // Also scatter climbable rocks in black-hole zone edges
+                for (let i = 0; i < 18; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const r = 40 + Math.random() * 160;
+                    if (typeof createClimbableRock === 'function') {
+                        blackHoleWorld.add(createClimbableRock(Math.cos(angle) * r, Math.sin(angle) * r));
+                    }
+                }
 
                  /* =========================
                     ELECTRON WORLD
@@ -3829,9 +4208,10 @@
                             hellFloor.visible = true;
                             hellWorld.visible = true;
                         } else if (gameStage === 11) {
-                            errorFloor.visible = false;
-                            universeFloor.visible = true;
-                            blackHoleWorld.visible = true;
+                            errorFloor.visible = true;
+                            universeFloor.visible = false;
+                            blackHoleWorld.visible = false;
+                            if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = true;
                         } else if (gameStage === 12) {
                             electronFloor.visible = true;
                             if (electronWorld) electronWorld.visible = true;
@@ -3852,20 +4232,31 @@
 
                 function setExpandedWorld(stage) {
                     hellWorld.visible = stage === 3;
-                    blackHoleWorld.visible = stage === 5 || stage === 6 || stage === 10 || stage === 11;
+                    // Stage 11 Error/Glitch: KHÔNG blackhole, KHÔNG cây — chỉ thế giới chữ GLITCH
+                    blackHoleWorld.visible = stage === 5 || stage === 6 || stage === 10;
                     planetWorld.visible = stage === 7 || stage === 8 || stage === 9;
                     forestWorld.visible = false;
                     if (electronWorld) electronWorld.visible = stage === 12;
+                    if (typeof glitchWorldGroup !== 'undefined') {
+                        glitchWorldGroup.visible = (stage === 11);
+                    }
                     if (stage === 3 || stage === 5 || stage === 6 || stage === 7 || stage === 8 || stage === 9 || stage === 10 || stage === 11 || stage === 12) {
                         platformGroup.visible = false;
-                        // Error world (stage 11) keeps universe / black-hole terrain — no forest, no code-floor switch
-                        universeFloor.visible = (stage === 11);
+                        universeFloor.visible = false;
                         if (stage === 11) {
+                            // Pure GLITCH world
+                            errorFloor.visible = true;
+                            if (glitchCodeFloor) glitchCodeFloor.visible = false;
+                            if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = true;
+                        } else {
                             errorFloor.visible = false;
+                            if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = false;
                         }
                     } else {
                         platformGroup.visible = true;
                         universeFloor.visible = false;
+                        errorFloor.visible = false;
+                        if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = false;
                     }
                 }
 
@@ -5327,11 +5718,9 @@
                         return;
                     }
 
-                    // Boss Error stands still in place — no chase, no roam.
-                    // Player only needs to click to attack (no aiming required).
+                    // Phase ERROR only: lock boss at center (glitch phase returns earlier)
                     errorBossMonster.position.x = 0;
-                    errorBossMonster.position.z = -10;
-                    // Keep slight hover from animateErrorBoss (y is set there)
+                    errorBossMonster.position.z = 0;
 
                     if (errorLaserActive && errorLaser) {
                         const target = playerGroup.position.clone();
@@ -5452,23 +5841,18 @@
                     errorSkinTexture.offset.y = (t * 0.00025) % 1;
                     errorSkinTexture.offset.x = (Math.random() < 0.03) ? Math.random() : errorSkinTexture.offset.x;
 
-                    // Boss Error: đứng yên tại chỗ, chỉ bob nhẹ — không di chuyển
+                    // CHỈ phase ERROR: đứng giữa thế giới GLITCH, quay quanh trục
+                    // (phase Glitch đã return ở trên — không áp dụng)
                     errorBossMonster.position.x = 0;
-                    errorBossMonster.position.z = -10;
+                    errorBossMonster.position.z = 0;
                     errorBossMonster.scale.set(1.3, 1.3, 1.3);
                     errorBossMonster.position.y = 4.4 + Math.sin(t * 0.0015) * 0.25;
+                    errorBossMonster.rotation.y += 0.018;
                     errorArmL.rotation.x = Math.sin(t * 0.0012) * 0.15;
                     errorArmR.rotation.x = -Math.sin(t * 0.0012) * 0.15;
                     errorLegL.rotation.x = Math.sin(t * 0.0009) * 0.06;
                     errorLegR.rotation.x = -Math.sin(t * 0.0009) * 0.06;
                     errorHead.rotation.z = (Math.random() < 0.02) ? (Math.random() - 0.5) * 0.4 : errorHead.rotation.z * 0.9;
-
-                    // Luôn nhìn về phía người chơi
-                    if (typeof playerGroup !== 'undefined') {
-                        const dx = playerGroup.position.x - errorBossMonster.position.x;
-                        const dz = playerGroup.position.z - errorBossMonster.position.z;
-                        errorBossMonster.rotation.y = Math.atan2(dx, dz);
-                    }
 
                     // Mắt trắng nhấp nháy glitch
                     const flick = (Math.random() < 0.04) ? 0.1 : 1;
@@ -5477,7 +5861,7 @@
                     updateErrorChaseAndLaser(t);
                 }
 
-                errorBossMonster.position.set(0, 4.4, -10);
+                errorBossMonster.position.set(0, 4.4, 0);
                 errorBossMonster.scale.set(1.3, 1.3, 1.3);
                 errorBossMonster.visible = false;
                 scene.add(errorBossMonster);
@@ -7959,12 +8343,122 @@ const octopusMonster =
                 const BOSS1_PATROL_Z = -8;
                 // Arm reach ≈ arm length of robot boss (~1.4) + body half (~0.8) ≈ 3.2
                 const BOSS1_ARM_REACH = 3.2;
+                // Boss 1 laser attack
+                let boss1Laser = null;
+                let boss1LaserActive = false;
+                let boss1LaserHitLock = false;
+                let boss1NextLaserTime = 0;
+                const BOSS1_LASER_SPEED = 0.55;
+                const BOSS1_LASER_DAMAGE = 1000000; // -1m HP
+                const BOSS1_LASER_COOLDOWN = 2200;
                 bossMonster.position.set(0, 0, BOSS1_PATROL_Z);
                 bossMonster.visible = false;
 
                 scene.add(
                     bossMonster
                 );
+
+                function createBoss1Laser() {
+                    if (boss1Laser) {
+                        scene.remove(boss1Laser);
+                        if (boss1Laser.material) {
+                            if (boss1Laser.material.map) boss1Laser.material.map.dispose();
+                            boss1Laser.material.dispose();
+                        }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 128; canvas.height = 32;
+                    const ctx = canvas.getContext('2d');
+                    const grd = ctx.createLinearGradient(0, 0, 128, 0);
+                    grd.addColorStop(0, 'rgba(255,40,20,0)');
+                    grd.addColorStop(0.25, 'rgba(255,80,30,0.95)');
+                    grd.addColorStop(0.5, 'rgba(255,220,80,1)');
+                    grd.addColorStop(0.75, 'rgba(255,60,20,0.95)');
+                    grd.addColorStop(1, 'rgba(255,20,10,0)');
+                    ctx.fillStyle = grd;
+                    ctx.fillRect(0, 0, 128, 32);
+                    const tex = new THREE.CanvasTexture(canvas);
+                    const mat = new THREE.SpriteMaterial({
+                        map: tex,
+                        transparent: true,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    });
+                    boss1Laser = new THREE.Sprite(mat);
+                    boss1Laser.scale.set(5.5, 1.4, 1);
+                    boss1Laser.position.copy(bossMonster.position);
+                    boss1Laser.position.y += 2.2;
+                    boss1Laser.userData.phase = Math.random() * 10;
+                    scene.add(boss1Laser);
+                    boss1LaserActive = true;
+                    boss1LaserHitLock = false;
+                }
+
+                function removeBoss1Laser() {
+                    if (!boss1Laser) return;
+                    scene.remove(boss1Laser);
+                    if (boss1Laser.material) {
+                        if (boss1Laser.material.map) boss1Laser.material.map.dispose();
+                        boss1Laser.material.dispose();
+                    }
+                    boss1Laser = null;
+                    boss1LaserActive = false;
+                    boss1LaserHitLock = false;
+                }
+
+                function updateBoss1Laser(now) {
+                    if (!bossMonster.visible || gameStage !== 3) {
+                        if (boss1LaserActive) removeBoss1Laser();
+                        return;
+                    }
+                    // Fire periodically
+                    if (!boss1LaserActive && now >= boss1NextLaserTime) {
+                        createBoss1Laser();
+                        boss1NextLaserTime = now + BOSS1_LASER_COOLDOWN;
+                    }
+                    if (!boss1LaserActive || !boss1Laser) return;
+
+                    const target = playerGroup.position.clone();
+                    target.y += 1.2;
+                    const dx = target.x - boss1Laser.position.x;
+                    const dy = target.y - boss1Laser.position.y;
+                    const dz = target.z - boss1Laser.position.z;
+                    const len = Math.max(0.001, Math.hypot(dx, dy, dz));
+                    boss1Laser.position.x += (dx / len) * BOSS1_LASER_SPEED;
+                    boss1Laser.position.y += (dy / len) * BOSS1_LASER_SPEED;
+                    boss1Laser.position.z += (dz / len) * BOSS1_LASER_SPEED;
+                    boss1Laser.position.y += Math.sin(now * 0.012 + boss1Laser.userData.phase) * 0.02;
+                    // Face travel direction
+                    const dist = boss1Laser.position.distanceTo(target);
+                    if (dist < 1.6 && !boss1LaserHitLock) {
+                        boss1LaserHitLock = true;
+                        playerHP = Math.max(0, playerHP - BOSS1_LASER_DAMAGE);
+                        lastDamageTakenTime = now;
+                        updatePlayerHPUI();
+                        showDmgPopup('-1m');
+                        showToast(
+                            currentLang === 'vi'
+                            ? '🔴 BOSS BẮN TIA LASER! -1m MÁU!'
+                            : '🔴 BOSS LASER HIT! -1m HP!'
+                        );
+                        if (playerHP <= 0) {
+                            playerHP = playerMaxHP;
+                            power = Math.floor(power * 0.9);
+                            document.getElementById('val-power').innerText = formatNum(power);
+                            showToast(
+                                currentLang === 'vi'
+                                ? '💥 BẠN GỤC VÌ LASER! MẤT 10% POWER!'
+                                : '💥 DOWNED BY LASER! LOST 10% POWER!'
+                            );
+                            saveCurrentAccount();
+                        }
+                        removeBoss1Laser();
+                        boss1NextLaserTime = now + BOSS1_LASER_COOLDOWN * 0.6;
+                    } else if (dist > 90) {
+                        // Missed — despawn
+                        removeBoss1Laser();
+                    }
+                }
 
 /* =========================
                    DROP ITEM
@@ -9595,9 +10089,18 @@ const octopusMonster =
 
                             openCosmicDinoBossByCommand();
 
-                        } else if ((cmd === '//hack' || plain === '//hack') && errorGlitchWorldWon) {
+                        } else if (cmd === '//hack' || plain === '//hack') {
 
+                            // //hack: mở khóa + dịch chuyển thẳng sang thế giới Electron (cuối)
+                            errorGlitchWorldWon = true;
+                            electronHackUnlocked = true;
+                            electronWorldUnlocked = true;
+                            waitingForNewBoss = false;
                             triggerElectronHack();
+                            // Dịch chuyển ngay, không cần nhấn D
+                            setTimeout(() => {
+                                enterElectronWorld();
+                            }, 700);
 
                         } else if (secretAdminMode && (cmd === '//end' || plain === '//end' || plain === '/end')) {
 
@@ -11048,13 +11551,16 @@ const octopusMonster =
                                         errorGlitchLaunchActive = false;
                                         errorGlitchDamageApplied = false;
                                         errorGlitchNextAttackTime = performance.now();
-                                        errorFloor.visible = false;
+                                        // Phase GLITCH: vẫn nền chữ nhưng boss nhỏ di chuyển tự do (không đứng giữa quay)
+                                        errorFloor.visible = true;
                                         if (glitchCodeFloor) glitchCodeFloor.visible = false;
-                                        universeFloor.visible = true;
-                                        blackHoleWorld.visible = true;
+                                        universeFloor.visible = false;
+                                        blackHoleWorld.visible = false;
+                                        if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = true;
                                         errorBossMonster.visible = true;
                                         errorBossMonster.scale.set(ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE);
-                                        errorBossMonster.position.set(0, 2, -35);
+                                        errorBossMonster.position.set(0, 2, -20);
+                                        errorBossMonster.userData.glitchTarget = new THREE.Vector3(0, 2, -20);
                                         errorBossMonster.userData.glitchTarget = new THREE.Vector3(0, 2, -35);
                                         errorBossMonster.userData.glitchNextMove = performance.now();
                                         setErrorMapExpanded(false);
@@ -11178,15 +11684,16 @@ const octopusMonster =
                                 playerGroup.position.x = 0;
                                 playerGroup.position.z = 35;
 
-                                errorFloor.visible = false;
-                                universeFloor.visible = true;
-                                blackHoleWorld.visible = true;
                                 setExpandedWorld(11);
+                                errorFloor.visible = true;
+                                universeFloor.visible = false;
+                                blackHoleWorld.visible = false;
+                                if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = true;
                                 if (glitchCodeFloor) glitchCodeFloor.visible = false;
                                 if (rainbowHaloGroup) rainbowHaloGroup.visible = false;
                                 errorBossMonster.visible = true;
                                 errorBossMonster.scale.set(1.3, 1.3, 1.3);
-                                errorBossMonster.position.set(0, 4.4, -10);
+                                errorBossMonster.position.set(0, 4.4, 0);
 
                                 setBossArenaSkybox(false);
 
@@ -12333,18 +12840,22 @@ const octopusMonster =
 
                     if (errorBossUnlocked && gameStage === 11) {
                         if (errorGlitchPhase && errorBossDefeated) {
-                            errorFloor.visible = false;
+                            errorFloor.visible = true;
                             errorBossMonster.visible = false;
+                            if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = true;
                         } else {
-                            errorFloor.visible = false;
-                            universeFloor.visible = true;
-                            blackHoleWorld.visible = true;
+                            setExpandedWorld(11);
+                            errorFloor.visible = true;
+                            universeFloor.visible = false;
+                            blackHoleWorld.visible = false;
+                            if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = true;
                             errorBossMonster.visible = true;
                             errorBossMonster.scale.set(
                                 errorGlitchPhase ? ERROR_GLITCH_BOSS_SCALE : 1.3,
                                 errorGlitchPhase ? ERROR_GLITCH_BOSS_SCALE : 1.3,
                                 errorGlitchPhase ? ERROR_GLITCH_BOSS_SCALE : 1.3
                             );
+                            errorBossMonster.position.set(0, errorGlitchPhase ? 2 : 4.4, 0);
                         }
                         if (glitchCodeFloor) glitchCodeFloor.visible = waitingForNewBoss;
                         setErrorMapExpanded(errorMapExpanded);
@@ -13531,11 +14042,13 @@ const octopusMonster =
                     gameStage = 11;
                     errorBossHPExponent = ERROR_BOSS_HP_EXPONENT;
                     errorBossMonster.scale.set(1.3, 1.3, 1.3);
-                    errorBossMonster.position.set(0, 4.4, -10);
+                    errorBossMonster.position.set(0, 4.4, 0);
                     errorBossMonster.visible = true;
-                    errorFloor.visible = false;
-                    universeFloor.visible = true;
-                    blackHoleWorld.visible = true;
+                    setExpandedWorld(11);
+                    errorFloor.visible = true;
+                    universeFloor.visible = false;
+                    blackHoleWorld.visible = false;
+                    if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = true;
                     if (glitchCodeFloor) glitchCodeFloor.visible = false;
                     if (rainbowHaloGroup) rainbowHaloGroup.visible = false;
                     playerGroup.position.set(0, 0, 35);
@@ -13550,8 +14063,8 @@ const octopusMonster =
                 }
 
                 function triggerElectronHack() {
-                    if (!errorGlitchWorldWon || electronWorldUnlocked) return;
-
+                    // Cho phép //hack bất cứ lúc nào — luôn mở Electron
+                    errorGlitchWorldWon = true;
                     electronHackUnlocked = true;
                     electronWorldUnlocked = true;
                     waitingForNewBoss = true;
@@ -13590,9 +14103,14 @@ const octopusMonster =
                 }
 
                 function enterElectronWorld() {
-                    if (!electronWorldUnlocked || electronBossDefeated) return;
+                    // //hack / D đều được vào — reset boss nếu đã thắng trước đó
+                    if (!electronWorldUnlocked) {
+                        electronWorldUnlocked = true;
+                    }
+                    electronBossDefeated = false;
 
-                    document.getElementById('electron-world-msg').style.display = 'none';
+                    const eMsg = document.getElementById('electron-world-msg');
+                    if (eMsg) eMsg.style.display = 'none';
                     document.getElementById('victory-screen').style.display = 'none';
                     showBossCommandBar(false);
 
@@ -13859,6 +14377,45 @@ const octopusMonster =
                         rainbowHaloGroup.children.forEach((h, i) => {
                             h.rotation.z += 0.01 + i * 0.002;
                         });
+                    }
+
+                    // Animate mystic gate portal rings + light pulse
+                    if (typeof gateGroup !== 'undefined' && gateGroup.userData) {
+                        const nowG = performance.now() * 0.001;
+                        if (gateGroup.userData.portalRing) {
+                            gateGroup.userData.portalRing.rotation.z += 0.02;
+                            const p = 1 + Math.sin(nowG * 2.2) * 0.06;
+                            gateGroup.userData.portalRing.scale.set(p, p, p);
+                        }
+                        if (gateGroup.userData.portalRing2) {
+                            gateGroup.userData.portalRing2.rotation.z -= 0.028;
+                        }
+                        if (gateGroup.userData.gateLight) {
+                            gateGroup.userData.gateLight.material.opacity = 0.32 + Math.sin(nowG * 3) * 0.18;
+                        }
+                        gateGroup.children.forEach(ch => {
+                            if (ch.userData && ch.userData.floatOrb) {
+                                ch.position.y = 3.5 + Math.sin(nowG * 2 + ch.position.x) * 0.45;
+                            }
+                        });
+                    }
+
+                    // Animate floating GLITCH text in Error world
+                    if (typeof glitchWorldGroup !== 'undefined' && glitchWorldGroup.visible && typeof glitchFloaters !== 'undefined') {
+                        const tG = performance.now() * 0.001;
+                        glitchFloaters.forEach((spr, i) => {
+                            if (spr.userData.orbitR) {
+                                spr.userData.orbit += 0.003;
+                                spr.position.x = Math.cos(spr.userData.orbit) * spr.userData.orbitR;
+                                spr.position.z = Math.sin(spr.userData.orbit) * spr.userData.orbitR;
+                            }
+                            spr.position.y = (spr.userData.baseY || 2) + Math.sin(tG * 1.5 + (spr.userData.phase || i)) * 0.55;
+                        });
+                        // Scroll floor texture for living code feel
+                        if (errorFloor && errorFloor.material && errorFloor.material.map) {
+                            errorFloor.material.map.offset.y = (tG * 0.04) % 1;
+                            errorFloor.material.map.offset.x = (tG * 0.015) % 1;
+                        }
                     }
 
                     if (waitingForNewBoss && glitchCodeFloor) {
@@ -14183,9 +14740,12 @@ const octopusMonster =
                             playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -4992, 4992);
                             playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -49992, 49992);
                         } else {
-                            const half = (errorMapExpanded ? ERROR_MAP_CHASE_SIZE : ERROR_MAP_NORMAL_SIZE) * 0.5 - 8;
-                            playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -half, half);
-                            playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -half, half);
+                            // Phase Error & Glitch: không đi xuyên tường chữ GLITCH
+                            const limit = (typeof GLITCH_WALL_LIMIT === 'number')
+                                ? GLITCH_WALL_LIMIT
+                                : 52.5;
+                            playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -limit, limit);
+                            playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -limit, limit);
                         }
                     } else if (gameStage === 3) {
                         playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -70, 70);
@@ -14829,6 +15389,12 @@ const octopusMonster =
                         if (distNear <= BOSS1_ARM_REACH * 1.5) {
                             bossMonster.rotation.y = Math.atan2(dxNear, dzNear);
                         }
+                        // Boss 1 laser attack
+                        if (typeof updateBoss1Laser === 'function') {
+                            updateBoss1Laser(performance.now());
+                        }
+                    } else if (typeof removeBoss1Laser === 'function') {
+                        removeBoss1Laser();
                     }
 
                     if (
