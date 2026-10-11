@@ -718,6 +718,7 @@
         </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/environments/RoomEnvironment.js"></script>
 </head>
@@ -801,11 +802,11 @@
         <button type="button" class="upd-close" onclick="hideUpdatePanel()" title="Close">×</button>
         <div class="upd-art">📷</div>
         <div class="upd-body">
-            <div class="upd-ver">Version 1.20</div>
+            <div class="upd-ver">Version 1.21</div>
             <p class="upd-desc lang-txt"
-               data-vi="Update góc nhìn: đã thêm nhiều hình ảnh hơn cho camera / góc nhìn! Nhấn ESC để ẩn. Admin: //speed (n) — tốc độ x10 đến x1m."
-               data-en="View update: more images added to the camera / view angle! Press ESC to hide. Admin: //speed (n) — speed x10 to x1m.">
-                Update góc nhìn: đã thêm nhiều hình ảnh hơn cho camera / góc nhìn! Nhấn ESC để ẩn. Admin: //speed (n) — tốc độ x10 đến x1m.
+               data-vi="People can play together! Chơi 2 người (phím Q) — tạo/vào phòng, thấy nhau & đi chung. Max 2 người/phòng. Nhấn ESC để ẩn."
+               data-en="People can play together! 2-player mode (press Q) — create/join room, see each other & walk together. Max 2 per room. Press ESC to hide.">
+                People can play together! Chơi 2 người (phím Q) — tạo/vào phòng, thấy nhau & đi chung. Max 2 người/phòng. Nhấn ESC để ẩn.
             </p>
         </div>
     </div>
@@ -815,6 +816,11 @@
         <div class="qa-btn" id="qa-inventory" onclick="toggleInventory()">
             <span class="qa-badge">TAB</span>
             🎒
+        </div>
+
+        <div class="qa-btn" id="qa-multi" onclick="toggleMultiplayer()" title="Chơi 2 người [Q]">
+            <span class="qa-badge">Q</span>
+            👥
         </div>
 
         <div class="qa-btn" id="qa-login" onclick="toggleLogin()">
@@ -1365,6 +1371,27 @@
             Bấm [J] để đóng
         </div>
 
+    </div>
+
+    <!-- MULTIPLAYER 2P -->
+    <div id="multi-modal" class="modal-box" style="border-color:#00ffcc;display:none;">
+        <h3 style="color:#00ffcc;">👥 CHƠI 2 NGƯỜI</h3>
+        <p style="font-size:12px;color:#ccc;text-align:center;">
+            Tối đa 1 phòng = 2 người · Chỉ thấy nhau &amp; đi chung
+        </p>
+        <div style="font-size:12px;color:#aaa;margin:8px 0;">Tên hiển thị của bạn:</div>
+        <div id="multi-my-name" style="text-align:center;font-size:16px;font-weight:bold;color:#ffd700;margin-bottom:10px;">Player</div>
+        <button type="button" onclick="mpCreateRoom()" style="background:#00aa88;">🏠 Tạo phòng</button>
+        <div id="multi-room-code" style="display:none;text-align:center;margin:12px 0;padding:10px;background:rgba(0,255,200,0.1);border-radius:8px;border:1px solid #00ffcc;">
+            <div style="font-size:11px;color:#aaa;">Mã phòng (gửi cho bạn chơi):</div>
+            <div id="multi-code-text" style="font-size:22px;font-weight:900;color:#00ffcc;letter-spacing:2px;user-select:all;"></div>
+            <div id="multi-status" style="font-size:12px;color:#ffcc00;margin-top:6px;">Đang chờ người chơi...</div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:#aaa;">Hoặc nhập mã phòng để vào:</div>
+        <input type="text" id="multi-join-input" placeholder="Dán mã phòng..." autocomplete="off" style="width:100%;padding:10px;border-radius:6px;border:none;margin:8px 0;font-size:14px;box-sizing:border-box;">
+        <button type="button" onclick="mpJoinRoom()" style="background:#4488ff;">🚪 Vào phòng</button>
+        <button type="button" onclick="mpLeaveRoom()" style="background:#ff4455;margin-top:8px;">✖ Rời phòng</button>
+        <div style="text-align:center;font-size:11px;margin-top:12px;color:#aaa;">Nhấn [Q] để đóng · Trong J/Y vẫn gõ được chữ q</div>
     </div>
 
     <div id="mc-cmd-hint">
@@ -5184,6 +5211,253 @@
                 scene.add(
                     playerGroup
                 );
+
+                /* =========================
+                   MULTIPLAYER 2P (PeerJS)
+                   Chỉ thấy nhau + đi chung
+                   Max 1 phòng = 2 người
+                ========================= */
+                let mpPeer = null;
+                let mpConn = null;
+                let mpIsHost = false;
+                let mpConnected = false;
+                let mpRemotePlayer = null;
+                let mpRemoteNameSprite = null;
+                let mpLastSend = 0;
+                const MP_SEND_INTERVAL = 80; // ms
+
+                function getDisplayName() {
+                    // Admin: luôn hiện "admin", không lộ mã đăng nhập
+                    if (secretAdminMode) return 'admin';
+                    if (currentAccountName && String(currentAccountName).trim()) {
+                        const n = String(currentAccountName).trim();
+                        // Chặn lộ credential admin trong tên
+                        if (/addmin/i.test(n) || n.toLowerCase() === 'addmin1o') return 'admin';
+                        return n;
+                    }
+                    return 'Player';
+                }
+
+                function makeNameSprite(name) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 256;
+                    canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, 256, 64);
+                    ctx.font = 'bold 28px Segoe UI, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+                    ctx.fillRect(20, 12, 216, 40);
+                    ctx.strokeStyle = '#00ffcc';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(20, 12, 216, 40);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillText(String(name || 'Player').slice(0, 16), 128, 34);
+                    const tex = new THREE.CanvasTexture(canvas);
+                    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+                    const spr = new THREE.Sprite(mat);
+                    spr.scale.set(3.2, 0.8, 1);
+                    spr.position.y = 3.2;
+                    return spr;
+                }
+
+                function createRemotePlayerAvatar(name) {
+                    const g = new THREE.Group();
+                    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a6a9a, roughness: 0.6 });
+                    const skin = new THREE.MeshStandardMaterial({ color: 0xd4a373, roughness: 0.8 });
+                    const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.1, 0.45), bodyMat);
+                    body.position.y = 1.25;
+                    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.5, 0.5), skin);
+                    head.position.y = 2.05;
+                    const legL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.7, 0.28), bodyMat);
+                    legL.position.set(-0.18, 0.35, 0);
+                    const legR = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.7, 0.28), bodyMat);
+                    legR.position.set(0.18, 0.35, 0);
+                    g.add(body, head, legL, legR);
+                    const nameSpr = makeNameSprite(name || 'Player');
+                    g.add(nameSpr);
+                    g.userData.nameSprite = nameSpr;
+                    g.visible = false;
+                    scene.add(g);
+                    return g;
+                }
+
+                function updateRemoteName(name) {
+                    if (!mpRemotePlayer) return;
+                    const old = mpRemotePlayer.userData.nameSprite;
+                    if (old) {
+                        mpRemotePlayer.remove(old);
+                        if (old.material.map) old.material.map.dispose();
+                        old.material.dispose();
+                    }
+                    const spr = makeNameSprite(name);
+                    mpRemotePlayer.add(spr);
+                    mpRemotePlayer.userData.nameSprite = spr;
+                }
+
+                function mpSetStatus(msg) {
+                    const el = document.getElementById('multi-status');
+                    if (el) el.innerText = msg;
+                }
+
+                function mpRefreshMyNameUI() {
+                    const el = document.getElementById('multi-my-name');
+                    if (el) el.innerText = getDisplayName();
+                }
+
+                window.toggleMultiplayer = function() {
+                    const modal = document.getElementById('multi-modal');
+                    if (!modal) return;
+                    const open = modal.style.display !== 'flex';
+                    modal.style.display = open ? 'flex' : 'none';
+                    if (open) mpRefreshMyNameUI();
+                };
+
+                function mpCleanupPeer() {
+                    try { if (mpConn) mpConn.close(); } catch(e) {}
+                    try { if (mpPeer) mpPeer.destroy(); } catch(e) {}
+                    mpConn = null;
+                    mpPeer = null;
+                    mpConnected = false;
+                    mpIsHost = false;
+                    if (mpRemotePlayer) mpRemotePlayer.visible = false;
+                    const codeBox = document.getElementById('multi-room-code');
+                    if (codeBox) codeBox.style.display = 'none';
+                }
+
+                function mpOnData(data) {
+                    if (!data || typeof data !== 'object') return;
+                    if (data.t === 'pos' && mpRemotePlayer) {
+                        mpRemotePlayer.visible = true;
+                        mpRemotePlayer.position.set(data.x || 0, data.y || 0, data.z || 0);
+                        if (typeof data.ry === 'number') mpRemotePlayer.rotation.y = data.ry;
+                        if (data.name) updateRemoteName(data.name);
+                    } else if (data.t === 'hello') {
+                        mpConnected = true;
+                        mpSetStatus('✅ Đã kết nối với ' + (data.name || 'Player'));
+                        if (data.name) updateRemoteName(data.name);
+                        if (mpRemotePlayer) mpRemotePlayer.visible = true;
+                        showToast('👥 ' + (data.name || 'Player') + ' đã vào phòng!');
+                    } else if (data.t === 'bye') {
+                        mpConnected = false;
+                        if (mpRemotePlayer) mpRemotePlayer.visible = false;
+                        mpSetStatus('Người chơi đã rời phòng');
+                        showToast('👥 Người chơi đã rời phòng');
+                    }
+                }
+
+                function mpBindConn(conn) {
+                    mpConn = conn;
+                    conn.on('open', () => {
+                        mpConnected = true;
+                        mpSetStatus('✅ Đã kết nối!');
+                        conn.send({ t: 'hello', name: getDisplayName() });
+                        if (mpRemotePlayer) mpRemotePlayer.visible = true;
+                    });
+                    conn.on('data', mpOnData);
+                    conn.on('close', () => {
+                        mpConnected = false;
+                        if (mpRemotePlayer) mpRemotePlayer.visible = false;
+                        mpSetStatus('Mất kết nối');
+                        showToast('👥 Mất kết nối multiplayer');
+                    });
+                    conn.on('error', () => {
+                        mpSetStatus('Lỗi kết nối');
+                    });
+                }
+
+                window.mpCreateRoom = function() {
+                    if (typeof Peer === 'undefined') {
+                        showToast('❌ PeerJS chưa tải — kiểm tra mạng');
+                        return;
+                    }
+                    mpCleanupPeer();
+                    if (!mpRemotePlayer) mpRemotePlayer = createRemotePlayerAvatar('Player');
+                    mpIsHost = true;
+                    mpPeer = new Peer();
+                    mpPeer.on('open', (id) => {
+                        const codeBox = document.getElementById('multi-room-code');
+                        const codeText = document.getElementById('multi-code-text');
+                        if (codeBox) codeBox.style.display = 'block';
+                        if (codeText) codeText.innerText = id;
+                        mpSetStatus('Đang chờ người chơi thứ 2...');
+                        showToast('🏠 Phòng đã tạo! Gửi mã cho bạn');
+                    });
+                    mpPeer.on('connection', (conn) => {
+                        // Max 2 người: nếu đã có 1 kết nối thì từ chối
+                        if (mpConn && mpConn.open) {
+                            conn.on('open', () => {
+                                conn.send({ t: 'bye' });
+                                conn.close();
+                            });
+                            showToast('❌ Phòng đã đủ 2 người!');
+                            return;
+                        }
+                        mpBindConn(conn);
+                        mpSetStatus('✅ Có người vào phòng!');
+                    });
+                    mpPeer.on('error', (err) => {
+                        mpSetStatus('Lỗi: ' + (err.type || 'unknown'));
+                        showToast('❌ Lỗi multiplayer');
+                    });
+                };
+
+                window.mpJoinRoom = function() {
+                    if (typeof Peer === 'undefined') {
+                        showToast('❌ PeerJS chưa tải — kiểm tra mạng');
+                        return;
+                    }
+                    const input = document.getElementById('multi-join-input');
+                    const roomId = (input && input.value || '').trim();
+                    if (!roomId) {
+                        showToast('❌ Nhập mã phòng!');
+                        return;
+                    }
+                    mpCleanupPeer();
+                    if (!mpRemotePlayer) mpRemotePlayer = createRemotePlayerAvatar('Player');
+                    mpIsHost = false;
+                    mpPeer = new Peer();
+                    mpPeer.on('open', () => {
+                        const conn = mpPeer.connect(roomId, { reliable: true });
+                        mpBindConn(conn);
+                        mpSetStatus('Đang kết nối...');
+                        const codeBox = document.getElementById('multi-room-code');
+                        if (codeBox) codeBox.style.display = 'block';
+                        const codeText = document.getElementById('multi-code-text');
+                        if (codeText) codeText.innerText = roomId;
+                    });
+                    mpPeer.on('error', (err) => {
+                        mpSetStatus('Lỗi: ' + (err.type || 'unknown'));
+                        showToast('❌ Không vào được phòng');
+                    });
+                };
+
+                window.mpLeaveRoom = function() {
+                    if (mpConn && mpConn.open) {
+                        try { mpConn.send({ t: 'bye' }); } catch(e) {}
+                    }
+                    mpCleanupPeer();
+                    mpSetStatus('Đã rời phòng');
+                    showToast('👥 Đã rời phòng');
+                };
+
+                function mpSendPos() {
+                    if (!mpConn || !mpConn.open || !playerGroup) return;
+                    const now = performance.now();
+                    if (now - mpLastSend < MP_SEND_INTERVAL) return;
+                    mpLastSend = now;
+                    try {
+                        mpConn.send({
+                            t: 'pos',
+                            x: playerGroup.position.x,
+                            y: playerGroup.position.y,
+                            z: playerGroup.position.z,
+                            ry: playerGroup.rotation.y,
+                            name: getDisplayName()
+                        });
+                    } catch(e) {}
+                }
 
                 updatePlayerSwordVisual();
 
@@ -12316,8 +12590,12 @@ const octopusMonster =
                 }
 
                 function accountPowerLabel() {
+                    if (secretAdminMode) return 'admin';
                     if (!currentAccountName) return '--';
-                    return currentAccountName + '/' + (currentAccountPass || '') + '(' + formatNum(power) + ')';
+                    const n = String(currentAccountName).trim();
+                    // Không lộ credential admin
+                    if (/addmin/i.test(n) || n.toLowerCase() === 'addmin1o') return 'admin';
+                    return n + '(' + formatNum(power) + ')';
                 }
 
                 function refreshAccountLabel() {
@@ -13744,6 +14022,10 @@ const octopusMonster =
 
                         if (raw.trim().toLowerCase() === 'addmin1o/addmin') {
                             secretAdminMode = true;
+                            // Tên hiển thị = admin (không lộ credential)
+                            const accEl = document.getElementById('val-account');
+                            if (accEl) accEl.innerText = 'ADMIN';
+                            if (typeof mpRefreshMyNameUI === 'function') mpRefreshMyNameUI();
                             power = Number.MAX_VALUE;
                             hasGlitchSword = true;
                             hasHackSword = true;
@@ -14027,6 +14309,9 @@ const octopusMonster =
 
                         if (e.key.toLowerCase() === 'y' && !e.repeat)
                             togglePasswordModal();
+
+                        if (e.key.toLowerCase() === 'q' && !e.repeat && typeof toggleMultiplayer === 'function')
+                            toggleMultiplayer();
 
                     }
                 );
@@ -14609,6 +14894,9 @@ const octopusMonster =
                     }
 
                     updateRealism();
+
+                    // Multiplayer: gửi vị trí cho người kia
+                    if (typeof mpSendPos === 'function') mpSendPos();
 
                     if (
                         gameStage === 11 &&
