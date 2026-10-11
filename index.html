@@ -2352,17 +2352,18 @@
                     new THREE.Scene();
 
                 scene.background =
-                    new THREE.Color(0x06030d);
+                    new THREE.Color(0x0a0714);
 
+                // Sương mù mềm hơn, chân thật hơn
                 scene.fog =
                     new THREE.FogExp2(
-                        0x06030d,
-                        0.004
+                        0x0a0714,
+                        0.0028
                     );
 
                 const camera =
                     new THREE.PerspectiveCamera(
-                        75,
+                        68, // FOV gần mắt người hơn 75
                         window.innerWidth /
                         window.innerHeight,
                         0.1,
@@ -2371,25 +2372,26 @@
 
                 const renderer =
                     new THREE.WebGLRenderer({
-                        antialias: true
+                        antialias: true,
+                        powerPreference: 'high-performance'
                     });
 
                 renderer.shadowMap.enabled = true;
-                renderer.shadowMap.type = THREE.BasicShadowMap; // nhẹ hơn PCFSoft
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap; // bóng mềm chân thật
                 renderer.outputEncoding = THREE.sRGBEncoding;
                 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                renderer.toneMappingExposure = 1.05;
+                renderer.toneMappingExposure = 1.18;
+                renderer.physicallyCorrectLights = true;
 
                 renderer.setSize(
                     window.innerWidth,
                     window.innerHeight
                 );
 
-                // Giảm pixel ratio để giảm lag (max 1.5)
                 renderer.setPixelRatio(
                     Math.min(
                         window.devicePixelRatio || 1,
-                        1.5
+                        1.75
                     )
                 );
 
@@ -2397,55 +2399,65 @@
                     renderer.domElement
                 );
 
+                // Ánh sáng bầu trời + mặt đất (màu tự nhiên hơn)
                 const hemiLight =
                     new THREE.HemisphereLight(
-                        0xb0c8ff,
-                        0x1a1025,
-                        1.35
+                        0xc8d6ff,
+                        0x2a1838,
+                        0.95
                     );
 
                 scene.add(hemiLight);
 
                 scene.add(
                     new THREE.AmbientLight(
-                        0x4a3a7e,
-                        0.55
+                        0x3d2a55,
+                        0.38
                     )
                 );
 
+                // Ánh sáng chính (mặt trời giả) — góc cao, bóng rõ
                 const dirLight =
                     new THREE.DirectionalLight(
-                        0xaa77ff,
-                        2.1
+                        0xffe6cc,
+                        1.55
                     );
 
                 dirLight.position.set(
-                    15,
-                    25,
-                    10
+                    22,
+                    38,
+                    14
                 );
 
                 dirLight.castShadow = true;
-                dirLight.shadow.mapSize.width = 1024;  // giảm từ 2048 → 1024 chống lag
-                dirLight.shadow.mapSize.height = 1024;
+                dirLight.shadow.mapSize.width = 2048;
+                dirLight.shadow.mapSize.height = 2048;
                 dirLight.shadow.camera.near = 0.5;
-                dirLight.shadow.camera.far = 120;
-                dirLight.shadow.camera.left = -50;
-                dirLight.shadow.camera.right = 50;
-                dirLight.shadow.camera.top = 50;
-                dirLight.shadow.camera.bottom = -50;
-                dirLight.shadow.bias = -0.001;
+                dirLight.shadow.camera.far = 180;
+                dirLight.shadow.camera.left = -70;
+                dirLight.shadow.camera.right = 70;
+                dirLight.shadow.camera.top = 70;
+                dirLight.shadow.camera.bottom = -70;
+                dirLight.shadow.bias = -0.0003;
+                dirLight.shadow.normalBias = 0.02;
+                dirLight.shadow.radius = 3;
 
                 scene.add(dirLight);
 
+                // Fill light nhẹ từ phía đối diện (giảm bóng đen cứng)
+                const fillLight = new THREE.DirectionalLight(0x8866cc, 0.35);
+                fillLight.position.set(-18, 12, -10);
+                scene.add(fillLight);
+
+                // Ánh sáng “trăng” điểm — tạo depth
                 const moonLight =
                     new THREE.PointLight(
-                        0x7aa2ff,
-                        1.6,
-                        40,
+                        0x9ab8ff,
+                        1.15,
+                        55,
                         2
                     );
-                moonLight.castShadow = false; // tắt shadow point light để giảm lag
+                moonLight.castShadow = false;
 
                 moonLight.position.set(
                     -8,
@@ -2506,55 +2518,74 @@
                     canvas.height = 512;
                     const ctx = canvas.getContext('2d');
 
-                    // Base deep purple-green stone
-                    const baseGrad = ctx.createLinearGradient(0, 0, 512, 512);
-                    baseGrad.addColorStop(0, '#1a0f2e');
-                    baseGrad.addColorStop(0.5, '#0f1a1a');
-                    baseGrad.addColorStop(1, '#1a0f2e');
-                    ctx.fillStyle = baseGrad;
+                    // Realistic dark stone base
+                    ctx.fillStyle = '#1c1528';
                     ctx.fillRect(0, 0, 512, 512);
 
-                    // Mystical tile pattern
+                    // Large stone slabs with variation
                     for (let y = 0; y < 8; y++) {
                         for (let x = 0; x < 8; x++) {
                             const px = x * 64, py = y * 64;
-                            const isAlt = (x + y) % 2 === 0;
-                            ctx.fillStyle = isAlt ? 'rgba(40,25,70,0.55)' : 'rgba(20,40,45,0.45)';
-                            ctx.fillRect(px + 2, py + 2, 60, 60);
+                            const shade = 18 + Math.floor(Math.random() * 22);
+                            const r = shade + 8, g = shade, b = shade + 18;
+                            ctx.fillStyle = `rgb(${r},${g},${b})`;
+                            ctx.fillRect(px + 1, py + 1, 62, 62);
 
-                            // Inner glow rune circle
-                            ctx.strokeStyle = 'rgba(100,255,220,0.18)';
-                            ctx.lineWidth = 1.5;
+                            // Edge bevel (darker rim)
+                            ctx.strokeStyle = `rgba(0,0,0,0.35)`;
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(px + 2, py + 2, 60, 60);
+
+                            // Highlight edge
+                            ctx.strokeStyle = `rgba(255,255,255,0.06)`;
+                            ctx.lineWidth = 1;
                             ctx.beginPath();
-                            ctx.arc(px + 32, py + 32, 18, 0, Math.PI * 2);
+                            ctx.moveTo(px + 3, py + 61);
+                            ctx.lineTo(px + 3, py + 3);
+                            ctx.lineTo(px + 61, py + 3);
                             ctx.stroke();
 
-                            // Center crystal spark
-                            ctx.fillStyle = 'rgba(180,255,255,0.25)';
-                            ctx.beginPath();
-                            ctx.arc(px + 32, py + 32, 3, 0, Math.PI * 2);
-                            ctx.fill();
+                            // Subtle rune glow (mystic but realistic)
+                            if ((x + y) % 3 === 0) {
+                                ctx.strokeStyle = 'rgba(80,200,180,0.12)';
+                                ctx.lineWidth = 1;
+                                ctx.beginPath();
+                                ctx.arc(px + 32, py + 32, 14, 0, Math.PI * 2);
+                                ctx.stroke();
+                            }
                         }
                     }
 
-                    // Subtle noise / cracks
-                    for (let i = 0; i < 400; i++) {
+                    // Grain / noise for stone realism
+                    for (let i = 0; i < 8000; i++) {
                         const nx = Math.random() * 512, ny = Math.random() * 512;
-                        ctx.fillStyle = `rgba(80,60,120,${0.05 + Math.random() * 0.1})`;
-                        ctx.fillRect(nx, ny, 1 + Math.random() * 2, 1 + Math.random() * 2);
+                        const a = 0.03 + Math.random() * 0.08;
+                        ctx.fillStyle = Math.random() < 0.5
+                            ? `rgba(255,255,255,${a})`
+                            : `rgba(0,0,0,${a})`;
+                        ctx.fillRect(nx, ny, 1, 1);
                     }
 
-                    // Border glow lines
-                    ctx.strokeStyle = 'rgba(163,53,238,0.35)';
-                    ctx.lineWidth = 3;
-                    for (let i = 0; i < 8; i++) {
-                        ctx.strokeRect(i * 64 + 1, i * 64 + 1, 62, 62);
+                    // Fine cracks
+                    ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+                    ctx.lineWidth = 1;
+                    for (let i = 0; i < 40; i++) {
+                        ctx.beginPath();
+                        let cx = Math.random() * 512, cy = Math.random() * 512;
+                        ctx.moveTo(cx, cy);
+                        for (let s = 0; s < 4; s++) {
+                            cx += (Math.random() - 0.5) * 28;
+                            cy += (Math.random() - 0.5) * 28;
+                            ctx.lineTo(cx, cy);
+                        }
+                        ctx.stroke();
                     }
 
                     const tex = new THREE.CanvasTexture(canvas);
                     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-                    tex.repeat.set(80, 80);
+                    tex.repeat.set(60, 60);
                     tex.encoding = THREE.sRGBEncoding;
+                    tex.anisotropy = 8;
                     return tex;
                 }
 
@@ -2564,10 +2595,10 @@
                     new THREE.MeshStandardMaterial({
                         map: templeFloorTex,
                         color: 0xffffff,
-                        roughness: 0.75,
-                        metalness: 0.15,
-                        emissive: 0x1a0033,
-                        emissiveIntensity: 0.25
+                        roughness: 0.88,
+                        metalness: 0.08,
+                        emissive: 0x0a0518,
+                        emissiveIntensity: 0.12
                     });
 
                 const floorMesh =
@@ -3002,11 +3033,11 @@
                     emissiveIntensity: 0.45
                 });
                 const gateCyanMat = new THREE.MeshStandardMaterial({
-                    color: 0x00ffff,
-                    roughness: 0.2,
-                    metalness: 0.7,
-                    emissive: 0x00ffff,
-                    emissiveIntensity: 0.85
+                    color: 0x66e8ff,
+                    roughness: 0.28,
+                    metalness: 0.65,
+                    emissive: 0x2299bb,
+                    emissiveIntensity: 0.55
                 });
 
                 function makeGatePillar(x) {
@@ -3502,8 +3533,15 @@
                 const hellWorld = new THREE.Group();
                 const hellFloor = new THREE.Mesh(
                     new THREE.PlaneGeometry(144, 144),
-                    new THREE.MeshStandardMaterial({ color: 0x260707, roughness: 0.96, emissive: 0x190000, emissiveIntensity: 0.35 })
+                    new THREE.MeshStandardMaterial({
+                        color: 0x2a1210,
+                        roughness: 0.92,
+                        metalness: 0.05,
+                        emissive: 0x1a0500,
+                        emissiveIntensity: 0.22
+                    })
                 );
+                hellFloor.receiveShadow = true;
                 hellFloor.rotation.x = -Math.PI / 2;
                 hellFloor.position.y = 0.01;
                 hellWorld.add(hellFloor);
@@ -3511,17 +3549,18 @@
                 function createClimbableRock(x, z) {
                     const g = new THREE.Group();
                     const rockMat = new THREE.MeshStandardMaterial({
-                        color: 0x3a2a22,
-                        roughness: 0.95,
-                        metalness: 0.05,
-                        emissive: 0x1a0a08,
-                        emissiveIntensity: 0.15
+                        color: 0x4a3a32,
+                        roughness: 0.97,
+                        metalness: 0.03,
+                        emissive: 0x0a0604,
+                        emissiveIntensity: 0.05
                     });
                     const mossMat = new THREE.MeshStandardMaterial({
-                        color: 0x1a3322,
-                        roughness: 0.9,
-                        emissive: 0x0a1a10,
-                        emissiveIntensity: 0.2
+                        color: 0x2a4030,
+                        roughness: 0.93,
+                        metalness: 0.02,
+                        emissive: 0x081a0c,
+                        emissiveIntensity: 0.08
                     });
                     // Base wide platform (step 1)
                     const baseH = 0.55 + Math.random() * 0.45;
@@ -3531,6 +3570,8 @@
                     );
                     base.position.y = baseH * 0.5;
                     base.rotation.y = Math.random() * 0.6;
+                    base.castShadow = true;
+                    base.receiveShadow = true;
                     g.add(base);
                     // Mid ledge (step 2)
                     const midH = 0.5 + Math.random() * 0.55;
@@ -3843,7 +3884,8 @@
                         trunkMat
                     );
                     trunk.position.y = 1.4 * s;
-                    trunk.castShadow = false;
+                    trunk.castShadow = true;
+                    trunk.receiveShadow = true;
                     group.add(trunk);
 
                     // Root flare at base
@@ -3884,20 +3926,20 @@
                     const leafMat = new THREE.MeshStandardMaterial({
                         color: pal[0],
                         emissive: pal[1],
-                        emissiveIntensity: 0.55,
-                        roughness: 0.35,
-                        metalness: 0.12,
+                        emissiveIntensity: 0.22,
+                        roughness: 0.72,
+                        metalness: 0.04,
                         transparent: true,
-                        opacity: 0.92
+                        opacity: 0.95
                     });
                     const leafMat2 = new THREE.MeshStandardMaterial({
                         color: pal[2],
                         emissive: pal[0],
-                        emissiveIntensity: 0.35,
-                        roughness: 0.4,
-                        metalness: 0.1,
+                        emissiveIntensity: 0.14,
+                        roughness: 0.78,
+                        metalness: 0.03,
                         transparent: true,
-                        opacity: 0.85
+                        opacity: 0.9
                     });
 
                     // Main dense canopy
@@ -3907,6 +3949,8 @@
                     );
                     canopy.position.y = 3.15 * s;
                     canopy.scale.set(1.15, 1.0, 1.15);
+                    canopy.castShadow = true;
+                    canopy.receiveShadow = true;
                     group.add(canopy);
 
                     // Upper crown
@@ -3963,12 +4007,14 @@
                 const forestGround = new THREE.Mesh(
                     new THREE.PlaneGeometry(220, 220),
                     new THREE.MeshStandardMaterial({
-                        color: 0x0c1f14,
-                        roughness: 0.88,
-                        emissive: 0x031a0c,
-                        emissiveIntensity: 0.38
+                        color: 0x142418,
+                        roughness: 0.94,
+                        metalness: 0.02,
+                        emissive: 0x061208,
+                        emissiveIntensity: 0.18
                     })
                 );
+                forestGround.receiveShadow = true;
                 forestGround.rotation.x = -Math.PI / 2;
                 forestGround.position.y = 0.01;
                 forestWorld.add(forestGround);
