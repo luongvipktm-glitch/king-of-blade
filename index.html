@@ -11,6 +11,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -1337,6 +1338,22 @@
 
         </div>
 
+        <div class="item-row">
+
+            <span>
+                ⚡ Electron Sword
+                (<span id="inv-electron">0</span>)
+                [Lv.4]
+            </span>
+
+            <div>
+                <span style="font-size:10px;color:#44ccff;">
+                    +10% POWER &amp; GOLD
+                </span>
+            </div>
+
+        </div>
+
         <div
             style="
                 background:rgba(255,255,255,0.08);
@@ -1391,78 +1408,27 @@
         <h3
             style="color:#00ffcc;"
             class="lang-txt"
-            data-vi="🎨 TÙY CHỈNH & KHU DRAFT"
-            data-en="🎨 CUSTOMIZE & DRAFT ZONE"
+            data-vi="🎨 SKIN & MÀU DA"
+            data-en="🎨 SKIN & COLOR"
         >
-            🎨 TÙY CHỈNH & KHU DRAFT
+            🎨 SKIN & MÀU DA
         </h3>
 
         <label>
-            <span
-                class="lang-txt"
-                data-vi="Màu áo nhân vật"
-                data-en="Body Color"
-            >
-                Màu áo nhân vật
-            </span>:
-
-            <input
-                type="color"
-                id="picker-body"
-                value="#1a1a24"
-            >
+            <span class="lang-txt" data-vi="Màu da (nhân vật)" data-en="Skin Color">Màu da (nhân vật)</span>:
+            <input type="color" id="picker-skin" value="#0a0a12">
         </label>
-
         <label>
-            <span
-                class="lang-txt"
-                data-vi="Màu da nhân vật"
-                data-en="Skin Color"
-            >
-                Màu da nhân vật
-            </span>:
-
-            <input
-                type="color"
-                id="picker-skin"
-                value="#d4a373"
-            >
+            <span class="lang-txt" data-vi="Màu áo / giáp" data-en="Body / Armor Color">Màu áo / giáp</span>:
+            <input type="color" id="picker-body" value="#0a0a18">
         </label>
-
         <label>
-            <span
-                class="lang-txt"
-                data-vi="Màu hào quang"
-                data-en="Halo Color"
-            >
-                Màu hào quang
-            </span>:
-
-            <input
-                type="color"
-                id="picker-halo"
-                value="#000000"
-            >
+            <span class="lang-txt" data-vi="Màu hào quang" data-en="Halo Color">Màu hào quang</span>:
+            <input type="color" id="picker-halo" value="#88ccff">
         </label>
-
-        <label>
-            <span
-                class="lang-txt"
-                data-vi="Da vũ trụ (bật/tắt)"
-                data-en="Cosmic Skin (on/off)"
-            >
-                Da vũ trụ (bật/tắt)
-            </span>:
-
-            <button
-                id="btn-cosmic-skin"
-                type="button"
-                style="width:auto;padding:6px 14px;margin-top:0;"
-                onclick="toggleCosmicSkin()"
-            >
-                🌌 <span class="lang-txt" data-vi="BẬT" data-en="ON">BẬT</span>
-            </button>
-        </label>
+        <p style="font-size:11px;color:#9ab;text-align:center;margin:6px 0 8px;line-height:1.4;">
+            🌌 Da mặc định: <b style="color:#cde;">đen vũ trụ Alien X</b> — hoa văn hành tinh gắn trên da, quay theo nhân vật (UV)
+        </p>
         <div id="skin-shop-section" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,215,0,0.25);max-height:280px;overflow-y:auto;">
             <div style="font-size:14px;font-weight:900;color:#ffd700;text-align:center;margin-bottom:8px;">🛒 SKIN SHOP · GOLD</div>
             <div style="font-size:11px;color:#ccc;text-align:center;margin-bottom:10px;">
@@ -2109,6 +2075,7 @@
                 let hackSwordCount = 0;
 
                 let hasGlitchSword = false;
+                let hasElectronSword = false;
                 let secretAdminMode = false;
                 let adminFlyMode = false;
                 let adminFlyY = 0;
@@ -2135,8 +2102,11 @@
                     let p = power;
                     if (!Number.isFinite(p) || p <= 0) p = 1;
                     if (p >= 1e18) p = 1e18;
-                    const g = Math.log10(Math.max(10, p)) / 67;
-                    return Math.max(0.002, Math.min(0.5, g));
+                    let g = Math.log10(Math.max(10, p)) / 67;
+                    // Electron Sword: +10% gold mỗi đòn
+                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword)
+                        g *= 1.10;
+                    return Math.max(0.002, Math.min(0.55, g));
                 }
                 function addGoldFromHit() {
                     playerGold += goldFromHit();
@@ -2162,11 +2132,12 @@
                     { id: 'boss1_gold', boss: 'Boss 1', name: 'Golden Knight', price: 900, speed: 1.1, color: '#b8860b', emoji: '✨' },
                     { id: 'boss2_ocean', boss: 'Boss 2', name: 'Ocean Diver', price: 1500, speed: 1.18, color: '#1a6a9a', emoji: '🌊' },
                     { id: 'boss2_ink', boss: 'Boss 2', name: 'Ink Phantom', price: 2200, speed: 1.2, color: '#2a1a4a', emoji: '🦑' },
-                    { id: 'boss2_pearl', boss: 'Boss 2', name: 'Pearl Guard', price: 3000, speed: 1.16, color: '#e8d5b7', emoji: '🐚' },
-                    { id: 'boss3_void', boss: 'Boss 3+', name: 'Void Walker', price: 8000, speed: 1.25, color: '#0a0618', emoji: '🌌' },
-                    { id: 'boss3_neon', boss: 'Boss 3+', name: 'Neon Ronin', price: 12000, speed: 1.3, color: '#00ffcc', emoji: '⚡' },
+                    { id: 'boss2_pearl', boss: 'Boss 2', name: 'Pearl Guard', price: 3000, speed: 1.16, color: '#c4a882', emoji: '🐚' },
+                    { id: 'boss3_void', boss: 'Boss 3+', name: 'Void Walker', price: 8000, speed: 1.25, color: '#1a1528', emoji: '🌌' },
+                    { id: 'boss3_neon', boss: 'Boss 3+', name: 'Neon Ronin', price: 12000, speed: 1.3, color: '#1a8a7a', emoji: '⚡' },
                     { id: 'bossn_legend', boss: 'Boss N', name: 'Legend Aura', price: 50000, speed: 1.4, color: '#ffd700', emoji: '👑' },
-                    { id: 'bossn_glitch', boss: 'Boss N', name: 'Glitch Skin', price: 99999, speed: 1.5, color: '#ff3355', emoji: '👾' }
+                    { id: 'bossn_glitch', boss: 'Boss N', name: 'Glitch Skin', price: 99999, speed: 1.5, color: '#ff3355', emoji: '👾' },
+                    { id: 'glitch_armor', boss: 'Glitch', name: 'Áo Giáp Glitch', price: 100000, speed: 1.55, color: '#0a1a3a', emoji: '🛡️' }
                 ];
 
 
@@ -4569,33 +4540,155 @@
                     ELECTRON WORLD
                  ========================= */
                  electronWorld = new THREE.Group();
+                 electronWorld.userData.decorAnims = [];
 
+                 // Nebula sky — deep blue / violet inside an atom
                  const electronSky = new THREE.Mesh(
-                     new THREE.SphereGeometry(420, 32, 16),
+                     new THREE.SphereGeometry(420, 48, 24),
                      new THREE.MeshBasicMaterial({
-                         color: 0x02030a,
+                         color: 0x0a1030,
                          side: THREE.BackSide
                      })
                  );
                  electronWorld.add(electronSky);
+                 // Inner glow sphere layers
+                 const skyGlow1 = new THREE.Mesh(
+                     new THREE.SphereGeometry(380, 32, 16),
+                     new THREE.MeshBasicMaterial({
+                         color: 0x1a40a0,
+                         side: THREE.BackSide,
+                         transparent: true,
+                         opacity: 0.25
+                     })
+                 );
+                 electronWorld.add(skyGlow1);
 
-                 const electronStarMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-                 for (let i = 0; i < 110; i++) {
+                 // Star field denser + colored
+                 const eStarColors = [0xffffff, 0xaaddff, 0xffccff, 0x88eeff, 0xccddff];
+                 for (let i = 0; i < 180; i++) {
                      const star = new THREE.Mesh(
-                         new THREE.SphereGeometry(0.035 + Math.random() * 0.09, 5, 5),
-                         electronStarMat
+                         new THREE.SphereGeometry(0.04 + Math.random() * 0.12, 5, 5),
+                         new THREE.MeshBasicMaterial({ color: eStarColors[i % eStarColors.length] })
                      );
                      star.position.set(
-                         (Math.random() - 0.5) * 360,
-                         8 + Math.random() * 160,
-                         (Math.random() - 0.5) * 360
+                         (Math.random() - 0.5) * 380,
+                         5 + Math.random() * 200,
+                         (Math.random() - 0.5) * 380
                      );
-                     star.userData.orbitSpeed = 0.00015 + Math.random() * 0.00045;
+                     star.userData.orbitSpeed = 0.00012 + Math.random() * 0.0004;
                      star.userData.orbitRadius = Math.hypot(star.position.x, star.position.z);
                      star.userData.orbitAngle = Math.atan2(star.position.z, star.position.x);
                      electronStars.push(star);
                      electronWorld.add(star);
                  }
+
+                 // Giant orbital rings in the environment (atom shell décor)
+                 for (let ri = 0; ri < 5; ri++) {
+                     const R = 28 + ri * 18;
+                     const ring = new THREE.Mesh(
+                         new THREE.TorusGeometry(R, 0.35 + ri * 0.08, 8, 96),
+                         new THREE.MeshBasicMaterial({
+                             color: ri % 2 === 0 ? 0x44aaff : 0xaa66ff,
+                             transparent: true,
+                             opacity: 0.35,
+                             blending: THREE.AdditiveBlending,
+                             depthWrite: false,
+                             side: THREE.DoubleSide
+                         })
+                     );
+                     ring.rotation.x = Math.PI / 2.1 + ri * 0.12;
+                     ring.rotation.z = ri * 0.35;
+                     ring.position.y = 2 + ri * 0.5;
+                     ring.userData.spin = 0.0015 + ri * 0.0004;
+                     electronWorld.userData.decorAnims.push(ring);
+                     electronWorld.add(ring);
+                 }
+
+                 // Floating energy platforms / islands
+                 for (let i = 0; i < 12; i++) {
+                     const ang = (i / 12) * Math.PI * 2;
+                     const rad = 22 + (i % 4) * 9;
+                     const plat = new THREE.Mesh(
+                         new THREE.CylinderGeometry(2.2 + (i % 3) * 0.6, 2.5 + (i % 3) * 0.5, 0.35, 8),
+                         new THREE.MeshStandardMaterial({
+                             color: 0x152040,
+                             emissive: 0x2244aa,
+                             emissiveIntensity: 0.35,
+                             metalness: 0.6,
+                             roughness: 0.4
+                         })
+                     );
+                     plat.position.set(Math.cos(ang) * rad, 0.2, Math.sin(ang) * rad);
+                     electronWorld.add(plat);
+                     // Crystal pillar on platform
+                     const crystal = new THREE.Mesh(
+                         new THREE.OctahedronGeometry(0.7 + (i % 3) * 0.25, 0),
+                         new THREE.MeshBasicMaterial({
+                             color: 0x66eeff,
+                             transparent: true,
+                             opacity: 0.85,
+                             blending: THREE.AdditiveBlending,
+                             depthWrite: false
+                         })
+                     );
+                     crystal.position.set(plat.position.x, 1.4 + (i % 3) * 0.3, plat.position.z);
+                     crystal.userData.spin = 0.02;
+                     electronWorld.userData.decorAnims.push(crystal);
+                     electronWorld.add(crystal);
+                 }
+
+                 // Ambient floating orbs (like image)
+                 for (let i = 0; i < 40; i++) {
+                     const orb = new THREE.Mesh(
+                         new THREE.SphereGeometry(0.15 + Math.random() * 0.25, 10, 10),
+                         new THREE.MeshBasicMaterial({
+                             color: Math.random() > 0.5 ? 0xffffff : 0xaaddff,
+                             transparent: true,
+                             opacity: 0.7,
+                             blending: THREE.AdditiveBlending,
+                             depthWrite: false
+                         })
+                     );
+                     const a = Math.random() * Math.PI * 2;
+                     const r = 8 + Math.random() * 70;
+                     orb.position.set(Math.cos(a) * r, 1 + Math.random() * 12, Math.sin(a) * r);
+                     orb.userData.baseY = orb.position.y;
+                     orb.userData.phase = Math.random() * Math.PI * 2;
+                     orb.userData.float = true;
+                     electronWorld.userData.decorAnims.push(orb);
+                     electronWorld.add(orb);
+                 }
+
+                 // Nucleus-style energy pillars around arena
+                 for (let i = 0; i < 8; i++) {
+                     const ang = (i / 8) * Math.PI * 2;
+                     const pillar = new THREE.Mesh(
+                         new THREE.CylinderGeometry(0.25, 0.4, 8, 10),
+                         new THREE.MeshBasicMaterial({
+                             color: 0x3388ff,
+                             transparent: true,
+                             opacity: 0.45,
+                             blending: THREE.AdditiveBlending,
+                             depthWrite: false
+                         })
+                     );
+                     pillar.position.set(Math.cos(ang) * 16, 4, Math.sin(ang) * 16);
+                     electronWorld.add(pillar);
+                     const cap = new THREE.Mesh(
+                         new THREE.SphereGeometry(0.55, 12, 12),
+                         new THREE.MeshBasicMaterial({
+                             color: 0x88eeff,
+                             transparent: true,
+                             opacity: 0.9,
+                             blending: THREE.AdditiveBlending,
+                             depthWrite: false
+                         })
+                     );
+                     cap.position.copy(pillar.position);
+                     cap.position.y = 8.2;
+                     electronWorld.add(cap);
+                 }
+
 
                  for (let i = 0; i < 6; i++) {
                      const hole = new THREE.Group();
@@ -4693,20 +4786,85 @@
                  electronBossMonster.visible = false;
                  electronWorld.add(electronBossMonster);
 
+                 // Central nucleus glow (sun)
                  const electronSun = new THREE.Mesh(
-                     new THREE.SphereGeometry(3.8, 20, 16),
-                     new THREE.MeshBasicMaterial({ color: 0x243cff })
+                     new THREE.SphereGeometry(4.2, 28, 20),
+                     new THREE.MeshBasicMaterial({
+                         color: 0x4488ff,
+                         transparent: true,
+                         opacity: 0.85,
+                         blending: THREE.AdditiveBlending,
+                         depthWrite: false
+                     })
                  );
-                 electronSun.position.set(0, 1.5, 0);
+                 electronSun.position.set(0, 2.2, 0);
                  electronWorld.add(electronSun);
+                 const sunCore = new THREE.Mesh(
+                     new THREE.SphereGeometry(2.2, 20, 16),
+                     new THREE.MeshBasicMaterial({ color: 0xffffff })
+                 );
+                 sunCore.position.set(0, 2.2, 0);
+                 electronWorld.add(sunCore);
+                 // Orbiting electrons around center sun
+                 for (let i = 0; i < 6; i++) {
+                     const e = new THREE.Mesh(
+                         new THREE.SphereGeometry(0.35, 10, 10),
+                         new THREE.MeshBasicMaterial({
+                             color: 0x88eeff,
+                             transparent: true,
+                             opacity: 0.95,
+                             blending: THREE.AdditiveBlending,
+                             depthWrite: false
+                         })
+                     );
+                     e.userData.angle = (i / 6) * Math.PI * 2;
+                     e.userData.speed = 0.015 + (i % 3) * 0.005;
+                     e.userData.radius = 7 + (i % 3) * 2;
+                     e.userData.yBase = 2.2;
+                     e.userData.sunOrbit = true;
+                     electronWorld.userData.decorAnims.push(e);
+                     electronWorld.add(e);
+                 }
 
+                 // Floor — soft blue glass arena
                  const electronFloor = new THREE.Mesh(
-                     new THREE.PlaneGeometry(500, 500),
-                     new THREE.MeshBasicMaterial({ color: 0x02030a, side: THREE.DoubleSide })
+                     new THREE.CircleGeometry(90, 64),
+                     new THREE.MeshStandardMaterial({
+                         color: 0x0a1528,
+                         emissive: 0x112244,
+                         emissiveIntensity: 0.4,
+                         metalness: 0.5,
+                         roughness: 0.35,
+                         side: THREE.DoubleSide
+                     })
                  );
                  electronFloor.rotation.x = -Math.PI / 2;
                  electronFloor.position.y = 0;
                  electronWorld.add(electronFloor);
+                 // Outer dark plane
+                 const electronFloorOuter = new THREE.Mesh(
+                     new THREE.PlaneGeometry(500, 500),
+                     new THREE.MeshBasicMaterial({ color: 0x050812, side: THREE.DoubleSide })
+                 );
+                 electronFloorOuter.rotation.x = -Math.PI / 2;
+                 electronFloorOuter.position.y = -0.05;
+                 electronWorld.add(electronFloorOuter);
+                 // Circuit ring lines on floor
+                 for (let i = 1; i <= 6; i++) {
+                     const cRing = new THREE.Mesh(
+                         new THREE.TorusGeometry(10 * i, 0.08, 6, 64),
+                         new THREE.MeshBasicMaterial({
+                             color: 0x2266aa,
+                             transparent: true,
+                             opacity: 0.4,
+                             blending: THREE.AdditiveBlending,
+                             depthWrite: false
+                         })
+                     );
+                     cRing.rotation.x = Math.PI / 2;
+                     cRing.position.y = 0.03;
+                     electronWorld.add(cRing);
+                 }
 
                  electronWorld.visible = false;
                  expandedWorlds.add(electronWorld);
@@ -4805,7 +4963,51 @@
                         errorFloor.visible = false;
                         if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = false;
                     }
+                    // Luôn đồng bộ mob theo stage (admin teleport / //hack / //end)
+                    if (typeof enforceStageMobVisibility === 'function')
+                        enforceStageMobVisibility(stage);
                 }
+
+                /** Ẩn mob/boss không thuộc stage hiện tại — chống red mob lọt vào Electron/Error/... */
+                function enforceStageMobVisibility(stage) {
+                    const s = (typeof stage === 'number') ? stage : gameStage;
+                    try {
+                        if (typeof redMonster !== 'undefined' && redMonster)
+                            redMonster.visible = (s === 1);
+                        if (typeof octopusMonster !== 'undefined' && octopusMonster)
+                            octopusMonster.visible = (s === 2) || (!!(typeof octopusCrossWorld !== 'undefined' && octopusCrossWorld) && s >= 2 && s <= 10);
+                        // Nếu stage cao (11/12) luôn tắt octopus dù crossWorld
+                        if (s === 11 || s === 12) {
+                            if (typeof octopusMonster !== 'undefined' && octopusMonster)
+                                octopusMonster.visible = false;
+                            if (typeof redMonster !== 'undefined' && redMonster)
+                                redMonster.visible = false;
+                        }
+                        if (typeof bossMonster !== 'undefined' && bossMonster)
+                            bossMonster.visible = (s === 3);
+                        if (typeof finalBossMonster !== 'undefined' && finalBossMonster)
+                            finalBossMonster.visible = (s === 5 || s === 6);
+                        if (typeof universeBossMonster !== 'undefined' && universeBossMonster)
+                            universeBossMonster.visible = (s === 7 && !universeBossDefeated);
+                        if (typeof cosmicBossMonster !== 'undefined' && cosmicBossMonster)
+                            cosmicBossMonster.visible = (s === 8 && cosmicBossType === 0 && !cosmicBossDefeated);
+                        if (typeof oldCharacterBossMonster !== 'undefined' && oldCharacterBossMonster)
+                            oldCharacterBossMonster.visible = (s === 8 && cosmicBossType === 1 && !cosmicBossDefeated);
+                        if (typeof atomicBossMonster !== 'undefined' && atomicBossMonster)
+                            atomicBossMonster.visible = (s === 9 && atomicBossActive && !atomicBossDefeated);
+                        if (typeof cosmicDinoMonster !== 'undefined' && cosmicDinoMonster)
+                            cosmicDinoMonster.visible = (s === 10 && cosmicDinoActive && !cosmicDinoDefeated);
+                        if (typeof errorBossMonster !== 'undefined' && errorBossMonster) {
+                            if (s !== 11) errorBossMonster.visible = false;
+                        }
+                        if (typeof electronBossMonster !== 'undefined' && electronBossMonster) {
+                            if (s !== 12) electronBossMonster.visible = false;
+                            else if (electronBossActive && !electronBossDefeated)
+                                electronBossMonster.visible = true;
+                        }
+                    } catch (e) {}
+                }
+                window.enforceStageMobVisibility = enforceStageMobVisibility;
 
                 rainbowHaloGroup = new THREE.Group();
                 const haloColors = [0xff0000,0xff8800,0xffff00,0x00ff66,0x00aaff,0x3355ff,0xcc33ff];
@@ -5123,16 +5325,21 @@
 
                 const playerBodyMat =
                     new THREE.MeshStandardMaterial({
-                        color: 0x1a1a24
+                        color: 0x2a3040,
+                        roughness: 0.55,
+                        metalness: 0.25
                     });
 
                 const skinMat =
                     new THREE.MeshStandardMaterial({
-                        color: 0xd4a373,
-                        map: cosmicTexture,
-                        emissive: 0x1a0033,
-                        emissiveIntensity: 0.4
+                        color: 0xffffff,
+                        map: typeof cosmicTexture !== 'undefined' ? cosmicTexture : null,
+                        emissive: 0x334455,
+                        emissiveIntensity: 0.55,
+                        roughness: 0.42,
+                        metalness: 0.2
                     });
+                // Will re-bind galaxy after galaxyBodyTex exists — see applyAlienXDefaultSkin
 
                 const body =
                     new THREE.Mesh(
@@ -5625,13 +5832,258 @@
                 errorSwordGroup.add(errorTextSprite, errorHandle);
                 errorSwordGroup.scale.set(1.15, 1.15, 1.15);
 
+                /* ===== ELECTRON SWORD — plasma / atom beauty ===== */
+                const electronSwordGroup = new THREE.Group();
+                electronSwordGroup.userData.orbitDots = [];
+                electronSwordGroup.userData.spinRings = [];
+                electronSwordGroup.userData.pulseMats = [];
+
+                // Outer soft glow sheath
+                const eOuterGlow = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.14, 0.20, 3.15, 20),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x1188ff,
+                        transparent: true,
+                        opacity: 0.22,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false,
+                        side: THREE.DoubleSide
+                    })
+                );
+                eOuterGlow.position.y = 1.55;
+                electronSwordGroup.userData.pulseMats.push(eOuterGlow.material);
+
+                // Mid plasma blade body
+                const eBladeMat = new THREE.MeshBasicMaterial({
+                    color: 0x44ddff,
+                    transparent: true,
+                    opacity: 0.72,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                const eBlade = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.055, 0.105, 3.05, 18),
+                    eBladeMat
+                );
+                eBlade.position.y = 1.55;
+                electronSwordGroup.userData.pulseMats.push(eBladeMat);
+
+                // Sharp tip
+                const eTip = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.055, 0.55, 16),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xaaeeff,
+                        transparent: true,
+                        opacity: 0.95,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    })
+                );
+                eTip.position.y = 3.32;
+
+                // Bright white-blue core
+                const eCore = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.018, 0.032, 3.2, 12),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.95,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    })
+                );
+                eCore.position.y = 1.55;
+
+                // Inner hot line
+                const eHot = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.008, 0.012, 3.25, 8),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xccffff,
+                        transparent: true,
+                        opacity: 1,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    })
+                );
+                eHot.position.y = 1.55;
+
+                // Energy rings around blade (spin)
+                for (let ri = 0; ri < 3; ri++) {
+                    const ringGeo = new THREE.TorusGeometry(0.16 + ri * 0.04, 0.012, 8, 32);
+                    const ringMat = new THREE.MeshBasicMaterial({
+                        color: ri === 1 ? 0x88eeff : 0x2299ff,
+                        transparent: true,
+                        opacity: 0.85 - ri * 0.15,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    });
+                    const ring = new THREE.Mesh(ringGeo, ringMat);
+                    ring.position.y = 1.0 + ri * 0.75;
+                    ring.rotation.x = Math.PI / 2;
+                    ring.userData.spinSpeed = 0.04 + ri * 0.02;
+                    ring.userData.spinAxis = ri % 2 === 0 ? 'z' : 'y';
+                    electronSwordGroup.userData.spinRings.push(ring);
+                    electronSwordGroup.add(ring);
+                }
+
+                // Orbiting electron particles (3 shells)
+                const eColors = [0x66eeff, 0x44aaff, 0xaaddff];
+                for (let ei = 0; ei < 8; ei++) {
+                    const shell = ei % 3;
+                    const dot = new THREE.Mesh(
+                        new THREE.SphereGeometry(0.04 + (ei % 2) * 0.015, 10, 10),
+                        new THREE.MeshBasicMaterial({
+                            color: eColors[shell],
+                            transparent: true,
+                            opacity: 0.95,
+                            blending: THREE.AdditiveBlending,
+                            depthWrite: false
+                        })
+                    );
+                    dot.userData.angle = (ei / 8) * Math.PI * 2;
+                    dot.userData.speed = 0.035 + shell * 0.012;
+                    dot.userData.radius = 0.28 + shell * 0.12;
+                    dot.userData.yBase = 1.1 + shell * 0.55;
+                    dot.userData.yAmp = 0.35;
+                    electronSwordGroup.userData.orbitDots.push(dot);
+                    electronSwordGroup.add(dot);
+                }
+
+                // Cross-guard: dual energy wings
+                const eGuardGroup = new THREE.Group();
+                eGuardGroup.position.y = 0.12;
+                const guardMat = new THREE.MeshBasicMaterial({
+                    color: 0x33bbff,
+                    transparent: true,
+                    opacity: 0.9,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                const guardBar = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.95, 0.08, 0.12),
+                    guardMat
+                );
+                // Left wing
+                const wingL = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.08, 0.45, 8),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x66ddff,
+                        transparent: true,
+                        opacity: 0.85,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    })
+                );
+                wingL.rotation.z = Math.PI / 2.2;
+                wingL.position.set(-0.55, 0.05, 0);
+                // Right wing
+                const wingR = wingL.clone();
+                wingR.rotation.z = -Math.PI / 2.2;
+                wingR.position.set(0.55, 0.05, 0);
+                // Center gem
+                const guardGem = new THREE.Mesh(
+                    new THREE.OctahedronGeometry(0.09, 0),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.95,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    })
+                );
+                guardGem.position.y = 0.06;
+                eGuardGroup.add(guardBar, wingL, wingR, guardGem);
+
+                // Handle — dark metal with cyan grip rings
+                const eHandle = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.055, 0.06, 0.58, 14),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x0a1520,
+                        metalness: 0.85,
+                        roughness: 0.25
+                    })
+                );
+                eHandle.position.y = -0.22;
+                for (let gi = 0; gi < 3; gi++) {
+                    const grip = new THREE.Mesh(
+                        new THREE.TorusGeometry(0.062, 0.012, 6, 20),
+                        new THREE.MeshBasicMaterial({
+                            color: 0x22aaff,
+                            transparent: true,
+                            opacity: 0.8,
+                            blending: THREE.AdditiveBlending,
+                            depthWrite: false
+                        })
+                    );
+                    grip.rotation.x = Math.PI / 2;
+                    grip.position.y = -0.05 - gi * 0.14;
+                    electronSwordGroup.add(grip);
+                }
+
+                // Pommel: glowing nucleus sphere
+                const ePommel = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.09, 14, 14),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x88eeff,
+                        transparent: true,
+                        opacity: 0.95,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    })
+                );
+                ePommel.position.y = -0.55;
+                const ePommelCore = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.04, 10, 10),
+                    new THREE.MeshBasicMaterial({ color: 0xffffff })
+                );
+                ePommelCore.position.y = -0.55;
+
+                electronSwordGroup.add(
+                    eOuterGlow, eBlade, eTip, eCore, eHot,
+                    eGuardGroup, eHandle, ePommel, ePommelCore
+                );
+                electronSwordGroup.scale.set(1.22, 1.22, 1.22);
+
+                // Animate electron sword (orbit + spin + pulse)
+                window.animateElectronSword = function(nowMs) {
+                    if (!electronSwordGroup || !electronSwordGroup.visible) return;
+                    const t = (nowMs || performance.now()) * 0.001;
+                    const dots = electronSwordGroup.userData.orbitDots || [];
+                    for (let i = 0; i < dots.length; i++) {
+                        const d = dots[i];
+                        d.userData.angle += d.userData.speed;
+                        const r = d.userData.radius;
+                        d.position.x = Math.cos(d.userData.angle) * r;
+                        d.position.z = Math.sin(d.userData.angle) * r * 0.55;
+                        d.position.y = d.userData.yBase + Math.sin(d.userData.angle * 1.4) * d.userData.yAmp;
+                    }
+                    const rings = electronSwordGroup.userData.spinRings || [];
+                    for (let i = 0; i < rings.length; i++) {
+                        const ring = rings[i];
+                        if (ring.userData.spinAxis === 'z')
+                            ring.rotation.z += ring.userData.spinSpeed;
+                        else
+                            ring.rotation.y += ring.userData.spinSpeed;
+                        const pulse = 1 + Math.sin(t * 3 + i) * 0.08;
+                        ring.scale.set(pulse, pulse, pulse);
+                    }
+                    const mats = electronSwordGroup.userData.pulseMats || [];
+                    for (let i = 0; i < mats.length; i++) {
+                        const base = i === 0 ? 0.18 : 0.65;
+                        mats[i].opacity = base + Math.sin(t * 4 + i) * 0.08;
+                    }
+                    if (guardGem) guardGem.rotation.y += 0.05;
+                    if (guardGem) guardGem.rotation.x = Math.sin(t * 2) * 0.3;
+                };
+
                 swordGroup.add(
                     commonSwordGroup,
                     rareSwordGroup,
                     legendarySwordGroup,
                     godSwordGroup,
                     hackSwordGroup,
-                    errorSwordGroup
+                    errorSwordGroup,
+                    electronSwordGroup
                 );
 
                 swordGroup.position.set(
@@ -5648,15 +6100,23 @@
                 godSwordGroup.visible = false;
                 hackSwordGroup.visible = false;
                 errorSwordGroup.visible = false;
+                electronSwordGroup.visible = false;
 
                 window.updatePlayerSwordVisual =
                     function() {
-                        commonSwordGroup.visible = equippedItemType === 'common' && !hasGoDSword && !hasHackSword && !hasGlitchSword;
-                        rareSwordGroup.visible = equippedItemType === 'rare' && !hasGoDSword && !hasHackSword && !hasGlitchSword;
-                        legendarySwordGroup.visible = equippedItemType === 'legendary' && !hasGoDSword && !hasHackSword && !hasGlitchSword;
-                        godSwordGroup.visible = hasGoDSword && !hasHackSword && !hasGlitchSword;
-                        hackSwordGroup.visible = hasHackSword && !hasGlitchSword;
-                        errorSwordGroup.visible = hasGlitchSword;
+                        // Electron Sword ưu tiên hiển thị cao nhất
+                        const showE = !!hasElectronSword;
+                        const showG = hasGlitchSword && !showE;
+                        const showH = hasHackSword && !showG && !showE;
+                        const showGoD = hasGoDSword && !showH && !showG && !showE;
+                        const showNorm = !showGoD && !showH && !showG && !showE;
+                        commonSwordGroup.visible = equippedItemType === 'common' && showNorm;
+                        rareSwordGroup.visible = equippedItemType === 'rare' && showNorm;
+                        legendarySwordGroup.visible = equippedItemType === 'legendary' && showNorm;
+                        godSwordGroup.visible = showGoD;
+                        hackSwordGroup.visible = showH;
+                        errorSwordGroup.visible = showG;
+                        electronSwordGroup.visible = showE;
                     };
 
                 playerGroup.add(
@@ -6097,7 +6557,8 @@
                             if (ps) skinColor = ps.value;
                         } catch(e) {}
                         let swordColor = 0xaaaaaa;
-                        if (hasGlitchSword || equippedItemType === 'glitch' || equippedItemType === 'error') swordColor = 0xff3355;
+                        if (hasElectronSword) swordColor = 0x44ccff;
+                        else if (hasGlitchSword || equippedItemType === 'glitch' || equippedItemType === 'error') swordColor = 0xff3355;
                         else if (hasHackSword || equippedItemType === 'hack') swordColor = 0x00ffff;
                         else if (hasGoDSword || equippedItemType === 'god') swordColor = 0xffd700;
                         else if (equippedItemType === 'legendary') swordColor = 0xffd700;
@@ -7290,131 +7751,165 @@
                 });
                 // ===== COSMIC GALAXY TEXTURE (body like reference image) =====
                 function createGalaxyBodyTexture() {
+                    // Alien X style: đen sâu + vân ngân hà trắng + hành tinh — UV gắn mesh (quay theo người)
                     const canvas = document.createElement('canvas');
                     canvas.width = 1024;
                     canvas.height = 1024;
                     const ctx = canvas.getContext('2d');
 
-                    // Deep space base matching the reference image
-                    const g = ctx.createRadialGradient(512, 512, 20, 512, 512, 700);
-                    g.addColorStop(0, '#1a0a4a');
-                    g.addColorStop(0.2, '#2b0b6e');
-                    g.addColorStop(0.45, '#12082e');
-                    g.addColorStop(0.7, '#08041a');
-                    g.addColorStop(1, '#02000a');
-                    ctx.fillStyle = g;
+                    // Base pure deep black
+                    ctx.fillStyle = '#030308';
                     ctx.fillRect(0, 0, 1024, 1024);
 
-                    // Large vibrant nebula clouds (purple / pink / blue / gold like the image)
-                    const nebulae = [
-                        [280, 320, 220, 'rgba(180,40,255,0.45)', 'rgba(100,20,180,0.15)'],
-                        [720, 380, 260, 'rgba(40,120,255,0.4)', 'rgba(20,60,160,0.12)'],
-                        [400, 700, 240, 'rgba(255,50,180,0.38)', 'rgba(160,20,100,0.1)'],
-                        [680, 680, 200, 'rgba(80,220,255,0.35)', 'rgba(30,120,180,0.1)'],
-                        [512, 480, 180, 'rgba(255,200,80,0.22)', 'rgba(180,120,30,0.06)'],
-                        [180, 600, 160, 'rgba(120,60,255,0.3)', 'rgba(60,20,140,0.08)'],
-                        [850, 200, 150, 'rgba(255,80,200,0.28)', 'rgba(140,30,100,0.08)']
-                    ];
-                    nebulae.forEach(([x, y, r, c0, c1]) => {
+                    // Soft dark gradient pockets
+                    for (let i = 0; i < 8; i++) {
+                        const x = Math.random() * 1024, y = Math.random() * 1024;
+                        const r = 120 + Math.random() * 200;
                         const ng = ctx.createRadialGradient(x, y, 0, x, y, r);
-                        ng.addColorStop(0, c0);
-                        ng.addColorStop(0.55, c1);
+                        ng.addColorStop(0, 'rgba(20,24,48,0.55)');
                         ng.addColorStop(1, 'rgba(0,0,0,0)');
                         ctx.fillStyle = ng;
                         ctx.beginPath();
                         ctx.arc(x, y, r, 0, Math.PI * 2);
                         ctx.fill();
-                    });
+                    }
 
-                    // Spiral galaxies (clear arms like the reference)
-                    function drawSpiralGalaxy(cx, cy, scale, rot, colorCore, colorArm) {
-                        // Bright core
-                        const core = ctx.createRadialGradient(cx, cy, 0, cx, cy, 18 * scale);
-                        core.addColorStop(0, '#fff8e0');
-                        core.addColorStop(0.25, colorCore);
-                        core.addColorStop(0.7, 'rgba(80,40,160,0.4)');
+                    // White / silver galaxy swirls (Alien X body pattern)
+                    function drawSwirl(cx, cy, scale, rot) {
+                        ctx.save();
+                        ctx.translate(cx, cy);
+                        ctx.rotate(rot);
+                        for (let arm = 0; arm < 4; arm++) {
+                            ctx.strokeStyle = arm % 2 === 0 ? 'rgba(230,240,255,0.55)' : 'rgba(160,190,255,0.35)';
+                            ctx.lineWidth = 2.2 * scale;
+                            ctx.beginPath();
+                            for (let t = 0; t < 28; t++) {
+                                const a = (t / 28) * Math.PI * 2.2 + arm * (Math.PI / 2);
+                                const rad = (8 + t * 3.2) * scale;
+                                const px = Math.cos(a) * rad;
+                                const py = Math.sin(a) * rad * 0.72;
+                                if (t === 0) ctx.moveTo(px, py);
+                                else ctx.lineTo(px, py);
+                            }
+                            ctx.stroke();
+                        }
+                        // Core glow
+                        const core = ctx.createRadialGradient(0, 0, 0, 0, 0, 22 * scale);
+                        core.addColorStop(0, 'rgba(255,255,255,0.95)');
+                        core.addColorStop(0.4, 'rgba(180,210,255,0.45)');
                         core.addColorStop(1, 'rgba(0,0,0,0)');
                         ctx.fillStyle = core;
                         ctx.beginPath();
-                        ctx.arc(cx, cy, 22 * scale, 0, Math.PI * 2);
+                        ctx.arc(0, 0, 22 * scale, 0, Math.PI * 2);
                         ctx.fill();
+                        ctx.restore();
+                    }
+                    drawSwirl(280, 300, 1.4, 0.3);
+                    drawSwirl(720, 420, 1.1, 1.2);
+                    drawSwirl(480, 720, 1.5, -0.5);
+                    drawSwirl(160, 700, 0.9, 2.0);
+                    drawSwirl(850, 200, 1.0, 0.8);
+                    drawSwirl(512, 480, 1.8, 0.15);
 
-                        // Spiral arms
-                        for (let arm = 0; arm < 3; arm++) {
-                            for (let a = 0; a < 70; a++) {
-                                const ang = rot + arm * (Math.PI * 2 / 3) + a * 0.12;
-                                const rad = (4 + a * 1.35) * scale;
-                                const px = cx + Math.cos(ang) * rad;
-                                const py = cy + Math.sin(ang) * rad * 0.55;
-                                const alpha = 0.55 * (1 - a / 70);
-                                ctx.fillStyle = colorArm.replace('A', alpha.toFixed(3));
-                                ctx.beginPath();
-                                ctx.arc(px, py, (1.8 - a * 0.015) * scale, 0, Math.PI * 2);
-                                ctx.fill();
-                            }
+                    // Planets painted into the skin texture
+                    function drawPlanet(cx, cy, r, c0, c1, ring) {
+                        const pg = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+                        pg.addColorStop(0, c0);
+                        pg.addColorStop(0.7, c1);
+                        pg.addColorStop(1, 'rgba(0,0,0,0.9)');
+                        ctx.fillStyle = pg;
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                        ctx.fill();
+                        // Specular
+                        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+                        ctx.beginPath();
+                        ctx.arc(cx - r * 0.35, cy - r * 0.35, r * 0.18, 0, Math.PI * 2);
+                        ctx.fill();
+                        if (ring) {
+                            ctx.strokeStyle = 'rgba(200,220,255,0.5)';
+                            ctx.lineWidth = Math.max(1.5, r * 0.12);
+                            ctx.beginPath();
+                            ctx.ellipse(cx, cy, r * 1.55, r * 0.35, -0.4, 0, Math.PI * 2);
+                            ctx.stroke();
                         }
                     }
-
-                    drawSpiralGalaxy(380, 280, 1.4, 0.3, '#ffd080', 'rgba(200,160,255,A)');
-                    drawSpiralGalaxy(680, 620, 1.1, 1.8, '#a0e0ff', 'rgba(120,180,255,A)');
-                    drawSpiralGalaxy(220, 720, 0.9, 0.9, '#ff90d0', 'rgba(255,120,200,A)');
-                    drawSpiralGalaxy(780, 280, 0.75, 2.4, '#e0c0ff', 'rgba(180,140,255,A)');
-                    drawSpiralGalaxy(520, 820, 0.65, 0.1, '#80ffd0', 'rgba(100,255,220,A)');
+                    drawPlanet(200, 180, 28, '#ffcc88', '#c47830', true);
+                    drawPlanet(820, 560, 36, '#88c8ff', '#2a6090', true);
+                    drawPlanet(450, 250, 22, '#ff88aa', '#a03050', false);
+                    drawPlanet(600, 800, 30, '#aaffcc', '#208060', false);
+                    drawPlanet(120, 480, 18, '#ddeeff', '#556688', false);
+                    drawPlanet(900, 320, 24, '#ffaa66', '#884420', true);
+                    drawPlanet(340, 880, 20, '#cc99ff', '#552288', false);
+                    drawPlanet(700, 150, 16, '#ffffff', '#8899aa', false);
 
                     // Dense star field
-                    for (let i = 0; i < 1200; i++) {
+                    for (let i = 0; i < 900; i++) {
                         const sx = Math.random() * 1024;
                         const sy = Math.random() * 1024;
-                        const size = Math.random() * 1.6 + 0.15;
-                        const b = 0.35 + Math.random() * 0.65;
+                        const size = Math.random() * 1.5 + 0.2;
+                        const b = 0.25 + Math.random() * 0.75;
                         ctx.fillStyle = `rgba(255,255,255,${b})`;
                         ctx.beginPath();
                         ctx.arc(sx, sy, size, 0, Math.PI * 2);
                         ctx.fill();
                     }
-
-                    // Bright star sparks with cross glow
-                    for (let i = 0; i < 45; i++) {
+                    // Bright sparks
+                    for (let i = 0; i < 50; i++) {
                         const sx = Math.random() * 1024;
                         const sy = Math.random() * 1024;
-                        const r = 1.5 + Math.random() * 2.5;
-                        ctx.fillStyle = 'rgba(200,230,255,0.95)';
+                        const r = 1.2 + Math.random() * 2.2;
+                        ctx.fillStyle = 'rgba(220,235,255,0.95)';
                         ctx.beginPath();
                         ctx.arc(sx, sy, r, 0, Math.PI * 2);
                         ctx.fill();
-                        // Cross flare
-                        ctx.strokeStyle = 'rgba(180,220,255,0.55)';
-                        ctx.lineWidth = 0.8;
+                        ctx.strokeStyle = 'rgba(180,210,255,0.5)';
+                        ctx.lineWidth = 0.7;
                         ctx.beginPath();
                         ctx.moveTo(sx - r * 3, sy); ctx.lineTo(sx + r * 3, sy);
                         ctx.moveTo(sx, sy - r * 3); ctx.lineTo(sx, sy + r * 3);
                         ctx.stroke();
                     }
 
-                    // Soft purple/blue energy veins
-                    ctx.strokeStyle = 'rgba(160,80,255,0.12)';
-                    ctx.lineWidth = 2;
-                    for (let i = 0; i < 12; i++) {
-                        ctx.beginPath();
-                        const sx = Math.random() * 1024, sy = Math.random() * 1024;
-                        ctx.moveTo(sx, sy);
-                        for (let j = 0; j < 5; j++) {
-                            ctx.quadraticCurveTo(
-                                sx + (Math.random() - 0.5) * 180,
-                                sy + (Math.random() - 0.5) * 180,
-                                sx + (Math.random() - 0.5) * 280,
-                                sy + (Math.random() - 0.5) * 280
-                            );
-                        }
-                        ctx.stroke();
-                    }
-
                     const tex = new THREE.CanvasTexture(canvas);
+                    // UV gắn trên mesh: texture quay theo nhân vật, không "dính" thế giới
                     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                    tex.repeat.set(1, 1);
                     tex.encoding = THREE.sRGBEncoding;
+                    tex.needsUpdate = true;
                     return tex;
                 }
                 const galaxyBodyTex = createGalaxyBodyTexture();
+                // Gắn texture Alien X lên skinMat (đầu/simple) — hoa văn quay theo mesh
+                if (typeof skinMat !== 'undefined' && skinMat) {
+                    skinMat.map = galaxyBodyTex;
+                    skinMat.emissiveMap = galaxyBodyTex;
+                    skinMat.color.set(0xffffff);
+                    skinMat.emissive.set(0x445566);
+                    skinMat.emissiveIntensity = 0.7;
+                    skinMat.needsUpdate = true;
+                }
+                window.applyAlienXSkinTint = function(hexColor) {
+                    // Đổi màu da: tint material, GIỮ map hành tinh (UV không trôi)
+                    const c = new THREE.Color(hexColor);
+                    if (typeof cosmicSkinMat !== 'undefined' && cosmicSkinMat) {
+                        cosmicSkinMat.color.copy(c);
+                        cosmicSkinMat.needsUpdate = true;
+                    }
+                    if (typeof skinMat !== 'undefined' && skinMat) {
+                        skinMat.color.copy(c);
+                        if (!skinMat.map && typeof galaxyBodyTex !== 'undefined')
+                            skinMat.map = galaxyBodyTex;
+                        skinMat.needsUpdate = true;
+                    }
+                    // Blocky skin parts share cosmicSkinMat
+                    try {
+                        if (blockyPlayer && blockyPlayer.userData && blockyPlayer.userData.parts) {
+                            // materials already shared via mats.skin
+                        }
+                    } catch(e) {}
+                };
+
 
                 // Tóc galaxy tím-xanh
                 const cosmicHairTexture = pixelTexture(g => {
@@ -7438,53 +7933,54 @@
 
                 const cosmicBodyMat = new THREE.MeshStandardMaterial({
                     map: galaxyBodyTex,
-                    color: 0xffffff,
-                    emissive: 0x4a10cc,
+                    color: 0x1a1a28,
+                    emissive: 0x223355,
                     emissiveMap: galaxyBodyTex,
-                    emissiveIntensity: 1.15,
-                    metalness: 0.45,
-                    roughness: 0.28,
-                    envMapIntensity: 1.2
+                    emissiveIntensity: 0.85,
+                    metalness: 0.55,
+                    roughness: 0.32,
+                    envMapIntensity: 1.15
                 });
                 const cosmicBodyMatLight = new THREE.MeshStandardMaterial({
                     map: galaxyBodyTex,
-                    color: 0xddccff,
-                    emissive: 0x6611ee,
+                    color: 0x2a2a3a,
+                    emissive: 0x334466,
                     emissiveMap: galaxyBodyTex,
-                    emissiveIntensity: 1.35,
+                    emissiveIntensity: 0.95,
                     metalness: 0.5,
-                    roughness: 0.22,
-                    envMapIntensity: 1.3
+                    roughness: 0.28,
+                    envMapIntensity: 1.2
                 });
                 const cosmicBodyMatDark = new THREE.MeshStandardMaterial({
                     map: galaxyBodyTex,
-                    color: 0x9977dd,
-                    emissive: 0x330088,
+                    color: 0x0a0a12,
+                    emissive: 0x111122,
                     emissiveMap: galaxyBodyTex,
-                    emissiveIntensity: 0.95,
-                    metalness: 0.4,
-                    roughness: 0.32,
-                    envMapIntensity: 1.1
+                    emissiveIntensity: 0.7,
+                    metalness: 0.6,
+                    roughness: 0.35,
+                    envMapIntensity: 1.0
                 });
+                // Da Alien X: đen sâu + hoa văn hành tinh (UV quay theo body)
                 const cosmicSkinMat = new THREE.MeshStandardMaterial({
                     map: galaxyBodyTex,
-                    color: 0xbb99ff,
-                    emissive: 0x4400aa,
+                    color: 0xffffff,
+                    emissive: 0x445566,
                     emissiveMap: galaxyBodyTex,
-                    emissiveIntensity: 0.9,
-                    metalness: 0.3,
-                    roughness: 0.35,
-                    envMapIntensity: 1.15
+                    emissiveIntensity: 0.75,
+                    metalness: 0.25,
+                    roughness: 0.4,
+                    envMapIntensity: 1.1
                 });
                 const cosmicBootMat = new THREE.MeshStandardMaterial({
                     map: galaxyBodyTex,
-                    color: 0x7755cc,
-                    emissive: 0x220055,
+                    color: 0x12121a,
+                    emissive: 0x222233,
                     emissiveMap: galaxyBodyTex,
-                    emissiveIntensity: 1.05,
-                    metalness: 0.55,
-                    roughness: 0.25,
-                    envMapIntensity: 1.2
+                    emissiveIntensity: 0.8,
+                    metalness: 0.6,
+                    roughness: 0.3,
+                    envMapIntensity: 1.15
                 });
                 const cosmicHairMat = new THREE.MeshStandardMaterial({
                     map: cosmicHairTexture,
@@ -9526,7 +10022,9 @@ const octopusMonster =
                     let blade = '#c0c0c0';
                     let glow = null;
                     let label = 'C';
-                    if (hasGlitchSword || equippedItemType === 'glitch' || equippedItemType === 'error') {
+                    if (hasElectronSword) {
+                        blade = '#44ccff'; glow = '#00aaff'; label = '⚡';
+                    } else if (hasGlitchSword || equippedItemType === 'glitch' || equippedItemType === 'error') {
                         blade = '#ff3355'; glow = '#ff0033'; label = 'E';
                     } else if (hasHackSword || equippedItemType === 'hack') {
                         blade = '#00ffff'; glow = '#00ccff'; label = 'H';
@@ -9663,6 +10161,15 @@ const octopusMonster =
                     if (invError)
                         invError.innerText =
                             hasGlitchSword ? 1 : 0;
+
+                    const invElectron =
+                        document.getElementById(
+                            'inv-electron'
+                        );
+
+                    if (invElectron)
+                        invElectron.innerText =
+                            hasElectronSword ? 1 : 0;
 
                     const lvlGod =
                         document.getElementById(
@@ -10104,7 +10611,9 @@ const octopusMonster =
                         document.getElementById(
                             'val-sword'
                         ).innerText =
-                            hasGlitchSword
+                            hasElectronSword
+                            ? `Electron Sword (+10% POWER & GOLD)`
+                            : hasGlitchSword
                             ? `Error Sword (x${GLITCH_SWORD_DMG_MULTIPLIER} DMG)`
                             : `Hack Lv.2 (x${HACK_SWORD_DMG_MULTIPLIER} DMG) ${hackSwordCount}/${GLITCH_SWORD_COUNT_NEEDED}`;
 
@@ -10347,17 +10856,19 @@ const octopusMonster =
                         isCosmicSkinOn =
                             !isCosmicSkinOn;
 
-                        skinMat.map =
-                            isCosmicSkinOn
-                            ? cosmicTexture
-                            : null;
-
-                        skinMat.emissiveIntensity =
-                            isCosmicSkinOn
-                            ? 0.4
-                            : 0;
-
+                        if (isCosmicSkinOn) {
+                            skinMat.map = cosmicTexture;
+                            skinMat.emissiveIntensity = 0.35;
+                            skinMat.color.set(0xd4a373);
+                        } else {
+                            skinMat.map = null;
+                            skinMat.emissive.set(0x000000);
+                            skinMat.emissiveIntensity = 0;
+                            skinMat.color.set(0xe8b896); // da đẹp tự nhiên
+                        }
                         skinMat.needsUpdate = true;
+                        if (typeof cosmicOrbitGroup !== 'undefined' && cosmicOrbitGroup)
+                            cosmicOrbitGroup.visible = !!isCosmicSkinOn;
 
                         const btn =
                             document.getElementById(
@@ -10421,50 +10932,32 @@ const octopusMonster =
                    COLOR
                 ========================= */
 
-                document.getElementById(
-                    'picker-body'
-                ).addEventListener(
-                    'input',
-                    e => {
-
-                        playerBodyMat.color.set(
-                            e.target.value
-                        );
-
+                // Color pickers — đổi tint, GIỮ hoa văn hành tinh trên da (UV theo nhân vật)
+                (function() {
+                    const pb = document.getElementById('picker-body');
+                    if (pb) pb.addEventListener('input', e => {
+                        playerBodyMat.color.set(e.target.value);
+                        try {
+                            if (typeof cosmicBodyMat !== 'undefined') cosmicBodyMat.color.set(e.target.value);
+                            if (typeof cosmicBodyMatLight !== 'undefined') cosmicBodyMatLight.color.set(e.target.value).offsetHSL(0, 0, 0.08);
+                            if (typeof cosmicBodyMatDark !== 'undefined') cosmicBodyMatDark.color.set(e.target.value).offsetHSL(0, 0, -0.1);
+                        } catch(err) {}
                         saveCurrentAccount();
-
-                    }
-                );
-
-                document.getElementById(
-                    'picker-skin'
-                ).addEventListener(
-                    'input',
-                    e => {
-
-                        skinMat.color.set(
-                            e.target.value
-                        );
-
+                    });
+                    const ps = document.getElementById('picker-skin');
+                    if (ps) ps.addEventListener('input', e => {
+                        if (typeof window.applyAlienXSkinTint === 'function')
+                            window.applyAlienXSkinTint(e.target.value);
+                        else
+                            skinMat.color.set(e.target.value);
                         saveCurrentAccount();
-
-                    }
-                );
-
-                document.getElementById(
-                    'picker-halo'
-                ).addEventListener(
-                    'input',
-                    e => {
-
-                        haloMat.color.set(
-                            e.target.value
-                        );
-
+                    });
+                    const ph = document.getElementById('picker-halo');
+                    if (ph) ph.addEventListener('input', e => {
+                        if (typeof haloMat !== 'undefined' && haloMat) haloMat.color.set(e.target.value);
                         saveCurrentAccount();
-
-                    }
-                );
+                    });
+                })();
 
                 /* =========================
                    CAMERA 360
@@ -10878,11 +11371,22 @@ const octopusMonster =
                     electronBossHits = 0;
                     gameStage = 12;
                     errorBossActive = false;
-                    errorBossMonster.visible = false;
+                    if (errorBossMonster) errorBossMonster.visible = false;
                     errorFloor.visible = false;
                     if (glitchCodeFloor) glitchCodeFloor.visible = false;
                     if (rainbowHaloGroup) rainbowHaloGroup.visible = false;
                     setExpandedWorld(12);
+                    if (typeof enforceStageMobVisibility === 'function')
+                        enforceStageMobVisibility(12);
+                    if (redMonster) redMonster.visible = false;
+                    if (octopusMonster) octopusMonster.visible = false;
+                    if (bossMonster) bossMonster.visible = false;
+                    if (finalBossMonster) finalBossMonster.visible = false;
+                    if (universeBossMonster) universeBossMonster.visible = false;
+                    if (cosmicBossMonster) cosmicBossMonster.visible = false;
+                    if (oldCharacterBossMonster) oldCharacterBossMonster.visible = false;
+                    if (atomicBossMonster) atomicBossMonster.visible = false;
+                    if (cosmicDinoMonster) cosmicDinoMonster.visible = false;
                     if (electronBossMonster) {
                         electronBossMonster.visible = true;
                         electronBossMonster.position.set(14, electronHomeY, 0);
@@ -11061,6 +11565,26 @@ const octopusMonster =
                         if (bar) bar.style.display = 'none';
                         killed = true;
                         toastKill('ELECTRON BOSS');
+                        // Chỉ admin (addmin1o/addmin) ở thế giới Electron + //kill → nhận Electron Sword ngay
+                        if (secretAdminMode && !hasElectronSword) {
+                            hasElectronSword = true;
+                            if (typeof updateInventoryUI === 'function') updateInventoryUI();
+                            if (typeof updatePlayerSwordVisual === 'function') updatePlayerSwordVisual();
+                            const vs = document.getElementById('val-sword');
+                            if (vs) {
+                                vs.innerText = 'Electron Sword (+10% POWER & GOLD)';
+                                vs.style.color = '#44ccff';
+                            }
+                            showToast(
+                                currentLang === 'vi'
+                                ? '⚡ NHẬN ELECTRON SWORD! +10% POWER & GOLD mỗi đòn'
+                                : '⚡ ELECTRON SWORD OBTAINED! +10% POWER & GOLD per hit'
+                            );
+                        }
+                        // Electron có thể hồi lại
+                        setTimeout(function() {
+                            if (typeof respawnElectronBoss === 'function') respawnElectronBoss();
+                        }, 2500);
                     } else if (killStage === 4) {
                         // Stage 4 = giữa các boss — cho phép skip sang vòng kế / mở final
                         hasBossTitle = true;
@@ -11223,6 +11747,104 @@ const octopusMonster =
                     const col = new THREE.Color(skin.color || '#1a1a24');
                     const accent = col.clone().offsetHSL(0.08, 0.15, 0.12);
                     const dark = col.clone().multiplyScalar(0.45);
+
+                    // Áo Giáp Glitch 100k — dark blue armor + cyan glow + orbit orbs (như reference)
+                    if (skin.id === 'glitch_armor') {
+                        try {
+                            if (body && body.material) {
+                                body.material.color.set(0x0a1a3a);
+                                body.material.emissive = new THREE.Color(0x1144aa);
+                                body.material.emissiveIntensity = 0.55;
+                                body.material.metalness = 0.7;
+                                body.material.roughness = 0.28;
+                            }
+                            [armL, armR, legL, legR].forEach(m => {
+                                if (m && m.material) {
+                                    m.material.color.set(0x0a1a3a);
+                                    m.material.emissive = new THREE.Color(0x113388);
+                                    m.material.emissiveIntensity = 0.4;
+                                    m.material.metalness = 0.65;
+                                    m.material.roughness = 0.3;
+                                }
+                            });
+                            // Natural skin on head (không cosmic fake)
+                            if (typeof skinMat !== 'undefined' && skinMat) {
+                                skinMat.map = null;
+                                skinMat.color.set(0xe8b896);
+                                skinMat.emissive.set(0x000000);
+                                skinMat.emissiveIntensity = 0;
+                                skinMat.needsUpdate = true;
+                            }
+                        } catch(e) {}
+                        // Chest glow panels
+                        const panelMat = new THREE.MeshBasicMaterial({
+                            color: 0x44aaff, transparent: true, opacity: 0.85,
+                            blending: THREE.AdditiveBlending, depthWrite: false
+                        });
+                        [[0, 1.45, 0.27], [0, 1.2, 0.27], [-0.18, 1.35, 0.26], [0.18, 1.35, 0.26]].forEach((p, i) => {
+                            const panel = new THREE.Mesh(
+                                new THREE.BoxGeometry(i < 2 ? 0.28 : 0.12, i < 2 ? 0.12 : 0.1, 0.04),
+                                panelMat.clone()
+                            );
+                            panel.position.set(p[0], p[1], p[2]);
+                            playerGroup.add(panel);
+                            playerGroup.userData.skinOverlays.push(panel);
+                        });
+                        // Orbit rings + white orbs
+                        const gOrbit = new THREE.Group();
+                        gOrbit.userData.spinAura = true;
+                        for (let ri = 0; ri < 3; ri++) {
+                            const ring = new THREE.Mesh(
+                                new THREE.TorusGeometry(1.15 + ri * 0.35, 0.012, 6, 48),
+                                new THREE.MeshBasicMaterial({
+                                    color: 0xffffff, transparent: true, opacity: 0.55 - ri * 0.1,
+                                    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
+                                })
+                            );
+                            ring.rotation.x = Math.PI / 2.3 + ri * 0.25;
+                            ring.rotation.z = ri * 0.4;
+                            gOrbit.add(ring);
+                        }
+                        for (let oi = 0; oi < 8; oi++) {
+                            const orb = new THREE.Mesh(
+                                new THREE.SphereGeometry(0.08, 10, 10),
+                                new THREE.MeshBasicMaterial({
+                                    color: 0xffffff, transparent: true, opacity: 0.9,
+                                    blending: THREE.AdditiveBlending, depthWrite: false
+                                })
+                            );
+                            orb.userData.angle = (oi / 8) * Math.PI * 2;
+                            orb.userData.speed = 0.02 + (oi % 3) * 0.008;
+                            orb.userData.radius = 1.2 + (oi % 3) * 0.35;
+                            orb.userData.yBase = 1.3;
+                            gOrbit.add(orb);
+                            // animate via spinAura parent rotation + manual in updateRealism if needed
+                        }
+                        gOrbit.position.y = 0.2;
+                        playerGroup.add(gOrbit);
+                        playerGroup.userData.skinOverlays.push(gOrbit);
+                        // animate orbs
+                        gOrbit.userData.animateOrbs = true;
+                        if (!window._glitchArmorAnim) {
+                            window._glitchArmorAnim = function() {
+                                const ov = playerGroup && playerGroup.userData && playerGroup.userData.skinOverlays;
+                                if (!ov) return;
+                                ov.forEach(g => {
+                                    if (!g.userData || !g.userData.animateOrbs) return;
+                                    g.rotation.y += 0.012;
+                                    g.children.forEach(ch => {
+                                        if (ch.userData && typeof ch.userData.angle === 'number') {
+                                            ch.userData.angle += ch.userData.speed;
+                                            ch.position.x = Math.cos(ch.userData.angle) * ch.userData.radius;
+                                            ch.position.z = Math.sin(ch.userData.angle) * ch.userData.radius * 0.7;
+                                            ch.position.y = ch.userData.yBase + Math.sin(ch.userData.angle * 1.5) * 0.25;
+                                        }
+                                    });
+                                });
+                            };
+                        }
+                        return;
+                    }
 
                     try {
                         if (typeof body !== 'undefined' && body && body.material && body.material.color)
@@ -12338,34 +12960,50 @@ const octopusMonster =
                 ========================= */
 
                 function applyWorldClickPowerGain() {
+                    // Electron Sword: cộng thêm 10 điểm % vào rate power/click của thế giới
+                    // Ví dụ world +3% → (3+10)%/click khi có Electron Sword
+                    const eBonus = (typeof hasElectronSword !== 'undefined' && hasElectronSword) ? 0.10 : 0;
+
                     if (gameStage === 1) {
-                        power += 10;
-                        return '+10 POWER';
+                        const base = 10;
+                        power += Math.floor(base * (1 + eBonus));
+                        return eBonus ? '+11 POWER' : '+10 POWER';
                     }
 
                     if (gameStage === 3) {
-                        power += 10000;
-                        return '+10K POWER';
+                        const base = 10000;
+                        power += Math.floor(base * (1 + eBonus));
+                        return eBonus ? '+11K POWER' : '+10K POWER';
                     }
 
                     if (gameStage === 2) {
-                        power += 10000;
-                        return '+10K POWER';
+                        const base = 10000;
+                        power += Math.floor(base * (1 + eBonus));
+                        return eBonus ? '+11K POWER' : '+10K POWER';
                     }
 
                     if (gameStage === 5 || gameStage === 6) {
-                        power = Math.max(1, power * 1.012);
-                        return '+1.2% POWER';
+                        const rate = 0.012 + eBonus;
+                        power = Math.max(1, power * (1 + rate));
+                        return '+' + (rate * 100).toFixed(1) + '% POWER';
                     }
 
                     if (gameStage === 7 || gameStage === 8) {
-                        power = Math.max(1, power * 1.013);
-                        return '+1.3% POWER';
+                        const rate = 0.013 + eBonus;
+                        power = Math.max(1, power * (1 + rate));
+                        return '+' + (rate * 100).toFixed(1) + '% POWER';
                     }
 
                     if (gameStage === 10) {
-                        power = Math.max(1, power * 1.023);
-                        return '+2.3% POWER';
+                        const rate = 0.023 + eBonus;
+                        power = Math.max(1, power * (1 + rate));
+                        return '+' + (rate * 100).toFixed(1) + '% POWER';
+                    }
+
+                    // Stage 12 Electron: chỉ khi có Electron Sword mới +10% power/click
+                    if (gameStage === 12 && eBonus > 0) {
+                        power = Math.max(1, power * (1 + eBonus));
+                        return '+10% POWER';
                     }
 
                     return '';
@@ -12439,7 +13077,7 @@ const octopusMonster =
                         // Gold = (power/click)/670
                         if (typeof addGoldFromHit === 'function') addGoldFromHit();
 
-                        if (!isAfk && gameStage !== 11 && gameStage !== 12) {
+                        if (!isAfk && gameStage !== 11 && (gameStage !== 12 || hasElectronSword)) {
                             applyWorldClickPowerGain();
                         }
 
@@ -13044,11 +13682,11 @@ const octopusMonster =
                             atomicBossHP -=
                                 totalDmg;
 
-                            power =
-                                Math.max(
-                                    1,
-                                    power * ATOMIC_POWER_PER_HIT
-                                );
+                            // Electron Sword: +10 điểm % vào rate (1.555% → 11.555%)
+                            {
+                                const aRate = (ATOMIC_POWER_PER_HIT - 1) + (hasElectronSword ? 0.10 : 0);
+                                power = Math.max(1, power * (1 + aRate));
+                            }
 
                             document.getElementById('val-power').innerText =
                                 formatNum(power);
@@ -13186,9 +13824,10 @@ const octopusMonster =
                             cosmicDinoHP -=
                                 BigInt(Math.max(1, Math.floor(totalDmg)));
 
-                            // +5% power mỗi click khi đánh boss khủng long
+                            // +5% power mỗi click (+10% nếu Electron Sword → 15%)
                             if (Number.isFinite(power) && power > 0) {
-                                power = power * COSMIC_DINO_POWER_RATE;
+                                const dRate = (COSMIC_DINO_POWER_RATE - 1) + (hasElectronSword ? 0.10 : 0);
+                                power = power * (1 + dRate);
                             }
                             document.getElementById(
                                 'val-power'
@@ -14172,6 +14811,7 @@ const octopusMonster =
                         hackSwordCount: hackSwordCount,
 
                         hasGlitchSword: hasGlitchSword,
+                        hasElectronSword: hasElectronSword,
 
                         hasKingStatus: hasKingStatus,
                         kingOutfit: kingOutfit,
@@ -14379,6 +15019,16 @@ const octopusMonster =
                     hasGlitchSword =
                         data.hasGlitchSword ||
                         false;
+
+                    hasElectronSword =
+                        !!data.hasElectronSword;
+                    if (hasElectronSword) {
+                        const vsE = document.getElementById('val-sword');
+                        if (vsE) {
+                            vsE.innerText = 'Electron Sword (+10% POWER & GOLD)';
+                            vsE.style.color = '#44ccff';
+                        }
+                    }
 
                     if (data.hasKingStatus) hasKingStatus = true;
                     if (data.kingOutfit) kingOutfit = data.kingOutfit;
@@ -14651,29 +15301,26 @@ const octopusMonster =
                     skinMat.color.set(data.skinColor);
                     haloMat.color.set(data.haloColor);
 
-                    document.getElementById(
-                        'picker-body'
-                    ).value = data.bodyColor;
+                    const _pb = document.getElementById('picker-body');
+                    if (_pb) _pb.value = data.bodyColor;
+                    const _ps = document.getElementById('picker-skin');
+                    if (_ps) _ps.value = data.skinColor;
+                    const _ph = document.getElementById('picker-halo');
+                    if (_ph) _ph.value = data.haloColor;
 
-                    document.getElementById(
-                        'picker-skin'
-                    ).value = data.skinColor;
-
-                    document.getElementById(
-                        'picker-halo'
-                    ).value = data.haloColor;
-
-                    skinMat.map =
-                        isCosmicSkinOn
-                        ? cosmicTexture
-                        : null;
-
-                    skinMat.emissiveIntensity =
-                        isCosmicSkinOn
-                        ? 0.4
-                        : 0;
-
+                    // Da đẹp tự nhiên — không cosmic fake trừ khi bật
+                    if (isCosmicSkinOn) {
+                        skinMat.map = cosmicTexture;
+                        skinMat.emissiveIntensity = 0.35;
+                    } else {
+                        skinMat.map = null;
+                        skinMat.emissive.set(0x000000);
+                        skinMat.emissiveIntensity = 0;
+                        if (!data.skinColor) skinMat.color.set(0xe8b896);
+                    }
                     skinMat.needsUpdate = true;
+                    if (typeof cosmicOrbitGroup !== 'undefined' && cosmicOrbitGroup)
+                        cosmicOrbitGroup.visible = !!isCosmicSkinOn;
 
                     if (hasGlitchSword) {
 
@@ -15498,8 +16145,9 @@ const octopusMonster =
                             if (typeof updateGoldUI === 'function') updateGoldUI();
                             hasGlitchSword = true;
                             hasHackSword = true;
+                            hasElectronSword = true;
                             hackSwordCount = Math.max(hackSwordCount, 20);
-                            equippedItemType = 'glitch';
+                            equippedItemType = 'electron';
                             playerLevel = Math.max(playerLevel, 1000);
                             const status = document.getElementById('login-status');
                             if (status) status.innerText = '';
@@ -15516,8 +16164,8 @@ const octopusMonster =
                             if (powerLabel) powerLabel.innerText = '∞';
                             const swordLabel = document.getElementById('val-sword');
                             if (swordLabel) {
-                                swordLabel.innerText = 'Error Sword (∞ DMG)';
-                                swordLabel.style.color = '#ff3355';
+                                swordLabel.innerText = 'Electron Sword (+10% POWER & GOLD)';
+                                swordLabel.style.color = '#44ccff';
                             }
                             if (typeof updatePlayerSwordVisual === 'function') updatePlayerSwordVisual();
                             if (typeof updateInventoryUI === 'function') updateInventoryUI();
@@ -15944,6 +16592,19 @@ const octopusMonster =
                     electronLastRegenTime = performance.now();
 
                     setExpandedWorld(12);
+                    if (typeof enforceStageMobVisibility === 'function')
+                        enforceStageMobVisibility(12);
+                    // Đảm bảo mob stage 1-4 không lọt vào Electron
+                    if (redMonster) redMonster.visible = false;
+                    if (octopusMonster) octopusMonster.visible = false;
+                    if (bossMonster) bossMonster.visible = false;
+                    if (finalBossMonster) finalBossMonster.visible = false;
+                    if (universeBossMonster) universeBossMonster.visible = false;
+                    if (cosmicBossMonster) cosmicBossMonster.visible = false;
+                    if (oldCharacterBossMonster) oldCharacterBossMonster.visible = false;
+                    if (atomicBossMonster) atomicBossMonster.visible = false;
+                    if (cosmicDinoMonster) cosmicDinoMonster.visible = false;
+                    if (errorBossMonster) errorBossMonster.visible = false;
 
                     electronBossMonster.visible = true;
                     electronBossMonster.position.set(14, electronHomeY, 0);
@@ -15976,15 +16637,21 @@ const octopusMonster =
                     if (gameStage !== 12 || !electronBossActive || electronBossDefeated)
                         return;
 
+                    // Hệ 10.500 click: mỗi click thường = 0.001e (ELECTRON_BOSS_PROGRESS_PER_CLICK)
+                    // Electron Sword = x10 progress (tương đương 10 click thường) → ~1.050 click hạ boss
+                    // Không one-shot (trước đó set hit=10e gần full 10.5e là sai)
+                    const clickMult = hasElectronSword ? 10 : 1;
+                    const hitAmount = ELECTRON_BOSS_PROGRESS_PER_CLICK * clickMult;
                     const nextHit = Math.min(
                         ELECTRON_BOSS_EHP,
-                        electronBossHits + ELECTRON_BOSS_PROGRESS_PER_CLICK
+                        electronBossHits + hitAmount
                     );
 
                     electronBossHits = nextHit;
 
                     const remaining = Math.max(0, ELECTRON_BOSS_EHP - electronBossHits);
                     const percent = Math.min(100, (electronBossHits / ELECTRON_BOSS_EHP) * 100);
+                    const clicksDone = Math.floor(electronBossHits / ELECTRON_BOSS_PROGRESS_PER_CLICK);
 
                     document.getElementById('boss-hp-inner').style.width =
                         Math.max(0, 100 - percent) + '%';
@@ -15995,12 +16662,12 @@ const octopusMonster =
                         : '0e HP';
 
                     document.getElementById('boss-hp-percent').innerText =
-                        `Đã tiêu diệt: ${percent.toFixed(1)}% • ${Math.floor(electronBossHits / ELECTRON_BOSS_PROGRESS_PER_CLICK).toLocaleString()}/10,500 clicks`;
+                        hasElectronSword
+                        ? `Đã tiêu diệt: ${percent.toFixed(1)}% • ${clicksDone.toLocaleString()}/10,500 (Electron Sword x10)`
+                        : `Đã tiêu diệt: ${percent.toFixed(1)}% • ${clicksDone.toLocaleString()}/10,500 clicks`;
 
                     showDmgPopup(
-                        electronBossHits >= 10
-                        ? '0.5e'
-                        : '1e'
+                        hasElectronSword ? '-10e' : (clicksDone >= 10 ? '0.5e' : '1e')
                     );
 
                     if (electronBossHits >= ELECTRON_BOSS_EHP) {
@@ -16012,12 +16679,45 @@ const octopusMonster =
 
                         showToast(
                             currentLang === 'vi'
-                            ? '⚡ ELECTRON ĐÃ BỊ TIÊU DIỆT! 10.5 CLICK-EQUIVALENT HOÀN TẤT!'
-                            : '⚡ ELECTRON DEFEATED! 10,500 CLICKS COMPLETED!'
+                            ? '⚡ ELECTRON ĐÃ BỊ TIÊU DIỆT! 10.5 CLICK-EQUIVALENT HOÀN TẤT! (Sẽ hồi lại...)'
+                            : '⚡ ELECTRON DEFEATED! 10,500 CLICKS COMPLETED! (Will respawn...)'
                         );
 
                         saveCurrentAccount();
+
+                        // Electron có thể hồi lại sau vài giây
+                        setTimeout(function() {
+                            if (typeof respawnElectronBoss === 'function') respawnElectronBoss();
+                        }, 4000);
                     }
+                }
+
+                function respawnElectronBoss() {
+                    if (gameStage !== 12) return;
+                    electronBossDefeated = false;
+                    electronBossActive = true;
+                    electronBossHits = 0;
+                    if (electronBossMonster) {
+                        electronBossMonster.visible = true;
+                        electronBossMonster.position.set(0, electronHomeY, -14);
+                    }
+                    const bar = document.getElementById('boss-hp-bar');
+                    if (bar) bar.style.display = 'block';
+                    const title = document.getElementById('boss-title');
+                    if (title) {
+                        title.innerText = currentLang === 'vi'
+                            ? '⚡ BOSS ELECTRON (10.5e HP) — HỒI LẠI'
+                            : '⚡ ELECTRON BOSS (10.5e HP) — RESPAWNED';
+                    }
+                    document.getElementById('boss-hp-inner').style.width = '100%';
+                    document.getElementById('boss-hp-text').innerText = '10.5e / 10.5e';
+                    document.getElementById('boss-hp-percent').innerText =
+                        currentLang === 'vi' ? 'Đã tiêu diệt: 0%' : 'Progress: 0%';
+                    showToast(
+                        currentLang === 'vi'
+                        ? '⚡ BOSS ELECTRON ĐÃ HỒI LẠI!'
+                        : '⚡ ELECTRON BOSS RESPAWNED!'
+                    );
                 }
 
                 function winErrorGlitchBoss() {
@@ -16295,8 +16995,38 @@ const octopusMonster =
                         item.hole.rotation.z += 0.0015;
                     });
 
+                    // Safety: mob stage 1 không được hiện ở Error/Electron (admin chuyển thế giới)
+                    if (gameStage === 11 || gameStage === 12) {
+                        if (redMonster && redMonster.visible) redMonster.visible = false;
+                        if (octopusMonster && octopusMonster.visible) octopusMonster.visible = false;
+                        if (bossMonster && bossMonster.visible) bossMonster.visible = false;
+                        if (finalBossMonster && finalBossMonster.visible) finalBossMonster.visible = false;
+                    }
+
                     if (gameStage === 12 && electronWorld) {
                         const nowElectron = performance.now();
+
+                        // Animate electron world décor (rings, crystals, orbs, sun electrons)
+                        if (electronWorld.userData && electronWorld.userData.decorAnims) {
+                            const t = nowElectron * 0.001;
+                            electronWorld.userData.decorAnims.forEach((obj, i) => {
+                                if (!obj) return;
+                                if (obj.userData.spin) {
+                                    obj.rotation.y += obj.userData.spin;
+                                    obj.rotation.z += obj.userData.spin * 0.4;
+                                }
+                                if (obj.userData.float) {
+                                    obj.position.y = obj.userData.baseY + Math.sin(t * 1.2 + (obj.userData.phase || 0)) * 0.6;
+                                }
+                                if (obj.userData.sunOrbit) {
+                                    obj.userData.angle += obj.userData.speed;
+                                    const r = obj.userData.radius;
+                                    obj.position.x = Math.cos(obj.userData.angle) * r;
+                                    obj.position.z = Math.sin(obj.userData.angle) * r;
+                                    obj.position.y = obj.userData.yBase + Math.sin(obj.userData.angle * 1.5) * 1.2;
+                                }
+                            });
+                        }
 
                         electronBossOrbitAngle += 0.006;
 
@@ -16734,6 +17464,11 @@ const octopusMonster =
 
                     if (typeof updatePlayerSwordVisual === 'function')
                         updatePlayerSwordVisual();
+
+                    if (typeof animateElectronSword === 'function')
+                        animateElectronSword(performance.now());
+                    if (typeof window._glitchArmorAnim === 'function')
+                        window._glitchArmorAnim();
 
                     // Map bounds handled per-stage above (expanded temple for stage 1-4)
 
