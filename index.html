@@ -12,6 +12,8 @@
 
 
 
+
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -2345,7 +2347,7 @@
 
                 let gameStage = 1;
 
-                let redMonsterHP = 50;
+                let redMonsterHP = 100;
 
                 let octopusHP = 3000;
 
@@ -2971,78 +2973,412 @@
 
                 scene.add(starField);
 
-                const platformGroup =
+                /* ===== SKY PLANETS — pastel orbs + rings (like reference) ===== */
+                const skyPlanetGroup = new THREE.Group(); // kept for anim compat
+                const skyPlanets = []; // all planet groups for animation
+
+                function createSkyPlanet(opts) {
+                    const {
+                        color, emissive, size, x, y, z,
+                        hasRing, ringColor, ringEmissive, tilt, spin
+                    } = opts;
+                    const g = new THREE.Group();
+
+                    // Soft glow shell (no depth write — never traps camera inside)
+                    const glow = new THREE.Mesh(
+                        new THREE.SphereGeometry(size * 1.18, 24, 18),
+                        new THREE.MeshBasicMaterial({
+                            color: color,
+                            transparent: true,
+                            opacity: 0.12,
+                            depthWrite: false,
+                            depthTest: true,
+                            side: THREE.BackSide
+                        })
+                    );
+                    glow.renderOrder = -2;
+                    g.add(glow);
+
+                    // Main body
+                    const body = new THREE.Mesh(
+                        new THREE.SphereGeometry(size, 32, 24),
+                        new THREE.MeshStandardMaterial({
+                            color: color,
+                            emissive: emissive || color,
+                            emissiveIntensity: 0.4,
+                            roughness: 0.5,
+                            metalness: 0.12,
+                            depthWrite: true
+                        })
+                    );
+                    body.renderOrder = -1;
+                    g.add(body);
+
+                    // Soft highlight hemisphere
+                    const hi = new THREE.Mesh(
+                        new THREE.SphereGeometry(size * 1.01, 24, 16),
+                        new THREE.MeshBasicMaterial({
+                            color: 0xffffff,
+                            transparent: true,
+                            opacity: 0.12,
+                            depthWrite: false
+                        })
+                    );
+                    hi.scale.set(1, 0.9, 1);
+                    g.add(hi);
+
+                    if (hasRing) {
+                        const rc = ringColor || 0xe8c0d8;
+                        const re = ringEmissive || 0x8844aa;
+                        const ringOuter = new THREE.Mesh(
+                            new THREE.RingGeometry(size * 1.25, size * 1.85, 48),
+                            new THREE.MeshStandardMaterial({
+                                color: rc,
+                                emissive: re,
+                                emissiveIntensity: 0.3,
+                                transparent: true,
+                                opacity: 0.7,
+                                side: THREE.DoubleSide,
+                                roughness: 0.4,
+                                metalness: 0.2,
+                                depthWrite: false
+                            })
+                        );
+                        ringOuter.rotation.x = Math.PI / 2.3;
+                        g.add(ringOuter);
+
+                        const ringInner = new THREE.Mesh(
+                            new THREE.RingGeometry(size * 1.35, size * 1.65, 48),
+                            new THREE.MeshBasicMaterial({
+                                color: 0xffffff,
+                                transparent: true,
+                                opacity: 0.28,
+                                side: THREE.DoubleSide,
+                                depthWrite: false
+                            })
+                        );
+                        ringInner.rotation.x = Math.PI / 2.3;
+                        g.add(ringInner);
+
+                        const ringEdge = new THREE.Mesh(
+                            new THREE.TorusGeometry(size * 1.55, size * 0.012, 6, 48),
+                            new THREE.MeshBasicMaterial({
+                                color: 0xfff0ff,
+                                transparent: true,
+                                opacity: 0.55
+                            })
+                        );
+                        ringEdge.rotation.x = Math.PI / 2.3;
+                        g.add(ringEdge);
+                    }
+
+                    g.position.set(x, y, z);
+                    if (tilt) {
+                        g.rotation.z = tilt;
+                        g.rotation.x = tilt * 0.4;
+                    }
+                    g.userData.spin = spin || 0.0006;
+                    g.userData.body = body;
+                    scene.add(g);
+                    skyPlanets.push(g);
+                    return g;
+                }
+
+                // Max 6 planets — high in sky, far from playable area (no camera clip)
+                // 1) Pink + ring
+                createSkyPlanet({
+                    color: 0xf5a0c8, emissive: 0xa03070, size: 14,
+                    x: -160, y: 200, z: -180, hasRing: true,
+                    ringColor: 0xe8d0e8, ringEmissive: 0xaa88cc, tilt: 0.25, spin: 0.0009
+                });
+                // 2) Soft blue
+                createSkyPlanet({
+                    color: 0xa8c8f0, emissive: 0x4060a0, size: 11,
+                    x: -80, y: 240, z: -220, hasRing: false, tilt: -0.08, spin: 0.0007
+                });
+                // 3) Purple + ring
+                createSkyPlanet({
+                    color: 0xc898e0, emissive: 0x603090, size: 9,
+                    x: 40, y: 190, z: -200, hasRing: true,
+                    ringColor: 0xe0c8f0, ringEmissive: 0x8866aa, tilt: 0.15, spin: 0.0008
+                });
+                // 4) Big mint
+                createSkyPlanet({
+                    color: 0x80d8c8, emissive: 0x208070, size: 18,
+                    x: 180, y: 260, z: -240, hasRing: false, tilt: -0.12, spin: 0.0005
+                });
+                // 5) Classic blue + ring
+                createSkyPlanet({
+                    color: 0x4aa8e8, emissive: 0x1a5080, size: 12,
+                    x: 120, y: 280, z: -210, hasRing: true,
+                    ringColor: 0xe8b0d8, ringEmissive: 0x8844aa, tilt: 0.18, spin: 0.00075
+                });
+                // 6) Soft gold
+                createSkyPlanet({
+                    color: 0xe8c878, emissive: 0x886622, size: 7,
+                    x: -200, y: 220, z: -160, hasRing: false, tilt: 0.1, spin: 0.0011
+                });
+
+                                // Point first planet as skyPlanetGroup for any old refs
+                if (skyPlanets.length) {
+                    skyPlanetGroup.add(new THREE.Object3D()); // dummy
+                }
+
+                // Distant warm sun disc
+                const skySun = new THREE.Mesh(
+                    new THREE.SphereGeometry(7, 24, 18),
+                    new THREE.MeshBasicMaterial({ color: 0xffe566 })
+                );
+                skySun.position.set(-280, 320, -300);
+                scene.add(skySun);
+                const skySunGlow = new THREE.Mesh(
+                    new THREE.SphereGeometry(12, 16, 12),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xffcc44,
+                        transparent: true,
+                        opacity: 0.22,
+                        depthWrite: false,
+                        side: THREE.BackSide
+                    })
+                );
+                skySunGlow.position.copy(skySun.position);
+                scene.add(skySunGlow);
+
+                                const platformGroup =
                     new THREE.Group();
 
                 /* ===== UPGRADED TEMPLE FLOOR TEXTURE ===== */
-                function createTempleFloorTexture() {
+                function createGrassTopTexture() {
                     const canvas = document.createElement('canvas');
                     canvas.width = 512;
                     canvas.height = 512;
                     const ctx = canvas.getContext('2d');
-
-                    // Dark mystic stone (không đất/cỏ)
-                    ctx.fillStyle = '#1c1528';
+                    // Base grass green
+                    ctx.fillStyle = '#3d7a32';
                     ctx.fillRect(0, 0, 512, 512);
-
-                    for (let y = 0; y < 8; y++) {
-                        for (let x = 0; x < 8; x++) {
-                            const px = x * 64, py = y * 64;
-                            const shade = 18 + Math.floor(Math.random() * 22);
-                            const r = shade + 8, g = shade, b = shade + 18;
-                            ctx.fillStyle = `rgb(${r},${g},${b})`;
-                            ctx.fillRect(px + 1, py + 1, 62, 62);
-                            ctx.strokeStyle = `rgba(0,0,0,0.35)`;
-                            ctx.lineWidth = 2;
-                            ctx.strokeRect(px + 2, py + 2, 60, 60);
-                        }
+                    // Varied grass patches
+                    for (let i = 0; i < 1200; i++) {
+                        const x = Math.random() * 512;
+                        const y = Math.random() * 512;
+                        const s = 8 + Math.random() * 28;
+                        const g = 90 + Math.floor(Math.random() * 70);
+                        const r = 30 + Math.floor(Math.random() * 40);
+                        const b = 20 + Math.floor(Math.random() * 30);
+                        ctx.fillStyle = `rgba(${r},${g},${b},${0.35 + Math.random() * 0.45})`;
+                        ctx.beginPath();
+                        ctx.ellipse(x, y, s, s * 0.7, Math.random() * Math.PI, 0, Math.PI * 2);
+                        ctx.fill();
                     }
-                    for (let i = 0; i < 6000; i++) {
-                        const nx = Math.random() * 512, ny = Math.random() * 512;
-                        const a = 0.03 + Math.random() * 0.08;
+                    // Dry / dirt patches on surface
+                    for (let i = 0; i < 80; i++) {
+                        const x = Math.random() * 512;
+                        const y = Math.random() * 512;
+                        const s = 12 + Math.random() * 40;
+                        ctx.fillStyle = `rgba(${140 + Math.random()*40},${100 + Math.random()*30},${50 + Math.random()*20},${0.25 + Math.random()*0.35})`;
+                        ctx.beginPath();
+                        ctx.ellipse(x, y, s, s * 0.6, Math.random(), 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // Fine noise
+                    for (let i = 0; i < 8000; i++) {
+                        const x = Math.random() * 512, y = Math.random() * 512;
                         ctx.fillStyle = Math.random() < 0.5
-                            ? `rgba(255,255,255,${a})`
-                            : `rgba(0,0,0,${a})`;
-                        ctx.fillRect(nx, ny, 1, 1);
+                            ? `rgba(255,255,200,${0.02 + Math.random()*0.06})`
+                            : `rgba(0,40,0,${0.03 + Math.random()*0.08})`;
+                        ctx.fillRect(x, y, 1 + Math.random()*2, 1);
                     }
-
                     const tex = new THREE.CanvasTexture(canvas);
                     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-                    tex.repeat.set(60, 60);
+                    tex.repeat.set(80, 80);
                     tex.encoding = THREE.sRGBEncoding;
                     tex.anisotropy = 8;
                     return tex;
                 }
 
-                const templeFloorTex = createTempleFloorTexture();
+                function createDirtSideTexture() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 512;
+                    canvas.height = 512;
+                    const ctx = canvas.getContext('2d');
+                    // Layered soil like cross-section photo
+                    const layers = [
+                        { y0: 0, y1: 40, c: '#4a7a2e' },   // thin grass/root layer
+                        { y0: 40, y1: 90, c: '#6b4a28' },  // topsoil
+                        { y0: 90, y1: 180, c: '#8b5a2b' }, // mid soil
+                        { y0: 180, y1: 300, c: '#5c3a1a' }, // darker earth
+                        { y0: 300, y1: 420, c: '#3d2814' }, // deep soil
+                        { y0: 420, y1: 512, c: '#2a1a0c' }  // bedrock-ish
+                    ];
+                    layers.forEach(L => {
+                        ctx.fillStyle = L.c;
+                        ctx.fillRect(0, L.y0, 512, L.y1 - L.y0);
+                    });
+                    // Soil noise / pebbles
+                    for (let i = 0; i < 6000; i++) {
+                        const x = Math.random() * 512;
+                        const y = Math.random() * 512;
+                        const shade = 40 + Math.floor(Math.random() * 90);
+                        const a = 0.08 + Math.random() * 0.25;
+                        ctx.fillStyle = `rgba(${shade+40},${shade*0.7},${shade*0.35},${a})`;
+                        ctx.fillRect(x, y, 1 + Math.random()*3, 1 + Math.random()*2);
+                    }
+                    // Darker roots / cracks
+                    for (let i = 0; i < 40; i++) {
+                        ctx.strokeStyle = `rgba(20,10,5,${0.15 + Math.random()*0.25})`;
+                        ctx.lineWidth = 1 + Math.random() * 2.5;
+                        ctx.beginPath();
+                        let x = Math.random() * 512, y = 30 + Math.random() * 450;
+                        ctx.moveTo(x, y);
+                        for (let k = 0; k < 6; k++) {
+                            x += (Math.random() - 0.5) * 40;
+                            y += 8 + Math.random() * 25;
+                            ctx.lineTo(x, y);
+                        }
+                        ctx.stroke();
+                    }
+                    // Cave-like dark holes
+                    for (let i = 0; i < 8; i++) {
+                        const cx = 40 + Math.random() * 430;
+                        const cy = 120 + Math.random() * 320;
+                        const rx = 18 + Math.random() * 35;
+                        const ry = 12 + Math.random() * 28;
+                        const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, rx);
+                        g.addColorStop(0, 'rgba(8,4,2,0.95)');
+                        g.addColorStop(0.6, 'rgba(30,18,8,0.7)');
+                        g.addColorStop(1, 'rgba(60,40,20,0)');
+                        ctx.fillStyle = g;
+                        ctx.beginPath();
+                        ctx.ellipse(cx, cy, rx, ry, Math.random() * 0.5, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    const tex = new THREE.CanvasTexture(canvas);
+                    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                    tex.repeat.set(40, 2);
+                    tex.encoding = THREE.sRGBEncoding;
+                    tex.anisotropy = 8;
+                    return tex;
+                }
 
+                const grassTopTex = createGrassTopTexture();
+                const dirtSideTex = createDirtSideTexture();
+
+                // Keep stoneMat name for any other refs, but base it on dirt
                 const stoneMat =
                     new THREE.MeshStandardMaterial({
-                        map: templeFloorTex,
+                        map: dirtSideTex,
                         color: 0xffffff,
-                        roughness: 0.88,
-                        metalness: 0.08,
-                        emissive: 0x0a0518,
-                        emissiveIntensity: 0.12
+                        roughness: 0.95,
+                        metalness: 0.02,
+                        emissive: 0x1a1008,
+                        emissiveIntensity: 0.04
                     });
 
-                const floorMesh =
-                    new THREE.Mesh(
-                        new THREE.BoxGeometry(
-                            4000,
-                            2,
-                            4000
-                        ),
-                        stoneMat
-                    );
+                const grassMatFloor = new THREE.MeshStandardMaterial({
+                    map: grassTopTex,
+                    color: 0xffffff,
+                    roughness: 0.92,
+                    metalness: 0.02,
+                    emissive: 0x0a1808,
+                    emissiveIntensity: 0.06
+                });
 
-                floorMesh.position.y = -1;
+                // Thick soil block like reference photo (grass top + dirt sides)
+                const FLOOR_SIZE = 4000;
+                const FLOOR_THICK = 28;
+                const floorGeo = new THREE.BoxGeometry(FLOOR_SIZE, FLOOR_THICK, FLOOR_SIZE);
+                // materials: +x, -x, +y (top), -y (bottom), +z, -z
+                const floorMats = [
+                    stoneMat, stoneMat,
+                    grassMatFloor, stoneMat,
+                    stoneMat, stoneMat
+                ];
+                const floorMesh =
+                    new THREE.Mesh(floorGeo, floorMats);
+
+                floorMesh.position.y = -FLOOR_THICK / 2;
                 floorMesh.receiveShadow = true;
-                floorMesh.receiveShadow = true;
+                floorMesh.castShadow = true;
 
                 platformGroup.add(
                     floorMesh
                 );
+
+                // Soft grass edge strip so the rim feels natural
+                (function addGrassEdgeTufts() {
+                    const tuftMat = new THREE.MeshStandardMaterial({
+                        color: 0x4a9a3a,
+                        roughness: 0.9,
+                        side: THREE.DoubleSide
+                    });
+                    for (let i = 0; i < 120; i++) {
+                        const a = Math.random() * Math.PI * 2;
+                        const r = 38 + Math.random() * 28;
+                        const h = 0.25 + Math.random() * 0.55;
+                        const blade = new THREE.Mesh(
+                            new THREE.ConeGeometry(0.08 + Math.random() * 0.06, h, 4),
+                            tuftMat
+                        );
+                        blade.position.set(Math.cos(a) * r, h * 0.4, Math.sin(a) * r);
+                        blade.rotation.z = (Math.random() - 0.5) * 0.35;
+                        blade.rotation.x = (Math.random() - 0.5) * 0.25;
+                        platformGroup.add(blade);
+                    }
+                })();
+
+                // Visible soil island slab around playable arena (like reference cross-section)
+                (function addVisibleSoilIsland() {
+                    const islandSize = 160;
+                    const islandThick = 18;
+                    const islandGeo = new THREE.BoxGeometry(islandSize, islandThick, islandSize);
+                    const islandMats = [
+                        stoneMat, stoneMat,
+                        grassMatFloor, stoneMat,
+                        stoneMat, stoneMat
+                    ];
+                    const island = new THREE.Mesh(islandGeo, islandMats);
+                    island.position.y = -islandThick / 2;
+                    island.receiveShadow = true;
+                    island.castShadow = true;
+                    platformGroup.add(island);
+
+                    // Slightly overhanging grass lip on top edge
+                    const lipMat = new THREE.MeshStandardMaterial({
+                        map: grassTopTex,
+                        color: 0xd0ffd0,
+                        roughness: 0.9,
+                        metalness: 0.02
+                    });
+                    const lip = new THREE.Mesh(
+                        new THREE.BoxGeometry(islandSize + 1.2, 0.35, islandSize + 1.2),
+                        lipMat
+                    );
+                    lip.position.y = 0.12;
+                    lip.receiveShadow = true;
+                    platformGroup.add(lip);
+
+                    // Dark cave holes carved into sides (visual only)
+                    const holeMat = new THREE.MeshStandardMaterial({
+                        color: 0x120a05,
+                        roughness: 1,
+                        metalness: 0
+                    });
+                    const holePositions = [
+                        [islandSize/2 - 0.2, -6, 20],
+                        [islandSize/2 - 0.2, -9, -25],
+                        [-islandSize/2 + 0.2, -7, 10],
+                        [25, -8, islandSize/2 - 0.2],
+                        [-30, -5, -islandSize/2 + 0.2]
+                    ];
+                    holePositions.forEach(([x, y, z]) => {
+                        const hole = new THREE.Mesh(
+                            new THREE.SphereGeometry(2.2 + Math.random() * 1.5, 10, 8),
+                            holeMat
+                        );
+                        hole.position.set(x, y, z);
+                        hole.scale.set(1, 0.75, 1.15);
+                        platformGroup.add(hole);
+                    });
+                })();
 
                 // Decorative edge rim around the temple platform
                 const rimMat = new THREE.MeshStandardMaterial({
@@ -4921,7 +5257,9 @@
                             electronFloor.visible = true;
                             if (electronWorld) electronWorld.visible = true;
                         } else {
-                            platformGroup.visible = true;
+                            // Chỉ hiện đất ở stage 1/2/4
+                            const gs = gameStage;
+                            platformGroup.visible = (gs === 1 || gs === 2 || gs === 4);
                         }
                     }
                 }
@@ -4945,11 +5283,16 @@
                     if (typeof glitchWorldGroup !== 'undefined') {
                         glitchWorldGroup.visible = (stage === 11);
                     }
-                    if (stage === 3 || stage === 5 || stage === 6 || stage === 7 || stage === 8 || stage === 9 || stage === 10 || stage === 11 || stage === 12) {
-                        platformGroup.visible = false;
-                        universeFloor.visible = false;
+                    // Boss / special worlds: KHÔNG bao giờ hiện đất/cỏ temple
+                    const isBossOrSpecial = (
+                        stage === 3 || stage === 5 || stage === 6 ||
+                        stage === 7 || stage === 8 || stage === 9 ||
+                        stage === 10 || stage === 11 || stage === 12
+                    );
+                    if (isBossOrSpecial) {
+                        platformGroup.visible = false; // bỏ đất
+                        universeFloor.visible = (stage === 7); // chỉ universe boss sàn vũ trụ nếu cần
                         if (stage === 11) {
-                            // Pure GLITCH world
                             errorFloor.visible = true;
                             if (glitchCodeFloor) glitchCodeFloor.visible = false;
                             if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = true;
@@ -4958,6 +5301,7 @@
                             if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = false;
                         }
                     } else {
+                        // Stage 1,2,4: thế giới đất
                         platformGroup.visible = true;
                         universeFloor.visible = false;
                         errorFloor.visible = false;
@@ -4966,6 +5310,9 @@
                     // Luôn đồng bộ mob theo stage (admin teleport / //hack / //end)
                     if (typeof enforceStageMobVisibility === 'function')
                         enforceStageMobVisibility(stage);
+                    // Bầu trời theo loại thế giới (đất / xanh / vũ trụ)
+                    if (typeof applyWorldSky === 'function')
+                        applyWorldSky(stage);
                 }
 
                 /** Ẩn mob/boss không thuộc stage hiện tại — chống red mob lọt vào Electron/Error/... */
@@ -4974,15 +5321,15 @@
                     try {
                         if (typeof redMonster !== 'undefined' && redMonster)
                             redMonster.visible = (s === 1);
+                        // Mob xanh CHỈ ở stage 2 — tuyệt đối không hiện trong world boss (3+)
                         if (typeof octopusMonster !== 'undefined' && octopusMonster)
-                            octopusMonster.visible = (s === 2) || (!!(typeof octopusCrossWorld !== 'undefined' && octopusCrossWorld) && s >= 2 && s <= 10);
-                        // Nếu stage cao (11/12) luôn tắt octopus dù crossWorld
+                            octopusMonster.visible = (s === 2);
                         if (s === 11 || s === 12) {
-                            if (typeof octopusMonster !== 'undefined' && octopusMonster)
-                                octopusMonster.visible = false;
                             if (typeof redMonster !== 'undefined' && redMonster)
                                 redMonster.visible = false;
                         }
+                        if (s !== 2 && typeof octopusMonster !== 'undefined' && octopusMonster)
+                            octopusMonster.visible = false;
                         if (typeof bossMonster !== 'undefined' && bossMonster)
                             bossMonster.visible = (s === 3);
                         if (typeof finalBossMonster !== 'undefined' && finalBossMonster)
@@ -5304,16 +5651,134 @@
                 const galaxySkybox =
                     createGalaxyNebulaSkybox();
 
-                const normalSkyColor =
+                // Đất / đền: trời đêm tím đen + quả cầu
+                const dirtSkyColor =
                     new THREE.Color(0x06030d);
 
+                // Thế giới xanh bao la: trời xanh
+                const blueSkyColor =
+                    new THREE.Color(0x5eb6ff);
+
+                // Canvas gradient trời xanh (đẹp hơn solid color)
+                function createBlueSkyTexture() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 8;
+                    canvas.height = 256;
+                    const ctx = canvas.getContext('2d');
+                    const g = ctx.createLinearGradient(0, 0, 0, 256);
+                    g.addColorStop(0, '#1a6ec8');   // zenith đậm
+                    g.addColorStop(0.35, '#4aa3f0');
+                    g.addColorStop(0.7, '#87ceeb');  // horizon
+                    g.addColorStop(1, '#c8e8ff');
+                    ctx.fillStyle = g;
+                    ctx.fillRect(0, 0, 8, 256);
+                    const tex = new THREE.CanvasTexture(canvas);
+                    tex.mapping = THREE.EquirectangularReflectionMapping;
+                    return tex;
+                }
+                let blueSkyTexture = null;
+                try { blueSkyTexture = createBlueSkyTexture(); } catch (e) { blueSkyTexture = null; }
+
+                const normalSkyColor = dirtSkyColor; // alias cũ
+
+                /**
+                 * Bầu trời theo loại thế giới:
+                 *  - dirt  (stage 1,2,4 + mặc định): trời đêm + hiện quả cầu
+                 *  - blue  (stage 7,8,9 planet world): trời xanh bao la, ẩn quả cầu pastel
+                 *  - universe (stage 5,6,10): galaxy skybox, ẩn quả cầu pastel
+                 *  - special (3 hell, 11 error, 12 electron): giữ tối / tự xử lý
+                 */
+                function applyWorldSky(stage) {
+                    const s = (typeof stage === 'number') ? stage : gameStage;
+
+                    const isUniverse = (s === 5 || s === 6 || s === 10);
+                    const isBlue = (s === 7 || s === 8 || s === 9);
+                    const isDirt = (s === 1 || s === 2 || s === 4 || s === 0);
+                    const isHell = (s === 3);
+                    const isError = (s === 11);
+                    const isElectron = (s === 12);
+
+                    // Hiện/ẩn 6 quả cầu pastel (chỉ thế giới đất)
+                    if (typeof skyPlanets !== 'undefined' && skyPlanets) {
+                        const showPlanets = isDirt;
+                        for (let i = 0; i < skyPlanets.length; i++) {
+                            if (skyPlanets[i]) skyPlanets[i].visible = showPlanets;
+                        }
+                    }
+                    if (typeof skySun !== 'undefined' && skySun) {
+                        skySun.visible = isDirt || isBlue;
+                        if (typeof skySunGlow !== 'undefined' && skySunGlow)
+                            skySunGlow.visible = skySun.visible;
+                    }
+                    if (typeof starField !== 'undefined' && starField) {
+                        // Sao: đất + vũ trụ; trời xanh ban ngày thì ẩn
+                        starField.visible = !isBlue;
+                    }
+
+                    if (isUniverse) {
+                        scene.background = galaxySkybox;
+                        if (scene.fog) {
+                            scene.fog.color.setHex(0x0a0518);
+                            scene.fog.density = 0.0018;
+                        }
+                    } else if (isBlue) {
+                        scene.background = blueSkyColor;
+                        if (scene.fog) {
+                            scene.fog.color.setHex(0x7ec8f0);
+                            scene.fog.density = 0.0012;
+                        }
+                    } else if (isHell) {
+                        scene.background = new THREE.Color(0x1a0508);
+                        if (scene.fog) {
+                            scene.fog.color.setHex(0x1a0508);
+                            scene.fog.density = 0.0035;
+                        }
+                    } else if (isError) {
+                        scene.background = new THREE.Color(0x000000);
+                        if (scene.fog) {
+                            scene.fog.color.setHex(0x000000);
+                            scene.fog.density = 0.002;
+                        }
+                    } else if (isElectron) {
+                        // Electron có sky mesh riêng — nền tối
+                        scene.background = new THREE.Color(0x0a1030);
+                        if (scene.fog) {
+                            scene.fog.color.setHex(0x0a1030);
+                            scene.fog.density = 0.0015;
+                        }
+                    } else {
+                        // Dirt / temple default
+                        scene.background = dirtSkyColor;
+                        if (scene.fog) {
+                            scene.fog.color.setHex(0x0a0714);
+                            scene.fog.density = 0.0028;
+                        }
+                    }
+                }
+
                 function setBossArenaSkybox(active) {
+                    // API cũ: true = đang vào arena boss → sky theo gameStage thật
+                    const s = (typeof gameStage === 'number') ? gameStage : 1;
+                    if (active) {
+                        // Ẩn đất/cỏ temple trong mọi world boss
+                        if (typeof platformGroup !== 'undefined' && platformGroup)
+                            platformGroup.visible = false;
+                        if (typeof setExpandedWorld === 'function')
+                            setExpandedWorld(s);
+                        else if (typeof applyWorldSky === 'function')
+                            applyWorldSky(s);
+                    } else {
+                        if (typeof setExpandedWorld === 'function')
+                            setExpandedWorld(s);
+                        else if (typeof applyWorldSky === 'function')
+                            applyWorldSky(s);
+                    }
+                }
 
-                    scene.background =
-                        active
-                        ? galaxySkybox
-                        : normalSkyColor;
-
+                /** Ẩn hoàn toàn địa hình đất/cỏ khỏi các thế giới boss */
+                function hideDirtTerrainForBoss() {
+                    if (typeof platformGroup !== 'undefined' && platformGroup)
+                        platformGroup.visible = false;
                 }
 
                 /* =========================
@@ -8732,17 +9197,18 @@
                         shin.position.y = -0.95;
 
                         const foot = new THREE.Mesh(
-                            new THREE.BoxGeometry(0.38, 0.18, 0.55),
+                            new THREE.BoxGeometry(0.38, 0.16, 0.55),
                             hornMat
                         );
-                        foot.position.set(0, -1.35, 0.12);
+                        // Đế chân cao hơn một chút để không cắm xuống dưới pivot
+                        foot.position.set(0, -1.28, 0.12);
 
                         for (let t = 0; t < 3; t++) {
                             const toe = new THREE.Mesh(
-                                new THREE.ConeGeometry(0.035, 0.22, 5),
+                                new THREE.ConeGeometry(0.035, 0.18, 5),
                                 clawMat
                             );
-                            toe.position.set((t - 1) * 0.1, -1.38, 0.4);
+                            toe.position.set((t - 1) * 0.1, -1.30, 0.38);
                             toe.rotation.x = Math.PI / 2 + 0.3;
                             legG.add(toe);
                         }
@@ -8817,9 +9283,12 @@ const redMonster =
                     m.userData.walkPhase = 0;
                 })(redMonster);
 
+                // Base Y ~0.42 so clawed feet sit ON grass (not through soil)
+                // Foot bottom ≈ -0.39 at rest; walk swing can dip ~0.15 → base 0.58 keeps soles on grass
+                const RED_MOB_GROUND_Y = 0.58;
                 redMonster.position.set(
                     0,
-                    0,
+                    RED_MOB_GROUND_Y,
                     -4
                 );
 
@@ -8834,6 +9303,75 @@ const redMonster =
                 scene.add(
                     redMonster
                 );
+
+                // ===== HP LABEL ABOVE FIRST MOB (redMonster) =====
+                let redMonsterCurrentHP = 100;
+                const RED_MOB_MAX_HP = 100;
+
+                function makeRedMobHPSprite(hp, maxHp) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 256;
+                    canvas.height = 64;
+                    const ctx = canvas.getContext('2d');
+                    ctx.clearRect(0, 0, 256, 64);
+                    // background bar
+                    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+                    ctx.fillRect(28, 16, 200, 32);
+                    ctx.strokeStyle = '#ff3344';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(28, 16, 200, 32);
+                    // HP fill
+                    const ratio = Math.max(0, Math.min(1, hp / Math.max(1, maxHp)));
+                    const fillW = Math.floor(196 * ratio);
+                    const grad = ctx.createLinearGradient(30, 0, 226, 0);
+                    if (ratio > 0.5) {
+                        grad.addColorStop(0, '#00c896');
+                        grad.addColorStop(1, '#00ffcc');
+                    } else if (ratio > 0.25) {
+                        grad.addColorStop(0, '#d4a017');
+                        grad.addColorStop(1, '#ffcc33');
+                    } else {
+                        grad.addColorStop(0, '#b01020');
+                        grad.addColorStop(1, '#ff3344');
+                    }
+                    ctx.fillStyle = grad;
+                    ctx.fillRect(30, 18, fillW, 28);
+                    // text
+                    ctx.font = 'bold 22px Segoe UI, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillStyle = '#ffffff';
+                    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+                    ctx.lineWidth = 3;
+                    const label = '❤️ ' + hp + ' / ' + maxHp;
+                    ctx.strokeText(label, 128, 32);
+                    ctx.fillText(label, 128, 32);
+                    const tex = new THREE.CanvasTexture(canvas);
+                    tex.needsUpdate = true;
+                    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+                    const spr = new THREE.Sprite(mat);
+                    spr.scale.set(2.8, 0.7, 1);
+                    spr.position.y = 3.6;
+                    return spr;
+                }
+
+                function updateRedMobHPSprite() {
+                    if (!redMonster || !redMonster.userData.hpSprite) return;
+                    const old = redMonster.userData.hpSprite;
+                    redMonster.remove(old);
+                    if (old.material && old.material.map) old.material.map.dispose();
+                    if (old.material) old.material.dispose();
+                    const spr = makeRedMobHPSprite(redMonsterCurrentHP, RED_MOB_MAX_HP);
+                    redMonster.userData.hpSprite = spr;
+                    redMonster.add(spr);
+                }
+
+                (function initRedMobHP() {
+                    redMonsterCurrentHP = RED_MOB_MAX_HP;
+                    const spr = makeRedMobHPSprite(redMonsterCurrentHP, RED_MOB_MAX_HP);
+                    redMonster.userData.hpSprite = spr;
+                    redMonster.add(spr);
+                })();
 
                 /* =========================
                    FINAL BOSS (con quái đỏ khổng lồ)
@@ -9545,7 +10083,7 @@ const octopusMonster =
                 );
 
                 // Octopus có thể sang thế giới boss khác (không kẹt stage 2)
-                let octopusCrossWorld = true;
+                let octopusCrossWorld = false; // chỉ stage 2, không vào world boss
                 let octopusDefeated = false;
 
                 /* =========================
@@ -10972,7 +11510,9 @@ const octopusMonster =
 
                 let cameraAngleX = 0;
 
-                let cameraAngleY = 0.55;
+                let cameraAngleY = 0.45; // third-person orbit elevation (radians)
+
+                let cameraPitch = 0; // first-person look pitch (radians), independent
 
                 let cameraDistance = 10;
 
@@ -11087,11 +11627,14 @@ const octopusMonster =
                             const deltaY = e.movementY || 0;
 
                             cameraAngleX -= deltaX * 0.006;
-                            cameraAngleY += deltaY * 0.006;
-                            cameraAngleY = Math.max(
-                                0.12,
-                                Math.min(1.45, cameraAngleY)
-                            );
+                            if (isFirstPerson) {
+                                // FPS: mouse up = look up
+                                cameraPitch -= deltaY * 0.005;
+                                cameraPitch = Math.max(-1.35, Math.min(1.35, cameraPitch));
+                            } else {
+                                cameraAngleY += deltaY * 0.006;
+                                cameraAngleY = Math.max(0.15, Math.min(1.35, cameraAngleY));
+                            }
                             return;
                         }
 
@@ -11115,17 +11658,13 @@ const octopusMonster =
                         cameraAngleX -=
                             deltaX * 0.01;
 
-                        cameraAngleY +=
-                            deltaY * 0.01;
-
-                        cameraAngleY =
-                            Math.max(
-                                0.12,
-                                Math.min(
-                                    1.45,
-                                    cameraAngleY
-                                )
-                            );
+                        if (isFirstPerson) {
+                            cameraPitch -= deltaY * 0.008;
+                            cameraPitch = Math.max(-1.35, Math.min(1.35, cameraPitch));
+                        } else {
+                            cameraAngleY += deltaY * 0.01;
+                            cameraAngleY = Math.max(0.15, Math.min(1.35, cameraAngleY));
+                        }
 
                         previousMousePosition = {
                             x: e.clientX,
@@ -11289,7 +11828,9 @@ const octopusMonster =
                     playerGroup.position.x = 0;
                     playerGroup.position.z = 7;
 
+                    if (typeof setExpandedWorld === 'function') setExpandedWorld(10);
                     setBossArenaSkybox(true);
+                    platformGroup.visible = false;
 
                     document.getElementById(
                         'boss-hp-bar'
@@ -12516,7 +13057,9 @@ const octopusMonster =
 
                                 gameStage = 5;
 
+                                if (typeof setExpandedWorld === 'function') setExpandedWorld(5);
                                 setBossArenaSkybox(true);
+                                platformGroup.visible = false;
 
                                 finalBossHP =
                                     finalBossMaxHP;
@@ -12570,7 +13113,9 @@ const octopusMonster =
 
                                 gameStage = 6;
 
+                                if (typeof setExpandedWorld === 'function') setExpandedWorld(6);
                                 setBossArenaSkybox(true);
+                                platformGroup.visible = false;
 
                                 supremeBossHP =
                                     supremeBossMaxHP;
@@ -12632,10 +13177,11 @@ const octopusMonster =
                                 universeBossHP =
                                     universeBossMaxHP;
 
+                                if (typeof setExpandedWorld === 'function') setExpandedWorld(7);
                                 setBossArenaSkybox(true);
 
                                 universeFloor.visible = true;
-                                platformGroup.visible = true;
+                                platformGroup.visible = false; // bỏ đất ở world boss
 
                                 finalBossMonster.visible = false;
                                 bossMonster.visible = false;
@@ -12728,8 +13274,10 @@ const octopusMonster =
                                 atomicRushActive = false;
                                 atomicNextRushTime = performance.now() + 5000 + Math.random() * 5000;
 
+                                if (typeof setExpandedWorld === 'function') setExpandedWorld(9);
                                 setBossArenaSkybox(true);
                                 universeFloor.visible = true;
+                                platformGroup.visible = false;
 
                                 redMonster.visible = false;
                                 octopusMonster.visible = false;
@@ -12787,9 +13335,11 @@ const octopusMonster =
                                 universeBossActive = true;
                                 gameStage = 7;
                                 universeBossHP = universeBossMaxHP;
+                                if (typeof setExpandedWorld === 'function') setExpandedWorld(7);
                                 setBossArenaSkybox(true);
+                                platformGroup.visible = false;
                                 universeFloor.visible = true;
-                                platformGroup.visible = true;
+                                platformGroup.visible = false; // không đất trong world boss
 
                                 finalBossMonster.visible = false;
                                 bossMonster.visible = false;
@@ -13107,86 +13657,54 @@ const octopusMonster =
                             gameStage === 1
                         ) {
 
-                            let monstersKilledInOneHit =
-                                Math.floor(
-                                    totalDmg /
-                                    redMonsterHP
-                                );
-
-                            if (
-                                monstersKilledInOneHit < 1
-                            )
-                                monstersKilledInOneHit = 1;
-
-                            if (
-                                monstersKilledInOneHit > 999
-                            )
-                                monstersKilledInOneHit = 999;
-
-                            killCount +=
-                                monstersKilledInOneHit;
-
-                            checkUpgradeSword();
-
-                            if (
-                                killCount > 999
-                            )
-                                killCount = 999;
-
-                            document.getElementById(
-                                'val-kills'
-                            ).innerText =
-                                killCount;
-
-                            document.getElementById(
-                                'val-power'
-                            ).innerText =
-                                formatNum(power);
-
-                            for (
-                                let i = 0;
-                                i < monstersKilledInOneHit;
-                                i++
-                            ) {
-
-                                handleItemDrop();
-
+                            // Trừ máu thật — chỉ chết khi HP về 0 (không one-shot nếu dmg < máu)
+                            if (typeof redMonsterCurrentHP !== 'number' || !Number.isFinite(redMonsterCurrentHP)) {
+                                redMonsterCurrentHP = (typeof RED_MOB_MAX_HP === 'number') ? RED_MOB_MAX_HP : 100;
                             }
+                            const maxHp = (typeof RED_MOB_MAX_HP === 'number') ? RED_MOB_MAX_HP : 100;
+                            const dmgToMob = Math.min(totalDmg, redMonsterCurrentHP);
+                            redMonsterCurrentHP = Math.max(0, redMonsterCurrentHP - totalDmg);
+                            if (typeof updateRedMobHPSprite === 'function') updateRedMobHPSprite();
 
-                            redMonster.visible =
-                                false;
+                            if (redMonsterCurrentHP > 0) {
+                                // Còn sống — chỉ hiện sát thương, không cộng kill
+                                document.getElementById('val-power').innerText = formatNum(power);
+                            } else {
+                                // Chết: +1 kill, rơi đồ, respawn full HP
+                                let monstersKilledInOneHit = 1;
+                                // Overkill: nếu sát thương dư nhiều lần máu tối đa thì cộng thêm (giữ progress nhanh khi power lớn)
+                                if (totalDmg > maxHp) {
+                                    monstersKilledInOneHit = Math.min(999, 1 + Math.floor((totalDmg - maxHp) / maxHp));
+                                }
 
-                            setTimeout(
-                                () => {
+                                killCount += monstersKilledInOneHit;
+                                checkUpgradeSword();
+                                if (killCount > 999) killCount = 999;
 
-                                    if (
-                                        gameStage === 1 &&
-                                        !isGameEnded
-                                    ) {
+                                document.getElementById('val-kills').innerText = killCount;
+                                document.getElementById('val-power').innerText = formatNum(power);
 
-                                        redMonster.visible =
-                                            true;
+                                for (let i = 0; i < monstersKilledInOneHit; i++) {
+                                    handleItemDrop();
+                                }
 
+                                redMonster.visible = false;
+                                setTimeout(() => {
+                                    if (gameStage === 1 && !isGameEnded) {
+                                        redMonster.visible = true;
+                                        redMonsterCurrentHP = maxHp;
+                                        if (typeof updateRedMobHPSprite === 'function') updateRedMobHPSprite();
                                     }
+                                }, 180);
 
-                                },
-                                100
-                            );
-
-                            if (
-                                killCount >= 999
-                            ) {
-
-                                showToast(
-                                    currentLang === 'vi'
-                                    ? "🌟 ĐÃ ĐẠT 999 MẠNG! CỔNG ĐÃ MỞ!"
-                                    : "🌟 REACHED 999 KILLS! GATE OPEN!"
-                                );
-
-                                gateLightMat.color.setHex(
-                                    0xffd700
-                                );
-
+                                if (killCount >= 999) {
+                                    showToast(
+                                        currentLang === 'vi'
+                                        ? "🌟 ĐÃ ĐẠT 999 MẠNG! CỔNG ĐÃ MỞ!"
+                                        : "🌟 REACHED 999 KILLS! GATE OPEN!"
+                                    );
+                                    gateLightMat.color.setHex(0xffd700);
+                                }
                             }
 
                         } else if (
@@ -13208,12 +13726,11 @@ const octopusMonster =
                                         !octopusDefeated &&
                                         octopusHP > 0 &&
                                         !isGameEnded &&
-                                        (gameStage === 2 || (octopusCrossWorld && gameStage >= 2 && gameStage <= 10))
+                                        gameStage === 2
                                     ) {
-
-                                        octopusMonster.visible =
-                                            true;
-
+                                        octopusMonster.visible = true;
+                                    } else if (octopusMonster) {
+                                        octopusMonster.visible = false; // không hiện ở world boss
                                     }
 
                                 },
@@ -16832,7 +17349,7 @@ const octopusMonster =
 
                         gameStage = 1;
                         killCount = 0;
-                        redMonsterHP = 50;
+                        redMonsterHP = 100;
                         octopusHP = 3000;
                         bossHP = currentBossMaxHP;
                         finalBossHP = finalBossMaxHP;
@@ -16842,6 +17359,8 @@ const octopusMonster =
                         cosmicDinoHP = COSMIC_DINO_MAX_HP;
 
                         redMonster.visible = true;
+                        redMonsterCurrentHP = (typeof RED_MOB_MAX_HP !== 'undefined') ? RED_MOB_MAX_HP : 100;
+                        if (typeof updateRedMobHPSprite === 'function') updateRedMobHPSprite();
                         octopusMonster.visible = false;
                         bossMonster.visible = false;
                         finalBossMonster.visible = false;
@@ -17494,14 +18013,16 @@ const octopusMonster =
                     /* =========================
                        OCTOPUS AI — stage 2 + có thể vào world boss khác
                     ========================= */
+                    // An toàn: mob xanh không bao giờ hiện ngoài stage 2 (world boss Ma Vương / Final / ...)
+                    if (octopusMonster && gameStage !== 2 && octopusMonster.visible) {
+                        octopusMonster.visible = false;
+                    }
+
                     if (
                         octopusMonster &&
                         !octopusDefeated &&
                         octopusHP > 0 &&
-                        (
-                            gameStage === 2 ||
-                            (octopusCrossWorld && gameStage >= 2 && gameStage <= 10 && octopusMonster.visible)
-                        )
+                        gameStage === 2
                     ) {
                         // Wave tentacles
                         octopusMonster.children.forEach(ch => {
@@ -17590,13 +18111,13 @@ const octopusMonster =
                         const wt = redMonster.userData.walkTime;
 
                         if (legL && legR) {
-                            // Giống hệt player khi isMoving:
-                            legL.rotation.x = Math.sin(wt) * 0.5;
-                            legR.rotation.x = -Math.sin(wt) * 0.5;
+                            // Biên độ nhỏ hơn player để bàn chân không cắm xuống đất khi xoay hông
+                            legL.rotation.x = Math.sin(wt) * 0.28;
+                            legR.rotation.x = -Math.sin(wt) * 0.28;
                         }
 
-                        // Nhún nhẹ
-                        redMonster.position.y = Math.sin(wt * 2) * 0.04;
+                        // Giữ đế chân trên mặt đất (không xuyên đất/cỏ)
+                        redMonster.position.y = RED_MOB_GROUND_Y + Math.sin(wt * 2) * 0.02;
                     }
 
                     /* =========================
@@ -17908,6 +18429,8 @@ const octopusMonster =
                                 cosmicWorldUnlocked = true;
                                 cosmicBossActive = true;
                                 gameStage = 8;
+                                if (typeof setExpandedWorld === 'function') setExpandedWorld(8);
+                                platformGroup.visible = false;
 
                                 power = Math.max(1, power * 0.01);
 
@@ -18016,49 +18539,70 @@ const octopusMonster =
                     ========================= */
 
                     if (isFirstPerson) {
+                        // First-person: eye height, free pitch (no coupling to orbit angle)
                         const eyeX = playerGroup.position.x;
-                        const eyeY = playerGroup.position.y + 2.05;
+                        const eyeY = Math.max(0.6, playerGroup.position.y) + 1.65;
                         const eyeZ = playerGroup.position.z;
-                        const pitch = 0.55 - cameraAngleY;
-                        const lookDistance = 20;
-                        const horizontalLook = Math.cos(pitch);
+                        const pitch = cameraPitch; // -1.35 .. 1.35
+                        const lookDistance = 12;
+                        const cosP = Math.cos(pitch);
+                        const sinP = Math.sin(pitch);
+                        // Direction player is facing (yaw)
+                        const dirX = -Math.sin(cameraAngleX);
+                        const dirZ = -Math.cos(cameraAngleX);
 
                         camera.position.set(eyeX, eyeY, eyeZ);
                         camera.lookAt(
-                            eyeX - Math.sin(cameraAngleX) * horizontalLook * lookDistance,
-                            eyeY + Math.sin(pitch) * lookDistance,
-                            eyeZ - Math.cos(cameraAngleX) * horizontalLook * lookDistance
+                            eyeX + dirX * cosP * lookDistance,
+                            eyeY + sinP * lookDistance,
+                            eyeZ + dirZ * cosP * lookDistance
                         );
+                        // Keep near plane safe
+                        camera.near = 0.08;
+                        camera.far = 5000;
+                        camera.updateProjectionMatrix();
                     } else {
+                        const elev = cameraAngleY;
                         const horizontalDistance =
-                            cameraDistance *
-                            Math.cos(cameraAngleY);
+                            cameraDistance * Math.cos(elev);
 
-                        camera.position.x =
+                        let camX =
                             playerGroup.position.x +
-                            horizontalDistance *
-                            Math.sin(cameraAngleX);
-
-                        camera.position.y =
+                            horizontalDistance * Math.sin(cameraAngleX);
+                        let camY =
                             playerGroup.position.y +
-                            cameraDistance *
-                            Math.sin(cameraAngleY) +
-                            1;
-
-                        camera.position.z =
+                            cameraDistance * Math.sin(elev) + 1.2;
+                        let camZ =
                             playerGroup.position.z +
-                            horizontalDistance *
-                            Math.cos(cameraAngleX);
+                            horizontalDistance * Math.cos(cameraAngleX);
 
+                        // Never put camera under the ground / inside dirt slab
+                        if (camY < 0.8) camY = 0.8;
+
+                        camera.position.set(camX, camY, camZ);
                         camera.lookAt(
                             playerGroup.position.x,
-                            playerGroup.position.y + 1,
+                            Math.max(0.5, playerGroup.position.y) + 1.15,
                             playerGroup.position.z
                         );
+                        camera.near = 0.15;
+                        camera.far = 5000;
+                        camera.updateProjectionMatrix();
                     }
 
                     starField.rotation.y +=
                         0.0005;
+
+                    // Sky planets slow spin
+                    if (typeof skyPlanets !== 'undefined' && skyPlanets) {
+                        for (let spi = 0; spi < skyPlanets.length; spi++) {
+                            const pg = skyPlanets[spi];
+                            if (!pg) continue;
+                            const sp = (pg.userData && pg.userData.spin) ? pg.userData.spin : 0.0006;
+                            pg.rotation.y += sp;
+                            if (pg.userData && pg.userData.body) pg.userData.body.rotation.y += sp * 0.5;
+                        }
+                    }
 
                     if (
                         bossMonster.visible
@@ -18459,6 +19003,8 @@ const octopusMonster =
                 if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
                 if (typeof updatePowerBarUI === 'function') updatePowerBarUI();
                 if (typeof updateGoldUI === 'function') updateGoldUI();
+
+                if (typeof applyWorldSky === 'function') applyWorldSky(gameStage || 1);
 
                 startTerrainWatchdog();
 
