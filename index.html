@@ -14,6 +14,8 @@
 
 
 
+
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -319,6 +321,39 @@
             z-index: 15;
             border: 2px solid #00ffff;
             text-align: center;
+        }
+
+        #universe-world-msg,
+        #atomic-boss-msg,
+        #electron-world-msg {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 15, 20, 0.92);
+            color: #ffffff;
+            padding: 12px 26px;
+            border-radius: 12px;
+            font-weight: bold;
+            font-size: 15px;
+            display: none;
+            z-index: 15;
+            text-align: center;
+        }
+
+        #universe-world-msg {
+            border: 2px solid #ff00ff;
+            box-shadow: 0 0 18px rgba(255,0,255,0.8);
+        }
+
+        #atomic-boss-msg {
+            border: 2px solid #00ff66;
+            box-shadow: 0 0 18px rgba(0,255,102,0.8);
+        }
+
+        #electron-world-msg {
+            border: 2px solid #008cff;
+            box-shadow: 0 0 18px rgba(0,140,255,0.8);
         }
 
         #boss-command {
@@ -5274,43 +5309,66 @@
                 }
 
                 function setExpandedWorld(stage) {
+                    // Chỉ 1 thế giới được hiện — tránh chồng chất (planet/blackhole/error/electron)
                     hellWorld.visible = stage === 3;
-                    // Stage 11 Error/Glitch: KHÔNG blackhole, KHÔNG cây — chỉ thế giới chữ GLITCH
                     blackHoleWorld.visible = stage === 5 || stage === 6 || stage === 10;
                     planetWorld.visible = stage === 7 || stage === 8 || stage === 9;
                     forestWorld.visible = false;
-                    if (electronWorld) electronWorld.visible = stage === 12;
+                    if (electronWorld) electronWorld.visible = (stage === 12);
                     if (typeof glitchWorldGroup !== 'undefined') {
                         glitchWorldGroup.visible = (stage === 11);
                     }
-                    // Boss / special worlds: KHÔNG bao giờ hiện đất/cỏ temple
+                    if (typeof rainbowHaloGroup !== 'undefined' && rainbowHaloGroup) {
+                        rainbowHaloGroup.visible = false;
+                    }
+
                     const isBossOrSpecial = (
                         stage === 3 || stage === 5 || stage === 6 ||
                         stage === 7 || stage === 8 || stage === 9 ||
                         stage === 10 || stage === 11 || stage === 12
                     );
                     if (isBossOrSpecial) {
-                        platformGroup.visible = false; // bỏ đất
-                        universeFloor.visible = (stage === 7); // chỉ universe boss sàn vũ trụ nếu cần
+                        platformGroup.visible = false;
+                        // universeFloor chỉ stage 7; stage 9 atomic dùng planetFloor
+                        universeFloor.visible = (stage === 7);
                         if (stage === 11) {
                             errorFloor.visible = true;
-                            if (glitchCodeFloor) glitchCodeFloor.visible = false;
-                            if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = true;
+                            if (typeof glitchCodeFloor !== 'undefined' && glitchCodeFloor)
+                                glitchCodeFloor.visible = false;
+                            if (typeof glitchWorldGroup !== 'undefined')
+                                glitchWorldGroup.visible = true;
                         } else {
                             errorFloor.visible = false;
-                            if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = false;
+                            if (typeof glitchWorldGroup !== 'undefined')
+                                glitchWorldGroup.visible = false;
+                        }
+                        // Stage 12 Electron: ẩn hết sàn/world khác để không chồng lên
+                        if (stage === 12) {
+                            errorFloor.visible = false;
+                            universeFloor.visible = false;
+                            blackHoleWorld.visible = false;
+                            planetWorld.visible = false;
+                            hellWorld.visible = false;
+                            forestWorld.visible = false;
+                            platformGroup.visible = false;
+                            if (typeof glitchWorldGroup !== 'undefined')
+                                glitchWorldGroup.visible = false;
+                            if (typeof glitchCodeFloor !== 'undefined' && glitchCodeFloor)
+                                glitchCodeFloor.visible = false;
+                            if (typeof rainbowHaloGroup !== 'undefined' && rainbowHaloGroup)
+                                rainbowHaloGroup.visible = false;
+                            if (electronWorld) electronWorld.visible = true;
                         }
                     } else {
-                        // Stage 1,2,4: thế giới đất
                         platformGroup.visible = true;
                         universeFloor.visible = false;
                         errorFloor.visible = false;
-                        if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = false;
+                        if (typeof glitchWorldGroup !== 'undefined')
+                            glitchWorldGroup.visible = false;
+                        if (electronWorld) electronWorld.visible = false;
                     }
-                    // Luôn đồng bộ mob theo stage (admin teleport / //hack / //end)
                     if (typeof enforceStageMobVisibility === 'function')
                         enforceStageMobVisibility(stage);
-                    // Bầu trời theo loại thế giới (đất / xanh / vũ trụ)
                     if (typeof applyWorldSky === 'function')
                         applyWorldSky(stage);
                 }
@@ -11853,7 +11911,7 @@ const octopusMonster =
                 }
 
                 function getAdminCmdHintText() {
-                    return '//boss · //hack · //end · //kill · //fly · //off · //speed n';
+                    return '//boss · //hack · //end · //kill · //fly · //off · //speed n · //player';
                 }
 
                 function showBossCommandBar(visible) {
@@ -12188,6 +12246,50 @@ const octopusMonster =
                         currentLang === 'vi'
                         ? '⬇️ //off → ĐÃ HẠ XUỐNG'
                         : '⬇️ //off → LANDED'
+                    );
+                }
+
+                /** Admin → Player ở bất kỳ thế giới: tắt admin, power = 10^20 */
+                function adminReturnToPlayerMode() {
+                    if (!secretAdminMode) {
+                        showToast(
+                            currentLang === 'vi'
+                            ? 'ℹ️ Bạn đang ở chế độ người chơi rồi'
+                            : 'ℹ️ Already in player mode'
+                        );
+                        return;
+                    }
+                    secretAdminMode = false;
+                    try { window.secretAdminMode = false; } catch (e) {}
+                    adminSpeedMultiplier = 1;
+                    if (adminFlyMode) {
+                        adminFlyMode = false;
+                        jumpVelocity = 0;
+                        wasJumping = false;
+                        if (playerGroup && playerGroup.position.y > 0.5)
+                            playerGroup.position.y = 0;
+                    }
+                    // Power cố định 10^20 (không đổi stage / world)
+                    power = 1e20;
+                    const powerLabel = document.getElementById('val-power');
+                    if (powerLabel) powerLabel.innerText = formatPowerDisplay();
+                    if (typeof updatePowerBarUI === 'function') updatePowerBarUI();
+                    if (typeof refreshPlayerMaxHP === 'function') refreshPlayerMaxHP();
+                    if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+                    if (typeof setAdminCommandUI === 'function') setAdminCommandUI(false);
+                    // Vẫn giữ thanh lệnh cho //boss · //hack
+                    if (typeof showBossCommandBar === 'function') showBossCommandBar(true);
+                    const hint = document.getElementById('mc-cmd-hint');
+                    if (hint) {
+                        hint.classList.remove('admin-visible');
+                        hint.innerText = getPlayerCmdHintText();
+                        hint.classList.add('cmd-hint-visible');
+                    }
+                    if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
+                    showToast(
+                        currentLang === 'vi'
+                        ? '👤 //player → CHẾ ĐỘ NGƯỜI CHƠI · POWER = 10^20 (giữ nguyên thế giới)'
+                        : '👤 //player → PLAYER MODE · POWER = 10^20 (same world)'
                     );
                 }
 
@@ -12862,6 +12964,13 @@ const octopusMonster =
                                 saveCurrentAccount();
                             }
 
+                        } else if (secretAdminMode && (
+                            cmd === '//player' || plain === '//player' || plain === '/player' ||
+                            cmd.replace(/\s+/g, '') === '//player'
+                        )) {
+
+                            adminReturnToPlayerMode();
+
                         } else if (secretAdminMode && (cmd.startsWith('//speed') || plain.startsWith('//speed') || plain.startsWith('/speed'))) {
 
                             const speedArgRaw = (plain.startsWith('/') ? plain : cmd)
@@ -12885,6 +12994,7 @@ const octopusMonster =
 
                         } else if (!secretAdminMode && (
                             plain === '//end' || plain === '//kill' || plain === '//fly' || plain === '//off' ||
+                            plain === '//player' || plain === '/player' ||
                             plain.startsWith('//speed') || plain.startsWith('/speed') ||
                             plain === '/end' || plain === '/kill' || plain === '/fly' || plain === '/off'
                         )) {
@@ -12895,7 +13005,7 @@ const octopusMonster =
 
                             showToast(
                                 currentLang === 'vi'
-                                ? '❌ LỆNH KHÔNG HỢP LỆ! Gõ //end //kill //fly //off //speed n'
+                                ? '❌ LỆNH KHÔNG HỢP LỆ! Gõ //end //kill //fly //off //speed n //player'
                                 : '❌ INVALID COMMAND! Try //end //kill //fly //off //speed n'
                             );
 
@@ -14175,7 +14285,7 @@ const octopusMonster =
                                         : '🌌✨ WORLD 3 BOSS DEFEATED! GO TO THE GATE AND PRESS [H] TO ENTER THE ATOMIC BOSS.';
 
                                     playGoDFusionSound();
-                                    document.getElementById('atomic-boss-msg').style.display = 'block';
+                                    document.getElementById('atomic-boss-msg').style.display = 'none';
 
                                     saveCurrentAccount();
 
@@ -16705,7 +16815,7 @@ const octopusMonster =
                             try { window.secretAdminMode = true; } catch(e) {}
                             if (typeof showToast === 'function') showToast(
                                 currentLang === 'vi'
-                                ? '⚡ ADMIN MODE! Gõ //kill · //end · //fly · //off · //speed n'
+                                ? '⚡ ADMIN MODE! Gõ //kill · //end · //fly · //off · //speed n · //player'
                                 : '⚡ ADMIN MODE! Type //kill · //end · //fly · //off · //speed n'
                             );
                             return;
@@ -17124,6 +17234,20 @@ const octopusMonster =
                     setExpandedWorld(12);
                     if (typeof enforceStageMobVisibility === 'function')
                         enforceStageMobVisibility(12);
+                    // Chống chồng thế giới: ẩn sạch sàn/world cũ
+                    try {
+                        if (errorFloor) errorFloor.visible = false;
+                        if (universeFloor) universeFloor.visible = false;
+                        if (blackHoleWorld) blackHoleWorld.visible = false;
+                        if (planetWorld) planetWorld.visible = false;
+                        if (hellWorld) hellWorld.visible = false;
+                        if (platformGroup) platformGroup.visible = false;
+                        if (typeof glitchWorldGroup !== 'undefined' && glitchWorldGroup)
+                            glitchWorldGroup.visible = false;
+                        if (typeof rainbowHaloGroup !== 'undefined' && rainbowHaloGroup)
+                            rainbowHaloGroup.visible = false;
+                        if (electronWorld) electronWorld.visible = true;
+                    } catch (e) {}
                     // Đảm bảo mob stage 1-4 không lọt vào Electron
                     if (redMonster) redMonster.visible = false;
                     if (octopusMonster) octopusMonster.visible = false;
