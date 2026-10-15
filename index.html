@@ -14058,6 +14058,14 @@ const octopusMonster =
 
                                 gameStage = 4;
 
+                                // Hiện lại world đất + cổng để sang boss tiếp
+                                if (typeof setExpandedWorld === 'function')
+                                    setExpandedWorld(4);
+                                if (typeof platformGroup !== 'undefined' && platformGroup)
+                                    platformGroup.visible = true;
+                                if (typeof gateLightMat !== 'undefined' && gateLightMat)
+                                    gateLightMat.color.setHex(0xffd700);
+
                                 playGoDFusionSound();
 
                                 document.getElementById(
@@ -14065,17 +14073,22 @@ const octopusMonster =
                                 ).style.display =
                                     'none';
 
-                                document.getElementById(
-                                    'win-title'
-                                ).innerText =
-                                    "UPDATE MORE";
+                                // Cánh cổng: nhấn D để đến boss / thế giới tiếp theo
+                                const uniMsg = document.getElementById('universe-world-msg');
+                                if (uniMsg) {
+                                    uniMsg.setAttribute('data-vi', '🌌 ĐÃ HẠ ULTIMATE BOSS! ĐẾN CỔNG — NHẤN [D] ĐỂ SANG BOSS TIẾP!');
+                                    uniMsg.setAttribute('data-en', '🌌 ULTIMATE BOSS DEFEATED! GO TO THE GATE — PRESS [D] FOR THE NEXT BOSS!');
+                                    uniMsg.innerText = currentLang === 'vi'
+                                        ? '🌌 ĐÃ HẠ ULTIMATE BOSS! ĐẾN CỔNG — NHẤN [D] ĐỂ SANG BOSS TIẾP!'
+                                        : '🌌 ULTIMATE BOSS DEFEATED! GO TO THE GATE — PRESS [D] FOR THE NEXT BOSS!';
+                                    uniMsg.style.display = 'block';
+                                }
 
-                                document.getElementById(
-                                    'win-desc'
-                                ).innerText =
+                                showToast(
                                     currentLang === 'vi'
-                                    ? `🌌 BẠN ĐÃ CHINH PHỤC ĐẠI BOSS TỐI THƯỢNG! THẾ GIỚI VŨ TRỤ ĐÃ MỞ KHOÁ! ✨`
-                                    : `🌌 YOU CONQUERED THE ULTIMATE BOSS! THE UNIVERSE WORLD IS NOW UNLOCKED! ✨`;
+                                    ? '🌌 ĐÃ HẠ ULTIMATE BOSS! ĐẾN CỔNG NHẤN [D] ĐỂ SANG BOSS TIẾP!'
+                                    : '🌌 ULTIMATE BOSS DOWN! GO TO GATE — PRESS [D] FOR NEXT BOSS!'
+                                );
 
                                 saveCurrentAccount();
 
@@ -18417,7 +18430,10 @@ const octopusMonster =
                                 supremeBossDefeated &&
                                 !universeBossDefeated
                             ) {
-
+                                // Sau Ultimate Boss: cổng bảo nhấn D sang boss tiếp
+                                universeWorldMsg.innerText = currentLang === 'vi'
+                                    ? '🌌 ĐÃ HẠ ULTIMATE BOSS! NHẤN [D] ĐỂ SANG BOSS / THẾ GIỚI TIẾP!'
+                                    : '🌌 ULTIMATE BOSS DEFEATED! PRESS [D] FOR THE NEXT BOSS / WORLD!';
                                 universeWorldMsg.style.display =
                                     'block';
 
