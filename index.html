@@ -2377,7 +2377,11 @@
                 let glitchBullets = [];
                 let glitchAimActive = false;
                 let errorBossDamagePercent = 0;
-                let errorBossGlichHP = 10101; // máu Error dạng glich (10101)
+                let errorBossGlichHP = 10101;
+                let errorNullClicks = 0;          // click trúng Error (hiện "null")
+                let errorJumpscareDone = false;   // đã jump-scare ở click 101
+                let errorLaserWarnActive = false; // hiện "tránh né laser"
+                let errorPhase2Clicks = 0;        // 101 click sau jump-scare để sang Glitch
                 let errorGlitchPhase = false;
                 let errorGlitchHits = 0;
                 let errorGlitchFinalClicks = 0;
@@ -11944,7 +11948,7 @@ const octopusMonster =
                 }
 
                 function getAdminCmdHintText() {
-                    return '//boss · //hack · //end · //kill · //fly · //off · //speed n · //player';
+                    return '//boss · //erorr · //hack · //end · //kill · //fly · //off · //speed n · //player';
                 }
 
                 function showBossCommandBar(visible) {
@@ -12937,6 +12941,18 @@ const octopusMonster =
                         } else if (cmd === '//boss' || plain === '//boss') {
 
                             openCosmicDinoBossByCommand();
+
+                        } else if (
+                            secretAdminMode &&
+                            (cmd === '//erorr' || cmd === '//error' || plain === '//erorr' || plain === '//error' ||
+                             plain === '/erorr' || plain === '/error')
+                        ) {
+                            // Admin: nhảy thẳng thế giới ERROR
+                            if (typeof adminTeleportToErrorWorld === 'function') {
+                                adminTeleportToErrorWorld();
+                            } else {
+                                showToast('ERROR TP missing');
+                            }
 
                         } else if (cmd === '//hack' || plain === '//hack') {
 
@@ -14444,36 +14460,19 @@ const octopusMonster =
 
                                 if (!errorGlitchPhase) {
 
-                                    // ===== BOSS ERROR: máu = 10101 (UI chữ "glich") =====
-                                    // GoD -1.9/click | Hack -2/click | Electron = kill luôn
-                                    // Power vẫn ×99 (Electron ×100)
-
+                                    // ===== BOSS ERROR: máu hiện "null" · bắn trúng · click 101 jump-scare · né laser · +101 → Glitch =====
                                     increaseErrorPowerByTenPercentExponent();
-
                                     const allMul = (typeof hasElectronSword !== 'undefined' && hasElectronSword) ? 100 : 99;
 
-                                    // Electron Sword → kill Error luôn → sang Glitch
-                                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword) {
-                                        errorBossGlichHP = 0;
-                                        errorBossDamagePercent = 100;
-                                        errorBossHPExponent = 0;
+                                    // Mỗi click trúng (có/không Electron đều cùng cơ chế)
+                                    if (!errorJumpscareDone) {
+                                        errorNullClicks = (errorNullClicks || 0) + 1;
                                     } else {
-                                        let dmg = 1;
-                                        if (typeof hasHackSword !== 'undefined' && hasHackSword) dmg = 2;
-                                        else if (typeof hasGoDSword !== 'undefined' && hasGoDSword) dmg = 1.9;
-                                        if (typeof errorBossGlichHP !== 'number' || !Number.isFinite(errorBossGlichHP))
-                                            errorBossGlichHP = ERROR_BOSS_HP_CLICKS;
-                                        errorBossGlichHP = Math.max(0, errorBossGlichHP - dmg);
-                                        errorBossDamagePercent = Math.min(100,
-                                            ((ERROR_BOSS_HP_CLICKS - errorBossGlichHP) / ERROR_BOSS_HP_CLICKS) * 100
-                                        );
-                                        errorBossHPExponent = ERROR_BOSS_HP_EXPONENT * (errorBossGlichHP / ERROR_BOSS_HP_CLICKS);
+                                        errorPhase2Clicks = (errorPhase2Clicks || 0) + 1;
                                     }
 
-                                    // UI: power số (×99) + máu boss chữ glich
-                                    const pExp = (Number.isFinite(errorPowerExponent) && errorPowerExponent > 0)
-                                        ? errorPowerExponent
-                                        : 1;
+                                    // HUD power
+                                    const pExp = (Number.isFinite(errorPowerExponent) && errorPowerExponent > 0) ? errorPowerExponent : 1;
                                     const powerLabel = document.getElementById('val-power');
                                     if (powerLabel) {
                                         powerLabel.innerText = pExp >= 12
@@ -14482,37 +14481,52 @@ const octopusMonster =
                                     }
                                     if (typeof updatePowerBarUI === 'function') updatePowerBarUI();
 
-                                    const hpLeft = Math.max(0, errorBossGlichHP);
-                                    const hpPercent = Math.max(0, 100 - errorBossDamagePercent);
+                                    // Máu boss = chữ "null" (thay 10^9999999999)
                                     const barInner = document.getElementById('boss-hp-inner');
                                     const barText = document.getElementById('boss-hp-text');
                                     const barPct = document.getElementById('boss-hp-percent');
                                     const barTitle = document.getElementById('boss-title');
-                                    if (barInner) barInner.style.width = hpPercent + '%';
-                                    if (barText) barText.innerText = 'glich / glich';
-                                    if (barPct) {
-                                        barPct.innerText =
-                                            'glich còn ' + hpLeft.toFixed(1) + ' / 10101 · đã trừ ' +
-                                            errorBossDamagePercent.toFixed(2) + '%';
-                                    }
-                                    if (barTitle) {
-                                        barTitle.innerText = currentLang === 'vi'
-                                            ? '💻 BOSS ERROR — máu glich (10101)'
-                                            : '💻 ERROR BOSS — glich HP (10101)';
+                                    if (barTitle) barTitle.innerText = currentLang === 'vi' ? '💻 BOSS ERROR — null' : '💻 ERROR BOSS — null';
+                                    if (barText) barText.innerText = 'null / null';
+
+                                    // --- Click 101: jump-scare mặt boss dính màn hình ---
+                                    if (!errorJumpscareDone && errorNullClicks >= 101) {
+                                        errorJumpscareDone = true;
+                                        errorLaserWarnActive = true;
+                                        errorPhase2Clicks = 0;
+                                        if (typeof triggerErrorJumpscare === 'function') triggerErrorJumpscare();
+                                        if (typeof showToast === 'function') {
+                                            showToast(currentLang === 'vi'
+                                                ? '⚠️ TRÁNH NÉ LASER! Click tiếp 101 lần để sang Boss Glitch!'
+                                                : '⚠️ AVOID THE LASER! Click 101 more to reach Glitch Boss!');
+                                        }
                                     }
 
-                                    let pop = 'Power ×' + allMul;
-                                    if (hasElectronSword) pop += ' · glich KILL';
-                                    else if (hasHackSword) pop += ' · glich -2';
-                                    else if (hasGoDSword) pop += ' · glich -1.9';
-                                    else pop += ' · glich -1';
-                                    if (typeof showDmgPopup === 'function') showDmgPopup(pop);
+                                    if (!errorJumpscareDone) {
+                                        const pct = Math.min(99, (errorNullClicks / 101) * 100);
+                                        errorBossDamagePercent = pct;
+                                        if (barInner) barInner.style.width = Math.max(1, 100 - pct) + '%';
+                                        if (barPct) barPct.innerText = 'null · click ' + errorNullClicks + ' / 101';
+                                        if (typeof showDmgPopup === 'function') showDmgPopup('null · ' + errorNullClicks + '/101');
+                                    } else {
+                                        // Phase 2: né laser + click 101 nữa
+                                        errorLaserWarnActive = true;
+                                        const pct2 = Math.min(100, (errorPhase2Clicks / 101) * 100);
+                                        errorBossDamagePercent = 50 + pct2 * 0.5;
+                                        if (barInner) barInner.style.width = Math.max(0, 100 - errorBossDamagePercent) + '%';
+                                        if (barPct) barPct.innerText = 'TRÁNH NÉ LASER · ' + errorPhase2Clicks + ' / 101 → Glitch';
+                                        if (typeof showDmgPopup === 'function') showDmgPopup('LASER · ' + errorPhase2Clicks + '/101');
+                                        // Thỉnh thoảng bắn laser về phía player
+                                        if (typeof fireErrorScareLaser === 'function' && Math.random() < 0.22) {
+                                            fireErrorScareLaser();
+                                        }
+                                    }
 
-                                    // Hết máu Error → phase Glitch (giữ logic Glitch bình thường)
-                                    if (errorBossGlichHP <= 0 || errorBossDamagePercent >= 100) {
-                                        errorBossGlichHP = 0;
+                                    // Đủ 101 sau jump-scare → Glitch
+                                    if (errorJumpscareDone && errorPhase2Clicks >= 101) {
                                         errorBossDamagePercent = 100;
                                         errorBossHPExponent = 0;
+                                        errorBossGlichHP = 0;
                                         errorGlitchPhase = true;
                                         errorGlitchWorldActive = true;
                                         errorGlitchWorldWon = false;
@@ -14520,8 +14534,8 @@ const octopusMonster =
                                         errorGlitchFinalClicks = 0;
                                         errorGlitchFinalActive = false;
                                         errorGlitchFinalStart = 0;
-                                        errorGlitchLaunchActive = false;
-                                        errorGlitchDamageApplied = false;
+                                        errorLaserWarnActive = false;
+                                        if (typeof clearErrorEyeLasers === 'function') clearErrorEyeLasers();
                                         errorGlitchNextAttackTime = performance.now();
                                         errorFloor.visible = true;
                                         if (glitchCodeFloor) glitchCodeFloor.visible = false;
@@ -14530,22 +14544,20 @@ const octopusMonster =
                                         if (typeof glitchWorldGroup !== 'undefined') glitchWorldGroup.visible = true;
                                         errorBossMonster.visible = true;
                                         errorBossMonster.scale.set(ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE);
-                                        errorBossMonster.position.set(0, 2, -20);
-                                        errorBossMonster.userData.glitchTarget = new THREE.Vector3(0, 2, -35);
+                                        errorBossMonster.position.set(0, 2.5, -20);
+                                        errorBossMonster.userData.glitchTarget = new THREE.Vector3(0, 2.5, -25);
                                         errorBossMonster.userData.glitchNextMove = performance.now();
                                         setErrorMapExpanded(false);
                                         document.body.style.cursor = 'crosshair';
                                         const glitch = document.getElementById('error-glitch-overlay');
                                         if (glitch) {
                                             glitch.style.display = 'block';
-                                            errorGlitchUntil = performance.now() + 3500;
+                                            errorGlitchUntil = performance.now() + 2500;
                                         }
                                         if (typeof showToast === 'function') {
-                                            showToast(
-                                                currentLang === 'vi'
-                                                ? '💥 ERROR HẾT MÁU GLICH! BOSS GLITCH BÌNH THƯỜNG — NGẮM BẮN 89 PHÁT!'
-                                                : '💥 ERROR GLICH HP GONE! NORMAL GLITCH BOSS — AIM 89 HITS!'
-                                            );
+                                            showToast(currentLang === 'vi'
+                                                ? '💥 QUA ERROR! BOSS GLITCH XUẤT HIỆN — BAY LÊN XUỐNG, ĐỔI MÀU!'
+                                                : '💥 ERROR CLEARED! GLITCH BOSS — FLIES & COLOR SHIFTS!');
                                         }
                                         if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
                                     } else {
@@ -14631,6 +14643,10 @@ const octopusMonster =
                                 errorBossHPExponent = ERROR_BOSS_HP_EXPONENT;
                                 errorBossDamagePercent = 0;
                                 errorBossGlichHP = ERROR_BOSS_HP_CLICKS;
+                                errorNullClicks = 0;
+                                errorJumpscareDone = false;
+                                errorLaserWarnActive = false;
+                                errorPhase2Clicks = 0;
                                 errorGlitchPhase = false;
                                 errorGlitchLaunchActive = false;
                                 errorGlitchDamageApplied = false;
@@ -14894,6 +14910,230 @@ const octopusMonster =
                     const box = new THREE.Box3().setFromObject(errorBossMonster);
                     box.expandByScalar(0.18);
                     return box.containsPoint(bullet.position);
+                }
+
+                
+                function triggerErrorJumpscare() {
+                    // Mặt boss dính màn hình — giật mình
+                    let ov = document.getElementById('error-jumpscare-overlay');
+                    if (!ov) {
+                        ov = document.createElement('div');
+                        ov.id = 'error-jumpscare-overlay';
+                        ov.style.cssText = 'position:fixed;inset:0;z-index:100001;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.92);pointer-events:none;';
+                        ov.innerHTML = '<div style="font-family:Impact,sans-serif;font-size:clamp(48px,12vw,140px);font-weight:900;color:#ff0033;text-shadow:6px 0 #0ff,-6px 0 #f0f,0 0 40px #f00;animation:hackShake 0.35s steps(3) 4;transform:scale(1.2);">ERROR<br><span style="font-size:0.45em;color:#fff">null</span></div>';
+                        document.body.appendChild(ov);
+                    }
+                    ov.style.display = 'flex';
+                    try { if (typeof playBeepSound === 'function') playBeepSound(); } catch(e) {}
+                    setTimeout(function() {
+                        if (ov) ov.style.display = 'none';
+                        // Hiện dòng chữ tránh né laser
+                        let warn = document.getElementById('error-laser-warn');
+                        if (!warn) {
+                            warn = document.createElement('div');
+                            warn.id = 'error-laser-warn';
+                            warn.style.cssText = 'position:fixed;top:22%;left:50%;transform:translateX(-50%);z-index:100002;padding:12px 28px;border-radius:12px;border:2px solid #ff3344;background:rgba(20,0,0,0.9);color:#ff6677;font-weight:900;font-size:18px;text-align:center;pointer-events:none;box-shadow:0 0 24px rgba(255,40,60,0.6);';
+                            document.body.appendChild(warn);
+                        }
+                        warn.innerText = (typeof currentLang !== 'undefined' && currentLang === 'vi')
+                            ? '⚠️ TRÁNH NÉ LASER! Click tiếp 101 lần!'
+                            : '⚠️ AVOID THE LASER! Click 101 more!';
+                        warn.style.display = 'block';
+                    }, 900);
+                }
+
+                function fireErrorScareLaser() {
+                    // Legacy single-shot — dùng updateErrorEyeLasers liên tục thay thế
+                }
+
+                // Laser mắt Error: liên tục, RẤT TO, quay quanh player
+                let errorEyeLaserBeams = [];
+                let errorEyeLaserAngle = 0;
+
+                function clearErrorEyeLasers() {
+                    if (!errorEyeLaserBeams) return;
+                    errorEyeLaserBeams.forEach(function(b) {
+                        if (!b) return;
+                        if (b.parent) scene.remove(b);
+                        b.traverse(function(ch) {
+                            if (ch.geometry) ch.geometry.dispose();
+                            if (ch.material) {
+                                if (Array.isArray(ch.material)) ch.material.forEach(function(m){ m.dispose(); });
+                                else ch.material.dispose();
+                            }
+                        });
+                    });
+                    errorEyeLaserBeams = [];
+                }
+
+                function ensureErrorEyeLasers() {
+                    if (errorEyeLaserBeams && errorEyeLaserBeams.length >= 10) return;
+                    clearErrorEyeLasers();
+                    // 10 tia đỏ CỰC TO — sát đất, quay quanh liên tục
+                    for (let i = 0; i < 10; i++) {
+                        const group = new THREE.Group();
+                        const len = 60;
+                        const beam = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.65, 0.95, len, 10),
+                            new THREE.MeshBasicMaterial({
+                                color: 0xff0000,
+                                transparent: true,
+                                opacity: 0.9
+                            })
+                        );
+                        beam.position.y = len / 2;
+                        group.add(beam);
+                        const core = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.2, 0.32, len * 1.02, 8),
+                            new THREE.MeshBasicMaterial({
+                                color: 0xffcccc,
+                                transparent: true,
+                                opacity: 0.95
+                            })
+                        );
+                        core.position.y = len / 2;
+                        group.add(core);
+                        const glow = new THREE.Mesh(
+                            new THREE.CylinderGeometry(1.2, 1.55, len * 0.98, 10),
+                            new THREE.MeshBasicMaterial({
+                                color: 0xff2244,
+                                transparent: true,
+                                opacity: 0.32,
+                                depthWrite: false
+                            })
+                        );
+                        glow.position.y = len / 2;
+                        group.add(glow);
+                        group.userData.offset = (i / 10) * Math.PI * 2;
+                        group.userData.len = len;
+                        scene.add(group);
+                        errorEyeLaserBeams.push(group);
+                    }
+                }
+
+                function updateErrorEyeLasers() {
+                    if (
+                        !(gameStage === 11 && errorBossActive && !errorGlitchPhase && errorLaserWarnActive) ||
+                        !playerGroup ||
+                        !errorBossMonster
+                    ) {
+                        clearErrorEyeLasers();
+                        return;
+                    }
+                    ensureErrorEyeLasers();
+                    errorEyeLaserAngle += 0.085; // quay rất nhanh — khó né
+
+                    const origin = errorBossMonster.position.clone();
+                    origin.y = 0.35; // sát đất
+
+                    // Điểm sáng mắt liên tục
+                    if (!errorBossMonster.userData._eyeGlowMesh) {
+                        const eg = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.45, 10, 10),
+                            new THREE.MeshBasicMaterial({ color: 0xff1100 })
+                        );
+                        errorBossMonster.add(eg);
+                        eg.position.set(0, 2.4, 0.3);
+                        errorBossMonster.userData._eyeGlowMesh = eg;
+                    }
+                    const eg = errorBossMonster.userData._eyeGlowMesh;
+                    if (eg) {
+                        eg.visible = true;
+                        const pulse = 0.85 + Math.sin(performance.now() * 0.02) * 0.35;
+                        eg.scale.setScalar(pulse);
+                    }
+
+                    let hitThisFrame = false;
+                    const px = playerGroup.position.x;
+                    const pz = playerGroup.position.z;
+                    const py = playerGroup.position.y + 0.9;
+
+                    errorEyeLaserBeams.forEach(function(group, i) {
+                        const ang = errorEyeLaserAngle + (group.userData.offset || 0);
+                        // Hướng tia: quay quanh + hơi hướng về player
+                        const dirX = Math.sin(ang);
+                        const dirZ = Math.cos(ang);
+                        const len = group.userData.len || 55;
+
+                        group.position.copy(origin);
+                        // orient cylinder (default Y-up) toward horizontal direction with slight downward
+                        const target = new THREE.Vector3(
+                            origin.x + dirX * len,
+                            0.35,
+                            origin.z + dirZ * len
+                        );
+                        group.lookAt(target);
+                        group.rotateX(Math.PI / 2);
+
+                        // Va chạm: khoảng cách từ player tới đoạn laser (gần đúng)
+                        // Điểm gần nhất trên tia từ origin theo hướng (dirX, -small, dirZ)
+                        const ox = origin.x, oy = origin.y, oz = origin.z;
+                        const dx = dirX, dy = (target.y - origin.y) / len, dz = dirZ;
+                        // project player onto ray
+                        const wx = px - ox, wy = py - oy, wz = pz - oz;
+                        let t = wx * dx + wy * dy + wz * dz;
+                        t = Math.max(0, Math.min(len, t));
+                        const cx = ox + dx * t, cy = oy + dy * t, cz = oz + dz * t;
+                        const dist = Math.hypot(px - cx, py - cy, pz - cz);
+                        // Laser RẤT TO → hit radius lớn
+                        if (dist < 2.35) hitThisFrame = true; // hitbox to — rất khó
+                    });
+
+                    if (
+                        hitThisFrame &&
+                        typeof playerHP === 'number' &&
+                        !(typeof isDeathAnimPlaying !== 'undefined' && isDeathAnimPlaying)
+                    ) {
+                        playerHP = 0;
+                        if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+                        if (Number.isFinite(power) && power > 0) power = Math.max(1, power * 0.9);
+                        if (typeof errorPowerExponent === 'number' && errorPowerExponent > 0) {
+                            errorPowerExponent = Math.max(1, errorPowerExponent + Math.log10(0.9));
+                            errorDamageExponent = errorPowerExponent;
+                        }
+                        const pl = document.getElementById('val-power');
+                        if (pl && typeof formatPowerDisplay === 'function') pl.innerText = formatPowerDisplay();
+
+                        if (typeof isDeathAnimPlaying !== 'undefined') isDeathAnimPlaying = true;
+                        if (playerGroup) playerGroup.visible = false;
+                        clearErrorEyeLasers();
+
+                        // Màn hình WAIT 3s (full màn, rất rõ)
+                        let wait = document.getElementById('error-laser-wait');
+                        if (!wait) {
+                            wait = document.createElement('div');
+                            wait.id = 'error-laser-wait';
+                            wait.style.cssText = 'position:fixed;inset:0;z-index:200000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.94);color:#ff3344;font-family:Impact,Segoe UI,sans-serif;text-align:center;pointer-events:all;';
+                            document.body.appendChild(wait);
+                        }
+                        let left = 3;
+                        wait.style.display = 'flex';
+                        function paintWait() {
+                            wait.innerHTML =
+                                '<div style="font-size:clamp(42px,10vw,110px);font-weight:900;letter-spacing:4px;text-shadow:0 0 28px #ff0033,4px 0 #0ff,-4px 0 #f0f;">WAIT</div>' +
+                                '<div style="font-size:clamp(64px,14vw,160px);font-weight:900;color:#fff;margin-top:8px;text-shadow:0 0 20px #ff4466;">' + left + '</div>' +
+                                '<div style="margin-top:18px;font-size:16px;color:#ff8899;font-family:Segoe UI,sans-serif;">💀 Laser hit · -10% POWER · Respawn...</div>';
+                        }
+                        paintWait();
+                        const tick = setInterval(function() {
+                            left -= 1;
+                            if (left > 0) paintWait();
+                            else {
+                                clearInterval(tick);
+                                wait.style.display = 'none';
+                                if (playerGroup) {
+                                    playerGroup.visible = true;
+                                    playerGroup.position.y = 0;
+                                    // Đẩy ra xa boss một chút cho dễ đứng dậy
+                                    playerGroup.position.x = (Math.random() - 0.5) * 20;
+                                    playerGroup.position.z = 28 + Math.random() * 8;
+                                }
+                                playerHP = (typeof playerMaxHP === 'number') ? playerMaxHP : 1000000;
+                                if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+                                if (typeof isDeathAnimPlaying !== 'undefined') isDeathAnimPlaying = false;
+                            }
+                        }, 1000);
+                    }
                 }
 
                 function shootGlitchBullet() {
@@ -17238,6 +17478,101 @@ const octopusMonster =
                     1000
                 );
 
+                
+                function adminTeleportToErrorWorld() {
+                    if (!secretAdminMode) {
+                        showToast(currentLang === 'vi' ? '🔒 Chỉ ADMIN!' : '🔒 ADMIN only!');
+                        return;
+                    }
+                    try {
+                        isGameEnded = false;
+                        const vs = document.getElementById('victory-screen');
+                        if (vs) vs.style.display = 'none';
+                        finalBossActive = false;
+                        supremeBossActive = false;
+                        universeBossActive = false;
+                        cosmicBossActive = false;
+                        cosmicDinoActive = false;
+                        electronBossActive = false;
+                        waitingForNewBoss = false;
+
+                        gameStage = 11;
+                        errorBossUnlocked = true;
+                        errorBossActive = true;
+                        errorBossDefeated = false;
+                        errorBossHPExponent = ERROR_BOSS_HP_EXPONENT;
+                        errorBossDamagePercent = 0;
+                        if (typeof errorBossGlichHP !== 'undefined') errorBossGlichHP = (typeof ERROR_BOSS_HP_CLICKS !== 'undefined') ? ERROR_BOSS_HP_CLICKS : 10101;
+                        errorNullClicks = 0;
+                        errorJumpscareDone = false;
+                        errorLaserWarnActive = false;
+                        errorPhase2Clicks = 0;
+                        errorGlitchPhase = false;
+                        errorGlitchWorldActive = false;
+                        errorGlitchWorldWon = false;
+                        errorGlitchHits = 0;
+                        errorGlitchFinalClicks = 0;
+                        errorGlitchFinalActive = false;
+                        if (typeof clearErrorEyeLasers === 'function') clearErrorEyeLasers();
+
+                        if (typeof setExpandedWorld === 'function') setExpandedWorld(11);
+                        if (errorFloor) errorFloor.visible = true;
+                        if (universeFloor) universeFloor.visible = false;
+                        if (blackHoleWorld) blackHoleWorld.visible = false;
+                        if (typeof glitchWorldGroup !== 'undefined' && glitchWorldGroup) glitchWorldGroup.visible = true;
+                        if (glitchCodeFloor) glitchCodeFloor.visible = false;
+                        if (rainbowHaloGroup) rainbowHaloGroup.visible = false;
+                        if (platformGroup) platformGroup.visible = false;
+                        if (electronWorld) electronWorld.visible = false;
+
+                        // Ẩn boss khác
+                        try {
+                            if (redMonster) redMonster.visible = false;
+                            if (octopusMonster) octopusMonster.visible = false;
+                            if (bossMonster) bossMonster.visible = false;
+                            if (finalBossMonster) finalBossMonster.visible = false;
+                            if (universeBossMonster) universeBossMonster.visible = false;
+                            if (cosmicBossMonster) cosmicBossMonster.visible = false;
+                            if (oldCharacterBossMonster) oldCharacterBossMonster.visible = false;
+                            if (atomicBossMonster) atomicBossMonster.visible = false;
+                            if (cosmicDinoMonster) cosmicDinoMonster.visible = false;
+                            if (electronBossMonster) electronBossMonster.visible = false;
+                        } catch (e) {}
+
+                        if (errorBossMonster) {
+                            errorBossMonster.visible = true;
+                            errorBossMonster.scale.set(1.3, 1.3, 1.3);
+                            errorBossMonster.position.set(0, 4.4, 0);
+                        }
+                        if (playerGroup) playerGroup.position.set(0, 0, 35);
+
+                        const bar = document.getElementById('boss-hp-bar');
+                        if (bar) bar.style.display = 'block';
+                        const title = document.getElementById('boss-title');
+                        if (title) title.innerText = currentLang === 'vi' ? '💻 BOSS ERROR — null' : '💻 ERROR BOSS — null';
+                        const ht = document.getElementById('boss-hp-text');
+                        if (ht) ht.innerText = 'null / null';
+                        const hp = document.getElementById('boss-hp-percent');
+                        if (hp) hp.innerText = 'null · click 0 / 101';
+                        const inner = document.getElementById('boss-hp-inner');
+                        if (inner) inner.style.width = '100%';
+
+                        if (typeof showBossCommandBar === 'function') showBossCommandBar(true);
+                        if (typeof setAdminCommandUI === 'function') setAdminCommandUI(true);
+                        document.body.style.cursor = 'default';
+
+                        showToast(
+                            currentLang === 'vi'
+                            ? '💻 ADMIN //erorr — ĐÃ DỊCH CHUYỂN VÀO THẾ GIỚI ERROR!'
+                            : '💻 ADMIN //error — TELEPORTED TO ERROR WORLD!'
+                        );
+                        if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
+                    } catch (err) {
+                        console.error(err);
+                        showToast('ERROR TP failed');
+                    }
+                }
+
                 function resetErrorBossFromBeginning(reason) {
                     glitchBullets.forEach(b => scene.remove(b));
                     glitchBullets = [];
@@ -17800,6 +18135,18 @@ const octopusMonster =
 
                     animateErrorBoss(performance.now());
 
+                    // Laser mắt Error: liên tục, rất to, quay quanh
+                    if (typeof updateErrorEyeLasers === 'function') updateErrorEyeLasers();
+                    else if (
+                        gameStage === 11 &&
+                        errorBossActive &&
+                        !errorGlitchPhase &&
+                        errorLaserWarnActive &&
+                        typeof fireErrorScareLaser === 'function'
+                    ) {
+                        fireErrorScareLaser();
+                    }
+
                     const blackHoleTime = performance.now() * 0.001;
                     blackHoleRotators.forEach(item => {
                         item.rings.forEach(ring => {
@@ -17995,24 +18342,42 @@ const octopusMonster =
                         const moveTarget = errorBossMonster.userData.glitchTarget || new THREE.Vector3();
                         if (!errorBossMonster.userData.glitchTarget) errorBossMonster.userData.glitchTarget = moveTarget;
                         if (now >= (errorBossMonster.userData.glitchNextMove || 0)) {
-                            const half = 80;
+                            // Bay lên/xuống ngẫu nhiên — không xuyên tường/sàn, không quá cao
+                            const half = (typeof GLITCH_WALL_LIMIT === 'number') ? Math.min(48, GLITCH_WALL_LIMIT - 2) : 48;
                             moveTarget.set(
                                 THREE.MathUtils.randFloat(-half, half),
-                                THREE.MathUtils.randFloat(1.5, 4.5),
+                                THREE.MathUtils.randFloat(1.2, 7.5), // chỉ bay trong khoảng an toàn
                                 THREE.MathUtils.randFloat(-half, half)
                             );
-                            errorBossMonster.userData.glitchNextMove = now + THREE.MathUtils.randFloat(800, 1600);
+                            errorBossMonster.userData.glitchNextMove = now + THREE.MathUtils.randFloat(600, 1400);
                         }
                         const dx = moveTarget.x - errorBossMonster.position.x;
+                        const dy = moveTarget.y - errorBossMonster.position.y;
                         const dz = moveTarget.z - errorBossMonster.position.z;
                         const d = Math.max(0.001, Math.hypot(dx, dz));
                         const burst = ERROR_GLITCH_BOSS_SPEED;
                         errorBossMonster.position.x += dx / d * Math.min(burst, d);
                         errorBossMonster.position.z += dz / d * Math.min(burst, d);
-                        errorBossMonster.position.y += (moveTarget.y - errorBossMonster.position.y) * 0.3;
+                        errorBossMonster.position.y += dy * 0.08; // mượt lên xuống
+                        // Clamp: không dưới sàn, không quá cao, không qua tường
+                        const wall = (typeof GLITCH_WALL_LIMIT === 'number') ? GLITCH_WALL_LIMIT - 1.5 : 50;
+                        errorBossMonster.position.x = THREE.MathUtils.clamp(errorBossMonster.position.x, -wall, wall);
+                        errorBossMonster.position.z = THREE.MathUtils.clamp(errorBossMonster.position.z, -wall, wall);
+                        errorBossMonster.position.y = THREE.MathUtils.clamp(errorBossMonster.position.y, 1.15, 8.0);
                         errorBossMonster.rotation.y = Math.atan2(playerGroup.position.x - errorBossMonster.position.x, playerGroup.position.z - errorBossMonster.position.z);
-                        // Keep Glitch boss distinctly small (never share Error boss scale)
                         errorBossMonster.scale.set(ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE);
+                        // Đổi màu liên tục: đen → trắng → đỏ
+                        const cyc = Math.floor((now / 180) % 3);
+                        const cols = [0x111111, 0xffffff, 0xff2200];
+                        const col = cols[cyc];
+                        errorBossMonster.traverse(function(ch) {
+                            if (ch.isMesh && ch.material && ch.material.color) {
+                                ch.material.color.setHex(col);
+                                if (ch.material.emissive) {
+                                    ch.material.emissive.setHex(cyc === 2 ? 0x880000 : (cyc === 1 ? 0x444444 : 0x000000));
+                                }
+                            }
+                        });
                         updateGlitchBullets();
                     }
 
