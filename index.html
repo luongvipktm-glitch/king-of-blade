@@ -16,6 +16,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -997,7 +998,7 @@
             </div>
         </div>
         <div class="upd-body">
-            <div class="upd-ver">Version 1.26</div>
+            <div class="upd-ver">Version 1.27 · Error Boss DMG</div>
             <p class="upd-desc lang-txt"
                data-vi="Update giúp thế giới đẹp & chân thật hơn: cây cối giống đời thật, địa hình gọn (cỏ · đá · quái), bỏ vùng vũ trụ trống ngoài Error/Glitch. Nhân vật & boss chi tiết hơn."
                data-en="Update helps the world look more beautiful & realistic: lifelike trees, compact terrain (grass · rock · mobs), no empty cosmic voids outside Error/Glitch. Richer characters & bosses.">
@@ -2074,15 +2075,44 @@
 
                 function formatPowerDisplay() {
                     if (secretAdminMode) return '∞';
+                    // Ưu tiên exponent khi power đã *99 nhiều lần (tránh Infinity / NaN)
+                    if (typeof errorPowerExponent === 'number' && errorPowerExponent >= 12) {
+                        return '10e' + formatExponentValue(errorPowerExponent);
+                    }
                     if (gameStage === 11 && errorBossActive)
                         return '10e' + formatExponentValue(errorPowerExponent);
-
+                    if (gameStage === 12)
+                        return (typeof errorPowerExponent === 'number' && errorPowerExponent >= 12)
+                            ? ('10e' + formatExponentValue(errorPowerExponent))
+                            : formatNum(power);
+                    if (!Number.isFinite(power)) {
+                        if (typeof errorPowerExponent === 'number' && errorPowerExponent > 0)
+                            return '10e' + formatExponentValue(errorPowerExponent);
+                        return '∞';
+                    }
                     return formatNum(power);
                 }
 
                 function increaseErrorPowerByTenPercentExponent() {
-                    errorPowerExponent *= ERROR_POWER_RATE;
-                    errorDamageExponent *= ERROR_POWER_RATE;
+                    // Mỗi click: power = power * 99 (dùng log để không vỡ Infinity)
+                    const LOG99 = Math.log10(99);
+                    let pExp;
+                    if (Number.isFinite(power) && power > 0) {
+                        pExp = Math.log10(power);
+                    } else if (Number.isFinite(errorPowerExponent) && errorPowerExponent > 0) {
+                        pExp = errorPowerExponent;
+                    } else {
+                        pExp = 1;
+                    }
+                    pExp += LOG99;
+                    errorPowerExponent = pExp;
+                    errorDamageExponent = pExp;
+                    if (pExp < 300) {
+                        power = Math.pow(10, pExp);
+                        if (!Number.isFinite(power) || power <= 0) power = Number.MAX_VALUE;
+                    } else {
+                        power = Number.MAX_VALUE;
+                    }
                     return errorPowerExponent;
                 }
 
@@ -2334,8 +2364,9 @@
 
                 const GLITCH_SWORD_COUNT_NEEDED = 20;
 
-                const ERROR_POWER_RATE = 1.15;
-                const ERROR_BOSS_DAMAGE_PER_CLICK = 1;
+                const ERROR_POWER_RATE = 1.10;          // +10%  (= nhân 1.1, KHÔNG phải nhân 10)
+                const ERROR_POWER_RATE_ELECTRON = 1.20; // +20% (= nhân 1.2) nếu Electron Sword
+                const ERROR_BOSS_DAMAGE_PER_CLICK = 1;  // fallback (logic mới dùng dmg thật)
                 const ERROR_GLITCH_HITS_TO_FINAL = 89;
                 const ERROR_GLITCH_FINAL_CLICKS = 1000;
                 const ERROR_GLITCH_FINAL_TIME = 60000;
@@ -2346,6 +2377,7 @@
                 let glitchBullets = [];
                 let glitchAimActive = false;
                 let errorBossDamagePercent = 0;
+                let errorBossGlichHP = 10101; // máu Error dạng glich (10101)
                 let errorGlitchPhase = false;
                 let errorGlitchHits = 0;
                 let errorGlitchFinalClicks = 0;
@@ -2506,6 +2538,7 @@
                 let hasErrorTitle = false;
                 let errorBossKillCount = 0;
                 const ERROR_BOSS_HP_EXPONENT = 9999999999;
+                const ERROR_BOSS_HP_CLICKS = 10101; // máu Error = 10101 (UI: glich)
                 let errorBossHPExponent = ERROR_BOSS_HP_EXPONENT;
                 let errorBossNextMoveTime = 0;
                 let errorBossMoveTarget = new THREE.Vector3(0, 0, -20);
@@ -14411,11 +14444,75 @@ const octopusMonster =
 
                                 if (!errorGlitchPhase) {
 
-                                    errorBossDamagePercent = Math.min(10, errorBossDamagePercent + ERROR_BOSS_DAMAGE_PER_CLICK);
+                                    // ===== BOSS ERROR: máu = 10101 (UI chữ "glich") =====
+                                    // GoD -1.9/click | Hack -2/click | Electron = kill luôn
+                                    // Power vẫn ×99 (Electron ×100)
+
                                     increaseErrorPowerByTenPercentExponent();
 
-                                    if (errorBossDamagePercent >= 10) {
-                                        errorBossDamagePercent = 10;
+                                    const allMul = (typeof hasElectronSword !== 'undefined' && hasElectronSword) ? 100 : 99;
+
+                                    // Electron Sword → kill Error luôn → sang Glitch
+                                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword) {
+                                        errorBossGlichHP = 0;
+                                        errorBossDamagePercent = 100;
+                                        errorBossHPExponent = 0;
+                                    } else {
+                                        let dmg = 1;
+                                        if (typeof hasHackSword !== 'undefined' && hasHackSword) dmg = 2;
+                                        else if (typeof hasGoDSword !== 'undefined' && hasGoDSword) dmg = 1.9;
+                                        if (typeof errorBossGlichHP !== 'number' || !Number.isFinite(errorBossGlichHP))
+                                            errorBossGlichHP = ERROR_BOSS_HP_CLICKS;
+                                        errorBossGlichHP = Math.max(0, errorBossGlichHP - dmg);
+                                        errorBossDamagePercent = Math.min(100,
+                                            ((ERROR_BOSS_HP_CLICKS - errorBossGlichHP) / ERROR_BOSS_HP_CLICKS) * 100
+                                        );
+                                        errorBossHPExponent = ERROR_BOSS_HP_EXPONENT * (errorBossGlichHP / ERROR_BOSS_HP_CLICKS);
+                                    }
+
+                                    // UI: power số (×99) + máu boss chữ glich
+                                    const pExp = (Number.isFinite(errorPowerExponent) && errorPowerExponent > 0)
+                                        ? errorPowerExponent
+                                        : 1;
+                                    const powerLabel = document.getElementById('val-power');
+                                    if (powerLabel) {
+                                        powerLabel.innerText = pExp >= 12
+                                            ? ('10e' + (typeof formatExponentValue === 'function' ? formatExponentValue(pExp) : pExp.toFixed(2)))
+                                            : ((typeof formatPowerDisplay === 'function') ? formatPowerDisplay() : String(power));
+                                    }
+                                    if (typeof updatePowerBarUI === 'function') updatePowerBarUI();
+
+                                    const hpLeft = Math.max(0, errorBossGlichHP);
+                                    const hpPercent = Math.max(0, 100 - errorBossDamagePercent);
+                                    const barInner = document.getElementById('boss-hp-inner');
+                                    const barText = document.getElementById('boss-hp-text');
+                                    const barPct = document.getElementById('boss-hp-percent');
+                                    const barTitle = document.getElementById('boss-title');
+                                    if (barInner) barInner.style.width = hpPercent + '%';
+                                    if (barText) barText.innerText = 'glich / glich';
+                                    if (barPct) {
+                                        barPct.innerText =
+                                            'glich còn ' + hpLeft.toFixed(1) + ' / 10101 · đã trừ ' +
+                                            errorBossDamagePercent.toFixed(2) + '%';
+                                    }
+                                    if (barTitle) {
+                                        barTitle.innerText = currentLang === 'vi'
+                                            ? '💻 BOSS ERROR — máu glich (10101)'
+                                            : '💻 ERROR BOSS — glich HP (10101)';
+                                    }
+
+                                    let pop = 'Power ×' + allMul;
+                                    if (hasElectronSword) pop += ' · glich KILL';
+                                    else if (hasHackSword) pop += ' · glich -2';
+                                    else if (hasGoDSword) pop += ' · glich -1.9';
+                                    else pop += ' · glich -1';
+                                    if (typeof showDmgPopup === 'function') showDmgPopup(pop);
+
+                                    // Hết máu Error → phase Glitch (giữ logic Glitch bình thường)
+                                    if (errorBossGlichHP <= 0 || errorBossDamagePercent >= 100) {
+                                        errorBossGlichHP = 0;
+                                        errorBossDamagePercent = 100;
+                                        errorBossHPExponent = 0;
                                         errorGlitchPhase = true;
                                         errorGlitchWorldActive = true;
                                         errorGlitchWorldWon = false;
@@ -14426,7 +14523,6 @@ const octopusMonster =
                                         errorGlitchLaunchActive = false;
                                         errorGlitchDamageApplied = false;
                                         errorGlitchNextAttackTime = performance.now();
-                                        // Phase GLITCH: vẫn nền chữ nhưng boss nhỏ di chuyển tự do (không đứng giữa quay)
                                         errorFloor.visible = true;
                                         if (glitchCodeFloor) glitchCodeFloor.visible = false;
                                         universeFloor.visible = false;
@@ -14435,23 +14531,25 @@ const octopusMonster =
                                         errorBossMonster.visible = true;
                                         errorBossMonster.scale.set(ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE, ERROR_GLITCH_BOSS_SCALE);
                                         errorBossMonster.position.set(0, 2, -20);
-                                        errorBossMonster.userData.glitchTarget = new THREE.Vector3(0, 2, -20);
                                         errorBossMonster.userData.glitchTarget = new THREE.Vector3(0, 2, -35);
                                         errorBossMonster.userData.glitchNextMove = performance.now();
                                         setErrorMapExpanded(false);
                                         document.body.style.cursor = 'crosshair';
-
                                         const glitch = document.getElementById('error-glitch-overlay');
                                         if (glitch) {
                                             glitch.style.display = 'block';
                                             errorGlitchUntil = performance.now() + 3500;
                                         }
-
-                                        showToast(
-                                            currentLang === 'vi'
-                                            ? '⚠️ THẾ GIỚI GLITCH! BOSS SIÊU NHỎ — PHẢI NGẮM VÀ BẮN TRÚNG! 89 PHÁT ĐỂ ĐẾN ĐÒN KẾT LIỄU!'
-                                            : '⚠️ GLITCH WORLD! THE BOSS IS TINY — AIM AND HIT IT! 89 HITS TO REACH THE FINISHING BLOW!'
-                                        );
+                                        if (typeof showToast === 'function') {
+                                            showToast(
+                                                currentLang === 'vi'
+                                                ? '💥 ERROR HẾT MÁU GLICH! BOSS GLITCH BÌNH THƯỜNG — NGẮM BẮN 89 PHÁT!'
+                                                : '💥 ERROR GLICH HP GONE! NORMAL GLITCH BOSS — AIM 89 HITS!'
+                                            );
+                                        }
+                                        if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
+                                    } else {
+                                        if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
                                     }
 
                                 }
@@ -14532,6 +14630,7 @@ const octopusMonster =
                                 errorBossDefeated = false;
                                 errorBossHPExponent = ERROR_BOSS_HP_EXPONENT;
                                 errorBossDamagePercent = 0;
+                                errorBossGlichHP = ERROR_BOSS_HP_CLICKS;
                                 errorGlitchPhase = false;
                                 errorGlitchLaunchActive = false;
                                 errorGlitchDamageApplied = false;
@@ -14800,8 +14899,13 @@ const octopusMonster =
                 function shootGlitchBullet() {
                     if (!errorGlitchWorldActive || !errorBossActive || !errorGlitchPhase || errorGlitchFinalActive) return;
                     createGlitchBullet();
-                    power = Math.max(1, power * 1.03);
-                    document.getElementById('val-power').innerText = formatPowerDisplay();
+                    // Glitch phase: power tăng nhẹ như cũ
+                    if (Number.isFinite(power) && power > 0) {
+                        const np = power * 1.03;
+                        if (Number.isFinite(np)) power = np;
+                    }
+                    const pel = document.getElementById('val-power');
+                    if (pel && typeof formatPowerDisplay === 'function') pel.innerText = formatPowerDisplay();
                 }
 
                 function updateGlitchBullets() {
@@ -14813,15 +14917,25 @@ const octopusMonster =
                         if (hit) {
                             if (!errorGlitchFinalActive) {
                                 errorGlitchHits = Math.min(ERROR_GLITCH_HITS_TO_FINAL, errorGlitchHits + 1);
-                                errorBossDamagePercent = Math.min(99, 10 + errorGlitchHits);
-                                showDmgPopup(`-${errorBossDamagePercent}%`);
+                                errorBossDamagePercent = Math.min(99, 10 + errorGlitchHits * (89 / ERROR_GLITCH_HITS_TO_FINAL));
+                                if (typeof showDmgPopup === 'function') showDmgPopup('-' + errorGlitchHits + '/' + ERROR_GLITCH_HITS_TO_FINAL);
+                                const barInner = document.getElementById('boss-hp-inner');
+                                const barText = document.getElementById('boss-hp-text');
+                                const barPct = document.getElementById('boss-hp-percent');
+                                const barTitle = document.getElementById('boss-title');
+                                if (barInner) barInner.style.width = Math.max(0, 100 - errorBossDamagePercent) + '%';
+                                if (barText) barText.innerText = errorGlitchHits + ' / ' + ERROR_GLITCH_HITS_TO_FINAL;
+                                if (barPct) barPct.innerText = 'Glitch hits: ' + errorGlitchHits + '/' + ERROR_GLITCH_HITS_TO_FINAL;
+                                if (barTitle) barTitle.innerText = currentLang === 'vi' ? '⚠️ BOSS GLITCH' : '⚠️ GLITCH BOSS';
                                 if (errorGlitchHits >= ERROR_GLITCH_HITS_TO_FINAL) {
                                     errorGlitchFinalActive = true;
                                     errorGlitchFinalClicks = 0;
                                     errorGlitchFinalStart = performance.now();
-                                    showToast(currentLang === 'vi'
-                                        ? '💀 BOSS CÒN 1%! NGẮM VÀ BẮN 1000 LẦN TRONG 60 GIÂY ĐỂ KẾT LIỄU!'
-                                        : '💀 BOSS HAS 1% LEFT! AIM AND SHOOT 1000 TIMES IN 60 SECONDS TO FINISH IT!');
+                                    if (typeof showToast === 'function') {
+                                        showToast(currentLang === 'vi'
+                                            ? '💀 BOSS CÒN 1%! NGẮM VÀ BẮN 1000 LẦN TRONG 60 GIÂY ĐỂ KẾT LIỄU!'
+                                            : '💀 BOSS HAS 1% LEFT! AIM AND SHOOT 1000 TIMES IN 60 SECONDS!');
+                                    }
                                 }
                             }
                             scene.remove(bullet);
@@ -14835,15 +14949,17 @@ const octopusMonster =
                     }
                     if (errorGlitchFinalActive) {
                         const remaining = Math.max(0, ERROR_GLITCH_FINAL_TIME - (performance.now() - errorGlitchFinalStart));
-                        document.getElementById('boss-hp-percent').innerText = `Đã tiêu diệt: 99% • KẾT LIỄU ${errorGlitchFinalClicks}/1000 • ${(remaining / 1000).toFixed(1)}s`;
-                        document.getElementById('boss-hp-text').innerText = `KẾT LIỄU: ${errorGlitchFinalClicks}/1000`;
+                        const barPct = document.getElementById('boss-hp-percent');
+                        const barText = document.getElementById('boss-hp-text');
+                        if (barPct) barPct.innerText = 'KẾT LIỄU ' + errorGlitchFinalClicks + '/1000 · ' + (remaining/1000).toFixed(1) + 's';
+                        if (barText) barText.innerText = 'FINAL: ' + errorGlitchFinalClicks + '/1000';
                         if (remaining <= 0) {
-                            power = Math.max(1, power * ERROR_GLITCH_POWER_REMAIN);
+                            power = Math.max(1, (Number.isFinite(power) ? power : 1) * ERROR_GLITCH_POWER_REMAIN);
                             errorPowerExponent = Math.max(1, errorPowerExponent * ERROR_GLITCH_POWER_REMAIN);
                             errorDamageExponent = Math.max(1, errorDamageExponent * ERROR_GLITCH_POWER_REMAIN);
                             resetErrorBossFromBeginning(currentLang === 'vi'
-                                ? '⏰ HẾT 60 GIÂY! BẠN THUA — POWER BỊ TRỪ 99,9999999%! BOSS ERROR QUAY LẠI TỪ ĐẦU!'
-                                : '⏰ 60 SECONDS ARE OVER! YOU LOSE — POWER REDUCED BY 99.9999999%! ERROR BOSS RESTARTED!');
+                                ? '⏰ HẾT 60 GIÂY! BOSS ERROR QUAY LẠI TỪ ĐẦU!'
+                                : '⏰ TIME UP! ERROR BOSS RESTARTED!');
                         }
                     }
                 }
@@ -17291,55 +17407,98 @@ const octopusMonster =
                     if (gameStage !== 12 || !electronBossActive || electronBossDefeated)
                         return;
 
-                    // Hệ 10.500 click: mỗi click thường = 0.001e (ELECTRON_BOSS_PROGRESS_PER_CLICK)
-                    // Electron Sword = x10 progress (tương đương 10 click thường) → ~1.050 click hạ boss
-                    // Không one-shot (trước đó set hit=10e gần full 10.5e là sai)
-                    const clickMult = hasElectronSword ? 10 : 1;
-                    const hitAmount = ELECTRON_BOSS_PROGRESS_PER_CLICK * clickMult;
-                    const nextHit = Math.min(
-                        ELECTRON_BOSS_EHP,
-                        electronBossHits + hitAmount
-                    );
+                    // ===== Hệ số kiếm =====
+                    let swordMul = 0.3;
+                    if (equippedItemType === 'common') swordMul = 0.5;
+                    else if (equippedItemType === 'rare') swordMul = 0.8;
+                    else if (equippedItemType === 'epic') swordMul = 1.1;
+                    else if (equippedItemType === 'legendary') swordMul = 1.45;
+                    else if (hasGoDSword) swordMul = (typeof GOD_SWORD_DMG_MULTIPLIER !== 'undefined') ? GOD_SWORD_DMG_MULTIPLIER : 5;
+                    else if (hasHackSword) swordMul = (typeof HACK_SWORD_DMG_MULTIPLIER !== 'undefined') ? HACK_SWORD_DMG_MULTIPLIER : 10;
+                    else if (hasGlitchSword) swordMul = (typeof GLITCH_SWORD_DMG_MULTIPLIER !== 'undefined') ? GLITCH_SWORD_DMG_MULTIPLIER : 101;
+                    if (hasElectronSword) swordMul = Math.max(swordMul, 10);
 
-                    electronBossHits = nextHit;
+                    // ===== power = power * 99 mỗi click (an toàn, không vỡ Infinity) =====
+                    // Dùng log10: mỗi click cộng log10(99) ≈ 1.9956 vào exponent
+                    const allMul = (typeof hasElectronSword !== 'undefined' && hasElectronSword) ? 100 : 99;
+                    const logMul = Math.log10(allMul);
+                    let pExp;
+                    if (Number.isFinite(power) && power > 0) {
+                        pExp = Math.log10(power);
+                    } else if (typeof errorPowerExponent === 'number' && errorPowerExponent > 0) {
+                        pExp = errorPowerExponent;
+                    } else {
+                        pExp = 1;
+                    }
+                    pExp += logMul; // *99 hoặc *100
+                    errorPowerExponent = pExp;
+                    errorDamageExponent = pExp;
+                    // Giữ power trong Number nếu còn nhỏ; nếu lớn chuyển sang MAX và dựa exponent
+                    if (pExp < 300) {
+                        power = Math.pow(10, pExp);
+                        if (!Number.isFinite(power) || power <= 0) power = Number.MAX_VALUE;
+                    } else {
+                        power = Number.MAX_VALUE;
+                    }
+
+                    const pl = document.getElementById('val-power');
+                    if (pl) {
+                        if (pExp >= 12) {
+                            pl.innerText = '10e' + (typeof formatExponentValue === 'function' ? formatExponentValue(pExp) : pExp.toFixed(2));
+                        } else if (typeof formatPowerDisplay === 'function') {
+                            pl.innerText = formatPowerDisplay();
+                        } else if (typeof formatNum === 'function') {
+                            pl.innerText = formatNum(power);
+                        } else {
+                            pl.innerText = String(power);
+                        }
+                    }
+                    if (typeof updatePowerBarUI === 'function') updatePowerBarUI();
+
+                    // ===== dmg = power * kiếm  (dùng exponent: dmgExp = pExp + log10(swordMul)) =====
+                    const dmgExp = pExp + Math.log10(Math.max(1e-12, swordMul));
+                    // Tiến độ boss theo dmg (log) — càng mạnh càng trừ nhanh, cap mỗi hit 20% máu
+                    const hitAmount = Math.min(
+                        ELECTRON_BOSS_EHP * 0.20,
+                        ELECTRON_BOSS_PROGRESS_PER_CLICK * (1 + Math.max(0, dmgExp)) * (hasElectronSword ? 2 : 1)
+                    );
+                    electronBossHits = Math.min(ELECTRON_BOSS_EHP, electronBossHits + hitAmount);
 
                     const remaining = Math.max(0, ELECTRON_BOSS_EHP - electronBossHits);
                     const percent = Math.min(100, (electronBossHits / ELECTRON_BOSS_EHP) * 100);
-                    const clicksDone = Math.floor(electronBossHits / ELECTRON_BOSS_PROGRESS_PER_CLICK);
 
-                    document.getElementById('boss-hp-inner').style.width =
-                        Math.max(0, 100 - percent) + '%';
+                    const barInner = document.getElementById('boss-hp-inner');
+                    const barText = document.getElementById('boss-hp-text');
+                    const barPct = document.getElementById('boss-hp-percent');
+                    if (barInner) barInner.style.width = Math.max(0, 100 - percent) + '%';
+                    if (barText) barText.innerText = remaining > 0 ? (remaining.toFixed(2) + 'e HP') : '0e HP';
+                    if (barPct) barPct.innerText = 'Đã tiêu diệt: ' + percent.toFixed(2) + '% · Power×' + allMul + ' · DMG×' + allMul;
 
-                    document.getElementById('boss-hp-text').innerText =
-                        remaining > 0
-                        ? `${remaining.toFixed(1)}e HP`
-                        : '0e HP';
-
-                    document.getElementById('boss-hp-percent').innerText =
-                        hasElectronSword
-                        ? `Đã tiêu diệt: ${percent.toFixed(1)}% • ${clicksDone.toLocaleString()}/10,500 (Electron Sword x10)`
-                        : `Đã tiêu diệt: ${percent.toFixed(1)}% • ${clicksDone.toLocaleString()}/10,500 clicks`;
-
-                    showDmgPopup(
-                        hasElectronSword ? '-10e' : (clicksDone >= 10 ? '0.5e' : '1e')
-                    );
+                    if (typeof showDmgPopup === 'function') {
+                        const dmgLabel = dmgExp >= 12
+                            ? ('10e' + (typeof formatExponentValue === 'function' ? formatExponentValue(dmgExp) : dmgExp.toFixed(2)))
+                            : ((typeof formatNum === 'function') ? formatNum(Math.pow(10, Math.min(dmgExp, 300))) : 'DMG');
+                        showDmgPopup('Power ×' + allMul + ' · DMG ×' + allMul);
+                    }
+                    if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
 
                     if (electronBossHits >= ELECTRON_BOSS_EHP) {
                         electronBossDefeated = true;
                         electronBossActive = false;
-                        electronBossMonster.visible = false;
-                        document.getElementById('boss-hp-bar').style.display = 'none';
-                        document.getElementById('electron-world-msg').style.display = 'none';
+                        if (electronBossMonster) electronBossMonster.visible = false;
+                        const hpBar = document.getElementById('boss-hp-bar');
+                        if (hpBar) hpBar.style.display = 'none';
+                        const eMsg = document.getElementById('electron-world-msg');
+                        if (eMsg) eMsg.style.display = 'none';
 
-                        showToast(
-                            currentLang === 'vi'
-                            ? '⚡ ELECTRON ĐÃ BỊ TIÊU DIỆT! 10.5 CLICK-EQUIVALENT HOÀN TẤT! (Sẽ hồi lại...)'
-                            : '⚡ ELECTRON DEFEATED! 10,500 CLICKS COMPLETED! (Will respawn...)'
-                        );
-
-                        saveCurrentAccount();
-
-                        // Electron có thể hồi lại sau vài giây
+                        if (typeof showToast === 'function') {
+                            showToast(
+                                currentLang === 'vi'
+                                ? '⚡ ELECTRON ĐÃ BỊ TIÊU DIỆT! (Sẽ hồi lại...)'
+                                : '⚡ ELECTRON DEFEATED! (Will respawn...)'
+                            );
+                        }
+                        if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
                         setTimeout(function() {
                             if (typeof respawnElectronBoss === 'function') respawnElectronBoss();
                         }, 4000);
