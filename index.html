@@ -10132,6 +10132,48 @@
                     group.userData.isCuteBlocky = true;
                     group.userData.isImageRedMob = true;
 
+                    // === KIẾM GỖ (cầm tay phải) ===
+                    const woodMat = new THREE.MeshStandardMaterial({
+                        color: 0xc4a574, roughness: 0.85, metalness: 0.05
+                    });
+                    const woodDarkMat = new THREE.MeshStandardMaterial({
+                        color: 0x8b6914, roughness: 0.8, metalness: 0.08
+                    });
+                    const woodSword = new THREE.Group();
+                    // blade
+                    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.95, 0.06), woodMat);
+                    blade.position.y = 0.55;
+                    woodSword.add(blade);
+                    // tip
+                    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.08, 0.2, 4), woodMat);
+                    tip.position.y = 1.12;
+                    woodSword.add(tip);
+                    // crossguard
+                    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.08, 0.1), woodDarkMat);
+                    guard.position.y = 0.08;
+                    woodSword.add(guard);
+                    // handle
+                    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.32, 0.1), woodDarkMat);
+                    handle.position.y = -0.12;
+                    woodSword.add(handle);
+                    // pommel
+                    const pommel = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.1, 0.14), woodMat);
+                    pommel.position.y = -0.32;
+                    woodSword.add(pommel);
+                    // Attach to right arm (hand tip)
+                    woodSword.position.set(0, -0.75, 0.15);
+                    woodSword.rotation.x = 0.35;
+                    woodSword.rotation.z = -0.15;
+                    if (group.userData.armR) {
+                        group.userData.armR.add(woodSword);
+                    } else {
+                        woodSword.position.set(0.95, 1.55, 0.2);
+                        group.add(woodSword);
+                    }
+                    group.userData.woodSword = woodSword;
+                    group.userData.attackSwing = 0;
+                    group.userData.nextAttackTime = 0;
+
                     group.scale.setScalar(1.08);
                     group.traverse(function(c) {
                         if (c.isMesh) {
@@ -19927,6 +19969,66 @@ const octopusMonster =
 
                         // Giữ đế chân trên mặt đất (không xuyên đất/cỏ)
                         redMonster.position.y = RED_MOB_GROUND_Y + Math.sin(wt * 2) * 0.02;
+
+                        // === Mob đỏ cầm kiếm gỗ: đánh player ~100k dmg ===
+                        const RED_MOB_ATK_RANGE = 2.6;
+                        const RED_MOB_ATK_CD = 1400; // ms
+                        const RED_MOB_ATK_DMG = 100000;
+                        if (!redMonster.userData.nextAttackTime) redMonster.userData.nextAttackTime = 0;
+                        if (!redMonster.userData.attackSwing) redMonster.userData.attackSwing = 0;
+
+                        // Swing animation
+                        if (redMonster.userData.attackSwing > 0) {
+                            redMonster.userData.attackSwing -= 0.045;
+                            if (redMonster.userData.attackSwing < 0) redMonster.userData.attackSwing = 0;
+                            const tSwing = 1 - redMonster.userData.attackSwing;
+                            const swingAng = Math.sin(tSwing * Math.PI) * 1.4;
+                            if (redMonster.userData.armR) {
+                                redMonster.userData.armR.rotation.x = -0.2 - swingAng;
+                                redMonster.userData.armR.rotation.z = 0.3 * Math.sin(tSwing * Math.PI);
+                            }
+                            if (redMonster.userData.woodSword) {
+                                redMonster.userData.woodSword.rotation.x = 0.35 + swingAng * 0.8;
+                            }
+                        } else if (redMonster.userData.armR) {
+                            redMonster.userData.armR.rotation.x *= 0.85;
+                            redMonster.userData.armR.rotation.z *= 0.85;
+                        }
+
+                        if (
+                            distP <= RED_MOB_ATK_RANGE &&
+                            nowRM >= redMonster.userData.nextAttackTime &&
+                            redMonster.visible &&
+                            !isGameEnded
+                        ) {
+                            redMonster.userData.nextAttackTime = nowRM + RED_MOB_ATK_CD;
+                            redMonster.userData.attackSwing = 1;
+
+                            // Gây ~100k sát thương
+                            if (typeof playerHP === 'number') {
+                                playerHP = Math.max(0, playerHP - RED_MOB_ATK_DMG);
+                                lastDamageTakenTime = nowRM;
+                                if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+                                if (typeof showDmgPopup === 'function') showDmgPopup('-100k');
+                                else if (typeof showToast === 'function') {
+                                    showToast(currentLang === 'vi'
+                                        ? '🪵 Mob kiếm gỗ đấm! -100.000 HP'
+                                        : '🪵 Wooden sword hit! -100,000 HP');
+                                }
+                                if (playerHP <= 0) {
+                                    if (typeof playDeathDismemberAndRespawn === 'function') {
+                                        playDeathDismemberAndRespawn();
+                                    } else {
+                                        playerHP = playerMaxHP;
+                                        power = Math.max(1, Math.floor(power * 0.9));
+                                        const vp = document.getElementById('val-power');
+                                        if (vp) vp.innerText = typeof formatNum === 'function' ? formatNum(power) : power;
+                                        if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
+                                        if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     /* =========================
