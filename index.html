@@ -1,22 +1,4 @@
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -897,6 +879,260 @@
                 75% { transform:translate(-3px,4px); filter:hue-rotate(220deg) contrast(2); }
                 100% { transform:translate(0,0); filter:contrast(1); }
             }
+
+
+        body.is-loading #hud,
+        body.is-loading #quick-actions,
+        body.is-loading #instructions,
+        body.is-loading #press-p-hint {
+            visibility: hidden !important;
+        }
+
+        /* ===== LOADING SCREEN (style như màn chờ hình 2) ===== */
+        #game-loading {
+            position: fixed;
+            inset: 0;
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(ellipse at 50% 30%, #3a1a5c 0%, #12081f 45%, #05020a 100%);
+            overflow: hidden;
+            transition: opacity 0.55s ease, visibility 0.55s ease;
+        }
+        #game-loading.hide {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+        #game-loading .ld-stars {
+            position: absolute;
+            inset: 0;
+            background-image:
+                radial-gradient(1.5px 1.5px at 12% 18%, #fff 40%, transparent 50%),
+                radial-gradient(1.5px 1.5px at 78% 22%, #cde 40%, transparent 50%),
+                radial-gradient(1px 1px at 45% 8%, #fff 40%, transparent 50%),
+                radial-gradient(1.5px 1.5px at 88% 55%, #f8f 40%, transparent 50%),
+                radial-gradient(1px 1px at 22% 70%, #fff 40%, transparent 50%),
+                radial-gradient(1.5px 1.5px at 60% 85%, #aef 40%, transparent 50%);
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        #game-loading .ld-planet {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(0.5px);
+            opacity: 0.85;
+            pointer-events: none;
+        }
+        #game-loading .ld-planet.a {
+            width: 90px; height: 90px; top: 12%; right: 14%;
+            background: radial-gradient(circle at 35% 35%, #f5d0a8, #c88a4a 55%, #6a3a18);
+            box-shadow: 0 0 40px rgba(255,180,100,0.35);
+        }
+        #game-loading .ld-planet.b {
+            width: 48px; height: 48px; top: 22%; left: 18%;
+            background: radial-gradient(circle at 40% 30%, #e8c4ff, #9b5cff 60%, #3a1860);
+            box-shadow: 0 0 28px rgba(160,100,255,0.4);
+        }
+        #game-loading .ld-gate {
+            position: absolute;
+            top: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(420px, 70vw);
+            height: 140px;
+            background:
+                linear-gradient(180deg, rgba(120,80,200,0.25), transparent 80%);
+            border-radius: 12px 12px 0 0;
+            opacity: 0.55;
+            pointer-events: none;
+        }
+        #game-loading .ld-gate::before,
+        #game-loading .ld-gate::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            width: 36px;
+            height: 120px;
+            background: linear-gradient(180deg, #9b7ad8, #5a3a9a);
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 0 20px rgba(140,100,255,0.35);
+        }
+        #game-loading .ld-gate::before { left: 8%; }
+        #game-loading .ld-gate::after { right: 8%; }
+
+        /* Ornate purple load bar */
+        #ld-bar-wrap {
+            position: relative;
+            width: min(520px, 88vw);
+            margin-top: 8px;
+            z-index: 2;
+        }
+        #ld-bar-frame {
+            position: relative;
+            height: 42px;
+            border-radius: 10px;
+            background: linear-gradient(180deg, #1a0e2e 0%, #0d0618 100%);
+            border: 2px solid #6b4aa8;
+            box-shadow:
+                0 0 24px rgba(140, 80, 255, 0.45),
+                inset 0 0 12px rgba(0,0,0,0.6);
+            overflow: hidden;
+        }
+        #ld-bar-frame::before {
+            content: '';
+            position: absolute;
+            left: -2px; top: -6px; bottom: -6px;
+            width: 28px;
+            background: linear-gradient(135deg, #8a6ad0, #4a2a80);
+            border-radius: 12px 4px 4px 12px;
+            border: 2px solid #c9a8ff;
+            box-shadow: 0 0 12px rgba(180,120,255,0.5);
+            z-index: 3;
+        }
+        #ld-bar-frame::after {
+            content: '⚔️';
+            position: absolute;
+            right: -4px; top: 50%;
+            transform: translateY(-50%);
+            font-size: 28px;
+            filter: drop-shadow(0 0 8px rgba(255,200,80,0.7));
+            z-index: 3;
+        }
+        #ld-bar-track {
+            position: absolute;
+            left: 24px;
+            right: 36px;
+            top: 8px;
+            bottom: 8px;
+            border-radius: 6px;
+            background: rgba(20, 8, 40, 0.9);
+            overflow: hidden;
+        }
+        #ld-bar-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 6px;
+            background:
+                linear-gradient(90deg,
+                    #4a1a8a 0%,
+                    #8b3dff 25%,
+                    #e0a0ff 45%,
+                    #ffe066 55%,
+                    #ff9a3c 70%,
+                    #c44dff 100%);
+            background-size: 200% 100%;
+            box-shadow: 0 0 18px rgba(255, 180, 80, 0.65), inset 0 1px 0 rgba(255,255,255,0.35);
+            transition: width 0.25s ease;
+            animation: ldEnergyFlow 1.8s linear infinite;
+            position: relative;
+        }
+        #ld-bar-fill::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 45%, rgba(0,0,0,0.15) 100%);
+            border-radius: inherit;
+            pointer-events: none;
+        }
+        @keyframes ldEnergyFlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        #ld-pct-pill {
+            margin: 10px auto 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 16px;
+            border-radius: 99px;
+            background: rgba(255,255,255,0.92);
+            color: #2a2035;
+            font-weight: 800;
+            font-size: 14px;
+            font-family: 'Segoe UI', sans-serif;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+        }
+        #ld-status {
+            margin-top: 14px;
+            color: #d8c8ff;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            text-shadow: 0 0 10px rgba(140,100,255,0.5);
+            z-index: 2;
+        }
+        #ld-title {
+            position: relative;
+            z-index: 2;
+            margin-bottom: 18px;
+            font-size: clamp(18px, 4vw, 26px);
+            font-weight: 900;
+            color: #ffd700;
+            text-shadow: 0 0 18px rgba(255,215,0,0.45);
+            letter-spacing: 1px;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* Voxel mascot row (pink + 2 white ghosts) */
+        #ld-mascots {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 18px;
+            margin: 28px 0 22px;
+            z-index: 2;
+            filter: drop-shadow(0 8px 20px rgba(255,120,200,0.25));
+        }
+        .ld-vox {
+            image-rendering: pixelated;
+            display: grid;
+            gap: 0;
+        }
+        .ld-vox .row { display: flex; }
+        .ld-vox .px {
+            width: 10px; height: 10px;
+            flex-shrink: 0;
+        }
+        .ld-vox.pink { transform: scale(1.35); }
+        .ld-vox.ghost { opacity: 0.92; transform: scale(1.15); }
+        .ld-ring {
+            position: absolute;
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,160,220,0.35);
+            box-shadow: 0 0 30px rgba(255,120,200,0.25), inset 0 0 30px rgba(180,100,255,0.15);
+            animation: ldSpin 8s linear infinite;
+            pointer-events: none;
+            z-index: 1;
+        }
+        @keyframes ldSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        #ld-grass {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 18%;
+            background: linear-gradient(180deg, transparent, #1a3a22 30%, #0e2416 100%);
+            pointer-events: none;
+        }
+        #ld-grass::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: repeating-linear-gradient(
+                90deg,
+                transparent 0 14px,
+                rgba(60,140,70,0.35) 14px 18px,
+                transparent 18px 32px
+            );
+            opacity: 0.5;
+        }
+
         </style>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -906,6 +1142,34 @@
 </head>
 
 <body>
+
+    <!-- LOADING SCREEN -->
+    <div id="game-loading">
+        <div class="ld-stars"></div>
+        <div class="ld-planet a"></div>
+        <div class="ld-planet b"></div>
+        <div class="ld-gate"></div>
+        <div class="ld-ring" style="top:42%;left:50%;margin-left:-90px;margin-top:-90px;"></div>
+        <div id="ld-title">MYSTIC TEMPLE 3D</div>
+        <div id="ld-mascots">
+            <!-- left white ghost (simple blocks via inline) -->
+            <div class="ld-vox ghost" aria-hidden="true" id="ld-ghost-l"></div>
+            <div class="ld-vox pink" aria-hidden="true" id="ld-pink"></div>
+            <div class="ld-vox ghost" aria-hidden="true" id="ld-ghost-r"></div>
+        </div>
+        <div id="ld-bar-wrap">
+            <div id="ld-bar-frame">
+                <div id="ld-bar-track">
+                    <div id="ld-bar-fill"></div>
+                </div>
+            </div>
+            <div style="text-align:center;">
+                <div id="ld-pct-pill"><span>❤</span> <span id="ld-pct-num">0</span> / 100</div>
+            </div>
+        </div>
+        <div id="ld-status">Loading</div>
+    </div>
+
 
     <div id="error-no">
         <h1>NO</h1>
@@ -1605,7 +1869,7 @@
     </div>
 
     <div id="mc-cmd-hint">
-        //boss · //hack
+        //boss · //hack · //planets
     </div>
     <div id="boss-command">
         <div class="mc-cmd-row">
@@ -1613,7 +1877,7 @@
             <input
                 id="boss-command-input"
                 type="text"
-                placeholder="//boss · //hack"
+                placeholder="//boss · //hack · //planets"
                 autocomplete="off"
                 spellcheck="false"
             >
@@ -1689,6 +1953,124 @@
 
     <script>
 
+
+        /* =========================
+           LOADING SCREEN CONTROLLER
+        ========================= */
+        (function setupLoadingScreen() {
+            const fill = document.getElementById('ld-bar-fill');
+            const pctNum = document.getElementById('ld-pct-num');
+            const status = document.getElementById('ld-status');
+            const overlay = document.getElementById('game-loading');
+            let progress = 0;
+
+            window.setLoadProgress = function(p, msg) {
+                progress = Math.max(progress, Math.min(100, p));
+                if (fill) fill.style.width = progress + '%';
+                if (pctNum) pctNum.textContent = Math.round(progress);
+                if (msg && status) status.textContent = msg;
+            };
+
+            window.hideGameLoading = function() {
+                window.setLoadProgress(100, 'Loading');
+                if (!overlay) return;
+                setTimeout(function() {
+                    overlay.classList.add('hide');
+                    setTimeout(function() {
+                        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                    }, 600);
+                }, 280);
+            };
+
+            // Build simple voxel mascots (pixel grid)
+            function paintVox(el, grid, palette) {
+                if (!el) return;
+                el.innerHTML = '';
+                grid.forEach(function(row) {
+                    const r = document.createElement('div');
+                    r.className = 'row';
+                    for (let i = 0; i < row.length; i++) {
+                        const c = row[i];
+                        const px = document.createElement('div');
+                        px.className = 'px';
+                        if (c !== '.') {
+                            px.style.background = palette[c] || 'transparent';
+                        } else {
+                            px.style.background = 'transparent';
+                        }
+                        r.appendChild(px);
+                    }
+                    el.appendChild(r);
+                });
+            }
+
+            // Pink hero (similar to image 2)
+            const pinkGrid = [
+                '....YYYYY....',
+                '...YYYYYYY...',
+                '..YYYYYYYYY..',
+                '..RRRRRRRRR..',
+                '.RRWWRRRWWRR.',
+                '.RRBBRRRBBRR.',
+                '.RRRRRRRRRRR.',
+                '.RRRMMRMMRRR.',
+                '.RRRRRRRRRRR.',
+                '..RRBBBBBRR..',
+                '..RBBBBBBBR..',
+                '..RBBBBBBBR..',
+                '..RRRRRRRRR..',
+                '..RR.....RR..',
+                '..RR.....RR..',
+                '..WW.....WW..'
+            ];
+            const pinkPal = {
+                Y: '#f5d76e', R: '#f08090', W: '#ffffff', B: '#111111',
+                M: '#ff6a8a', '.': 'transparent'
+            };
+
+            // White ghost companion
+            const ghostGrid = [
+                '...WWWWW...',
+                '..WWWWWWW..',
+                '.WWWWWWWWW.',
+                '.WWBWWWBWW.',
+                '.WWBWWWBWW.',
+                '.WWWWWWWWW.',
+                '.WWWDDDWWW.',
+                '.WWWWWWWWW.',
+                '.WWWWWWWWW.',
+                '..WWWWWWW..',
+                '..WW...WW..',
+                '..WW...WW..'
+            ];
+            const ghostPal = {
+                W: '#eef4ff', B: '#2a3550', D: '#a8b8d0', '.': 'transparent'
+            };
+
+            paintVox(document.getElementById('ld-pink'), pinkGrid, pinkPal);
+            paintVox(document.getElementById('ld-ghost-l'), ghostGrid, ghostPal);
+            paintVox(document.getElementById('ld-ghost-r'), ghostGrid, ghostPal);
+
+            // Fake smooth progress while scripts boot
+            let fake = 0;
+            const fakeTimer = setInterval(function() {
+                if (progress >= 92) {
+                    clearInterval(fakeTimer);
+                    return;
+                }
+                fake += 1 + Math.random() * 2.2;
+                if (fake > 88) fake = 88;
+                if (fake > progress) {
+                    window.setLoadProgress(fake, 'Loading');
+                }
+            }, 120);
+            window._ldFakeTimer = fakeTimer;
+
+            document.body.classList.add('is-loading');
+            window.setLoadProgress(3, 'Loading');
+        })();
+
+
         let audioCtx = null;
 
         function initAudio() {
@@ -1726,6 +2108,10 @@
 
             if (error)
                 error.style.display = 'flex';
+
+            document.body.classList.remove('is-loading');
+            const ld = document.getElementById('game-loading');
+            if (ld) ld.style.display = 'none';
         }
 
         function playBeepSound() {
@@ -2047,6 +2433,9 @@
         } else {
 
             try {
+
+                if (typeof setLoadProgress === 'function')
+                    setLoadProgress(18, 'Loading');
 
                 let power = 10;
 
@@ -2936,6 +3325,9 @@
                     renderer.domElement
                 );
 
+                if (typeof setLoadProgress === 'function')
+                    setLoadProgress(35, 'Loading');
+
                 // Ánh sáng bầu trời + mặt đất (màu tự nhiên hơn)
                 const hemiLight =
                     new THREE.HemisphereLight(
@@ -3156,7 +3548,10 @@
                     return g;
                 }
 
-                // Max 6 planets — high in sky, far from playable area (no camera clip)
+                // Sky planets DISABLED — quả cầu lớn không xuất hiện gần khu vực chơi (che tầm nhìn)
+                // Bật lại: đặt ENABLE_SKY_PLANETS = true
+                const ENABLE_SKY_PLANETS = false;
+                if (ENABLE_SKY_PLANETS) {
                 // 1) Pink + ring
                 createSkyPlanet({
                     color: 0xf5a0c8, emissive: 0xa03070, size: 14,
@@ -3190,6 +3585,7 @@
                     color: 0xe8c878, emissive: 0x886622, size: 7,
                     x: -200, y: 220, z: -160, hasRing: false, tilt: 0.1, spin: 0.0011
                 });
+                }
 
                                 // Point first planet as skyPlanetGroup for any old refs
                 if (skyPlanets.length) {
@@ -3375,26 +3771,153 @@
                     floorMesh
                 );
 
-                // Soft grass edge strip so the rim feels natural
-                (function addGrassEdgeTufts() {
-                    const tuftMat = new THREE.MeshStandardMaterial({
-                        color: 0x4a9a3a,
-                        roughness: 0.9,
-                        side: THREE.DoubleSide
+                // Thảm cỏ 3D TẮT — bỏ cỏ trong game
+                window._swayGrassData = null;
+                (function addSwayingGrass() {
+                    return; // bỏ cỏ
+
+                    const HALF = 70;
+                    // Cụm cỏ nhỏ 3D — mật độ vừa, xa giảm chi tiết
+                    const LODs = [
+                        { step: 1.1,  minDist: 0,  maxDist: 18, bladesPerCell: 3, sway: true  },
+                        { step: 2.0,  minDist: 16, maxDist: 38, bladesPerCell: 2, sway: false },
+                        { step: 3.4,  minDist: 34, maxDist: 72, bladesPerCell: 1, sway: false }
+                    ];
+
+                    // Cụm nhỏ dạng cone 3D (nhìn mọi góc đều thấy)
+                    const bladeGeo = new THREE.ConeGeometry(0.06, 0.28, 4);
+                    bladeGeo.translate(0, 0.14, 0);
+
+                    const grassMat = new THREE.MeshStandardMaterial({
+                        color: 0x3d8a32,
+                        roughness: 0.92,
+                        metalness: 0.0,
+                        side: THREE.DoubleSide,
+                        depthWrite: true
                     });
-                    for (let i = 0; i < 120; i++) {
-                        const a = Math.random() * Math.PI * 2;
-                        const r = 38 + Math.random() * 28;
-                        const h = 0.25 + Math.random() * 0.55;
-                        const blade = new THREE.Mesh(
-                            new THREE.ConeGeometry(0.08 + Math.random() * 0.06, h, 4),
-                            tuftMat
-                        );
-                        blade.position.set(Math.cos(a) * r, h * 0.4, Math.sin(a) * r);
-                        blade.rotation.z = (Math.random() - 0.5) * 0.35;
-                        blade.rotation.x = (Math.random() - 0.5) * 0.25;
-                        platformGroup.add(blade);
-                    }
+
+                    const colorList = [
+                        new THREE.Color(0x2a6b20),
+                        new THREE.Color(0x348028),
+                        new THREE.Color(0x3d8a32),
+                        new THREE.Color(0x4a9a3a),
+                        new THREE.Color(0x56a844),
+                        new THREE.Color(0x2f7526),
+                        new THREE.Color(0x458c36)
+                    ];
+
+                    const dummy = new THREE.Object3D();
+                    const layers = [];
+
+                    LODs.forEach(function(lod) {
+                        const cols = Math.floor((HALF * 2) / lod.step) + 1;
+                        const maxCount = cols * cols * lod.bladesPerCell;
+                        const mesh = new THREE.InstancedMesh(bladeGeo, grassMat, maxCount);
+                        mesh.castShadow = false;
+                        mesh.receiveShadow = false;
+                        mesh.frustumCulled = true;
+
+                        const posX = new Float32Array(maxCount);
+                        const posZ = new Float32Array(maxCount);
+                        const baseRotY = new Float32Array(maxCount);
+                        const baseRotZ = new Float32Array(maxCount);
+                        const baseRotX = new Float32Array(maxCount);
+                        const scales = new Float32Array(maxCount);
+                        const scaleW = new Float32Array(maxCount);
+                        const phases = new Float32Array(maxCount);
+                        const speeds = new Float32Array(maxCount);
+                        const amts = new Float32Array(maxCount);
+
+                        let idx = 0;
+                        for (let ix = 0; ix < cols; ix++) {
+                            for (let iz = 0; iz < cols; iz++) {
+                                // Lưới sát nhau, jitter rất nhỏ → không còn lỗ trống
+                                const cx = -HALF + ix * lod.step + (Math.random() - 0.5) * lod.step * 0.2;
+                                const cz = -HALF + iz * lod.step + (Math.random() - 0.5) * lod.step * 0.2;
+
+                                for (let b = 0; b < lod.bladesPerCell; b++) {
+                                    // 2–3 lá chồng tại mỗi ô, xoay khác nhau → thành búi kín
+                                    const x = cx + (Math.random() - 0.5) * lod.step * 0.45;
+                                    const z = cz + (Math.random() - 0.5) * lod.step * 0.45;
+                                    const hScale = 0.7 + Math.random() * 0.9;
+                                    const wScale = 0.9 + Math.random() * 0.7;
+                                    const ry = (b / lod.bladesPerCell) * Math.PI + (Math.random() - 0.5) * 0.4;
+                                    const rz = (Math.random() - 0.5) * 0.35;
+                                    const rx = (Math.random() - 0.5) * 0.25;
+
+                                    dummy.position.set(x, 0.01, z);
+                                    dummy.rotation.set(rx, ry, rz);
+                                    dummy.scale.set(wScale, hScale, wScale);
+                                    dummy.updateMatrix();
+                                    mesh.setMatrixAt(idx, dummy.matrix);
+                                    if (mesh.setColorAt) {
+                                        mesh.setColorAt(idx, colorList[Math.floor(Math.random() * colorList.length)]);
+                                    }
+
+                                    posX[idx] = x;
+                                    posZ[idx] = z;
+                                    baseRotY[idx] = ry;
+                                    baseRotZ[idx] = rz;
+                                    baseRotX[idx] = rx;
+                                    scales[idx] = hScale;
+                                    scaleW[idx] = wScale;
+                                    phases[idx] = Math.random() * Math.PI * 2;
+                                    speeds[idx] = 0.8 + Math.random() * 1.2;
+                                    amts[idx] = 0.14 + Math.random() * 0.18;
+                                    idx++;
+                                }
+                            }
+                        }
+                        mesh.count = idx;
+                        mesh.instanceMatrix.needsUpdate = true;
+                        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+                        platformGroup.add(mesh);
+
+                        layers.push({
+                            mesh: mesh,
+                            minDist: lod.minDist,
+                            maxDist: lod.maxDist,
+                            sway: lod.sway,
+                            count: idx,
+                            posX: posX,
+                            posZ: posZ,
+                            baseRotY: baseRotY,
+                            baseRotZ: baseRotZ,
+                            baseRotX: baseRotX,
+                            scales: scales,
+                            scaleW: scaleW,
+                            phases: phases,
+                            speeds: speeds,
+                            amts: amts,
+                            active: new Uint8Array(idx),
+                            lastPx: 9999,
+                            lastPz: 9999
+                        });
+                    });
+
+                    // Ẩn layer không thuộc band quanh origin lúc load
+                    layers.forEach(function(layer) {
+                        const minD2 = layer.minDist * layer.minDist;
+                        const maxD2 = layer.maxDist * layer.maxDist;
+                        for (let i = 0; i < layer.count; i++) {
+                            const d2 = layer.posX[i] * layer.posX[i] + layer.posZ[i] * layer.posZ[i];
+                            const on = d2 >= minD2 && d2 <= maxD2;
+                            layer.active[i] = on ? 1 : 0;
+                            if (!on) {
+                                dummy.position.set(layer.posX[i], -80, layer.posZ[i]);
+                                dummy.scale.set(0, 0, 0);
+                                dummy.updateMatrix();
+                                layer.mesh.setMatrixAt(i, dummy.matrix);
+                            }
+                        }
+                        layer.mesh.instanceMatrix.needsUpdate = true;
+                    });
+
+                    window._swayGrassData = {
+                        layers: layers,
+                        dummy: dummy,
+                        _frame: 0
+                    };
                 })();
 
                 // Visible soil island slab around playable arena (like reference cross-section)
@@ -3845,201 +4368,339 @@
                     );
 
                 /* =========================
-                   GATE
+                   GATE — mystic deluxe (đẹp & ngầu hơn)
                 ========================= */
 
                 const gateGroup =
                     new THREE.Group();
 
-                // Ornate dark-purple stone for mystic gate
+                // Materials
                 const gateStoneMat = new THREE.MeshStandardMaterial({
-                    color: 0x1a0f2e,
-                    roughness: 0.4,
-                    metalness: 0.55,
-                    emissive: 0x2a1050,
-                    emissiveIntensity: 0.35
+                    color: 0x6b3aad,
+                    roughness: 0.38,
+                    metalness: 0.42,
+                    emissive: 0x2a1060,
+                    emissiveIntensity: 0.28
+                });
+                const gateStoneDarkMat = new THREE.MeshStandardMaterial({
+                    color: 0x3a1a6a,
+                    roughness: 0.45,
+                    metalness: 0.35,
+                    emissive: 0x1a0840,
+                    emissiveIntensity: 0.2
                 });
                 const gateGoldMat = new THREE.MeshStandardMaterial({
-                    color: 0xffd700,
-                    roughness: 0.25,
-                    metalness: 0.9,
-                    emissive: 0xaa7700,
-                    emissiveIntensity: 0.45
+                    color: 0xffd24a,
+                    roughness: 0.22,
+                    metalness: 0.95,
+                    emissive: 0xc48800,
+                    emissiveIntensity: 0.55
+                });
+                const gatePinkMat = new THREE.MeshStandardMaterial({
+                    color: 0xff66cc,
+                    roughness: 0.3,
+                    metalness: 0.55,
+                    emissive: 0xaa2288,
+                    emissiveIntensity: 0.65
                 });
                 const gateCyanMat = new THREE.MeshStandardMaterial({
                     color: 0x66e8ff,
-                    roughness: 0.28,
-                    metalness: 0.65,
-                    emissive: 0x2299bb,
-                    emissiveIntensity: 0.55
+                    roughness: 0.25,
+                    metalness: 0.7,
+                    emissive: 0x22aacc,
+                    emissiveIntensity: 0.7
+                });
+                const gatePurpleGlowMat = new THREE.MeshBasicMaterial({
+                    color: 0xc44dff,
+                    transparent: true,
+                    opacity: 0.55,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false,
+                    side: THREE.DoubleSide
                 });
 
                 function makeGatePillar(x) {
                     const g = new THREE.Group();
-                    // Base pedestal
-                    const base = new THREE.Mesh(
-                        new THREE.BoxGeometry(2.2, 0.55, 2.2),
-                        gateStoneMat
-                    );
-                    base.position.y = 0.28;
-                    g.add(base);
-                    // Stepped base
-                    const base2 = new THREE.Mesh(
-                        new THREE.BoxGeometry(1.7, 0.4, 1.7),
-                        gateGoldMat
-                    );
-                    base2.position.y = 0.7;
+
+                    // Wide base plinth (3 steps)
+                    const base1 = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.4, 2.8), gateStoneDarkMat);
+                    base1.position.y = 0.2;
+                    g.add(base1);
+                    const base2 = new THREE.Mesh(new THREE.BoxGeometry(2.3, 0.35, 2.3), gateGoldMat);
+                    base2.position.y = 0.55;
                     g.add(base2);
-                    // Main shaft
-                    const shaft = new THREE.Mesh(
-                        new THREE.BoxGeometry(1.15, 7.2, 1.15),
-                        gateStoneMat
-                    );
-                    shaft.position.y = 4.4;
+                    const base3 = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.3, 1.9), gateStoneMat);
+                    base3.position.y = 0.85;
+                    g.add(base3);
+
+                    // Main shaft — slightly tapered look via stacked boxes
+                    const shaft = new THREE.Mesh(new THREE.BoxGeometry(1.25, 7.6, 1.25), gateStoneMat);
+                    shaft.position.y = 4.9;
+                    shaft.castShadow = true;
                     g.add(shaft);
-                    // Decorative bands
-                    [2.2, 4.4, 6.6].forEach(yy => {
+
+                    // Inner darker inset panel
+                    const inset = new THREE.Mesh(new THREE.BoxGeometry(0.95, 6.8, 0.18), gateStoneDarkMat);
+                    inset.position.set(0, 4.9, 0.58);
+                    g.add(inset);
+                    const insetB = inset.clone();
+                    insetB.position.z = -0.58;
+                    g.add(insetB);
+
+                    // Gold bands + pink accent rings
+                    [1.6, 3.2, 4.9, 6.6, 8.0].forEach(function(yy, i) {
                         const band = new THREE.Mesh(
-                            new THREE.BoxGeometry(1.4, 0.22, 1.4),
-                            gateGoldMat
+                            new THREE.BoxGeometry(1.55, 0.2, 1.55),
+                            i % 2 === 0 ? gateGoldMat : gatePinkMat
                         );
                         band.position.y = yy;
                         g.add(band);
                     });
-                    // Capital
-                    const cap = new THREE.Mesh(
-                        new THREE.BoxGeometry(1.8, 0.5, 1.8),
-                        gateStoneMat
-                    );
-                    cap.position.y = 8.15;
+
+                    // Side wing brackets
+                    [-1, 1].forEach(function(side) {
+                        const wing = new THREE.Mesh(
+                            new THREE.BoxGeometry(0.35, 2.2, 0.9),
+                            gateGoldMat
+                        );
+                        wing.position.set(side * 0.95, 5.2, 0);
+                        g.add(wing);
+                    });
+
+                    // Capital / crown
+                    const cap = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.55, 2.0), gateStoneMat);
+                    cap.position.y = 8.95;
                     g.add(cap);
-                    // Crystal on top
-                    const crystal = new THREE.Mesh(
-                        new THREE.OctahedronGeometry(0.45, 0),
-                        gateCyanMat
-                    );
-                    crystal.position.y = 8.85;
+                    const capGold = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.22, 2.2), gateGoldMat);
+                    capGold.position.y = 9.3;
+                    g.add(capGold);
+
+                    // Crystal spire + glow
+                    const crystal = new THREE.Mesh(new THREE.OctahedronGeometry(0.55, 0), gateCyanMat);
+                    crystal.position.y = 10.05;
                     g.add(crystal);
-                    // Soft glow sphere
+                    const crystal2 = new THREE.Mesh(new THREE.OctahedronGeometry(0.32, 0), gatePinkMat);
+                    crystal2.position.y = 10.65;
+                    g.add(crystal2);
                     const glow = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.7, 12, 12),
+                        new THREE.SphereGeometry(0.95, 14, 12),
                         new THREE.MeshBasicMaterial({
-                            color: 0x88ffff,
+                            color: 0xaa88ff,
                             transparent: true,
-                            opacity: 0.28,
+                            opacity: 0.32,
                             depthWrite: false,
                             blending: THREE.AdditiveBlending
                         })
                     );
-                    glow.position.y = 8.85;
+                    glow.position.y = 10.2;
                     g.add(glow);
+
+                    // Torch flame on outer side
+                    const flame = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.22, 0.7, 6),
+                        new THREE.MeshBasicMaterial({
+                            color: 0xffaa44,
+                            transparent: true,
+                            opacity: 0.85,
+                            blending: THREE.AdditiveBlending,
+                            depthWrite: false
+                        })
+                    );
+                    flame.position.set(x > 0 ? 0.9 : -0.9, 7.4, 0.7);
+                    flame.userData.gateFlame = true;
+                    g.add(flame);
+
                     g.position.set(x, 0, -16);
                     return g;
                 }
 
-                const archPillar1 = makeGatePillar(-5.2);
-                const archPillar2 = makeGatePillar(5.2);
+                const archPillar1 = makeGatePillar(-5.6);
+                const archPillar2 = makeGatePillar(5.6);
 
-                // Arch top beam
+                // Double lintel / arch top
                 const archTop = new THREE.Mesh(
-                    new THREE.BoxGeometry(11.5, 1.1, 1.6),
+                    new THREE.BoxGeometry(12.4, 1.25, 1.85),
                     gateStoneMat
                 );
-                archTop.position.set(0, 8.6, -16);
-                // Gold trim on arch
+                archTop.position.set(0, 9.15, -16);
+                archTop.castShadow = true;
+
                 const archTrim = new THREE.Mesh(
-                    new THREE.BoxGeometry(11.8, 0.28, 1.85),
+                    new THREE.BoxGeometry(12.9, 0.32, 2.1),
                     gateGoldMat
                 );
-                archTrim.position.set(0, 9.25, -16);
-                // Center keystone gem
+                archTrim.position.set(0, 9.9, -16);
+
+                // Upper crown beam
+                const archCrown = new THREE.Mesh(
+                    new THREE.BoxGeometry(10.5, 0.45, 1.4),
+                    gatePinkMat
+                );
+                archCrown.position.set(0, 10.45, -16);
+
+                // Center keystone gem cluster
                 const keystone = new THREE.Mesh(
-                    new THREE.OctahedronGeometry(0.55, 0),
+                    new THREE.OctahedronGeometry(0.7, 0),
                     gateCyanMat
                 );
-                keystone.position.set(0, 9.7, -16);
+                keystone.position.set(0, 10.95, -16);
+                const keyGlow = new THREE.Mesh(
+                    new THREE.SphereGeometry(1.1, 12, 10),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x88ffff,
+                        transparent: true,
+                        opacity: 0.3,
+                        depthWrite: false,
+                        blending: THREE.AdditiveBlending
+                    })
+                );
+                keyGlow.position.copy(keystone.position);
 
-                // Portal energy plane (animated-looking cyan/magenta)
+                // Side arch wings (decorative walls)
+                [-1, 1].forEach(function(side) {
+                    const wing = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.1, 5.5, 0.55),
+                        gateStoneDarkMat
+                    );
+                    wing.position.set(side * 7.0, 4.0, -16);
+                    gateGroup.add(wing);
+                    const wingGold = new THREE.Mesh(
+                        new THREE.BoxGeometry(1.25, 0.2, 0.7),
+                        gateGoldMat
+                    );
+                    wingGold.position.set(side * 7.0, 6.8, -16);
+                    gateGroup.add(wingGold);
+                });
+
+                // Portal energy disc
                 const gateLightMat =
                     new THREE.MeshBasicMaterial({
-                        color: 0x00ffff,
+                        color: 0xff66dd,
                         transparent: true,
-                        opacity: 0.42,
+                        opacity: 0.38,
                         side: THREE.DoubleSide,
                         blending: THREE.AdditiveBlending,
                         depthWrite: false
                     });
                 const gateLight =
                     new THREE.Mesh(
-                        new THREE.PlaneGeometry(8.4, 8.2),
+                        new THREE.CircleGeometry(3.4, 48),
                         gateLightMat
                     );
-                gateLight.position.set(0, 4.2, -15.7);
+                gateLight.position.set(0, 4.6, -15.65);
 
-                // Inner swirling ring
+                // Multi-layer portal rings (spin)
                 const portalRing = new THREE.Mesh(
-                    new THREE.TorusGeometry(3.6, 0.12, 10, 48),
+                    new THREE.TorusGeometry(3.5, 0.12, 10, 56),
                     new THREE.MeshBasicMaterial({
-                        color: 0xff00ff,
+                        color: 0xff66cc,
+                        transparent: true,
+                        opacity: 0.85,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false
+                    })
+                );
+                portalRing.position.set(0, 4.6, -15.5);
+                portalRing.userData.spin = true;
+
+                const portalRing2 = new THREE.Mesh(
+                    new THREE.TorusGeometry(2.9, 0.09, 8, 48),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x44eeff,
                         transparent: true,
                         opacity: 0.75,
                         blending: THREE.AdditiveBlending,
                         depthWrite: false
                     })
                 );
-                portalRing.position.set(0, 4.2, -15.55);
-                portalRing.userData.spin = true;
+                portalRing2.position.set(0, 4.6, -15.45);
+                portalRing2.userData.spin = true;
 
-                const portalRing2 = new THREE.Mesh(
-                    new THREE.TorusGeometry(2.6, 0.08, 8, 40),
+                const portalRing3 = new THREE.Mesh(
+                    new THREE.TorusGeometry(2.2, 0.07, 8, 40),
                     new THREE.MeshBasicMaterial({
-                        color: 0x00ffff,
+                        color: 0xffd700,
                         transparent: true,
-                        opacity: 0.65,
+                        opacity: 0.7,
                         blending: THREE.AdditiveBlending,
                         depthWrite: false
                     })
                 );
-                portalRing2.position.set(0, 4.2, -15.5);
-                portalRing2.userData.spin = true;
+                portalRing3.position.set(0, 4.6, -15.4);
+                portalRing3.userData.spin = true;
+                portalRing3.rotation.x = 0.4;
+
+                // Outer energy halo
+                const portalHalo = new THREE.Mesh(
+                    new THREE.TorusGeometry(4.1, 0.05, 8, 64),
+                    gatePurpleGlowMat
+                );
+                portalHalo.position.set(0, 4.6, -15.55);
+                portalHalo.userData.spin = true;
 
                 // Rune steps leading to gate
-                for (let s = 0; s < 3; s++) {
+                for (let s = 0; s < 4; s++) {
                     const step = new THREE.Mesh(
-                        new THREE.BoxGeometry(7 - s * 0.6, 0.22, 1.2),
+                        new THREE.BoxGeometry(8.5 - s * 0.7, 0.24, 1.15),
                         s % 2 ? gateGoldMat : gateStoneMat
                     );
-                    step.position.set(0, 0.12 + s * 0.22, -13.5 + s * 1.15);
+                    step.position.set(0, 0.12 + s * 0.24, -12.8 + s * 1.05);
+                    step.receiveShadow = true;
                     gateGroup.add(step);
                 }
 
-                // Floating rune orbs beside gate
-                [-6.5, 6.5].forEach((ox, i) => {
+                // Floating rune orbs + crystals beside gate
+                [-7.2, 7.2].forEach(function(ox, i) {
                     const orb = new THREE.Mesh(
-                        new THREE.SphereGeometry(0.28, 10, 10),
+                        new THREE.SphereGeometry(0.32, 12, 12),
                         new THREE.MeshBasicMaterial({
-                            color: i ? 0xffd700 : 0x00ffff,
+                            color: i ? 0xffd700 : 0xff66cc,
                             transparent: true,
-                            opacity: 0.9
+                            opacity: 0.95
                         })
                     );
-                    orb.position.set(ox, 3.5 + i * 0.8, -15.2);
+                    orb.position.set(ox, 3.8 + i * 0.6, -15.0);
                     orb.userData.floatOrb = true;
                     gateGroup.add(orb);
+
+                    const rune = new THREE.Mesh(
+                        new THREE.OctahedronGeometry(0.38, 0),
+                        i ? gateCyanMat : gatePinkMat
+                    );
+                    rune.position.set(ox * 0.85, 6.2, -14.6);
+                    rune.userData.floatOrb = true;
+                    gateGroup.add(rune);
                 });
+
+                // Point lights for dramatic glow
+                const gatePointL = new THREE.PointLight(0xff66cc, 1.4, 22, 2);
+                gatePointL.position.set(-4.5, 6, -14);
+                const gatePointR = new THREE.PointLight(0x66eeff, 1.4, 22, 2);
+                gatePointR.position.set(4.5, 6, -14);
+                const gatePointC = new THREE.PointLight(0xffd700, 0.9, 16, 2);
+                gatePointC.position.set(0, 9.5, -14);
 
                 gateGroup.add(
                     archPillar1,
                     archPillar2,
                     archTop,
                     archTrim,
+                    archCrown,
                     keystone,
+                    keyGlow,
                     gateLight,
                     portalRing,
-                    portalRing2
+                    portalRing2,
+                    portalRing3,
+                    portalHalo,
+                    gatePointL,
+                    gatePointR,
+                    gatePointC
                 );
                 gateGroup.userData.portalRing = portalRing;
                 gateGroup.userData.portalRing2 = portalRing2;
+                gateGroup.userData.portalRing3 = portalRing3;
+                gateGroup.userData.portalHalo = portalHalo;
                 gateGroup.userData.gateLight = gateLight;
 
                 platformGroup.add(
@@ -7159,44 +7820,10 @@
                    và có sừng vũ trụ
                 ========================= */
 
-                const universeBossMonster =
-                    playerGroup.clone(true);
-
-                universeBossMonster.position.set(
-                    0,
-                    0,
-                    -7
-                );
-
-                universeBossMonster.scale.set(
-                    10,
-                    10,
-                    10
-                );
-
-                universeBossMonster.visible =
-                    false;
-
-                universeBossMonster.traverse(
-                    child => {
-
-                        if (child.isMesh && child.material) {
-
-                            if (child.material.color) {
-
-                                child.material =
-                                    child.material.clone();
-
-                                child.material.color.setHex(
-                                    0x221144
-                                );
-
-                            }
-
-                        }
-
-                    }
-                );
+                // Placeholder — sẽ thay bằng cute blocky sau khi có createCuteBlockyCreature
+                let universeBossMonster = new THREE.Group();
+                universeBossMonster.position.set(0, 0, -7);
+                universeBossMonster.visible = false;
 
                 const universeHornMat =
                     new THREE.MeshStandardMaterial({
@@ -8874,6 +9501,83 @@
                         errorBlockyP.armR.shoulder.rotation.x = -0.3 + Math.sin(t * 1.3) * 0.15;
                         errorBlockyP.armL.shoulder.rotation.x = -0.3 - Math.sin(t * 1.3) * 0.15;
                     }
+
+                    // Cỏ full sàn + LOD theo khoảng cách + ẩn ngoài tầm nhìn
+                    const gd = window._swayGrassData;
+                    if (gd && gd.layers && playerGroup) {
+                        gd._frame = (gd._frame || 0) + 1;
+                        const px = playerGroup.position.x;
+                        const pz = playerGroup.position.z;
+                        const wind = t * 1.25;
+                        const dummy = gd.dummy;
+                        // Refresh visibility every 8 frames; sway every 2 frames
+                        const doVis = (gd._frame % 8) === 0;
+                        const doSway = (gd._frame % 2) === 0;
+
+                        for (let L = 0; L < gd.layers.length; L++) {
+                            const layer = gd.layers[L];
+                            const minD2 = layer.minDist * layer.minDist;
+                            const maxD2 = layer.maxDist * layer.maxDist;
+                            const moved = Math.abs(px - layer.lastPx) + Math.abs(pz - layer.lastPz) > 2.5;
+
+                            if (doVis || moved) {
+                                layer.lastPx = px;
+                                layer.lastPz = pz;
+                                let anyOn = false;
+                                for (let i = 0; i < layer.count; i++) {
+                                    const dx = layer.posX[i] - px;
+                                    const dz = layer.posZ[i] - pz;
+                                    const d2 = dx * dx + dz * dz;
+                                    // Band: only show this LOD in its distance ring
+                                    const on = d2 >= minD2 && d2 <= maxD2;
+                                    if (on !== !!layer.active[i]) {
+                                        layer.active[i] = on ? 1 : 0;
+                                        if (on) {
+                                            dummy.position.set(layer.posX[i], 0.01, layer.posZ[i]);
+                                            dummy.rotation.set(
+                                                layer.baseRotX[i],
+                                                layer.baseRotY[i],
+                                                layer.baseRotZ[i]
+                                            );
+                                            dummy.scale.set(layer.scaleW[i], layer.scales[i], layer.scaleW[i]);
+                                        } else {
+                                            dummy.position.set(layer.posX[i], -80, layer.posZ[i]);
+                                            dummy.scale.set(0, 0, 0);
+                                        }
+                                        dummy.updateMatrix();
+                                        layer.mesh.setMatrixAt(i, dummy.matrix);
+                                    }
+                                    if (on) anyOn = true;
+                                }
+                                layer.mesh.instanceMatrix.needsUpdate = true;
+                                layer.mesh.visible = anyOn;
+                            }
+
+                            // Chỉ đung đưa layer gần
+                            if (layer.sway && doSway && layer.mesh.visible) {
+                                for (let i = 0; i < layer.count; i++) {
+                                    if (!layer.active[i]) continue;
+                                    const s = Math.sin(wind * layer.speeds[i] + layer.phases[i]);
+                                    const c = Math.cos(wind * layer.speeds[i] * 0.65 + layer.phases[i] * 1.2);
+                                    const amt = layer.amts[i];
+                                    dummy.position.set(
+                                        layer.posX[i],
+                                        0.01 + Math.abs(s) * 0.012,
+                                        layer.posZ[i]
+                                    );
+                                    dummy.rotation.set(
+                                        layer.baseRotX[i] + c * amt * 0.45,
+                                        layer.baseRotY[i],
+                                        layer.baseRotZ[i] + s * amt
+                                    );
+                                    dummy.scale.set(layer.scaleW[i], layer.scales[i], layer.scaleW[i]);
+                                    dummy.updateMatrix();
+                                    layer.mesh.setMatrixAt(i, dummy.matrix);
+                                }
+                                layer.mesh.instanceMatrix.needsUpdate = true;
+                            }
+                        }
+                    }
                 }
 
                 let dinoNextFireTime = 0;
@@ -9094,11 +9798,351 @@
                 scene.add(atomicBossMonster);
 
                 /* =========================
-                   RED MONSTER
+                   CUTE BLOCKY CREATURE (hình vuông dễ thương)
+                   Dùng cho mob/boss — KHÔNG dùng Error / Glitch / Atomic
+                ========================= */
+                function createCuteBlockyCreature(opts) {
+                    opts = opts || {};
+                    const bodyColor = opts.bodyColor != null ? opts.bodyColor : 0xfff5f8;
+                    const accentColor = opts.accentColor != null ? opts.accentColor : 0xff6ba8;
+                    const cheekColor = opts.cheekColor != null ? opts.cheekColor : 0xffb0c8;
+                    const earColor = opts.earColor != null ? opts.earColor : accentColor;
+                    const scale = opts.scale != null ? opts.scale : 1;
+                    const hasEars = opts.hasEars !== false;
+                    const hasDiamond = opts.hasDiamond !== false;
+
+                    const group = new THREE.Group();
+                    const bodyMat = new THREE.MeshStandardMaterial({
+                        color: bodyColor, roughness: 0.55, metalness: 0.05
+                    });
+                    const accentMat = new THREE.MeshStandardMaterial({
+                        color: accentColor, roughness: 0.45, metalness: 0.08,
+                        emissive: accentColor, emissiveIntensity: 0.15
+                    });
+                    const cheekMat = new THREE.MeshStandardMaterial({
+                        color: cheekColor, roughness: 0.6, metalness: 0
+                    });
+                    const eyeWhiteMat = new THREE.MeshStandardMaterial({
+                        color: 0xffffff, roughness: 0.3, metalness: 0
+                    });
+                    const pupilMat = new THREE.MeshBasicMaterial({ color: 0x1a1020 });
+                    const darkMat = new THREE.MeshStandardMaterial({
+                        color: 0x2a2030, roughness: 0.5, metalness: 0.1
+                    });
+
+                    // Body — big soft cube
+                    const body = new THREE.Mesh(new THREE.BoxGeometry(1.35, 1.25, 1.0), bodyMat);
+                    body.position.y = 1.15;
+                    body.castShadow = true;
+                    group.add(body);
+
+                    // Soft belly patch
+                    const belly = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.95, 0.7, 0.12),
+                        new THREE.MeshStandardMaterial({
+                            color: bodyColor, roughness: 0.5, metalness: 0,
+                            emissive: 0xffffff, emissiveIntensity: 0.08
+                        })
+                    );
+                    belly.position.set(0, 1.05, 0.52);
+                    group.add(belly);
+
+                    // Diamond / heart accent on chest
+                    if (hasDiamond) {
+                        const diamond = new THREE.Mesh(
+                            new THREE.OctahedronGeometry(0.22, 0),
+                            accentMat
+                        );
+                        diamond.position.set(0, 1.35, 0.58);
+                        diamond.rotation.z = Math.PI / 4;
+                        diamond.scale.set(1, 1.15, 0.35);
+                        group.add(diamond);
+                    }
+
+                    // Head — big cube
+                    const head = new THREE.Mesh(new THREE.BoxGeometry(1.45, 1.2, 1.15), bodyMat);
+                    head.position.y = 2.35;
+                    head.castShadow = true;
+                    group.add(head);
+
+                    // Ears / side tufts (like reference)
+                    if (hasEars) {
+                        [-1, 1].forEach(function(side) {
+                            const ear = new THREE.Mesh(
+                                new THREE.BoxGeometry(0.35, 0.55, 0.28),
+                                new THREE.MeshStandardMaterial({
+                                    color: earColor, roughness: 0.5, metalness: 0.05,
+                                    emissive: earColor, emissiveIntensity: 0.12
+                                })
+                            );
+                            ear.position.set(side * 0.72, 2.85, 0);
+                            ear.rotation.z = side * -0.25;
+                            group.add(ear);
+                            // Inner ear
+                            const inner = new THREE.Mesh(
+                                new THREE.BoxGeometry(0.18, 0.28, 0.08),
+                                cheekMat
+                            );
+                            inner.position.set(side * 0.72, 2.82, 0.12);
+                            group.add(inner);
+                        });
+                    }
+
+                    // Cute eyes
+                    function makeEye(x) {
+                        const eg = new THREE.Group();
+                        const white = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.36, 0.12), eyeWhiteMat);
+                        const pupil = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.2, 0.08), pupilMat);
+                        pupil.position.set(0.02, -0.02, 0.08);
+                        const shine = new THREE.Mesh(
+                            new THREE.BoxGeometry(0.07, 0.07, 0.04),
+                            new THREE.MeshBasicMaterial({ color: 0xffffff })
+                        );
+                        shine.position.set(-0.06, 0.08, 0.12);
+                        eg.add(white, pupil, shine);
+                        eg.position.set(x, 2.4, 0.58);
+                        return eg;
+                    }
+                    group.add(makeEye(-0.32), makeEye(0.32));
+
+                    // Cheeks
+                    [-0.52, 0.52].forEach(function(x) {
+                        const cheek = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.14, 0.08), cheekMat);
+                        cheek.position.set(x, 2.15, 0.55);
+                        group.add(cheek);
+                    });
+
+                    // Smile
+                    const smile = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.28, 0.06, 0.06),
+                        darkMat
+                    );
+                    smile.position.set(0, 2.05, 0.58);
+                    group.add(smile);
+
+                    // Arms
+                    function makeArm(side) {
+                        const arm = new THREE.Group();
+                        const upper = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.7, 0.32), bodyMat);
+                        upper.position.y = -0.15;
+                        const hand = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.32, 0.36), bodyMat);
+                        hand.position.y = -0.55;
+                        // Paw pad
+                        const pad = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.22), accentMat);
+                        pad.position.set(0, -0.68, 0.08);
+                        arm.add(upper, hand, pad);
+                        arm.position.set(side * 0.95, 1.45, 0);
+                        arm.userData.isArm = true;
+                        return arm;
+                    }
+                    const armL = makeArm(-1);
+                    const armR = makeArm(1);
+                    group.add(armL, armR);
+                    group.userData.armL = armL;
+                    group.userData.armR = armR;
+
+                    // Legs
+                    function makeLeg(side) {
+                        const leg = new THREE.Group();
+                        const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.55, 0.4), bodyMat);
+                        thigh.position.y = -0.15;
+                        const foot = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.22, 0.5), bodyMat);
+                        foot.position.set(0, -0.48, 0.05);
+                        const sole = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.06, 0.3), accentMat);
+                        sole.position.set(0, -0.58, 0.08);
+                        leg.add(thigh, foot, sole);
+                        leg.position.set(side * 0.38, 0.55, 0);
+                        leg.userData.isRedLeg = true;
+                        return leg;
+                    }
+                    const legL = makeLeg(-1);
+                    const legR = makeLeg(1);
+                    group.add(legL, legR);
+                    group.userData.legL = legL;
+                    group.userData.legR = legR;
+                    group.userData.walkTime = 0;
+                    group.userData.isCuteBlocky = true;
+
+                    group.scale.setScalar(scale);
+                    group.traverse(function(c) {
+                        if (c.isMesh) {
+                            c.castShadow = true;
+                            c.receiveShadow = true;
+                        }
+                    });
+                    return group;
+                }
+
+                /* =========================
+                   RED MONSTER (cute blocky)
                 ========================= */
 
                 function createRedMonster() {
+                    /* Voxel / blocky red mob matching reference image:
+                       square body, head spikes, big square eyes, smile,
+                       peach segmented belly, claw hands, short legs */
+                    const group = new THREE.Group();
 
+                    const redMat = new THREE.MeshStandardMaterial({
+                        color: 0xe8453c, roughness: 0.62, metalness: 0.04
+                    });
+                    const redDarkMat = new THREE.MeshStandardMaterial({
+                        color: 0xc2332b, roughness: 0.65, metalness: 0.05
+                    });
+                    const bellyMat = new THREE.MeshStandardMaterial({
+                        color: 0xf0a070, roughness: 0.55, metalness: 0.02
+                    });
+                    const bellyLightMat = new THREE.MeshStandardMaterial({
+                        color: 0xf8b888, roughness: 0.5, metalness: 0.02
+                    });
+                    const cheekMat = new THREE.MeshStandardMaterial({
+                        color: 0xff8a9a, roughness: 0.55, metalness: 0
+                    });
+                    const eyeWhiteMat = new THREE.MeshStandardMaterial({
+                        color: 0xffffff, roughness: 0.25, metalness: 0
+                    });
+                    const pupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+                    const spikeMat = new THREE.MeshStandardMaterial({
+                        color: 0x8a6a6a, roughness: 0.45, metalness: 0.15
+                    });
+                    const clawMat = new THREE.MeshStandardMaterial({
+                        color: 0xb8b0a8, roughness: 0.4, metalness: 0.25
+                    });
+                    const footMat = new THREE.MeshStandardMaterial({
+                        color: 0x9a9088, roughness: 0.55, metalness: 0.1
+                    });
+                    const mouthMat = new THREE.MeshBasicMaterial({ color: 0x2a1810 });
+
+                    // === BODY (tall red block) ===
+                    const body = new THREE.Mesh(new THREE.BoxGeometry(1.55, 1.55, 1.05), redMat);
+                    body.position.y = 1.55;
+                    group.add(body);
+
+                    // === HEAD (slightly smaller cube on top) ===
+                    const head = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.95, 1.0), redMat);
+                    head.position.y = 2.55;
+                    group.add(head);
+
+                    // === SPIKES on head (4 cones like image) ===
+                    const spikePositions = [
+                        [-0.42, 3.15, -0.15],
+                        [-0.14, 3.22, 0.05],
+                        [0.14, 3.22, 0.05],
+                        [0.42, 3.15, -0.15]
+                    ];
+                    spikePositions.forEach((p, i) => {
+                        const spike = new THREE.Mesh(
+                            new THREE.ConeGeometry(0.12, 0.38 + (i % 2) * 0.06, 5),
+                            spikeMat
+                        );
+                        spike.position.set(p[0], p[1], p[2]);
+                        group.add(spike);
+                    });
+
+                    // === EYES (big white squares + black pupils) ===
+                    [[-0.32, 2.62, 0.52], [0.32, 2.62, 0.52]].forEach((p) => {
+                        const eye = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.36, 0.12), eyeWhiteMat);
+                        eye.position.set(p[0], p[1], p[2]);
+                        group.add(eye);
+                        const pupil = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.18, 0.08), pupilMat);
+                        pupil.position.set(p[0], p[1] - 0.02, p[2] + 0.06);
+                        group.add(pupil);
+                    });
+
+                    // === CHEEKS ===
+                    [[-0.58, 2.35, 0.48], [0.58, 2.35, 0.48]].forEach((p) => {
+                        const cheek = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.1), cheekMat);
+                        cheek.position.set(p[0], p[1], p[2]);
+                        group.add(cheek);
+                    });
+
+                    // === SMILE ===
+                    const smile = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.08, 0.06), mouthMat);
+                    smile.position.set(0, 2.28, 0.54);
+                    group.add(smile);
+                    [[-0.22, 2.32], [0.22, 2.32]].forEach((p) => {
+                        const corner = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 0.06), mouthMat);
+                        corner.position.set(p[0], p[1], 0.54);
+                        group.add(corner);
+                    });
+
+                    // === SEGMENTED PEACH BELLY ===
+                    const bellyGroup = new THREE.Group();
+                    const layers = [
+                        { y: 1.95, w: 0.95, h: 0.22, d: 0.18, mat: bellyLightMat },
+                        { y: 1.72, w: 1.05, h: 0.24, d: 0.20, mat: bellyMat },
+                        { y: 1.48, w: 1.10, h: 0.24, d: 0.22, mat: bellyLightMat },
+                        { y: 1.24, w: 1.05, h: 0.24, d: 0.20, mat: bellyMat },
+                        { y: 1.02, w: 0.90, h: 0.22, d: 0.18, mat: bellyLightMat }
+                    ];
+                    layers.forEach((L) => {
+                        const b = new THREE.Mesh(new THREE.BoxGeometry(L.w, L.h, L.d), L.mat);
+                        b.position.set(0, L.y, 0.55);
+                        bellyGroup.add(b);
+                    });
+                    group.add(bellyGroup);
+
+                    // === ARMS ===
+                    function makeArm(side) {
+                        const arm = new THREE.Group();
+                        const upper = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.72, 0.32), redDarkMat);
+                        upper.position.y = -0.15;
+                        arm.add(upper);
+                        const hand = new THREE.Mesh(new THREE.BoxGeometry(0.36, 0.30, 0.34), redMat);
+                        hand.position.y = -0.58;
+                        arm.add(hand);
+                        for (let t = 0; t < 3; t++) {
+                            const claw = new THREE.Mesh(
+                                new THREE.ConeGeometry(0.045, 0.22, 4),
+                                clawMat
+                            );
+                            claw.position.set((t - 1) * 0.11, -0.82, 0.06);
+                            claw.rotation.x = Math.PI;
+                            arm.add(claw);
+                        }
+                        arm.position.set(side * 0.98, 1.75, 0);
+                        arm.userData.isArm = true;
+                        return arm;
+                    }
+                    const armL = makeArm(-1);
+                    const armR = makeArm(1);
+                    group.add(armL, armR);
+                    group.userData.armL = armL;
+                    group.userData.armR = armR;
+
+                    // === LEGS ===
+                    function makeLeg(side) {
+                        const leg = new THREE.Group();
+                        const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.40, 0.55, 0.42), redDarkMat);
+                        thigh.position.y = -0.12;
+                        leg.add(thigh);
+                        const foot = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.20, 0.52), footMat);
+                        foot.position.set(0, -0.48, 0.06);
+                        leg.add(foot);
+                        leg.position.set(side * 0.36, 0.72, 0);
+                        leg.userData.isRedLeg = true;
+                        return leg;
+                    }
+                    const legL = makeLeg(-1);
+                    const legR = makeLeg(1);
+                    group.add(legL, legR);
+                    group.userData.legL = legL;
+                    group.userData.legR = legR;
+                    group.userData.walkTime = 0;
+                    group.userData.isCuteBlocky = true;
+                    group.userData.isImageRedMob = true;
+
+                    group.scale.setScalar(1.08);
+                    group.traverse(function(c) {
+                        if (c.isMesh) {
+                            c.castShadow = true;
+                            c.receiveShadow = true;
+                        }
+                    });
+                    return group;
+                }
+
+                function __unusedOldRedMonster_DISABLED() {
                     const group = new THREE.Group();
 
                     // === Materials (realistic demonic look) ===
@@ -9356,6 +10400,51 @@
 const redMonster =
                     createRedMonster();
 
+                if (typeof setLoadProgress === 'function')
+                    setLoadProgress(72, 'Loading');
+
+                // Universe / Cosmic boss = cute blocky (sau khi factory đã sẵn sàng)
+                (function rebuildCuteWorldBosses() {
+                    try {
+                        if (universeBossMonster && universeBossMonster.parent)
+                            universeBossMonster.parent.remove(universeBossMonster);
+                    } catch (e) {}
+                    universeBossMonster = createCuteBlockyCreature({
+                        bodyColor: 0x4a2a6a,
+                        accentColor: 0xcc66ff,
+                        cheekColor: 0xaa88cc,
+                        earColor: 0xdd88ff,
+                        scale: 8,
+                        hasEars: true,
+                        hasDiamond: true
+                    });
+                    universeBossMonster.position.set(0, 0, -7);
+                    universeBossMonster.visible = false;
+                    scene.add(universeBossMonster);
+
+                    // cosmicBossMonster is const — refill with cute clone of universe
+                    if (typeof cosmicBossMonster !== 'undefined' && cosmicBossMonster) {
+                        while (cosmicBossMonster.children.length)
+                            cosmicBossMonster.remove(cosmicBossMonster.children[0]);
+                        const cuteCosmic = createCuteBlockyCreature({
+                            bodyColor: 0x2a4a6a,
+                            accentColor: 0x44ccff,
+                            cheekColor: 0x88ccee,
+                            earColor: 0x66ddff,
+                            scale: 1,
+                            hasEars: true,
+                            hasDiamond: true
+                        });
+                        while (cuteCosmic.children.length) {
+                            cosmicBossMonster.add(cuteCosmic.children[0]);
+                        }
+                        cosmicBossMonster.scale.set(8, 8, 8);
+                        cosmicBossMonster.position.set(0, 0, -7);
+                        cosmicBossMonster.visible = false;
+                        cosmicBossMonster.userData.isCuteBlocky = true;
+                    }
+                })();
+
                 // Bảo đảm có ref chân để animate
                 (function ensureRedLegs(m) {
                     if (!m) return;
@@ -9378,9 +10467,8 @@ const redMonster =
                     m.userData.walkPhase = 0;
                 })(redMonster);
 
-                // Base Y ~0.42 so clawed feet sit ON grass (not through soil)
-                // Foot bottom ≈ -0.39 at rest; walk swing can dip ~0.15 → base 0.58 keeps soles on grass
-                const RED_MOB_GROUND_Y = 0.58;
+                // New voxel red mob: foot bottom ~0.15 * scale → group Y near 0
+                const RED_MOB_GROUND_Y = 0.12;
                 redMonster.position.set(
                     0,
                     RED_MOB_GROUND_Y,
@@ -9404,49 +10492,49 @@ const redMonster =
                 const RED_MOB_MAX_HP = 100;
 
                 function makeRedMobHPSprite(hp, maxHp) {
+                    /* HP bar style like reference image: soft mint capsule + heart + 100/100 */
                     const canvas = document.createElement('canvas');
-                    canvas.width = 256;
-                    canvas.height = 64;
+                    canvas.width = 280;
+                    canvas.height = 56;
                     const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, 256, 64);
-                    // background bar
-                    ctx.fillStyle = 'rgba(0,0,0,0.65)';
-                    ctx.fillRect(28, 16, 200, 32);
-                    ctx.strokeStyle = '#ff3344';
+                    ctx.clearRect(0, 0, 280, 56);
+
+                    const x = 20, y = 10, w = 240, h = 36, r = 18;
+                    ctx.beginPath();
+                    ctx.moveTo(x + r, y);
+                    ctx.arcTo(x + w, y, x + w, y + h, r);
+                    ctx.arcTo(x + w, y + h, x, y + h, r);
+                    ctx.arcTo(x, y + h, x, y, r);
+                    ctx.arcTo(x, y, x + w, y, r);
+                    ctx.closePath();
+                    const bgGrad = ctx.createLinearGradient(x, y, x, y + h);
+                    bgGrad.addColorStop(0, 'rgba(180, 230, 210, 0.95)');
+                    bgGrad.addColorStop(1, 'rgba(140, 210, 190, 0.92)');
+                    ctx.fillStyle = bgGrad;
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(80, 160, 140, 0.55)';
                     ctx.lineWidth = 2;
-                    ctx.strokeRect(28, 16, 200, 32);
-                    // HP fill
+                    ctx.stroke();
+
                     const ratio = Math.max(0, Math.min(1, hp / Math.max(1, maxHp)));
-                    const fillW = Math.floor(196 * ratio);
-                    const grad = ctx.createLinearGradient(30, 0, 226, 0);
-                    if (ratio > 0.5) {
-                        grad.addColorStop(0, '#00c896');
-                        grad.addColorStop(1, '#00ffcc');
-                    } else if (ratio > 0.25) {
-                        grad.addColorStop(0, '#d4a017');
-                        grad.addColorStop(1, '#ffcc33');
-                    } else {
-                        grad.addColorStop(0, '#b01020');
-                        grad.addColorStop(1, '#ff3344');
-                    }
-                    ctx.fillStyle = grad;
-                    ctx.fillRect(30, 18, fillW, 28);
-                    // text
                     ctx.font = 'bold 22px Segoe UI, sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
-                    ctx.fillStyle = '#ffffff';
-                    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
-                    ctx.lineWidth = 3;
-                    const label = '❤️ ' + hp + ' / ' + maxHp;
-                    ctx.strokeText(label, 128, 32);
-                    ctx.fillText(label, 128, 32);
+                    ctx.fillStyle = '#2a3a35';
+                    ctx.fillText('❤  ' + hp + ' / ' + maxHp, 140, 28);
+
+                    if (ratio < 0.999) {
+                        ctx.fillStyle = ratio > 0.5 ? 'rgba(0,200,140,0.35)' : (ratio > 0.25 ? 'rgba(255,180,40,0.4)' : 'rgba(255,60,80,0.45)');
+                        const fillW = Math.floor((w - 8) * ratio);
+                        ctx.fillRect(x + 4, y + h - 6, fillW, 3);
+                    }
+
                     const tex = new THREE.CanvasTexture(canvas);
                     tex.needsUpdate = true;
                     const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
                     const spr = new THREE.Sprite(mat);
-                    spr.scale.set(2.8, 0.7, 1);
-                    spr.position.y = 3.6;
+                    spr.scale.set(2.6, 0.52, 1);
+                    spr.position.y = 3.85;
                     return spr;
                 }
 
@@ -9475,28 +10563,33 @@ const redMonster =
                 ========================= */
 
                 const finalBossMonster =
-                    createRedMonster();
+                    createCuteBlockyCreature({
+                        bodyColor: 0xff6b6b,
+                        accentColor: 0xff3355,
+                        cheekColor: 0xffa0a8,
+                        earColor: 0xff4466,
+                        scale: 4.5,
+                        hasEars: true,
+                        hasDiamond: true
+                    });
 
-                finalBossMonster.scale.set(
-                    4.5,
-                    4.5,
-                    4.5
-                );
-
-                finalBossMonster.traverse(
-                    child => {
-                        if (child.isMesh && child.material && child.material.color) {
-                            const hex = child.material.color.getHex();
-                            // Darken flesh tones for giant final boss
-                            if (hex === 0xb91c1c || hex === 0x5c0a0a) {
-                                child.material = child.material.clone();
-                                child.material.color.setHex(0x4a0000);
-                                child.material.emissive = new THREE.Color(0x220000);
-                                child.material.emissiveIntensity = 0.45;
+                // Final boss = cute blocky khổng lồ (tím đen dễ thương)
+                finalBossMonster.traverse(function(child) {
+                    if (child.isMesh && child.material && child.material.color) {
+                        child.material = child.material.clone();
+                        const hex = child.material.color.getHex();
+                        // Body → tím tối cute
+                        if (hex === 0xff6b6b || hex === 0xfff5f8 || hex === 0xffffff) {
+                            child.material.color.setHex(0x6b4a8a);
+                        } else if (hex === 0xff3355 || hex === 0xff4466 || hex === 0xffa0a8) {
+                            child.material.color.setHex(0xff66cc);
+                            if (child.material.emissive) {
+                                child.material.emissive.setHex(0xaa2288);
+                                child.material.emissiveIntensity = 0.35;
                             }
                         }
                     }
-                );
+                });
 
                 finalBossMonster.position.set(
                     0,
@@ -10038,7 +11131,19 @@ const redMonster =
                 ========================= */
 
                 function createOctopusMonster() {
-                    // v1.26 — cute blue blob octopus (matches reference): round body, big eyes, simple tentacles
+                    // Cute blocky blue pet
+                    return createCuteBlockyCreature({
+                        bodyColor: 0x7ec8e8,
+                        accentColor: 0x4a9ec8,
+                        cheekColor: 0xa8e0ff,
+                        earColor: 0x5ab0d8,
+                        scale: 1.15,
+                        hasEars: true,
+                        hasDiamond: true
+                    });
+                }
+
+                function __unusedOldOctopus_DISABLED() {
                     const group = new THREE.Group();
 
                     const bodyMat = new THREE.MeshStandardMaterial({
@@ -10186,6 +11291,19 @@ const octopusMonster =
                 ========================= */
 
                 function createStarterRobotBoss() {
+                    // Cute blocky boss (không phải Error/Glitch/Atomic)
+                    return createCuteBlockyCreature({
+                        bodyColor: 0xe8ecf4,
+                        accentColor: 0x66eaff,
+                        cheekColor: 0xb0e8ff,
+                        earColor: 0x88d0ff,
+                        scale: 1.6,
+                        hasEars: true,
+                        hasDiamond: true
+                    });
+                }
+
+                function __unusedOldRobotBoss_DISABLED() {
                     const group = new THREE.Group();
 
                     const armor = new THREE.MeshStandardMaterial({
@@ -11944,7 +13062,7 @@ const octopusMonster =
 
 
                 function getPlayerCmdHintText() {
-                    return '//boss · //hack';
+                    return '//boss · //hack · //planets';
                 }
 
                 function getAdminCmdHintText() {
@@ -11960,7 +13078,7 @@ const octopusMonster =
                         hint.innerText = secretAdminMode
                             ? getAdminCmdHintText()
                             : getPlayerCmdHintText();
-                        // Luôn hiện gợi ý //boss · //hack ngay khi có thanh lệnh
+                        // Luôn hiện gợi ý //boss · //hack · //planets ngay khi có thanh lệnh
                         if (visible) {
                             hint.classList.add('cmd-hint-visible');
                             hint.style.display = 'block';
@@ -11970,7 +13088,7 @@ const octopusMonster =
                         }
                     }
                     if (visible && input && !input.placeholder)
-                        input.placeholder = '//boss · //hack';
+                        input.placeholder = '//boss · //hack · //planets';
                 }
 
                 function setAdminCommandUI(active) {
@@ -12314,7 +13432,7 @@ const octopusMonster =
                     if (typeof refreshPlayerMaxHP === 'function') refreshPlayerMaxHP();
                     if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
                     if (typeof setAdminCommandUI === 'function') setAdminCommandUI(false);
-                    // Vẫn giữ thanh lệnh cho //boss · //hack
+                    // Vẫn giữ thanh lệnh cho //boss · //hack · //planets
                     if (typeof showBossCommandBar === 'function') showBossCommandBar(true);
                     const hint = document.getElementById('mc-cmd-hint');
                     if (hint) {
@@ -12941,6 +14059,20 @@ const octopusMonster =
                         } else if (cmd === '//boss' || plain === '//boss') {
 
                             openCosmicDinoBossByCommand();
+
+                        } else if (cmd === '//planets' || plain === '//planets' || cmd === '//cau' || plain === '//cau') {
+                            // Bật/tắt quả cầu bầu trời (sky planets)
+                            if (typeof skyPlanets !== 'undefined' && skyPlanets && skyPlanets.length) {
+                                const on = !skyPlanets[0].visible;
+                                skyPlanets.forEach(function(p) { p.visible = on; });
+                                showToast(on
+                                    ? (currentLang === 'vi' ? '🪐 Đã BẬT quả cầu bầu trời' : '🪐 Sky planets ON')
+                                    : (currentLang === 'vi' ? '🚫 Đã TẮT quả cầu bầu trời' : '🚫 Sky planets OFF'));
+                            } else {
+                                showToast(currentLang === 'vi'
+                                    ? '🚫 Quả cầu đã tắt (không spawn)'
+                                    : '🚫 Planets disabled (not spawned)');
+                            }
 
                         } else if (
                             secretAdminMode &&
@@ -18070,19 +19202,35 @@ const octopusMonster =
                     if (typeof gateGroup !== 'undefined' && gateGroup.userData) {
                         const nowG = performance.now() * 0.001;
                         if (gateGroup.userData.portalRing) {
-                            gateGroup.userData.portalRing.rotation.z += 0.02;
-                            const p = 1 + Math.sin(nowG * 2.2) * 0.06;
+                            gateGroup.userData.portalRing.rotation.z += 0.022;
+                            const p = 1 + Math.sin(nowG * 2.2) * 0.07;
                             gateGroup.userData.portalRing.scale.set(p, p, p);
                         }
                         if (gateGroup.userData.portalRing2) {
-                            gateGroup.userData.portalRing2.rotation.z -= 0.028;
+                            gateGroup.userData.portalRing2.rotation.z -= 0.03;
+                            gateGroup.userData.portalRing2.rotation.x = Math.sin(nowG * 0.8) * 0.15;
+                        }
+                        if (gateGroup.userData.portalRing3) {
+                            gateGroup.userData.portalRing3.rotation.z += 0.04;
+                            gateGroup.userData.portalRing3.rotation.y += 0.012;
+                        }
+                        if (gateGroup.userData.portalHalo) {
+                            gateGroup.userData.portalHalo.rotation.z -= 0.015;
+                            const h = 1 + Math.sin(nowG * 1.6) * 0.05;
+                            gateGroup.userData.portalHalo.scale.set(h, h, h);
                         }
                         if (gateGroup.userData.gateLight) {
-                            gateGroup.userData.gateLight.material.opacity = 0.32 + Math.sin(nowG * 3) * 0.18;
+                            gateGroup.userData.gateLight.material.opacity = 0.28 + Math.sin(nowG * 3) * 0.2;
+                            gateGroup.userData.gateLight.rotation.z += 0.008;
                         }
-                        gateGroup.children.forEach(ch => {
+                        gateGroup.traverse(function(ch) {
                             if (ch.userData && ch.userData.floatOrb) {
-                                ch.position.y = 3.5 + Math.sin(nowG * 2 + ch.position.x) * 0.45;
+                                ch.position.y = (ch.userData._baseY || (ch.userData._baseY = ch.position.y)) + Math.sin(nowG * 2.2 + ch.position.x) * 0.4;
+                                ch.rotation.y += 0.025;
+                            }
+                            if (ch.userData && ch.userData.gateFlame) {
+                                ch.scale.y = 0.85 + Math.sin(nowG * 8 + ch.position.x) * 0.25;
+                                ch.material.opacity = 0.7 + Math.sin(nowG * 10) * 0.2;
                             }
                         });
                     }
@@ -19639,6 +20787,14 @@ const octopusMonster =
                 }
 
                 animate();
+
+                // Màn chờ xong → ẩn loading
+                if (typeof hideGameLoading === 'function') {
+                    if (window._ldFakeTimer) try { clearInterval(window._ldFakeTimer); } catch(e) {}
+                    window.setLoadProgress(100, 'Loading');
+                    document.body.classList.remove('is-loading');
+                    hideGameLoading();
+                }
 
                 /* =========================
                    RESIZE
