@@ -4259,7 +4259,7 @@
                         );
 
                     hair.position.y = 2.45;
-                    hair.visible = false; // mặc định không tóc
+                    hair.visible = true;
 
                     const eyeMat =
                         new THREE.MeshBasicMaterial({
@@ -9315,7 +9315,7 @@
                     blockyPlayer = buildBlockyCharacter(
                         female ? girlMats : blockyMats,
                         female ? girlFaceTexture : playerFaceTexture,
-                        false, // skin mặc định: không tóc
+                        true, // có tóc như bình thường
                         female
                     );
                     playerGroup.add(blockyPlayer);
@@ -11828,6 +11828,7 @@ const octopusMonster =
                     ) {
 
                         inventory.legendary++;
+                        if (typeof autoEquipBestSword === 'function') autoEquipBestSword();
 
                         showToast(
                             currentLang === 'vi'
@@ -11843,6 +11844,7 @@ const octopusMonster =
                     ) {
 
                         inventory.epic++;
+                        if (typeof autoEquipBestSword === 'function') autoEquipBestSword();
 
                         showToast(
                             currentLang === 'vi'
@@ -11856,6 +11858,7 @@ const octopusMonster =
                     ) {
 
                         inventory.rare++;
+                        if (typeof autoEquipBestSword === 'function') autoEquipBestSword();
 
                         showToast(
                             currentLang === 'vi'
@@ -11869,6 +11872,7 @@ const octopusMonster =
                     ) {
 
                         inventory.common++;
+                        if (typeof autoEquipBestSword === 'function') autoEquipBestSword();
 
                         showToast(
                             currentLang === 'vi'
@@ -12290,6 +12294,9 @@ const octopusMonster =
 
                         equippedItemType =
                             type;
+                        // Người chơi chủ động đeo → giữ lựa chọn đến khi có kiếm tốt hơn
+                        preferManualEquip = true;
+                        manualEquipType = type;
 
                         updatePlayerSwordVisual();
 
@@ -12322,7 +12329,97 @@ const octopusMonster =
                         saveCurrentAccount();
                     };
 
+                
                 /* =========================
+                   TỰ ĐEO KIẾM TỐT NHẤT
+                   (tránh quên đeo; nếu tự chọn kém hơn
+                   thì giữ đến khi có kiếm tốt hơn)
+                ========================= */
+                let preferManualEquip = false;
+                let manualEquipType = null;
+
+                const SWORD_RANK = {
+                    common: 1, rare: 2, epic: 3, legendary: 4,
+                    god: 5, hack: 6, glitch: 7, error: 7, electron: 8
+                };
+
+                function getBestOwnedSwordType() {
+                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword) return 'electron';
+                    if (typeof hasGlitchSword !== 'undefined' && hasGlitchSword) return 'glitch';
+                    if (typeof hasHackSword !== 'undefined' && hasHackSword) return 'hack';
+                    if (typeof hasGoDSword !== 'undefined' && hasGoDSword) return 'god';
+                    if (inventory && inventory.legendary > 0) return 'legendary';
+                    if (inventory && inventory.epic > 0) return 'epic';
+                    if (inventory && inventory.rare > 0) return 'rare';
+                    if (inventory && inventory.common > 0) return 'common';
+                    return null;
+                }
+
+                function applyEquippedSwordUI(type) {
+                    try {
+                        const vs = document.getElementById('val-sword');
+                        const te = document.getElementById('txt-equipped');
+                        const names = {
+                            common: 'Common', rare: 'Rare', epic: 'Epic', legendary: 'Legendary',
+                            god: 'GoD', hack: 'Hack', glitch: 'Glitch', error: 'Error', electron: 'Electron'
+                        };
+                        const dmgs = {
+                            common: 10, rare: 50, epic: 250, legendary: 1000,
+                            god: 9999, hack: '∞', glitch: 'E', error: 'E', electron: '⚡'
+                        };
+                        const colors = {
+                            common: '#aaa', rare: '#0088ff', epic: '#a335ee', legendary: '#ffd700',
+                            god: '#ffd700', hack: '#00ffff', glitch: '#ff3355', error: '#ff3355', electron: '#44ccff'
+                        };
+                        if (vs && type) {
+                            vs.innerText = (names[type] || type) + (dmgs[type] != null ? ' (+' + dmgs[type] + ')' : '');
+                            vs.style.color = colors[type] || '#fff';
+                        }
+                        if (te && type) {
+                            if (type === 'god' || type === 'hack' || type === 'glitch' || type === 'error' || type === 'electron')
+                                te.innerText = (names[type] || type);
+                            else
+                                te.innerText = type.toUpperCase() + ' (Lv.' + ((itemLevels && itemLevels[type]) || 1) + ')';
+                        }
+                        if (typeof drawEquippedSwordIcon === 'function') drawEquippedSwordIcon();
+                        if (typeof updatePlayerSwordVisual === 'function') updatePlayerSwordVisual();
+                        if (typeof refreshPlayerMaxHP === 'function') refreshPlayerMaxHP();
+                    } catch (e) {}
+                }
+
+                function autoEquipBestSword(opts) {
+                    opts = opts || {};
+                    const best = getBestOwnedSwordType();
+                    if (!best) return;
+
+                    // Người chơi chọn kiếm kém hơn → giữ đến khi có cái tốt hơn
+                    if (!opts.force && preferManualEquip && manualEquipType) {
+                        const br = SWORD_RANK[best] || 0;
+                        const mr = SWORD_RANK[manualEquipType] || 0;
+                        if (br <= mr) return;
+                        // có kiếm tốt hơn → bỏ khóa manual
+                        preferManualEquip = false;
+                        manualEquipType = null;
+                    }
+
+                    // Special swords: flags already active; just set type for UI
+                    if (best === 'electron' || best === 'glitch' || best === 'error' || best === 'hack' || best === 'god') {
+                        equippedItemType = best;
+                        applyEquippedSwordUI(best);
+                        return;
+                    }
+
+                    if (!inventory || inventory[best] <= 0) return;
+                    if (equippedItemType === best && !opts.force) {
+                        applyEquippedSwordUI(best);
+                        return;
+                    }
+                    equippedItemType = best;
+                    applyEquippedSwordUI(best);
+                }
+                window.autoEquipBestSword = autoEquipBestSword;
+
+/* =========================
                    FUSE GOD SWORD
                    4 x Legendary Lv.2 -> GoD Sword 9999 DMG
                 ========================= */
@@ -19756,9 +19853,9 @@ const octopusMonster =
                         keys['a'] ||
                         keys['arrowleft']
                     ) {
-
-                        moveDX -= rightX;
-                        moveDZ -= rightZ;
+                        // Đảo A/D theo cảm giác góc nhìn
+                        moveDX += rightX;
+                        moveDZ += rightZ;
 
                         isMoving = true;
                     }
@@ -19768,8 +19865,8 @@ const octopusMonster =
                         keys['arrowright']
                     ) {
 
-                        moveDX += rightX;
-                        moveDZ += rightZ;
+                        moveDX -= rightX;
+                        moveDZ -= rightZ;
 
                         isMoving = true;
                     }
@@ -21365,6 +21462,7 @@ const octopusMonster =
 
                 applyLanguageToUI();
 
+                if (typeof autoEquipBestSword === 'function') autoEquipBestSword({ force: true });
                 if (typeof tryLoadKingFromStorage === 'function') tryLoadKingFromStorage();
                 if (typeof refreshKingUI === 'function') refreshKingUI();
 
