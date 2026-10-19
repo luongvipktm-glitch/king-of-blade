@@ -1356,7 +1356,7 @@
             <span id="val-kills">0</span> / 999
         </div>
 
-        <div class="stat-box" id="loop-box">
+        <div class="stat-box" id="loop-box" style="display:none !important;">
             🔄
             <span class="lang-txt" data-vi="VÒNG CHƠI" data-en="LOOP">
                 VÒNG CHƠI
@@ -1408,7 +1408,7 @@
             id="boss-title"
             style="font-size:12px;margin-bottom:3px;font-weight:bold;color:#ff4d4d;"
         >
-            BOSS MA VƯƠNG (2.000.000 HP)
+            DEMON BOSS (5,000,000 HP)
         </div>
 
         <div id="boss-hp-track">
@@ -1416,7 +1416,7 @@
         </div>
 
         <div id="boss-hp-text" style="font-size:12px;margin-top:6px;font-weight:700;color:#ffe0e4;letter-spacing:0.3px;">
-            2000000 / 2000000
+            5000000 / 5000000
         </div>
         <div id="boss-hp-percent" style="font-size:11px;margin-top:3px;color:#ffd700;font-weight:600;opacity:0.95;">
             Đã tiêu diệt: 0%
@@ -2805,15 +2805,18 @@
                 let rainbowHaloGroup = null;
                 let glitchCodeFloor = null;
 
-                let gameStage = 1;
+                let gameStage = 0; // 0 = hub đảo
+                let hubWorldGroup = null;
+                let hubUnlockIndex = 0; // 0 = temple mở
+                let hubPortalCooldownUntil = 0;
 
                 let redMonsterHP = 100;
 
                 let octopusHP = 3000;
 
-                let currentBossMaxHP = 2000000;
+                let currentBossMaxHP = 5000000;
 
-                let bossHP = 2000000;
+                let bossHP = 5000000;
 
                 let isGameEnded = false;
 
@@ -2946,7 +2949,7 @@
                 let errorNextChaseCheckTime = 0;
                 let errorLaser = null;
                 let errorLaserActive = false;
-                let errorLaserSpeed = 0.45;
+                let errorLaserSpeed = 0.45 * 0.3; // chậm hơn ×0.3
                 let errorLaserHitLock = false;
                 let errorReverseForm = false;
                 let errorReverseTexture = null;
@@ -3152,6 +3155,65 @@
                 }
 
                 let isDeathAnimPlaying = false;
+                let deathActionLocked = false;
+
+                function isPlayerActionLocked() {
+                    return !!(deathActionLocked || isDeathAnimPlaying);
+                }
+
+                function showDeathContinueScreen(seconds, opts) {
+                    opts = opts || {};
+                    deathActionLocked = true;
+                    isDeathAnimPlaying = true;
+                    if (playerGroup) playerGroup.visible = false;
+                    try {
+                        if (typeof keys === 'object' && keys) {
+                            Object.keys(keys).forEach(function(k) { keys[k] = false; });
+                        }
+                    } catch (e) {}
+
+                    let wait = document.getElementById('death-continue-wait');
+                    if (!wait) {
+                        wait = document.createElement('div');
+                        wait.id = 'death-continue-wait';
+                        wait.style.cssText = 'position:fixed;inset:0;z-index:200000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.92);color:#ff3344;font-family:Impact,Segoe UI,sans-serif;text-align:center;pointer-events:all;';
+                        document.body.appendChild(wait);
+                    }
+                    let left = Math.max(1, Math.floor(seconds || 1));
+                    wait.style.display = 'flex';
+                    const subtitle = opts.subtitle || '💀 ...';
+
+                    function paintWait() {
+                        wait.innerHTML =
+                            '<div style="font-size:clamp(42px,10vw,110px);font-weight:900;letter-spacing:4px;text-shadow:0 0 28px #ff0033,4px 0 #0ff,-4px 0 #f0f;">WAIT</div>' +
+                            '<div style="font-size:clamp(64px,14vw,160px);font-weight:900;color:#fff;margin-top:8px;text-shadow:0 0 20px #ff4466;">' + left + '</div>' +
+                            '<div style="margin-top:18px;font-size:15px;color:#ff8899;font-family:Segoe UI,sans-serif;">' + subtitle + '</div>';
+                    }
+                    paintWait();
+
+                    // Tự hồi sinh sau countdown — không cần bấm Sẵn sàng
+                    const tick = setInterval(function() {
+                        left -= 1;
+                        if (left > 0) {
+                            paintWait();
+                        } else {
+                            clearInterval(tick);
+                            wait.style.display = 'none';
+                            if (typeof opts.onContinue === 'function') {
+                                opts.onContinue();
+                            } else {
+                                if (playerGroup) {
+                                    playerGroup.visible = true;
+                                    playerGroup.position.y = 0;
+                                }
+                                if (typeof playerMaxHP === 'number') playerHP = playerMaxHP;
+                                if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+                                deathActionLocked = false;
+                                isDeathAnimPlaying = false;
+                            }
+                        }
+                    }, 1000);
+                }
 
                 function playDeathDismemberAndRespawn() {
                     if (isDeathAnimPlaying || !playerGroup) {
@@ -3226,17 +3288,34 @@
                                     }
                                 });
                             });
-                            playerGroup.visible = true;
-                            playerGroup.position.y = 0;
-                            playerHP = playerMaxHP;
-                            updatePlayerHPUI();
-                            isDeathAnimPlaying = false;
-                            showToast(
-                                currentLang === 'vi'
-                                ? '💥 BẠN GỤC! Tách bộ phận · Hồi sinh · -10% POWER'
-                                : '💥 YOU DIED! Body split · Respawn · -10% POWER'
-                            );
-                            if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
+                            const isGlitchDeath = (typeof gameStage !== 'undefined' && gameStage === 11 &&
+                                typeof errorGlitchPhase !== 'undefined' && errorGlitchPhase);
+                            const waitSec = isGlitchDeath ? 3 : 1;
+                            showDeathContinueScreen(waitSec, {
+                                subtitle: currentLang === 'vi'
+                                    ? (isGlitchDeath
+                                        ? '💀 Chết ở Glitch · -10% POWER · Chờ 3s...'
+                                        : '💀 Bạn gục · -10% POWER · Chờ 1s...')
+                                    : (isGlitchDeath
+                                        ? '💀 Died in Glitch · -10% POWER · Wait 3s...'
+                                        : '💀 You died · -10% POWER · Wait 1s...'),
+                                onContinue: function() {
+                                    if (playerGroup) {
+                                        playerGroup.visible = true;
+                                        playerGroup.position.y = 0;
+                                    }
+                                    playerHP = playerMaxHP;
+                                    updatePlayerHPUI();
+                                    deathActionLocked = false;
+                                    isDeathAnimPlaying = false;
+                                    showToast(
+                                        currentLang === 'vi'
+                                        ? '💚 Hồi sinh đầy máu'
+                                        : '💚 Full HP restored'
+                                    );
+                                    if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
+                                }
+                            });
                         }
                     }
                     requestAnimationFrame(animDeath);
@@ -4180,6 +4259,7 @@
                         );
 
                     hair.position.y = 2.45;
+                    hair.visible = false; // mặc định không tóc
 
                     const eyeMat =
                         new THREE.MeshBasicMaterial({
@@ -9235,7 +9315,7 @@
                     blockyPlayer = buildBlockyCharacter(
                         female ? girlMats : blockyMats,
                         female ? girlFaceTexture : playerFaceTexture,
-                        true,
+                        false, // skin mặc định: không tóc
                         female
                     );
                     playerGroup.add(blockyPlayer);
@@ -10521,7 +10601,7 @@ const redMonster =
                 let redMobPatrolDir = 1;
                 let redMobNextTurn = 0;
                 let redMobWanderTarget = new THREE.Vector3(0, 0, -4);
-                const RED_MOB_SPEED = 0.085;
+                const RED_MOB_SPEED = 0.24; // nhanh hơn (~x2.8) — đuổi kịp player
                 const RED_MOB_CHASE_RANGE = 28;
                 const RED_MOB_PATROL_HALF = 55;
 
@@ -12440,22 +12520,12 @@ const octopusMonster =
 
                     playGoDFusionSound();
 
-                    document.getElementById(
-                        'victory-screen'
-                    ).style.display =
-                        'flex';
-
-                    document.getElementById(
-                        'win-title'
-                    ).innerText =
-                        "BOSS";
-
-                    document.getElementById(
-                        'win-desc'
-                    ).innerText =
+                    // Không khóa màn WIN dài — chỉ toast (tự nhận danh hiệu)
+                    showToast(
                         currentLang === 'vi'
-                        ? `👑 BẠN ĐÃ HẠ ĐỦ 999 [BOSS] CUỐI VÀ NHẬN DANH HIỆU [BOSS]! ✨`
-                        : `👑 YOU DEFEATED 999 FINAL [BOSS] AND EARNED THE [BOSS] TITLE! ✨`;
+                        ? `👑 ĐÃ NHẬN DANH HIỆU [BOSS]!`
+                        : `👑 [BOSS] TITLE CLAIMED!`
+                    );
 
                     bossTitleSprite.material.map =
                         createBossTitleSprite().material.map;
@@ -12777,13 +12847,24 @@ const octopusMonster =
 
                 playerGroup.visible = false;
 
+                function setPlayerModelVisibleForCamera() {
+                    const show = !isFirstPerson;
+                    if (playerGroup) playerGroup.visible = show;
+                    if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
+                        blockyPlayer.visible = show;
+                }
+
+
                 function toggleCameraView() {
                     isFirstPerson = !isFirstPerson;
+                    // FP: ẩn hết model (không thấy tóc/thân). TP: hiện lại
                     playerGroup.visible = !isFirstPerson;
+                    if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
+                        blockyPlayer.visible = !isFirstPerson;
                     showToast(
                         currentLang === 'vi'
-                        ? (isFirstPerson ? '👁️ Góc nhìn thứ nhất' : '👤 Góc nhìn thứ ba')
-                        : (isFirstPerson ? '👁️ First-person view' : '👤 Third-person view')
+                        ? (isFirstPerson ? '👁️ Góc nhìn từ mắt (không thấy thân)' : '👤 Góc nhìn thứ ba')
+                        : (isFirstPerson ? '👁️ Eye view (body hidden)' : '👤 Third-person view')
                     );
                 }
 
@@ -13280,7 +13361,7 @@ const octopusMonster =
                         gameStage = 4;
                         if (bar) bar.style.display = 'none';
                         killed = true;
-                        toastKill('BOSS MA VƯƠNG');
+                        toastKill(currentLang === 'vi' ? 'BOSS MA VƯƠNG' : 'DEMON BOSS');
                     } else if (killStage === 5 || finalBossActive) {
                         finalBossHP = 0;
                         finalBossKillCount = FINAL_BOSS_KILLS_NEEDED;
@@ -14339,6 +14420,11 @@ const octopusMonster =
 
                         }
 
+                        if (k === 'e') {
+                            if (typeof tryEnterHubPortalFromKey === 'function')
+                                tryEnterHubPortalFromKey();
+                        }
+
                         if (k === 'p') {
                             showToast(
                                 currentLang === 'vi'
@@ -14381,10 +14467,10 @@ const octopusMonster =
                             if (
                                 distToGateForBoss < 3.5 &&
                                 gameStage === 4 &&
-                                gameLoop >= 2 &&
                                 !hasBossTitle &&
                                 !finalBossActive
                             ) {
+                                // LOOP đã tắt — không cần gameLoop >= 2
 
                                 finalBossActive = true;
 
@@ -14893,6 +14979,7 @@ const octopusMonster =
                 }
 
                 function performAttack(isAfk) {
+                    if (typeof isPlayerActionLocked === 'function' && isPlayerActionLocked()) return;
 
                         if (
                             isGameEnded ||
@@ -15036,7 +15123,8 @@ const octopusMonster =
                                         ? "🌟 ĐÃ ĐẠT 999 MẠNG! CỔNG ĐÃ MỞ!"
                                         : "🌟 REACHED 999 KILLS! GATE OPEN!"
                                     );
-                                    gateLightMat.color.setHex(0xffd700);
+                                    if (typeof gateLightMat !== 'undefined' && gateLightMat)
+                                        gateLightMat.color.setHex(0xffd700);
                                 }
                             }
 
@@ -15165,17 +15253,18 @@ const octopusMonster =
                                 ).style.display =
                                     'none';
 
-                                gameStage = 4;
-
+                                // Mở khóa Final Boss trên hub
+                                hubUnlockIndex = Math.max(hubUnlockIndex, 1);
                                 showToast(
                                     currentLang === 'vi'
-                                    ? "👑 BOSS ĐÃ GỤC! HÃY BƯỚC QUA CỔNG!"
-                                    : "👑 BOSS DEFEATED! WALK THROUGH GATE!"
+                                    ? "👑 BOSS MA VƯƠNG ĐÃ GỤC! Về đảo trung tâm chọn thế giới tiếp!"
+                                    : "👑 DEMON BOSS DEFEATED! Return to hub for the next world!"
                                 );
-
-                                gateLightMat.color.setHex(
-                                    0xffffff
-                                );
+                                if (typeof returnToHubWorld === 'function') returnToHubWorld();
+                                else {
+                                    gameStage = 4;
+                                    gateLightMat.color.setHex(0xffffff);
+                                }
 
                             }
 
@@ -15284,13 +15373,16 @@ const octopusMonster =
                                 setBossArenaSkybox(false);
 
                                 readyForGoDTitle = true;
-
+                                // Tự nhận danh hiệu [BOSS] — không cần bấm G
+                                if (typeof claimGoDTitle === 'function') claimGoDTitle();
+                                else hasBossTitle = true;
+                                hubUnlockIndex = Math.max(hubUnlockIndex, 2); // mở supreme
                                 showToast(
                                     currentLang === 'vi'
-                                    ? `👑 ĐÃ HẠ ĐỦ ${FINAL_BOSS_KILLS_NEEDED} [BOSS] CUỐI! BẤM [G] ĐỂ NHẬN DANH HIỆU [BOSS]!`
-                                    : `👑 DEFEATED ${FINAL_BOSS_KILLS_NEEDED} FINAL [BOSS]! PRESS [G] TO CLAIM THE [BOSS] TITLE!`
+                                    ? `👑 ĐÃ HẠ ĐỦ ${FINAL_BOSS_KILLS_NEEDED} [BOSS] CUỐI! TỰ NHẬN DANH HIỆU [BOSS]!`
+                                    : `👑 DEFEATED ${FINAL_BOSS_KILLS_NEEDED} FINAL [BOSS]! [BOSS] TITLE AUTO-CLAIMED!`
                                 );
-
+                                if (typeof returnToHubWorld === 'function') returnToHubWorld();
                                 saveCurrentAccount();
 
                             } else {
@@ -16195,7 +16287,7 @@ const octopusMonster =
                         return;
                     }
                     ensureErrorEyeLasers();
-                    errorEyeLaserAngle += 0.085; // quay rất nhanh — khó né
+                    errorEyeLaserAngle += 0.085 * 0.3; // quay chậm hơn ×0.3
 
                     const origin = errorBossMonster.position.clone();
                     origin.y = 0.35; // sát đất
@@ -16280,33 +16372,26 @@ const octopusMonster =
                             wait.style.cssText = 'position:fixed;inset:0;z-index:200000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.94);color:#ff3344;font-family:Impact,Segoe UI,sans-serif;text-align:center;pointer-events:all;';
                             document.body.appendChild(wait);
                         }
-                        let left = 3;
-                        wait.style.display = 'flex';
-                        function paintWait() {
-                            wait.innerHTML =
-                                '<div style="font-size:clamp(42px,10vw,110px);font-weight:900;letter-spacing:4px;text-shadow:0 0 28px #ff0033,4px 0 #0ff,-4px 0 #f0f;">WAIT</div>' +
-                                '<div style="font-size:clamp(64px,14vw,160px);font-weight:900;color:#fff;margin-top:8px;text-shadow:0 0 20px #ff4466;">' + left + '</div>' +
-                                '<div style="margin-top:18px;font-size:16px;color:#ff8899;font-family:Segoe UI,sans-serif;">💀 Laser hit · -10% POWER · Respawn...</div>';
-                        }
-                        paintWait();
-                        const tick = setInterval(function() {
-                            left -= 1;
-                            if (left > 0) paintWait();
-                            else {
-                                clearInterval(tick);
-                                wait.style.display = 'none';
+                        deathActionLocked = true;
+                        wait.style.display = 'none';
+                        showDeathContinueScreen(3, {
+                            subtitle: currentLang === 'vi'
+                                ? '💀 Laser Error trúng · -10% POWER · Chờ 3s...'
+                                : '💀 Error laser hit · -10% POWER · Wait 3s...',
+                            onContinue: function() {
                                 if (playerGroup) {
                                     playerGroup.visible = true;
                                     playerGroup.position.y = 0;
-                                    // Đẩy ra xa boss một chút cho dễ đứng dậy
                                     playerGroup.position.x = (Math.random() - 0.5) * 20;
                                     playerGroup.position.z = 28 + Math.random() * 8;
                                 }
                                 playerHP = (typeof playerMaxHP === 'number') ? playerMaxHP : 1000000;
                                 if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
-                                if (typeof isDeathAnimPlaying !== 'undefined') isDeathAnimPlaying = false;
+                                deathActionLocked = false;
+                                isDeathAnimPlaying = false;
+                                if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
                             }
-                        }, 1000);
+                        });
                     }
                 }
 
@@ -17957,7 +18042,7 @@ const octopusMonster =
                         ).innerText =
                             gameLoop >= 2
                             ? `BOSS MA VƯƠNG (5.000.000 HP)`
-                            : `BOSS MA VƯƠNG (2.000.000 HP)`;
+                            : `DEMON BOSS (5,000,000 HP)`;
 
                         const hpPercent =
                             Math.max(
@@ -19595,6 +19680,16 @@ const octopusMonster =
                         wasJumping = false;
                     }
 
+                    if (typeof isPlayerActionLocked === 'function' && isPlayerActionLocked()) {
+                        try {
+                            if (keys) {
+                                keys['w']=keys['a']=keys['s']=keys['d']=false;
+                                keys['arrowup']=keys['arrowdown']=keys['arrowleft']=keys['arrowright']=false;
+                                keys[' ']=keys['space']=keys['shift']=false;
+                            }
+                        } catch (e) {}
+                    }
+
                     const baseMoveSpeed = 0.54; // x1.5 faster than previous 0.36 (was 0.12→0.36→0.54)
                     const stageMul =
                         (gameStage === 7 || gameStage === 8 || gameStage === 9)
@@ -20151,6 +20246,8 @@ const octopusMonster =
                        GATE
                     ========================= */
 
+                    if (typeof updateHubPortalTrigger === 'function') updateHubPortalTrigger();
+
                     const distToGate =
                         Math.hypot(
                             playerGroup.position.x,
@@ -20225,9 +20322,9 @@ const octopusMonster =
                         ) {
 
                             if (
-                                gameLoop === 1
+                                false && gameLoop === 1
                             ) {
-
+                                // LOOP ĐÃ TẮT — không reset vòng chơi
                                 gameLoop = 2;
 
                                 power *= 3;
@@ -20263,7 +20360,7 @@ const octopusMonster =
                                 document.getElementById(
                                     'boss-title'
                                 ).innerText =
-                                    `BOSS MA VƯƠNG (5.000.000 HP)`;
+                                    (currentLang === 'vi' ? 'BOSS MA VƯƠNG (5.000.000 HP)' : 'DEMON BOSS (5,000,000 HP)');
 
                                 document.getElementById(
                                     'boss-hp-inner'
@@ -20453,17 +20550,23 @@ const octopusMonster =
                     ========================= */
 
                     if (isFirstPerson) {
-                        // First-person: eye height, free pitch (no coupling to orbit angle)
-                        const eyeX = playerGroup.position.x;
-                        const eyeY = Math.max(0.6, playerGroup.position.y) + 1.65;
-                        const eyeZ = playerGroup.position.z;
-                        const pitch = cameraPitch; // -1.35 .. 1.35
-                        const lookDistance = 12;
+                        // Góc nhìn từ mắt: ẩn toàn bộ model (tóc/thân) — chỉ nhìn thế giới
+                        playerGroup.visible = false;
+                        if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
+                            blockyPlayer.visible = false;
+
+                        const pitch = cameraPitch;
+                        const lookDistance = 16;
                         const cosP = Math.cos(pitch);
                         const sinP = Math.sin(pitch);
-                        // Direction player is facing (yaw)
                         const dirX = -Math.sin(cameraAngleX);
                         const dirZ = -Math.cos(cameraAngleX);
+                        // Chiều cao mắt (~đầu), đẩy nhẹ ra trước để không clip mesh
+                        const eyeH = 1.52;
+                        const fwd = 0.22;
+                        const eyeX = playerGroup.position.x + dirX * fwd;
+                        const eyeY = Math.max(0.5, playerGroup.position.y) + eyeH;
+                        const eyeZ = playerGroup.position.z + dirZ * fwd;
 
                         camera.position.set(eyeX, eyeY, eyeZ);
                         camera.lookAt(
@@ -20471,11 +20574,14 @@ const octopusMonster =
                             eyeY + sinP * lookDistance,
                             eyeZ + dirZ * cosP * lookDistance
                         );
-                        // Keep near plane safe
-                        camera.near = 0.08;
+                        camera.near = 0.05;
                         camera.far = 5000;
                         camera.updateProjectionMatrix();
                     } else {
+                        playerGroup.visible = true;
+                        if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
+                            blockyPlayer.visible = true;
+
                         const elev = cameraAngleY;
                         const horizontalDistance =
                             cameraDistance * Math.cos(elev);
@@ -20769,7 +20875,7 @@ const octopusMonster =
                             let bossDmg = 0;
 
                             if (gameStage === 2)
-                                bossDmg = 10000000;
+                                bossDmg = 500000; // bạch tuộc: 500k dmg
 
                             else if (gameStage === 5)
                                 bossDmg = 100000000;
@@ -20888,7 +20994,332 @@ const octopusMonster =
                     );
                 }
 
+
+                /* =========================
+                   HUB WORLD — đảo chọn thế giới
+                   Bắt đầu ở giữa đảo, mũi tên chỉ
+                   thế giới đã mở; thế giới cao = khóa
+                ========================= */
+                const HUB_WORLDS = [
+                    { id: 'temple',  nameVi: 'Mob đỏ & Ma Vương', nameEn: 'Red Mob & Demon Boss', stage: 1, color: 0xff4466 },
+                    { id: 'final',   nameVi: 'Boss Cuối',         nameEn: 'Final Boss',           stage: 5, color: 0xffd700 },
+                    { id: 'supreme', nameVi: 'Đại Boss Tối Thượng', nameEn: 'Ultimate Boss',       stage: 6, color: 0xaa66ff },
+                    { id: 'universe',nameVi: 'Vũ trụ',            nameEn: 'Universe',             stage: 7, color: 0xff00ff },
+                    { id: 'cosmic',  nameVi: 'Cosmic',            nameEn: 'Cosmic',               stage: 8, color: 0x44ccff },
+                    { id: 'atomic',  nameVi: 'Nguyên tử',         nameEn: 'Atomic',               stage: 9, color: 0x00ff66 },
+                    { id: 'error',   nameVi: 'Error / Glitch',    nameEn: 'Error / Glitch',       stage: 11, color: 0xff2233 },
+                    { id: 'electron',nameVi: 'Electron',          nameEn: 'Electron',             stage: 12, color: 0x008cff }
+                ];
+
+                function buildHubWorld() {
+                    if (hubWorldGroup) {
+                        scene.remove(hubWorldGroup);
+                        hubWorldGroup = null;
+                    }
+                    hubWorldGroup = new THREE.Group();
+                    hubWorldGroup.name = 'hubWorld';
+
+                    // Đảo trung tâm
+                    const islandMat = new THREE.MeshStandardMaterial({
+                        color: 0x3d8a4a, roughness: 0.85, metalness: 0.05
+                    });
+                    const rockMat = new THREE.MeshStandardMaterial({
+                        color: 0x6a6a78, roughness: 0.7, metalness: 0.15
+                    });
+                    const goldMat = new THREE.MeshStandardMaterial({
+                        color: 0xffd700, roughness: 0.3, metalness: 0.85, emissive: 0xaa8800, emissiveIntensity: 0.35
+                    });
+
+                    const island = new THREE.Mesh(new THREE.CylinderGeometry(28, 32, 4, 32), islandMat);
+                    island.position.y = -2;
+                    island.receiveShadow = true;
+                    hubWorldGroup.add(island);
+
+                    // Lâu đài trung tâm (khối đơn giản)
+                    const castle = new THREE.Group();
+                    const keep = new THREE.Mesh(new THREE.BoxGeometry(8, 10, 8), new THREE.MeshStandardMaterial({ color: 0xb8c4d8, metalness: 0.3, roughness: 0.45 }));
+                    keep.position.y = 5;
+                    castle.add(keep);
+                    const dome = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 12), goldMat);
+                    dome.position.y = 11.5;
+                    castle.add(dome);
+                    [[-5, -5], [5, -5], [-5, 5], [5, 5]].forEach(function(p) {
+                        const t = new THREE.Mesh(new THREE.BoxGeometry(2.2, 7, 2.2), new THREE.MeshStandardMaterial({ color: 0x9aabc4 }));
+                        t.position.set(p[0], 3.5, p[1]);
+                        castle.add(t);
+                        const cap = new THREE.Mesh(new THREE.ConeGeometry(1.4, 2.2, 8), goldMat);
+                        cap.position.set(p[0], 8.2, p[1]);
+                        castle.add(cap);
+                    });
+                    hubWorldGroup.add(castle);
+
+                    // Cổng/portal quanh đảo
+                    const n = HUB_WORLDS.length;
+                    HUB_WORLDS.forEach(function(w, i) {
+                        const ang = (i / n) * Math.PI * 2 - Math.PI / 2;
+                        const r = 18;
+                        const px = Math.cos(ang) * r;
+                        const pz = Math.sin(ang) * r;
+                        const pad = new THREE.Group();
+                        pad.position.set(px, 0.15, pz);
+                        pad.userData.hubWorldIndex = i;
+                        pad.userData.hubWorldId = w.id;
+
+                        const disc = new THREE.Mesh(
+                            new THREE.CylinderGeometry(2.4, 2.6, 0.35, 20),
+                            new THREE.MeshStandardMaterial({
+                                color: w.color, emissive: w.color, emissiveIntensity: 0.35,
+                                metalness: 0.4, roughness: 0.4
+                            })
+                        );
+                        pad.add(disc);
+
+                        const ring = new THREE.Mesh(
+                            new THREE.TorusGeometry(2.7, 0.12, 8, 32),
+                            new THREE.MeshBasicMaterial({ color: w.color, transparent: true, opacity: 0.7 })
+                        );
+                        ring.rotation.x = Math.PI / 2;
+                        ring.position.y = 0.4;
+                        pad.add(ring);
+
+                        // Mũi tên chỉ vào portal (chỉ hiện nếu đã mở khóa)
+                        const arrow = new THREE.Mesh(
+                            new THREE.ConeGeometry(0.55, 1.4, 6),
+                            new THREE.MeshBasicMaterial({ color: 0xffee66 })
+                        );
+                        arrow.rotation.x = Math.PI;
+                        arrow.position.y = 3.2;
+                        arrow.userData.hubArrow = true;
+                        pad.add(arrow);
+
+                        // Cột khóa
+                        const lock = new THREE.Mesh(
+                            new THREE.BoxGeometry(1.2, 2.2, 1.2),
+                            new THREE.MeshStandardMaterial({ color: 0x333344, metalness: 0.5, roughness: 0.5 })
+                        );
+                        lock.position.y = 1.3;
+                        lock.userData.hubLock = true;
+                        pad.add(lock);
+
+                        // Label sprite
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 256; canvas.height = 64;
+                        const ctx = canvas.getContext('2d');
+                        function drawLabel(locked) {
+                            ctx.clearRect(0, 0, 256, 64);
+                            ctx.fillStyle = locked ? 'rgba(40,20,30,0.85)' : 'rgba(10,20,40,0.88)';
+                            ctx.fillRect(8, 8, 240, 48);
+                            ctx.strokeStyle = locked ? '#886688' : '#ffd700';
+                            ctx.lineWidth = 3;
+                            ctx.strokeRect(8, 8, 240, 48);
+                            ctx.font = 'bold 18px Segoe UI,sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.fillStyle = locked ? '#aaa' : '#ffe566';
+                            const nm = (typeof currentLang !== 'undefined' && currentLang === 'en') ? w.nameEn : w.nameVi;
+                            ctx.fillText((locked ? '🔒 ' : '➤ ') + nm, 128, 38);
+                        }
+                        drawLabel(i > hubUnlockIndex);
+                        const tex = new THREE.CanvasTexture(canvas);
+                        const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+                        spr.scale.set(5, 1.25, 1);
+                        spr.position.y = 4.5;
+                        spr.userData.hubLabel = true;
+                        spr.userData.drawLabel = drawLabel;
+                        spr.userData.tex = tex;
+                        pad.add(spr);
+
+                        hubWorldGroup.add(pad);
+                    });
+
+                    hubWorldGroup.visible = false;
+                    scene.add(hubWorldGroup);
+                    refreshHubLocks();
+                }
+
+                function refreshHubLocks() {
+                    if (!hubWorldGroup) return;
+                    hubWorldGroup.children.forEach(function(pad) {
+                        if (pad.userData.hubWorldIndex == null) return;
+                        const i = pad.userData.hubWorldIndex;
+                        const unlocked = i <= hubUnlockIndex;
+                        pad.children.forEach(function(ch) {
+                            if (ch.userData.hubArrow) ch.visible = unlocked;
+                            if (ch.userData.hubLock) ch.visible = !unlocked;
+                            if (ch.userData.hubLabel && ch.userData.drawLabel) {
+                                ch.userData.drawLabel(!unlocked);
+                                if (ch.userData.tex) ch.userData.tex.needsUpdate = true;
+                            }
+                        });
+                    });
+                }
+
+                function returnToHubWorld() {
+                    gameStage = 0;
+                    if (typeof setExpandedWorld === 'function') setExpandedWorld(0);
+                    if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(false);
+                    if (typeof platformGroup !== 'undefined' && platformGroup) platformGroup.visible = false;
+                    if (typeof enforceStageMobVisibility === 'function') enforceStageMobVisibility(0);
+                    // Ẩn boss bars
+                    const bar = document.getElementById('boss-hp-bar');
+                    if (bar) bar.style.display = 'none';
+                    ['gate-msg','final-boss-msg','supreme-boss-msg','universe-world-msg','atomic-boss-msg','electron-world-msg'].forEach(function(id) {
+                        const el = document.getElementById(id);
+                        if (el) el.style.display = 'none';
+                    });
+                    if (!hubWorldGroup) buildHubWorld();
+                    hubWorldGroup.visible = true;
+                    refreshHubLocks();
+                    if (playerGroup) {
+                        playerGroup.position.set(0, 0, 8);
+                        playerGroup.visible = !isFirstPerson;
+                        if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
+                            blockyPlayer.visible = !isFirstPerson;
+                    }
+                    if (typeof scene !== 'undefined' && scene) {
+                        scene.background = new THREE.Color(0x050218);
+                        if (scene.fog) scene.fog = null;
+                    }
+                    showToast(
+                        currentLang === 'vi'
+                        ? '🏝️ Đảo trung tâm — đi vào portal có mũi tên để chọn thế giới!'
+                        : '🏝️ Hub island — walk into the arrow portal to choose a world!'
+                    );
+                    if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
+                }
+
+                function enterHubWorldByIndex(idx) {
+                    if (idx > hubUnlockIndex) {
+                        showToast(currentLang === 'vi' ? '🔒 Thế giới này chưa mở khóa!' : '🔒 This world is locked!');
+                        return;
+                    }
+                    const w = HUB_WORLDS[idx];
+                    if (!w) return;
+                    if (hubWorldGroup) hubWorldGroup.visible = false;
+                    if (typeof platformGroup !== 'undefined' && platformGroup) platformGroup.visible = true;
+
+                    if (w.id === 'temple') {
+                        gameStage = 1;
+                        if (typeof setExpandedWorld === 'function') setExpandedWorld(1);
+                        if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(false);
+                        if (typeof redMonster !== 'undefined' && redMonster) {
+                            redMonster.visible = true;
+                            redMonsterCurrentHP = typeof RED_MOB_MAX_HP === 'number' ? RED_MOB_MAX_HP : 100;
+                            if (typeof updateRedMobHPSprite === 'function') updateRedMobHPSprite();
+                        }
+                        if (typeof bossMonster !== 'undefined' && bossMonster) bossMonster.visible = false;
+                        if (typeof octopusMonster !== 'undefined' && octopusMonster) octopusMonster.visible = false;
+                        if (playerGroup) playerGroup.position.set(0, 0, 6);
+                        showToast(currentLang === 'vi' ? '⚔️ Thế giới Temple — hạ mob đỏ!' : '⚔️ Temple world — defeat the red mob!');
+                    } else if (w.id === 'final') {
+                        finalBossActive = true;
+                        gameStage = 5;
+                        if (typeof setExpandedWorld === 'function') setExpandedWorld(5);
+                        if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(true);
+                        if (platformGroup) platformGroup.visible = false;
+                        finalBossHP = finalBossMaxHP;
+                        if (finalBossMonster) {
+                            finalBossMonster.visible = true;
+                            finalBossMonster.position.set(0, 0, -6);
+                        }
+                        if (playerGroup) playerGroup.position.set(0, 0, 6);
+                        const bar = document.getElementById('boss-hp-bar');
+                        if (bar) bar.style.display = 'block';
+                        const bt = document.getElementById('boss-title');
+                        if (bt) bt.innerText = currentLang === 'vi'
+                            ? `👑 [BOSS] CUỐI (Đã hạ: ${finalBossKillCount}/${FINAL_BOSS_KILLS_NEEDED})`
+                            : `👑 FINAL [BOSS] (Defeated: ${finalBossKillCount}/${FINAL_BOSS_KILLS_NEEDED})`;
+                        showToast(currentLang === 'vi' ? '🔥 Boss Cuối xuất hiện!' : '🔥 Final Boss appeared!');
+                    } else if (w.id === 'supreme') {
+                        // Simulate D key path for supreme
+                        supremeBossActive = true;
+                        gameStage = 6;
+                        if (typeof setExpandedWorld === 'function') setExpandedWorld(6);
+                        if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(true);
+                        if (platformGroup) platformGroup.visible = false;
+                        supremeBossHP = supremeBossMaxHP;
+                        if (finalBossMonster) {
+                            finalBossMonster.visible = true;
+                            finalBossMonster.scale.set(7, 7, 7);
+                            finalBossMonster.position.set(0, 0, -6);
+                        }
+                        if (playerGroup) playerGroup.position.set(0, 0, 6);
+                        const bar = document.getElementById('boss-hp-bar');
+                        if (bar) bar.style.display = 'block';
+                        showToast(currentLang === 'vi' ? '🌌 Đại Boss Tối Thượng!' : '🌌 Ultimate Boss!');
+                    } else {
+                        // Generic: set stage and try expanded world
+                        gameStage = w.stage;
+                        if (typeof setExpandedWorld === 'function') setExpandedWorld(w.stage);
+                        if (playerGroup) playerGroup.position.set(0, 0, 8);
+                        showToast((currentLang === 'vi' ? '➤ Vào: ' : '➤ Enter: ') + (currentLang === 'vi' ? w.nameVi : w.nameEn));
+                    }
+                    if (typeof enforceStageMobVisibility === 'function') enforceStageMobVisibility(gameStage);
+                    if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
+                }
+
+                // Vào portal hub khi đứng gần + bấm E hoặc tự vào
+                function updateHubPortalTrigger() {
+                    // Chỉ hiện gợi ý gần portal — vào bằng phím E (tránh đơ / vào lặp)
+                    if (gameStage !== 0 || !hubWorldGroup || !playerGroup) return;
+                    if (typeof window._hubHintEl === 'undefined') {
+                        const el = document.createElement('div');
+                        el.id = 'hub-enter-hint';
+                        el.style.cssText = 'position:fixed;bottom:22%;left:50%;transform:translateX(-50%);z-index:50;display:none;padding:10px 18px;border-radius:12px;background:rgba(10,5,30,0.9);border:2px solid #ffd700;color:#ffe566;font-weight:800;font-size:14px;pointer-events:none;';
+                        document.body.appendChild(el);
+                        window._hubHintEl = el;
+                    }
+                    const hint = window._hubHintEl;
+                    let nearest = null, nearestD = 3.5;
+                    hubWorldGroup.children.forEach(function(pad) {
+                        if (pad.userData.hubWorldIndex == null) return;
+                        const dx = pad.position.x - playerGroup.position.x;
+                        const dz = pad.position.z - playerGroup.position.z;
+                        const d = Math.hypot(dx, dz);
+                        if (d < nearestD) { nearestD = d; nearest = pad; }
+                    });
+                    if (nearest) {
+                        const idx = nearest.userData.hubWorldIndex;
+                        const unlocked = idx <= hubUnlockIndex;
+                        const w = HUB_WORLDS[idx];
+                        const nm = (currentLang === 'en') ? (w && w.nameEn) : (w && w.nameVi);
+                        hint.style.display = 'block';
+                        hint.innerText = unlocked
+                            ? ((currentLang === 'vi' ? '➤ [E] Vào: ' : '➤ [E] Enter: ') + (nm || ''))
+                            : ((currentLang === 'vi' ? '🔒 Chưa mở: ' : '🔒 Locked: ') + (nm || ''));
+                        window._hubNearIndex = idx;
+                        window._hubNearUnlocked = unlocked;
+                    } else {
+                        hint.style.display = 'none';
+                        window._hubNearIndex = null;
+                        window._hubNearUnlocked = false;
+                    }
+                }
+
+                function tryEnterHubPortalFromKey() {
+                    if (gameStage !== 0) return;
+                    if (performance.now() < hubPortalCooldownUntil) return;
+                    const idx = window._hubNearIndex;
+                    if (idx == null) return;
+                    if (!window._hubNearUnlocked) {
+                        showToast(currentLang === 'vi' ? '🔒 Thế giới này chưa mở khóa!' : '🔒 World locked!');
+                        return;
+                    }
+                    hubPortalCooldownUntil = performance.now() + 2000;
+                    enterHubWorldByIndex(idx);
+                }
+
+                // Build hub after scene ready
+                try { buildHubWorld(); } catch (e) { console.error('hub build', e); }
+
+
                 animate();
+
+                // Vào hub sau khi frame đầu render xong (tránh đơ lúc load)
+                setTimeout(function() {
+                    try {
+                        if (typeof returnToHubWorld === 'function') returnToHubWorld();
+                    } catch (e) { console.error('hub start', e); }
+                }, 400);
 
                 // Màn chờ xong → ẩn loading
                 if (typeof hideGameLoading === 'function') {
