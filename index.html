@@ -272,7 +272,10 @@
             box-shadow: 0 0 10px rgba(255,50,50,0.7);
         }
 
-        #final-boss-msg {
+        #final-boss-msg, #supreme-boss-msg, #universe-world-msg, #atomic-boss-msg, #electron-world-msg, #gate-msg {
+            display: none !important;
+        }
+        #final-boss-msg-unused {
             position: absolute;
             bottom: 80px;
             left: 50%;
@@ -2004,47 +2007,53 @@
                 });
             }
 
-            // Pink hero (similar to image 2)
+            // Cute pixel mascots (loading) — giống hình: hồng tóc vàng + 2 ghost trắng
             const pinkGrid = [
-                '....YYYYY....',
-                '...YYYYYYY...',
-                '..YYYYYYYYY..',
-                '..RRRRRRRRR..',
-                '.RRWWRRRWWRR.',
-                '.RRBBRRRBBRR.',
-                '.RRRRRRRRRRR.',
-                '.RRRMMRMMRRR.',
-                '.RRRRRRRRRRR.',
-                '..RRBBBBBRR..',
-                '..RBBBBBBBR..',
-                '..RBBBBBBBR..',
-                '..RRRRRRRRR..',
-                '..RR.....RR..',
-                '..RR.....RR..',
-                '..WW.....WW..'
+                '.....YYYYY.....',
+                '....YYYYYYY....',
+                '...YYYYYYYYY...',
+                '...YYPPPPPYY...',
+                '..YPPPPPPPPPY..',
+                '..PPWPPPPPWP...',
+                '..PPPPPPPPPP...',
+                '..PPMMMMMMMP...',
+                '..PPMMMMMMMP...',
+                '..PPPPPPPPPP...',
+                '...PPCPPPCPP...',
+                '...PPPPPPPPP...',
+                '....PPPPPPP....',
+                '....FP.....FP...',
+                '....FF.....FF...'
             ];
+            // Y=tóc vàng  P=da hồng  W=mắt trắng  M=miệng đen  C=má  F=giày trắng
             const pinkPal = {
-                Y: '#f5d76e', R: '#f08090', W: '#ffffff', B: '#111111',
-                M: '#ff6a8a', '.': 'transparent'
+                Y: '#f5d76e',
+                P: '#ff9b8a',
+                W: '#ffffff',
+                M: '#2a1520',
+                C: '#ff6b8a',
+                F: '#f5f5f5',
+                '.': 'transparent'
             };
 
-            // White ghost companion
             const ghostGrid = [
-                '...WWWWW...',
-                '..WWWWWWW..',
-                '.WWWWWWWWW.',
-                '.WWBWWWBWW.',
-                '.WWBWWWBWW.',
-                '.WWWWWWWWW.',
-                '.WWWDDDWWW.',
-                '.WWWWWWWWW.',
-                '.WWWWWWWWW.',
-                '..WWWWWWW..',
-                '..WW...WW..',
-                '..WW...WW..'
+                '....WWWWW....',
+                '...WWWWWWW...',
+                '..WWWWWWWWW..',
+                '..WDDWWWDWW..',
+                '..WWWWWWWWW..',
+                '..WWWGGGWWW..',
+                '..WWWWWWWWW..',
+                '...WWWWWWW...',
+                '...WW.W.WW...',
+                '...W...W.W...'
             ];
+            // W=trắng  D=mắt  G=miệng
             const ghostPal = {
-                W: '#eef4ff', B: '#2a3550', D: '#a8b8d0', '.': 'transparent'
+                W: '#f2f6ff',
+                D: '#5a6a88',
+                G: '#7a8aaa',
+                '.': 'transparent'
             };
 
             paintVox(document.getElementById('ld-pink'), pinkGrid, pinkPal);
@@ -2520,7 +2529,7 @@
 
                 let gameLoop = 1;
 
-                let currentLang = (function(){ try { return localStorage.getItem('mystic_lang') || 'vi'; } catch(e) { return 'vi'; } })();
+                let currentLang = (function(){ try { return localStorage.getItem('mystic_lang') || 'en'; } catch(e) { return 'en'; } })();
 
                 let hasGoDSword = false;
 
@@ -6155,6 +6164,10 @@
                 function enforceStageMobVisibility(stage) {
                     const s = (typeof stage === 'number') ? stage : gameStage;
                     try {
+                        // Cổng tím CHỈ thế giới mob đỏ / bạch tuộc / Ma Vương (1–3)
+                        if (typeof gateGroup !== 'undefined' && gateGroup) {
+                            gateGroup.visible = (s === 1 || s === 2 || s === 3);
+                        }
                         if (typeof redMonster !== 'undefined' && redMonster)
                             redMonster.visible = (s === 1);
                         // Mob xanh CHỈ ở stage 2 — tuyệt đối không hiện trong world boss (3+)
@@ -10542,6 +10555,22 @@ const redMonster =
                     });
                     universeBossMonster.position.set(0, 0, -7);
                     universeBossMonster.visible = false;
+                    // Màu xanh nước biển
+                    universeBossMonster.traverse(function(child) {
+                        if (child.isMesh && child.material && child.material.color) {
+                            child.material = child.material.clone();
+                            const hex = child.material.color.getHex();
+                            if (hex === 0xff6b6b || hex === 0xfff5f8 || hex === 0xffffff || hex === 0xffb6c1) {
+                                child.material.color.setHex(0x1e90ff);
+                            } else {
+                                child.material.color.setHex(0x00bfff);
+                                if (child.material.emissive) {
+                                    child.material.emissive.setHex(0x0077aa);
+                                    child.material.emissiveIntensity = 0.35;
+                                }
+                            }
+                        }
+                    });
                     scene.add(universeBossMonster);
 
                     // cosmicBossMonster is const — refill with cute clone of universe
@@ -10700,15 +10729,17 @@ const redMonster =
                     if (child.isMesh && child.material && child.material.color) {
                         child.material = child.material.clone();
                         const hex = child.material.color.getHex();
-                        // Body → tím tối cute
+                        // Body → tím rõ
                         if (hex === 0xff6b6b || hex === 0xfff5f8 || hex === 0xffffff) {
-                            child.material.color.setHex(0x6b4a8a);
+                            child.material.color.setHex(0x7b3fe4);
                         } else if (hex === 0xff3355 || hex === 0xff4466 || hex === 0xffa0a8) {
-                            child.material.color.setHex(0xff66cc);
+                            child.material.color.setHex(0xaa66ff);
                             if (child.material.emissive) {
-                                child.material.emissive.setHex(0xaa2288);
-                                child.material.emissiveIntensity = 0.35;
+                                child.material.emissive.setHex(0x6622cc);
+                                child.material.emissiveIntensity = 0.45;
                             }
+                        } else {
+                            child.material.color.setHex(0x8b5cf6);
                         }
                     }
                 });
@@ -13133,9 +13164,9 @@ const octopusMonster =
                         if (cmdInput && document.activeElement === cmdInput) {
                             cmdInput.blur();
                         }
-                        // Một lần ESC → luôn hiện bảng update
-                        if (typeof showUpdatePanel === 'function') showUpdatePanel();
-                        else if (typeof toggleUpdatePanel === 'function') toggleUpdatePanel();
+                        // ESC không mở bảng update nữa
+                        const up = document.getElementById('update-panel');
+                        if (up) up.classList.remove('show');
                     }
                 }, true);
 
@@ -13290,25 +13321,29 @@ const octopusMonster =
                 }
 
                 function showBossCommandBar(visible) {
+                    // Chỉ admin mới thấy thanh lệnh
                     const box = document.getElementById('boss-command');
                     const hint = document.getElementById('mc-cmd-hint');
                     const input = document.getElementById('boss-command-input');
-                    if (box) box.style.display = visible ? 'block' : 'none';
+                    const show = !!(visible && secretAdminMode);
+                    if (box) {
+                        box.style.display = show ? 'block' : 'none';
+                        if (show) box.classList.add('admin-mode');
+                        else box.classList.remove('admin-mode');
+                    }
                     if (hint) {
-                        hint.innerText = secretAdminMode
-                            ? getAdminCmdHintText()
-                            : getPlayerCmdHintText();
-                        // Luôn hiện gợi ý //boss · //hack · //planets ngay khi có thanh lệnh
-                        if (visible) {
+                        if (show) {
+                            hint.innerText = getAdminCmdHintText();
                             hint.classList.add('cmd-hint-visible');
+                            hint.classList.add('admin-visible');
                             hint.style.display = 'block';
                         } else {
                             hint.classList.remove('cmd-hint-visible');
+                            hint.classList.remove('admin-visible');
                             hint.style.display = 'none';
                         }
                     }
-                    if (visible && input && !input.placeholder)
-                        input.placeholder = '//boss · //hack · //planets';
+                    if (show && input) input.placeholder = '//command';
                 }
 
                 function setAdminCommandUI(active) {
@@ -13692,15 +13727,7 @@ const octopusMonster =
                 }
 
                 function showUpdatePanel() {
-                    const panel = document.getElementById('update-panel');
-                    if (!panel) return;
-                    // refresh lang text inside panel
-                    panel.querySelectorAll('.lang-txt').forEach(el => {
-                        const v = el.getAttribute('data-' + currentLang);
-                        if (v) el.innerText = v;
-                    });
-                    panel.classList.add('show');
-                    panel.style.display = 'flex';
+                    return; // disabled permanently
                 }
 
                 function hideUpdatePanel() {
@@ -14231,21 +14258,15 @@ const octopusMonster =
                 }
 
                 function toggleUpdatePanel() {
-                    const panel = document.getElementById('update-panel');
-                    if (!panel) return;
-                    if (panel.classList.contains('show') || panel.style.display === 'flex') {
-                        hideUpdatePanel();
-                    } else {
-                        showUpdatePanel();
-                    }
+                    return; // disabled permanently
                 }
 
-                                const bossCommandInput =
+                const bossCommandInput =
                     document.getElementById(
                         'boss-command-input'
                     );
 
-                bossCommandInput.addEventListener(
+                if (bossCommandInput) bossCommandInput.addEventListener(
                     'keydown',
                     e => {
 
@@ -14523,12 +14544,7 @@ const octopusMonster =
                         }
 
                         if (k === 'p') {
-                            showToast(
-                                currentLang === 'vi'
-                                ? '🧿 Version 1.26 — Thế giới đẹp hơn: cây thật · cỏ đá · boss rõ. ESC = changelog'
-                                : '🧿 Version 1.26 — More beautiful world: real trees · grass rocks · clearer bosses. ESC = changelog'
-                            );
-                            if (typeof toggleUpdatePanel === 'function') toggleUpdatePanel();
+                            // Bảng update đã tắt (không ESC / P)
                         }
 
                         if (k === 'g') {
@@ -14562,6 +14578,7 @@ const octopusMonster =
                                 );
 
                             if (
+                                false && // Vô hiệu: vào boss qua HUB, không bấm D
                                 distToGateForBoss < 3.5 &&
                                 gameStage === 4 &&
                                 !hasBossTitle &&
@@ -14618,6 +14635,7 @@ const octopusMonster =
                             }
 
                             else if (
+                                false && // Vô hiệu: vào boss qua HUB
                                 distToGateForBoss < 3.5 &&
                                 gameStage === 4 &&
                                 hasBossTitle &&
@@ -14680,6 +14698,7 @@ const octopusMonster =
                             }
 
                             else if (
+                                false && // Vô hiệu D — vào qua HUB
                                 distToGateForBoss < 3.5 &&
                                 gameStage === 4 &&
                                 supremeBossDefeated &&
@@ -15465,19 +15484,17 @@ const octopusMonster =
                                 ).style.display =
                                     'none';
 
-                                gameStage = 4;
-
                                 setBossArenaSkybox(false);
 
                                 readyForGoDTitle = true;
-                                // Tự nhận danh hiệu [BOSS] — không cần bấm G
                                 if (typeof claimGoDTitle === 'function') claimGoDTitle();
                                 else hasBossTitle = true;
-                                hubUnlockIndex = Math.max(hubUnlockIndex, 2); // mở supreme
+                                // Mở Universe trên hub (bỏ supreme qua D)
+                                hubUnlockIndex = Math.max(hubUnlockIndex, 3);
                                 showToast(
                                     currentLang === 'vi'
-                                    ? `👑 ĐÃ HẠ ĐỦ ${FINAL_BOSS_KILLS_NEEDED} [BOSS] CUỐI! TỰ NHẬN DANH HIỆU [BOSS]!`
-                                    : `👑 DEFEATED ${FINAL_BOSS_KILLS_NEEDED} FINAL [BOSS]! [BOSS] TITLE AUTO-CLAIMED!`
+                                    ? `👑 ĐÃ HẠ ĐỦ ${FINAL_BOSS_KILLS_NEEDED} [BOSS] CUỐI! Về hub chọn Boss Vũ Trụ!`
+                                    : `👑 DEFEATED ${FINAL_BOSS_KILLS_NEEDED} FINAL [BOSS]! Return to hub for Universe Boss!`
                                 );
                                 if (typeof returnToHubWorld === 'function') returnToHubWorld();
                                 saveCurrentAccount();
@@ -15547,71 +15564,35 @@ const octopusMonster =
                             ) {
 
                                 supremeBossActive = false;
-
                                 supremeBossDefeated = true;
-
                                 universeWorldUnlocked = true;
-
                                 setBossArenaSkybox(false);
 
-                                bossTitleSprite.material.map =
-                                    createCosmicBossLabelTexture();
-
-                                bossTitleSprite.material.map.needsUpdate =
-                                    true;
-
-                                bossTitleSprite.material.color.set(
-                                    0xffffff
-                                );
-
-                                finalBossMonster.visible =
-                                    false;
-
-                                finalBossMonster.scale.set(
-                                    4.5,
-                                    4.5,
-                                    4.5
-                                );
-
-                                document.getElementById(
-                                    'boss-hp-bar'
-                                ).style.display =
-                                    'none';
-
-                                gameStage = 4;
-
-                                // Hiện lại world đất + cổng để sang boss tiếp
-                                if (typeof setExpandedWorld === 'function')
-                                    setExpandedWorld(4);
-                                if (typeof platformGroup !== 'undefined' && platformGroup)
-                                    platformGroup.visible = true;
-                                if (typeof gateLightMat !== 'undefined' && gateLightMat)
-                                    gateLightMat.color.setHex(0xffd700);
-
-                                playGoDFusionSound();
-
-                                document.getElementById(
-                                    'victory-screen'
-                                ).style.display =
-                                    'none';
-
-                                // Cánh cổng: nhấn D để đến boss / thế giới tiếp theo
-                                const uniMsg = document.getElementById('universe-world-msg');
-                                if (uniMsg) {
-                                    uniMsg.setAttribute('data-vi', '🌌 ĐÃ HẠ ULTIMATE BOSS! ĐẾN CỔNG — NHẤN [D] ĐỂ SANG BOSS TIẾP!');
-                                    uniMsg.setAttribute('data-en', '🌌 ULTIMATE BOSS DEFEATED! GO TO THE GATE — PRESS [D] FOR THE NEXT BOSS!');
-                                    uniMsg.innerText = currentLang === 'vi'
-                                        ? '🌌 ĐÃ HẠ ULTIMATE BOSS! ĐẾN CỔNG — NHẤN [D] ĐỂ SANG BOSS TIẾP!'
-                                        : '🌌 ULTIMATE BOSS DEFEATED! GO TO THE GATE — PRESS [D] FOR THE NEXT BOSS!';
-                                    uniMsg.style.display = 'block';
+                                if (typeof bossTitleSprite !== 'undefined' && bossTitleSprite) {
+                                    try {
+                                        bossTitleSprite.material.map = createCosmicBossLabelTexture();
+                                        bossTitleSprite.material.map.needsUpdate = true;
+                                        bossTitleSprite.material.color.set(0xffffff);
+                                    } catch (e) {}
                                 }
 
+                                if (finalBossMonster) {
+                                    finalBossMonster.visible = false;
+                                    finalBossMonster.scale.set(4.5, 4.5, 4.5);
+                                }
+
+                                document.getElementById('boss-hp-bar').style.display = 'none';
+                                document.getElementById('victory-screen').style.display = 'none';
+
+                                // Mở Universe trên hub — luôn về trung tâm (không bấm D)
+                                hubUnlockIndex = Math.max(hubUnlockIndex, 3);
+                                playGoDFusionSound();
                                 showToast(
                                     currentLang === 'vi'
-                                    ? '🌌 ĐÃ HẠ ULTIMATE BOSS! ĐẾN CỔNG NHẤN [D] ĐỂ SANG BOSS TIẾP!'
-                                    : '🌌 ULTIMATE BOSS DOWN! GO TO GATE — PRESS [D] FOR NEXT BOSS!'
+                                    ? '🌌 ĐÃ HẠ ULTIMATE BOSS! Về hub chọn portal tiếp!'
+                                    : '🌌 ULTIMATE BOSS DEFEATED! Back to hub for next portal!'
                                 );
-
+                                if (typeof returnToHubWorld === 'function') returnToHubWorld();
                                 saveCurrentAccount();
 
                             }
@@ -15619,6 +15600,11 @@ const octopusMonster =
                         } else if (
                             gameStage === 8
                         ) {
+                            cosmicBossActive = true;
+                            const _bar = document.getElementById('boss-hp-bar');
+                            if (_bar) _bar.style.display = 'block';
+                            if (cosmicBossMonster && cosmicBossType === 0)
+                                cosmicBossMonster.visible = true;
 
                             cosmicBossHP -= totalDmg;
 
@@ -15667,6 +15653,12 @@ const octopusMonster =
 
                                     cosmicBossMonster.visible = false;
                                     oldCharacterBossMonster.visible = false;
+
+                                    hubUnlockIndex = Math.max(hubUnlockIndex, 5);
+                                    showToast(currentLang === 'vi'
+                                        ? '🌌 Cosmic xong! Về hub!'
+                                        : '🌌 Cosmic done! Back to hub!');
+                                    if (typeof returnToHubWorld === 'function') returnToHubWorld();
 
                                     bossTitleSprite.visible = false;
                                     universeTitleSprite.visible = false;
@@ -16172,9 +16164,15 @@ const octopusMonster =
 
                                     showBossCommandBar(true);
 
+                                    // Về hub — mở thế giới tiếp (Cosmic)
+                                    hubUnlockIndex = Math.max(hubUnlockIndex, 4);
+                                    if (typeof returnToHubWorld === 'function') {
+                                        returnToHubWorld();
+                                    } else {
                                     gameStage = 4;
                                     playerGroup.position.x = 0;
                                     playerGroup.position.z = -15.5;
+                                    }
                                     universeBossMonster.visible = false;
                                     finalBossMonster.visible = false;
                                     cosmicBossMonster.visible = false;
@@ -17468,6 +17466,10 @@ const octopusMonster =
 
                     hasBossTitle =
                         data.hasBossTitle || false;
+                    if (hasBossTitle) {
+                        finalBossKillCount = Math.max(finalBossKillCount || 0, FINAL_BOSS_KILLS_NEEDED);
+                        hubUnlockIndex = Math.max(typeof hubUnlockIndex === 'number' ? hubUnlockIndex : 0, 3);
+                    }
 
                     readyForGoDTitle =
                         data.readyForGoDTitle || false;
@@ -20366,6 +20368,15 @@ const octopusMonster =
                             'supreme-boss-msg'
                         );
 
+                    // Vô hiệu msg cổng cũ (D / Ultimate) — chỉ dùng HUB
+                    if (gateMsg) gateMsg.style.display = 'none';
+                    if (finalBossMsg) finalBossMsg.style.display = 'none';
+                    if (supremeBossMsg) supremeBossMsg.style.display = 'none';
+                    const _uwm = document.getElementById('universe-world-msg');
+                    if (_uwm) _uwm.style.display = 'none';
+                    const _abm = document.getElementById('atomic-boss-msg');
+                    if (_abm) _abm.style.display = 'none';
+
                     if (
                         distToGate < 3.5
                     ) {
@@ -20375,7 +20386,9 @@ const octopusMonster =
                                 'universe-world-msg'
                             );
 
-                        if (
+                        if (universeWorldMsg) universeWorldMsg.style.display = 'none';
+
+                        if (false &&
                             gameStage === 4 &&
                             supremeBossDefeated &&
                             !universeBossActive &&
@@ -20385,7 +20398,7 @@ const octopusMonster =
                             universeWorldMsg.style.display =
                                 'block';
 
-                        } else {
+                        } else if (universeWorldMsg) {
 
                             universeWorldMsg.style.display =
                                 'none';
@@ -20491,23 +20504,9 @@ const octopusMonster =
                                     : "🔄 LOOP 2! POWER & LUCK *3!"
                                 );
 
-                            } else if (
-                                !hasBossTitle
-                            ) {
-
-                                /*
-                                   Đã hoàn thành vòng 2,
-                                   thay vì kết thúc game ngay,
-                                   mời người chơi thách đấu
-                                   BOSS cuối bằng phím D
-                                */
-
-                                finalBossMsg.style.display =
-                                    'block';
-
-                            } else if (
-                                !supremeBossDefeated
-                            ) {
+                            } else if (false && !hasBossTitle) {
+                                finalBossMsg.style.display = 'none';
+                            } else if (false && !supremeBossDefeated) {
 
                                 /*
                                    Đã có danh hiệu [BOSS],
@@ -20974,19 +20973,19 @@ const octopusMonster =
                             if (gameStage === 2)
                                 bossDmg = 500000; // bạch tuộc: 500k dmg
 
-                            else if (gameStage === 5)
-                                bossDmg = 100000000;
+                            // Final / Supreme / Universe / ... : KHÔNG tự trừ HP
+                            // Chỉ laser bắn trúng mới trừ (xử lý riêng)
+                            else if (gameStage === 5 || gameStage === 6 || gameStage === 7 || gameStage === 8)
+                                bossDmg = 0;
 
-                            else if (
-                                gameStage === 3 ||
-                                gameStage === 6
-                            )
+                            else if (gameStage === 3)
                                 bossDmg = 50000000;
                             else if (
                                 gameStage === 9
                             )
                                 bossDmg = 1000000000;
 
+                            if (bossDmg > 0)
                             playerHP -=
                                 bossDmg;
 
@@ -21327,6 +21326,7 @@ const octopusMonster =
                         pad.userData.hubWorldIndex = i;
                         pad.userData.hubWorldId = w.id;
 
+                        // Portal kiểu cũ: đế + vòng màu
                         const disc = new THREE.Mesh(
                             new THREE.CylinderGeometry(2.4, 2.6, 0.35, 20),
                             new THREE.MeshStandardMaterial({
@@ -21516,6 +21516,24 @@ const octopusMonster =
                         hubWorldGroup.add(pad);
                     });
 
+                    // Rào vô hình: không cho đi ra ngoài đảo / vũ trụ
+                    const HUB_RADIUS = 26;
+                    if (typeof collisionObstacles !== 'undefined') {
+                        const nWall = 24;
+                        for (let w = 0; w < nWall; w++) {
+                            const ang = (w / nWall) * Math.PI * 2;
+                            collisionObstacles.push({
+                                x: Math.cos(ang) * HUB_RADIUS,
+                                z: Math.sin(ang) * HUB_RADIUS,
+                                r: 3.2,
+                                hub: true,
+                                hubWall: true
+                            });
+                        }
+                    }
+                    // Clamp phụ trong animate (an toàn)
+                    window._hubBoundaryR = HUB_RADIUS - 1.5;
+
                     hubWorldGroup.visible = false;
                     scene.add(hubWorldGroup);
                     refreshHubLocks();
@@ -21545,6 +21563,7 @@ const octopusMonster =
                     if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(false);
                     if (typeof platformGroup !== 'undefined' && platformGroup) platformGroup.visible = false;
                     if (typeof enforceStageMobVisibility === 'function') enforceStageMobVisibility(0);
+                    if (typeof gateGroup !== 'undefined' && gateGroup) gateGroup.visible = false;
                     // Ẩn boss bars
                     const bar = document.getElementById('boss-hp-bar');
                     if (bar) bar.style.display = 'none';
@@ -21580,6 +21599,7 @@ const octopusMonster =
                         ? '🏝️ Đảo trung tâm — đi vào portal có mũi tên để chọn thế giới!'
                         : '🏝️ Hub island — walk into the arrow portal to choose a world!'
                     );
+                    if (typeof showBossCommandBar === 'function') showBossCommandBar(false);
                     if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
                 }
 
@@ -21597,6 +21617,8 @@ const octopusMonster =
                         }
                     }
                     if (hubWorldGroup) hubWorldGroup.visible = false;
+                    if (window._hubHintEl) window._hubHintEl.style.display = 'none';
+                    window._hubNearIndex = null;
                     if (typeof platformGroup !== 'undefined' && platformGroup) platformGroup.visible = true;
 
                     if (w.id === 'temple') {
@@ -21613,6 +21635,15 @@ const octopusMonster =
                         if (playerGroup) playerGroup.position.set(0, 0, 6);
                         showToast(currentLang === 'vi' ? '⚔️ Thế giới Temple — hạ mob đỏ!' : '⚔️ Temple world — defeat the red mob!');
                     } else if (w.id === 'final') {
+                        // Đã hạ đủ 999 → không đánh lại, chuyển Universe nếu mở
+                        if (hasBossTitle && finalBossKillCount >= FINAL_BOSS_KILLS_NEEDED) {
+                            showToast(currentLang === 'vi'
+                                ? '👑 Đã có [BOSS]! Chọn portal Universe / boss tiếp theo.'
+                                : '👑 You already have [BOSS]! Pick Universe / next portal.');
+                            if (hubWorldGroup) hubWorldGroup.visible = true;
+                            gameStage = 0;
+                            return;
+                        }
                         finalBossActive = true;
                         gameStage = 5;
                         if (typeof setExpandedWorld === 'function') setExpandedWorld(5);
@@ -21632,7 +21663,20 @@ const octopusMonster =
                             : `👑 FINAL [BOSS] (Defeated: ${finalBossKillCount}/${FINAL_BOSS_KILLS_NEEDED})`;
                         showToast(currentLang === 'vi' ? '🔥 Boss Cuối xuất hiện!' : '🔥 Final Boss appeared!');
                     } else if (w.id === 'supreme') {
-                        // Simulate D key path for supreme
+                        // Portal Ultimate: có [BOSS] → vào thẳng Ultimate world
+                        if (!hasBossTitle && finalBossKillCount < FINAL_BOSS_KILLS_NEEDED) {
+                            showToast(currentLang === 'vi'
+                                ? '🔒 Cần danh hiệu [BOSS] (hạ xong Final) trước!'
+                                : '🔒 Need [BOSS] title (finish Final) first!');
+                            if (hubWorldGroup) hubWorldGroup.visible = true;
+                            gameStage = 0;
+                            return;
+                        }
+                        finalBossActive = false;
+                        if (finalBossMonster) {
+                            finalBossMonster.visible = false;
+                            finalBossMonster.scale.set(1, 1, 1);
+                        }
                         supremeBossActive = true;
                         gameStage = 6;
                         if (typeof setExpandedWorld === 'function') setExpandedWorld(6);
@@ -21648,6 +21692,63 @@ const octopusMonster =
                         const bar = document.getElementById('boss-hp-bar');
                         if (bar) bar.style.display = 'block';
                         showToast(currentLang === 'vi' ? '🌌 Đại Boss Tối Thượng!' : '🌌 Ultimate Boss!');
+                    } else if (w.id === 'universe') {
+                        universeWorldUnlocked = true;
+                        universeBossActive = true;
+                        gameStage = 7;
+                        universeBossHP = universeBossMaxHP;
+                        if (typeof setExpandedWorld === 'function') setExpandedWorld(7);
+                        if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(true);
+                        if (typeof universeFloor !== 'undefined' && universeFloor) universeFloor.visible = true;
+                        if (platformGroup) platformGroup.visible = false;
+                        if (finalBossMonster) finalBossMonster.visible = false;
+                        if (bossMonster) bossMonster.visible = false;
+                        if (redMonster) redMonster.visible = false;
+                        if (octopusMonster) octopusMonster.visible = false;
+                        if (universeBossMonster) {
+                            universeBossMonster.visible = true;
+                            universeBossMonster.position.set(0, 0, -7);
+                            universeBossMonster.scale.set(10, 10, 10);
+                        }
+                        if (playerGroup) playerGroup.position.set(0, 0, 7);
+                        const bar = document.getElementById('boss-hp-bar');
+                        if (bar) bar.style.display = 'block';
+                        const bt = document.getElementById('boss-title');
+                        if (bt) bt.innerText = currentLang === 'vi'
+                            ? ('🌌 BOSS VŨ TRỤ (' + formatNum(universeBossMaxHP) + ' HP)')
+                            : ('🌌 UNIVERSE BOSS (' + formatNum(universeBossMaxHP) + ' HP)');
+                        showToast(currentLang === 'vi' ? '🌌 Boss Vũ Trụ xuất hiện!' : '🌌 Universe Boss appeared!');
+                    } else if (w.id === 'cosmic') {
+                        cosmicWorldUnlocked = true;
+                        cosmicBossActive = true;
+                        cosmicBossDefeated = false;
+                        cosmicBossType = 0;
+                        gameStage = 8;
+                        cosmicBossHP = COSMIC_BOSS_MAX_HP;
+                        if (typeof setExpandedWorld === 'function') setExpandedWorld(8);
+                        if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(true);
+                        if (platformGroup) platformGroup.visible = false;
+                        if (finalBossMonster) finalBossMonster.visible = false;
+                        if (universeBossMonster) universeBossMonster.visible = false;
+                        if (cosmicBossMonster) {
+                            cosmicBossMonster.visible = true;
+                            cosmicBossMonster.position.set(0, 0, -7);
+                            cosmicBossMonster.scale.set(10, 10, 10);
+                        }
+                        if (typeof oldCharacterBossMonster !== 'undefined' && oldCharacterBossMonster)
+                            oldCharacterBossMonster.visible = false;
+                        if (playerGroup) playerGroup.position.set(0, 0, 7);
+                        const bar = document.getElementById('boss-hp-bar');
+                        if (bar) bar.style.display = 'block';
+                        const bt = document.getElementById('boss-title');
+                        if (bt) bt.innerText = currentLang === 'vi'
+                            ? ('🌌 BOSS COSMIC (' + formatNum(COSMIC_BOSS_MAX_HP) + ' HP) - ' + cosmicBossKillCount + '/' + COSMIC_BOSS_KILLS_NEEDED)
+                            : ('🌌 COSMIC BOSS (' + formatNum(COSMIC_BOSS_MAX_HP) + ' HP) - ' + cosmicBossKillCount + '/' + COSMIC_BOSS_KILLS_NEEDED);
+                        const inner = document.getElementById('boss-hp-inner');
+                        if (inner) inner.style.width = '100%';
+                        const ht = document.getElementById('boss-hp-text');
+                        if (ht) ht.innerText = formatNum(cosmicBossHP) + ' / ' + formatNum(COSMIC_BOSS_MAX_HP);
+                        showToast(currentLang === 'vi' ? '🌌 Cosmic Boss xuất hiện!' : '🌌 Cosmic Boss appeared!');
                     } else {
                         // Generic: set stage and try expanded world
                         gameStage = w.stage;
@@ -21660,9 +21761,52 @@ const octopusMonster =
                 }
 
                 // Vào portal hub khi đứng gần + bấm E hoặc tự vào
+                function fixFinalStuckToUltimate() {
+                    // Đã có [BOSS] + đủ 999 final mà vẫn vào nhầm Final → ép sang Ultimate
+                    if (!hasBossTitle) return;
+                    if (typeof FINAL_BOSS_KILLS_NEEDED === 'number' && finalBossKillCount < FINAL_BOSS_KILLS_NEEDED) return;
+                    if (gameStage === 5 || (finalBossActive && hasBossTitle && finalBossKillCount >= FINAL_BOSS_KILLS_NEEDED)) {
+                        finalBossActive = false;
+                        if (finalBossMonster) finalBossMonster.visible = false;
+                        supremeBossActive = true;
+                        gameStage = 6;
+                        if (typeof setExpandedWorld === 'function') setExpandedWorld(6);
+                        if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(true);
+                        if (platformGroup) platformGroup.visible = false;
+                        supremeBossHP = supremeBossMaxHP;
+                        if (finalBossMonster) {
+                            finalBossMonster.visible = true;
+                            finalBossMonster.scale.set(7, 7, 7);
+                            finalBossMonster.position.set(0, 0, -6);
+                        }
+                        if (playerGroup) playerGroup.position.set(0, 0, 6);
+                        const bar = document.getElementById('boss-hp-bar');
+                        if (bar) bar.style.display = 'block';
+                        const bt = document.getElementById('boss-title');
+                        if (bt) bt.innerText = currentLang === 'vi'
+                            ? ('🌌 ĐẠI BOSS TỐI THƯỢNG (' + formatNum(supremeBossMaxHP) + ' HP)')
+                            : ('🌌 ULTIMATE BOSS (' + formatNum(supremeBossMaxHP) + ' HP)');
+                        if (window._hubHintEl) window._hubHintEl.style.display = 'none';
+                        showToast(currentLang === 'vi'
+                            ? '👑 Đã có [BOSS] — chuyển thẳng Ultimate (tránh lỗi Final)!'
+                            : '👑 [BOSS] title active — sent to Ultimate (skip Final bug)!');
+                    }
+                }
+
                 function updateHubPortalTrigger() {
+                    if (typeof fixFinalStuckToUltimate === 'function') fixFinalStuckToUltimate();
                     // Chỉ hiện gợi ý gần portal — vào bằng phím E (tránh đơ / vào lặp)
                     if (gameStage !== 0 || !hubWorldGroup || !playerGroup) return;
+                    // Không cho đi ra vũ trụ
+                    const br = (typeof window._hubBoundaryR === 'number') ? window._hubBoundaryR : 24;
+                    const px = playerGroup.position.x, pz = playerGroup.position.z;
+                    const dist = Math.hypot(px, pz);
+                    if (dist > br) {
+                        const s = br / dist;
+                        playerGroup.position.x = px * s;
+                        playerGroup.position.z = pz * s;
+                    }
+
                     if (typeof window._hubHintEl === 'undefined') {
                         const el = document.createElement('div');
                         el.id = 'hub-enter-hint';
