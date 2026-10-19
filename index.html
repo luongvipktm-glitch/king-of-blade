@@ -21132,29 +21132,194 @@ const octopusMonster =
                     island.receiveShadow = true;
                     hubWorldGroup.add(island);
 
-                    // Lâu đài trung tâm (khối đơn giản)
-                    const castle = new THREE.Group();
-                    const keep = new THREE.Mesh(new THREE.BoxGeometry(8, 10, 8), new THREE.MeshStandardMaterial({ color: 0xb8c4d8, metalness: 0.3, roughness: 0.45 }));
-                    keep.position.y = 5;
-                    castle.add(keep);
-                    const dome = new THREE.Mesh(new THREE.SphereGeometry(3.2, 16, 12), goldMat);
-                    dome.position.y = 11.5;
-                    castle.add(dome);
-                    [[-5, -5], [5, -5], [-5, 5], [5, 5]].forEach(function(p) {
-                        const t = new THREE.Mesh(new THREE.BoxGeometry(2.2, 7, 2.2), new THREE.MeshStandardMaterial({ color: 0x9aabc4 }));
-                        t.position.set(p[0], 3.5, p[1]);
-                        castle.add(t);
-                        const cap = new THREE.Mesh(new THREE.ConeGeometry(1.4, 2.2, 8), goldMat);
-                        cap.position.set(p[0], 8.2, p[1]);
-                        castle.add(cap);
+                    // Khu giữa: vòng tròn + đất + cây lá vũ trụ
+                    const plaza = new THREE.Group();
+                    plaza.name = 'hubCosmicGrove';
+
+                    // Đất pastel cầu vồng mượt (vệt mềm, không chia miếng cứng)
+                    const ground = new THREE.Mesh(
+                        new THREE.CylinderGeometry(10.2, 10.6, 0.5, 56),
+                        new THREE.MeshStandardMaterial({
+                            color: 0xf5f0ff, roughness: 0.88, metalness: 0.04
+                        })
+                    );
+                    ground.position.y = 0.12;
+                    ground.receiveShadow = true;
+                    plaza.add(ground);
+
+                    // Pastel 7 sắc — độ đậm dịu như lá cây
+                    const pastelRainbow = [
+                        0xff8a9a, // hồng đỏ
+                        0xffb070, // cam sữa
+                        0xffe88a, // vàng kem
+                        0x8aefb0, // lục mint
+                        0x7ec8ff, // xanh trời
+                        0x9a8cff, // chàm nhạt
+                        0xe090ff  // tím hoa
+                    ];
+                    // Vòng đồng tâm màu xen kẽ
+                    for (let ring = 0; ring < 5; ring++) {
+                        const rInner = 1.8 + ring * 1.55;
+                        const rOuter = rInner + 1.45;
+                        for (let s = 0; s < 7; s++) {
+                            const shape = new THREE.Shape();
+                            const a0 = (s / 7) * Math.PI * 2 + ring * 0.15;
+                            const a1 = ((s + 1) / 7) * Math.PI * 2 + ring * 0.15;
+                            shape.moveTo(Math.cos(a0) * rInner, Math.sin(a0) * rInner);
+                            const steps = 6;
+                            for (let k = 0; k <= steps; k++) {
+                                const a = a0 + (a1 - a0) * (k / steps);
+                                shape.lineTo(Math.cos(a) * rOuter, Math.sin(a) * rOuter);
+                            }
+                            for (let k = steps; k >= 0; k--) {
+                                const a = a0 + (a1 - a0) * (k / steps);
+                                shape.lineTo(Math.cos(a) * rInner, Math.sin(a) * rInner);
+                            }
+                            shape.closePath();
+                            const geo = new THREE.ShapeGeometry(shape, 4);
+                            const col = pastelRainbow[(s + ring) % 7];
+                            const mat = new THREE.MeshStandardMaterial({
+                                color: col,
+                                emissive: col,
+                                emissiveIntensity: 0.22,
+                                roughness: 0.7,
+                                metalness: 0.08,
+                                side: THREE.DoubleSide,
+                                transparent: true,
+                                opacity: 0.92
+                            });
+                            const piece = new THREE.Mesh(geo, mat);
+                            piece.rotation.x = -Math.PI / 2;
+                            piece.position.y = 0.38 + ring * 0.01;
+                            plaza.add(piece);
+                        }
+                    }
+
+                    // Tâm đứng — ngọc trai ánh hồng
+                    const centerPad = new THREE.Mesh(
+                        new THREE.CylinderGeometry(1.9, 2.1, 0.2, 32),
+                        new THREE.MeshStandardMaterial({
+                            color: 0xfff5fc, roughness: 0.4, metalness: 0.25,
+                            emissive: 0xffcce8, emissiveIntensity: 0.28
+                        })
+                    );
+                    centerPad.position.y = 0.5;
+                    plaza.add(centerPad);
+
+                    // (đã xóa vòng giữa — chỉ còn đất vũ trụ + cây + tên game)
+
+                    // Cây với lá màu vũ trụ (galaxy)
+                    function addCosmicTree(x, z, scale) {
+                        scale = scale || 1;
+                        const g = new THREE.Group();
+                        g.position.set(x, 0.4, z);
+                        g.scale.setScalar(scale);
+                        const trunk = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.18, 0.28, 2.2, 8),
+                            new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.85 })
+                        );
+                        trunk.position.y = 1.1;
+                        g.add(trunk);
+                        // Lá / tán = màu vũ trụ (tím, xanh neon, hồng galaxy)
+                        const leafColors = [0x6644ff, 0x22ddff, 0xff44cc, 0x8866ff, 0x44ffaa, 0xaa66ff];
+                        for (let k = 0; k < 5; k++) {
+                            const col = leafColors[k % leafColors.length];
+                            const canopy = new THREE.Mesh(
+                                new THREE.SphereGeometry(0.55 + Math.random() * 0.25, 10, 8),
+                                new THREE.MeshStandardMaterial({
+                                    color: col,
+                                    emissive: col,
+                                    emissiveIntensity: 0.35,
+                                    roughness: 0.6,
+                                    metalness: 0.15
+                                })
+                            );
+                            canopy.position.set(
+                                (Math.random() - 0.5) * 0.9,
+                                2.2 + Math.random() * 0.6,
+                                (Math.random() - 0.5) * 0.9
+                            );
+                            g.add(canopy);
+                        }
+                        // Đốm sao trên tán
+                        for (let s = 0; s < 4; s++) {
+                            const star = new THREE.Mesh(
+                                new THREE.SphereGeometry(0.06, 6, 6),
+                                new THREE.MeshBasicMaterial({ color: 0xffffff })
+                            );
+                            star.position.set(
+                                (Math.random() - 0.5) * 1.2,
+                                2.3 + Math.random() * 0.8,
+                                (Math.random() - 0.5) * 1.2
+                            );
+                            g.add(star);
+                        }
+                        plaza.add(g);
+                        // collider gốc cây
+                        if (typeof collisionObstacles !== 'undefined') {
+                            collisionObstacles.push({ x: x, z: z, r: 0.55 * scale, hub: true });
+                        }
+                    }
+
+                    // Vài cây quanh vòng (không chặn giữa)
+                    const treeSpots = [
+                        [-5.5, -4.2, 1.1], [5.2, -3.8, 1.0], [-4.8, 4.5, 1.15],
+                        [5.5, 4.0, 0.95], [-6.5, 0.5, 1.2], [6.2, 1.2, 1.05],
+                        [-2.5, -6.0, 0.9], [3.0, -6.2, 1.0], [-1.5, 6.0, 0.95], [2.8, 5.8, 1.1]
+                    ];
+                    treeSpots.forEach(function(t) {
+                        addCosmicTree(t[0], t[1], t[2]);
                     });
-                    hubWorldGroup.add(castle);
+
+                    // Viền galaxy quanh khu đất
+                    const rim = new THREE.Mesh(
+                        new THREE.TorusGeometry(10.3, 0.14, 8, 48),
+                        new THREE.MeshStandardMaterial({
+                            color: 0xaa88ff, metalness: 0.7, roughness: 0.3,
+                            emissive: 0x5533aa, emissiveIntensity: 0.4
+                        })
+                    );
+                    rim.rotation.x = Math.PI / 2;
+                    rim.position.y = 0.4;
+                    plaza.add(rim);
+
+                    // Tên game nhỏ trên vòng (không che view)
+                    (function titleSprite() {
+                        const c = document.createElement('canvas');
+                        c.width = 512; c.height = 96;
+                        const g = c.getContext('2d');
+                        g.clearRect(0, 0, 512, 96);
+                        g.fillStyle = 'rgba(15, 8, 40, 0.75)';
+                        if (g.roundRect) { g.beginPath(); g.roundRect(20, 12, 472, 72, 14); g.fill(); }
+                        else g.fillRect(20, 12, 472, 72);
+                        g.strokeStyle = '#88aaff'; g.lineWidth = 3; g.strokeRect(22, 14, 468, 68);
+                        g.font = 'bold 36px Segoe UI,sans-serif';
+                        g.textAlign = 'center'; g.textBaseline = 'middle';
+                        g.fillStyle = '#c8e0ff';
+                        g.fillText('✨ MYSTIC TEMPLE 3D ✨', 256, 48);
+                        const tex = new THREE.CanvasTexture(c);
+                        const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true }));
+                        spr.scale.set(6.5, 1.3, 1);
+                        spr.position.y = 4.8;
+                        plaza.add(spr);
+                    })();
+
+                    hubWorldGroup.add(plaza);
+
+                    // Collider vòng giữa (nhẹ)
+                    if (typeof collisionObstacles !== 'undefined') {
+                        plaza.userData.hubColliders = true;
+                    }
+
+
+
+
 
                     // Cổng/portal quanh đảo
                     const n = HUB_WORLDS.length;
                     HUB_WORLDS.forEach(function(w, i) {
                         const ang = (i / n) * Math.PI * 2 - Math.PI / 2;
-                        const r = 18;
+                        const r = 14; // gần tâm hơn — thấy rõ các khu từ giữa đảo
                         const px = Math.cos(ang) * r;
                         const pz = Math.sin(ang) * r;
                         const pad = new THREE.Group();
@@ -21189,14 +21354,137 @@ const octopusMonster =
                         arrow.userData.hubArrow = true;
                         pad.add(arrow);
 
-                        // Cột khóa
-                        const lock = new THREE.Mesh(
-                            new THREE.BoxGeometry(1.2, 2.2, 1.2),
-                            new THREE.MeshStandardMaterial({ color: 0x333344, metalness: 0.5, roughness: 0.5 })
-                        );
-                        lock.position.y = 1.3;
+                        // Khóa = dấu "?" (không dùng cục đen)
+                        const lock = new THREE.Group();
                         lock.userData.hubLock = true;
+                        lock.position.y = 0.2;
+                        (function makeQuestionMark() {
+                            const qMat = new THREE.MeshStandardMaterial({
+                                color: 0xffe566, emissive: 0xaa8800, emissiveIntensity: 0.45,
+                                metalness: 0.3, roughness: 0.4
+                            });
+                            const soft = new THREE.Mesh(
+                                new THREE.CylinderGeometry(1.5, 1.6, 0.2, 20),
+                                new THREE.MeshStandardMaterial({ color: 0x4a3a6a, transparent: true, opacity: 0.55 })
+                            );
+                            soft.position.y = 0.15;
+                            lock.add(soft);
+                            // Dấu ? bằng canvas sprite (rõ hơn)
+                            const c = document.createElement('canvas');
+                            c.width = 128; c.height = 160;
+                            const g = c.getContext('2d');
+                            g.clearRect(0, 0, 128, 160);
+                            g.fillStyle = 'rgba(40, 25, 70, 0.75)';
+                            g.beginPath();
+                            g.roundRect ? g.roundRect(8, 8, 112, 144, 16) : g.fillRect(8, 8, 112, 144);
+                            g.fill();
+                            g.strokeStyle = '#ffd700';
+                            g.lineWidth = 5;
+                            g.strokeRect(10, 10, 108, 140);
+                            g.fillStyle = '#ffe566';
+                            g.font = 'bold 100px Segoe UI, Arial, sans-serif';
+                            g.textAlign = 'center';
+                            g.textBaseline = 'middle';
+                            g.fillText('?', 64, 72);
+                            g.font = 'bold 22px Segoe UI,sans-serif';
+                            g.fillStyle = '#ccb0ff';
+                            g.fillText('LOCKED', 64, 130);
+                            const tex = new THREE.CanvasTexture(c);
+                            const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+                                map: tex, transparent: true, depthTest: true
+                            }));
+                            spr.scale.set(2.4, 3.0, 1);
+                            spr.position.y = 2.2;
+                            lock.add(spr);
+                        })();
                         pad.add(lock);
+
+                        // === Mô hình 3D đại diện thế giới (như preview) ===
+                        (function addHubWorldModels() {
+                            const models = new THREE.Group();
+                            models.position.y = 0.55;
+                            models.userData.hubModels = true;
+
+                            function boxMesh(w, h, d, color, x, y, z) {
+                                const m = new THREE.Mesh(
+                                    new THREE.BoxGeometry(w, h, d),
+                                    new THREE.MeshLambertMaterial({ color: color })
+                                );
+                                m.position.set(x, y, z);
+                                models.add(m);
+                                return m;
+                            }
+
+                            if (w.id === 'temple') {
+                                // Mob đỏ (trái)
+                                boxMesh(0.72, 0.8, 0.58, 0xe8453c, -1.05, 0.95, 0);
+                                boxMesh(0.68, 0.58, 0.62, 0xff5555, -1.05, 1.65, 0);
+                                boxMesh(0.5, 0.28, 0.15, 0xffcc88, -1.05, 0.9, 0.32);
+                                boxMesh(0.14, 0.14, 0.08, 0xffffff, -1.22, 1.7, 0.32);
+                                boxMesh(0.14, 0.14, 0.08, 0xffffff, -0.88, 1.7, 0.32);
+                                boxMesh(0.08, 0.08, 0.06, 0x111111, -1.22, 1.7, 0.36);
+                                boxMesh(0.08, 0.08, 0.06, 0x111111, -0.88, 1.7, 0.36);
+                                boxMesh(0.22, 0.45, 0.22, 0xcc3333, -1.35, 0.55, 0);
+                                boxMesh(0.22, 0.45, 0.22, 0xcc3333, -0.75, 0.55, 0);
+                                // Boss Ma Vương trắng (phải)
+                                boxMesh(0.7, 0.85, 0.55, 0xf0f4ff, 1.05, 0.95, 0);
+                                boxMesh(0.72, 0.62, 0.65, 0xffffff, 1.05, 1.7, 0);
+                                boxMesh(0.55, 0.12, 0.58, 0xffe566, 1.05, 2.05, 0);
+                                boxMesh(0.14, 0.14, 0.08, 0x222244, 0.88, 1.75, 0.34);
+                                boxMesh(0.14, 0.14, 0.08, 0x222244, 1.22, 1.75, 0.34);
+                                boxMesh(0.28, 0.08, 0.08, 0x444466, 1.05, 1.55, 0.34);
+                                boxMesh(0.2, 0.5, 0.2, 0xe8eef8, 0.75, 0.55, 0);
+                                boxMesh(0.2, 0.5, 0.2, 0xe8eef8, 1.35, 0.55, 0);
+                            } else if (w.id === 'final') {
+                                boxMesh(0.9, 1.1, 0.7, 0x2a1040, 0, 1.1, 0);
+                                boxMesh(0.85, 0.7, 0.75, 0x3a1858, 0, 1.9, 0);
+                                boxMesh(0.35, 0.25, 0.2, 0xffd700, 0, 2.35, 0);
+                                boxMesh(0.16, 0.16, 0.1, 0xff2233, -0.2, 1.95, 0.4);
+                                boxMesh(0.16, 0.16, 0.1, 0xff2233, 0.2, 1.95, 0.4);
+                            } else if (w.id === 'supreme') {
+                                boxMesh(1.0, 1.3, 0.8, 0x114466, 0, 1.2, 0);
+                                boxMesh(0.9, 0.75, 0.85, 0x22aacc, 0, 2.1, 0);
+                                boxMesh(0.5, 0.2, 0.5, 0x00ffff, 0, 2.55, 0);
+                            } else if (w.id === 'universe') {
+                                boxMesh(0.8, 0.8, 0.8, 0xaa22cc, 0, 1.2, 0);
+                                const ring = new THREE.Mesh(
+                                    new THREE.TorusGeometry(0.7, 0.08, 6, 20),
+                                    new THREE.MeshBasicMaterial({ color: 0xff66ff })
+                                );
+                                ring.rotation.x = 0.5;
+                                ring.position.y = 1.2;
+                                models.add(ring);
+                            } else if (w.id === 'cosmic') {
+                                boxMesh(0.7, 0.9, 0.55, 0x2266aa, 0, 1.0, 0);
+                                boxMesh(0.65, 0.55, 0.6, 0x44aaff, 0, 1.7, 0);
+                                boxMesh(0.15, 0.15, 0.1, 0xffffff, -0.15, 1.75, 0.32);
+                                boxMesh(0.15, 0.15, 0.1, 0xffffff, 0.15, 1.75, 0.32);
+                            } else if (w.id === 'atomic') {
+                                boxMesh(0.55, 0.55, 0.55, 0x00ff88, 0, 1.3, 0);
+                                const r1 = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.05, 6, 24), new THREE.MeshBasicMaterial({ color: 0x88ffcc }));
+                                r1.rotation.x = Math.PI / 2; r1.position.y = 1.3; models.add(r1);
+                                const r2 = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.05, 6, 24), new THREE.MeshBasicMaterial({ color: 0x44ffaa }));
+                                r2.rotation.x = 0.4; r2.position.y = 1.3; models.add(r2);
+                            } else if (w.id === 'error') {
+                                boxMesh(0.75, 1.0, 0.5, 0xff2244, 0, 1.1, 0);
+                                boxMesh(0.7, 0.55, 0.55, 0x111111, 0, 1.85, 0);
+                                boxMesh(0.2, 0.12, 0.1, 0x00ffff, -0.18, 1.9, 0.3);
+                                boxMesh(0.2, 0.12, 0.1, 0xff0033, 0.18, 1.9, 0.3);
+                            } else if (w.id === 'electron') {
+                                boxMesh(0.6, 0.9, 0.5, 0x0088ff, 0, 1.0, 0);
+                                boxMesh(0.55, 0.5, 0.5, 0x44ccff, 0, 1.65, 0);
+                                const e = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffff88 }));
+                                e.position.set(0.7, 1.4, 0); models.add(e);
+                            } else {
+                                boxMesh(0.7, 0.9, 0.55, w.color, 0, 1.0, 0);
+                                boxMesh(0.6, 0.5, 0.55, 0xffffff, 0, 1.65, 0);
+                            }
+
+                            // Ẩn models khi khóa (cùng logic lock)
+                            models.visible = (i <= hubUnlockIndex);
+                            models.userData.hubPreview = true;
+                            pad.add(models);
+                        })();
 
                         // Label sprite
                         const canvas = document.createElement('canvas');
@@ -21242,6 +21530,7 @@ const octopusMonster =
                         pad.children.forEach(function(ch) {
                             if (ch.userData.hubArrow) ch.visible = unlocked;
                             if (ch.userData.hubLock) ch.visible = !unlocked;
+                            if (ch.userData.hubPreview) ch.visible = unlocked;
                             if (ch.userData.hubLabel && ch.userData.drawLabel) {
                                 ch.userData.drawLabel(!unlocked);
                                 if (ch.userData.tex) ch.userData.tex.needsUpdate = true;
@@ -21266,12 +21555,22 @@ const octopusMonster =
                     if (!hubWorldGroup) buildHubWorld();
                     hubWorldGroup.visible = true;
                     refreshHubLocks();
+                    // Nếu mất collider hub (cây/vòng) → build lại hub
+                    if (typeof collisionObstacles !== 'undefined') {
+                        const hasHub = collisionObstacles.some(function(o) { return o.hub; });
+                        if (!hasHub) {
+                            try { buildHubWorld(); hubWorldGroup.visible = true; } catch (e) {}
+                        }
+                    }
                     if (playerGroup) {
-                        playerGroup.position.set(0, 0, 8);
+                        // Giữa map (tâm đất cầu vồng)
+                        playerGroup.position.set(0, 0, 0);
                         playerGroup.visible = !isFirstPerson;
                         if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
                             blockyPlayer.visible = !isFirstPerson;
                     }
+                    // Camera quay nhẹ về phía portal temple (phía trước)
+                    if (typeof cameraAngleX === 'number') cameraAngleX = 0;
                     if (typeof scene !== 'undefined' && scene) {
                         scene.background = new THREE.Color(0x050218);
                         if (scene.fog) scene.fog = null;
@@ -21291,6 +21590,12 @@ const octopusMonster =
                     }
                     const w = HUB_WORLDS[idx];
                     if (!w) return;
+                    // Gỡ collider chùa hub khi vào world khác
+                    if (typeof collisionObstacles !== 'undefined' && collisionObstacles) {
+                        for (let i = collisionObstacles.length - 1; i >= 0; i--) {
+                            if (collisionObstacles[i].hub) collisionObstacles.splice(i, 1);
+                        }
+                    }
                     if (hubWorldGroup) hubWorldGroup.visible = false;
                     if (typeof platformGroup !== 'undefined' && platformGroup) platformGroup.visible = true;
 
