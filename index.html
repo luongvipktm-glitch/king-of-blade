@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -21,80 +22,150 @@
 
         #hud {
             position: absolute;
-            top: 14px;
-            left: 14px;
+            top: 12px;
+            left: 12px;
             display: flex;
             flex-direction: column;
-            gap: 7px;
+            gap: 8px;
             z-index: 10;
-            min-width: 210px;
-            max-width: min(280px, 42vw);
+            min-width: 252px;
+            max-width: min(310px, 48vw);
+            font-family: 'Segoe UI', system-ui, sans-serif;
         }
 
         .stat-box {
-            background: linear-gradient(135deg, rgba(12, 8, 28, 0.92), rgba(8, 6, 18, 0.88));
-            border: 2px solid rgba(163, 53, 238, 0.75);
-            border-radius: 14px;
-            padding: 8px 14px;
-            color: #fff;
+            position: relative;
+            background:
+                linear-gradient(165deg, rgba(20, 16, 40, 0.95) 0%, rgba(8, 6, 22, 0.93) 55%, rgba(14, 10, 32, 0.96) 100%);
+            border: 1.5px solid rgba(170, 130, 255, 0.38);
+            border-radius: 16px;
+            padding: 9px 12px;
+            color: #ebe4ff;
             font-weight: 700;
-            font-size: 13px;
-            letter-spacing: 0.2px;
+            font-size: 12.5px;
+            letter-spacing: 0.35px;
             box-shadow:
-                0 0 14px rgba(163, 53, 238, 0.28),
-                inset 0 1px 0 rgba(255,255,255,0.06);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+                0 0 0 1px rgba(0,0,0,0.5),
+                0 4px 18px rgba(0,0,0,0.48),
+                inset 0 1px 0 rgba(255,255,255,0.09),
+                0 0 22px rgba(120, 80, 220, 0.14);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             display: flex;
             align-items: center;
             flex-wrap: wrap;
-            gap: 4px 6px;
-            transition: box-shadow 0.15s ease, border-color 0.15s ease;
+            gap: 4px 8px;
+            overflow: hidden;
         }
-
+        .stat-box::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            pointer-events: none;
+            background: linear-gradient(115deg, rgba(255,255,255,0.07) 0%, transparent 38%, transparent 72%, rgba(160,120,255,0.06) 100%);
+        }
         .stat-box .stat-val {
             margin-left: auto;
-            font-weight: 800;
+            font-weight: 900;
+            font-variant-numeric: tabular-nums;
+            position: relative;
+            z-index: 1;
         }
 
         #power-box {
-            border-color: #ff9f1a;
-            color: #ffb84d;
-            box-shadow: 0 0 16px rgba(255, 153, 0, 0.35), inset 0 1px 0 rgba(255,200,100,0.12);
+            border-color: rgba(255, 175, 50, 0.7);
+            color: #ffc266;
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,0.45),
+                0 0 24px rgba(255, 145, 25, 0.3),
+                inset 0 1px 0 rgba(255,220,140,0.14);
             flex-direction: column;
             align-items: stretch;
-            gap: 6px;
+            gap: 0;
         }
         #power-box .stat-row {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
+            width: 100%;
         }
         #power-box #val-power {
-            color: #ffe0a0;
+            color: #ffe9a8;
             font-weight: 900;
-            text-shadow: 0 0 8px rgba(255, 180, 40, 0.45);
+            font-size: 14px;
+            text-shadow: 0 0 12px rgba(255, 180, 40, 0.7);
+            margin-left: 4px;
+            flex-shrink: 0;
         }
-        #power-bar-track {
-            height: 7px;
+        #power-tube {
+            flex: 1;
+            height: 18px;
             border-radius: 99px;
-            background: rgba(0,0,0,0.45);
+            background: linear-gradient(180deg, #1a1208, #0a0804);
+            border: 2px solid rgba(255, 185, 70, 0.6);
+            box-shadow:
+                inset 0 2px 6px rgba(0,0,0,0.75),
+                0 0 12px rgba(255,160,40,0.28);
+            position: relative;
+            overflow: visible;
+            min-width: 64px;
+            margin: 0 4px;
+        }
+        #power-tube::before,
+        #power-tube::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 9px;
+            height: 20px;
+            margin-top: -10px;
+            border-radius: 3px;
+            background: linear-gradient(180deg, #e0c090, #9a7040);
+            border: 1px solid rgba(255,230,170,0.45);
+            z-index: 3;
+            box-shadow: 0 0 6px rgba(255,200,100,0.35);
+        }
+        #power-tube::before { left: -4px; }
+        #power-tube::after { right: -4px; }
+        #power-bar-track {
+            height: 100%;
+            border-radius: 99px;
+            background: transparent;
             overflow: hidden;
-            border: 1px solid rgba(255,160,40,0.35);
+            border: none;
         }
         #power-bar-fill {
             height: 100%;
             width: 40%;
             border-radius: 99px;
-            background: linear-gradient(90deg, #ff6a00, #ffb020, #ffe066);
-            box-shadow: 0 0 10px rgba(255, 160, 40, 0.7);
+            background: linear-gradient(90deg, #ff3d00, #ff8c00 35%, #ffd040 75%, #fff0b0);
+            box-shadow: 0 0 16px rgba(255, 150, 30, 0.9), 0 0 5px #ffcc44;
             transition: width 0.25s ease;
+            position: relative;
+            animation: powerPulse 2.2s ease-in-out infinite;
+        }
+        #power-bar-fill::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.5) 0%, transparent 48%, rgba(0,0,0,0.18) 100%);
+            border-radius: inherit;
+        }
+        @keyframes powerPulse {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.12); }
         }
 
         #hp-box {
-            border-color: #00e6b8 !important;
+            border-color: rgba(0, 235, 205, 0.62) !important;
             color: #7dffd4 !important;
-            box-shadow: 0 0 16px rgba(0, 255, 200, 0.28), inset 0 1px 0 rgba(120,255,220,0.1) !important;
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,0.4),
+                0 0 20px rgba(0, 255, 200, 0.24),
+                inset 0 1px 0 rgba(120,255,220,0.12) !important;
             flex-direction: column;
             align-items: stretch;
             gap: 6px;
@@ -102,43 +173,97 @@
         #hp-box .stat-row {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
+            position: relative;
+            z-index: 1;
         }
         #player-hp-track {
-            height: 10px;
+            height: 13px;
             border-radius: 99px;
-            background: rgba(0, 20, 24, 0.65);
+            background: linear-gradient(180deg, rgba(0, 28, 34, 0.95), rgba(0, 10, 14, 0.98));
             overflow: hidden;
-            border: 1px solid rgba(0, 230, 184, 0.4);
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+            border: 1.5px solid rgba(0, 230, 184, 0.5);
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
         }
         #player-hp-fill {
             height: 100%;
             width: 100%;
             border-radius: 99px;
-            background: linear-gradient(90deg, #00c896 0%, #00ffcc 55%, #a8fff0 100%);
-            box-shadow: 0 0 12px rgba(0, 255, 200, 0.55);
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 42%),
+                linear-gradient(90deg, #009e70 0%, #00ffcc 52%, #b0fff0 100%);
+            box-shadow: 0 0 14px rgba(0, 255, 200, 0.55);
             transition: width 0.2s ease, background 0.2s ease;
         }
         #player-hp-fill.hp-mid {
-            background: linear-gradient(90deg, #d4a017 0%, #ffcc33 55%, #ffe899 100%);
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 42%),
+                linear-gradient(90deg, #c49210 0%, #ffcc33 55%, #ffe899 100%);
             box-shadow: 0 0 12px rgba(255, 200, 40, 0.5);
         }
         #player-hp-fill.hp-low {
-            background: linear-gradient(90deg, #b01020 0%, #ff3344 55%, #ff8890 100%);
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.28) 0%, transparent 42%),
+                linear-gradient(90deg, #a01018 0%, #ff3344 55%, #ff8890 100%);
             box-shadow: 0 0 12px rgba(255, 50, 70, 0.55);
         }
 
         #sword-box {
-            border-color: #c44dff;
-            color: #e0b0ff;
-            box-shadow: 0 0 14px rgba(196, 77, 255, 0.3), inset 0 1px 0 rgba(220,180,255,0.1);
+            border-color: rgba(200, 110, 255, 0.58);
+            color: #e8c0ff;
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,0.4),
+                0 0 20px rgba(180, 90, 255, 0.28),
+                inset 0 1px 0 rgba(220,180,255,0.12);
+            min-height: 46px;
+        }
+        #sword-box .gear-pedestal {
+            margin-left: auto;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background:
+                radial-gradient(circle at 38% 32%, rgba(255,255,255,0.28), transparent 48%),
+                radial-gradient(circle at 50% 55%, rgba(170, 90, 255, 0.4), rgba(30, 8, 50, 0.95));
+            border: 2px solid rgba(230, 190, 255, 0.5);
+            box-shadow: 0 0 16px rgba(190, 110, 255, 0.45), inset 0 0 12px rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+        #sword-box .gear-pedestal::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            width: 24px;
+            height: 7px;
+            border-radius: 50%;
+            background: radial-gradient(ellipse, rgba(255,215,120,0.55), transparent 72%);
+        }
+        #sword-icon-canvas {
+            width: 26px !important;
+            height: 26px !important;
+            border-radius: 6px;
+            background: transparent !important;
+            position: relative;
+            z-index: 1;
         }
 
         #kill-box {
-            border-color: #00ffcc;
+            border-color: rgba(0, 255, 210, 0.42);
             color: #7affe0;
-            box-shadow: 0 0 12px rgba(0, 255, 204, 0.25);
+            box-shadow: 0 0 14px rgba(0, 255, 190, 0.16), inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+        #kill-box .kill-tally {
+            margin-left: 6px;
+            opacity: 0.5;
+            letter-spacing: 1.5px;
+            font-size: 11px;
+            color: #5ee0c0;
+            font-weight: 800;
         }
 
         #loop-box {
@@ -148,19 +273,106 @@
         }
 
         #world-box {
-            box-shadow: 0 0 12px rgba(255, 0, 255, 0.22) !important;
+            border-color: rgba(200, 90, 255, 0.58) !important;
+            color: #f2d4ff !important;
+            box-shadow: 0 0 16px rgba(180, 70, 255, 0.24) !important;
         }
 
         #level-box {
-            box-shadow: 0 0 12px rgba(0, 255, 255, 0.22) !important;
+            border-color: rgba(0, 220, 255, 0.52) !important;
+            color: #7ef0ff !important;
+            box-shadow: 0 0 14px rgba(0, 200, 255, 0.22) !important;
         }
 
         #account-box {
-            box-shadow: 0 0 12px rgba(255, 215, 0, 0.22) !important;
+            border-color: rgba(255, 205, 90, 0.55) !important;
+            color: #ffe08a !important;
+            box-shadow: 0 0 14px rgba(255, 195, 50, 0.2) !important;
+        }
+        #account-box .acc-sub {
+            width: 100%;
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255, 225, 160, 0.5);
+            margin-top: 2px;
+            letter-spacing: 0.2px;
+            position: relative;
+            z-index: 1;
         }
 
         #power-save-box {
-            box-shadow: 0 0 12px rgba(0, 255, 150, 0.22) !important;
+            border-color: rgba(0, 255, 185, 0.48) !important;
+            color: #7dffe0 !important;
+            box-shadow: 0 0 14px rgba(0, 255, 165, 0.2) !important;
+        }
+
+        #gold-box {
+            border-color: rgba(255, 205, 70, 0.58) !important;
+            color: #ffe566 !important;
+            box-shadow: 0 0 16px rgba(255, 200, 45, 0.24) !important;
+        }
+        #gold-box .gold-sub {
+            width: 100%;
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255, 235, 160, 0.48);
+            margin-top: 2px;
+            position: relative;
+            z-index: 1;
+        }
+
+
+        /* Thanh kill mob đỏ — trên giữa, kiểu boss bar nhưng chỉ n/999 */
+        #red-kill-bar {
+            position: absolute;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(420px, 86vw);
+            background: linear-gradient(180deg, rgba(24, 6, 12, 0.94), rgba(10, 4, 10, 0.92));
+            border: 2px solid #ff3a4a;
+            border-radius: 16px;
+            padding: 10px 16px 12px;
+            display: none;
+            text-align: center;
+            color: #fff;
+            z-index: 11;
+            box-shadow:
+                0 0 24px rgba(255, 40, 60, 0.4),
+                inset 0 1px 0 rgba(255,180,180,0.1);
+            backdrop-filter: blur(10px);
+            pointer-events: none;
+        }
+        #red-kill-bar .rk-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #ff8a95;
+            letter-spacing: 0.3px;
+            text-shadow: 0 0 10px rgba(255, 60, 80, 0.45);
+            margin-bottom: 8px;
+        }
+        #red-kill-bar .rk-track {
+            height: 10px;
+            border-radius: 99px;
+            background: rgba(0,0,0,0.55);
+            border: 1px solid rgba(255, 80, 100, 0.35);
+            overflow: hidden;
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.5);
+        }
+        #red-kill-bar .rk-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #8b0000, #ff2233 45%, #ff8a95);
+            box-shadow: 0 0 12px rgba(255, 40, 60, 0.5);
+            transition: width 0.2s ease;
+        }
+        #red-kill-bar .rk-count {
+            margin-top: 8px;
+            font-size: 15px;
+            font-weight: 900;
+            color: #ffe0e4;
+            letter-spacing: 0.5px;
         }
 
         #boss-hp-bar {
@@ -1324,13 +1536,13 @@
 
     <div id="hud">
 
-        <div class="stat-box" id="power-box" style="pointer-events:auto;cursor:pointer;" title="J / Click: tên/mật khẩu">
+        <div class="stat-box" id="power-box" style="pointer-events:auto;cursor:pointer;" title="J / Click: account">
             <div class="stat-row">
                 <span style="font-size:15px;">⚡</span>
                 <span class="lang-txt" data-vi="SỨC MẠNH" data-en="POWER">POWER</span>:
+                <div id="power-tube"><div id="power-bar-track"><div id="power-bar-fill"></div></div></div>
                 <span id="val-power" class="stat-val">10</span>
             </div>
-            <div id="power-bar-track"><div id="power-bar-fill"></div></div>
         </div>
 
         <div class="stat-box" id="hp-box">
@@ -1344,65 +1556,66 @@
 
         <div class="stat-box" id="sword-box" style="display:flex;align-items:center;gap:8px;">
             <span style="font-size:16px;">🗡️</span>
-            <span class="lang-txt" data-vi="KIẾM" data-en="SWORD">SWORD</span>:
-            <canvas id="sword-icon-canvas" width="28" height="28" style="width:28px;height:28px;vertical-align:middle;border-radius:6px;background:rgba(0,0,0,0.25);flex-shrink:0;"></canvas>
-            <span id="val-sword" style="color:#ffd700;">
+            <span class="lang-txt" data-vi="TRANG BỊ" data-en="GEAR">GEAR</span>:
+            <span id="val-sword" style="color:#ffd700;font-weight:800;">
                 Legendary (+1000)
             </span>
+            <div class="gear-pedestal">
+                <canvas id="sword-icon-canvas" width="64" height="64" style="width:28px;height:28px;"></canvas>
+            </div>
         </div>
 
         <div class="stat-box" id="kill-box">
             💀
-            <span class="lang-txt" data-vi="QUÁI ĐÃ HẠ" data-en="KILLS">
-                QUÁI ĐÃ HẠ
-            </span>:
+            <span class="lang-txt" data-vi="QUÁI ĐÃ HẠ" data-en="KILLS">KILLS</span>:
             <span id="val-kills">0</span> / 999
         </div>
 
         <div class="stat-box" id="loop-box" style="display:none !important;">
             🔄
-            <span class="lang-txt" data-vi="VÒNG CHƠI" data-en="LOOP">
-                VÒNG CHƠI
-            </span>:
+            <span class="lang-txt" data-vi="VÒNG CHƠI" data-en="LOOP">LOOP</span>:
             <span id="val-loop">1</span>
         </div>
 
-        <div class="stat-box" id="world-box" style="border-color:#ff00ff;color:#ffffff;">
-            🌌
-            <span class="lang-txt" data-vi="THẾ GIỚI" data-en="WORLD">
-                THẾ GIỚI
-            </span>:
-            <span id="val-world">1</span>
+        <div class="stat-box" id="world-box">
+            🌐
+            <span class="lang-txt" data-vi="THẾ GIỚI" data-en="WORLD">WORLD</span>:
+            <span id="val-world" class="stat-val">1</span>
         </div>
 
-        <div class="stat-box" id="level-box" style="border-color:#00ffff;color:#00ffff;cursor:pointer;" title="Bấm để lưu Level và toàn bộ tiến trình" onclick="saveLevelProgress()">
+        <div class="stat-box" id="level-box" style="cursor:pointer;" title="Save level & progress" onclick="saveLevelProgress()">
             ⭐
-            <span class="lang-txt" data-vi="CẤP" data-en="LV">CẤP</span>:
-            <span id="val-level">1</span>
+            <span class="lang-txt" data-vi="CẤP" data-en="LV">LV</span>:
+            <span id="val-level" class="stat-val">1</span>
         </div>
 
-        <div class="stat-box" id="account-box" style="border-color:#ffd700;color:#ffd700;">
+        <div class="stat-box" id="account-box">
             🔑
-            <span class="lang-txt" data-vi="TK" data-en="ACC">
-                TK
-            </span>:
-            <span id="val-account">--</span>
+            <span class="lang-txt" data-vi="TK" data-en="ACC">ACC</span>:
+            <span id="val-account" class="stat-val">--</span>
+            <div class="acc-sub">Account Link Status: <span id="acc-link-status">Unlinked</span></div>
         </div>
 
-        <div class="stat-box" id="power-save-box" style="border-color:#00ff99;color:#00ff99;cursor:pointer;" title="Bấm để dùng Power đã lưu thay cho Power hiện tại" onclick="useSavedPower()">
+        <div class="stat-box" id="power-save-box" style="cursor:pointer;" title="Use saved power" onclick="useSavedPower()">
             💾
-            <span class="lang-txt" data-vi="POWER ĐÃ LƯU" data-en="SAVED POWER">
-                POWER ĐÃ LƯU
-            </span>:
-            <span id="val-power-saved">--</span>
+            <span class="lang-txt" data-vi="POWER ĐÃ LƯU" data-en="SAVED POWER">SAVED POWER</span>:
+            <span id="val-power-saved" class="stat-val">--</span>
         </div>
 
-        <div class="stat-box" id="gold-box" style="border-color:#ffd700;color:#ffe566;box-shadow:0 0 14px rgba(255,215,0,0.3);">
+        <div class="stat-box" id="gold-box">
             🪙
             <span class="lang-txt" data-vi="VÀNG" data-en="GOLD">GOLD</span>:
-            <span id="val-gold" style="font-weight:900;color:#ffe9a0;">0</span>
+            <span id="val-gold" class="stat-val" style="color:#ffe9a0;">0</span>
+            <div class="gold-sub">Currency: Platinum Ducats</div>
         </div>
 
+    </div>
+
+
+    <div id="red-kill-bar">
+        <div class="rk-title">💀 RED MOB</div>
+        <div class="rk-track"><div class="rk-fill" id="red-kill-fill"></div></div>
+        <div class="rk-count"><span id="red-kill-num">0</span> / 999</div>
     </div>
 
     <div id="boss-hp-bar">
@@ -2519,6 +2732,38 @@
                 }
 
                 let killCount = 0;
+
+                function updateKillTally() {
+                    if (typeof refreshRedKillBar === 'function') refreshRedKillBar();
+                }
+                function ensureKillHeadLabel() {
+                    if (playerGroup && playerGroup.userData.killHeadLabel) {
+                        try { playerGroup.remove(playerGroup.userData.killHeadLabel); } catch (e) {}
+                        playerGroup.userData.killHeadLabel = null;
+                    }
+                }
+                function refreshKillHeadLabel() { ensureKillHeadLabel(); }
+
+                // 999 kill chỉ áp dụng mob đỏ (stage 1) — thanh trên giữa
+                function refreshRedKillBar() {
+                    const bar = document.getElementById('red-kill-bar');
+                    if (!bar) return;
+                    const k = typeof killCount === 'number' ? killCount : 0;
+                    const num = document.getElementById('red-kill-num');
+                    const fill = document.getElementById('red-kill-fill');
+                    if (num) num.textContent = String(Math.min(k, 999));
+                    if (fill) fill.style.width = (Math.min(k, 999) / 999 * 100) + '%';
+                    // Chỉ hiện ở thế giới mob đỏ
+                    const show = (typeof gameStage === 'number' && gameStage === 1);
+                    bar.style.display = show ? 'block' : 'none';
+                    // Title theo ngôn ngữ
+                    const tit = bar.querySelector('.rk-title');
+                    if (tit) {
+                        tit.textContent = (typeof currentLang !== 'undefined' && currentLang === 'vi')
+                            ? '💀 MOB ĐỎ'
+                            : '💀 RED MOB';
+                    }
+                }
 
                 let swordLevel = 0;
 
@@ -6168,6 +6413,7 @@
                         if (typeof gateGroup !== 'undefined' && gateGroup) {
                             gateGroup.visible = (s === 1 || s === 2 || s === 3);
                         }
+                        if (typeof refreshRedKillBar === 'function') refreshRedKillBar();
                         if (typeof redMonster !== 'undefined' && redMonster)
                             redMonster.visible = (s === 1);
                         // Mob xanh CHỈ ở stage 2 — tuyệt đối không hiện trong world boss (3+)
@@ -7031,6 +7277,70 @@
                 commonSwordGroup.add(swordGuard.clone(), swordHandle.clone());
                 commonSwordGroup.scale.set(1.45, 1.45, 1.45);
 
+                // ===== EPIC SWORD (hình 3: lưỡi bạc + guard/chuôi tím) =====
+                const epicSwordGroup = new THREE.Group();
+                const epicBladeMat = new THREE.MeshStandardMaterial({
+                    color: 0xd8d8e8,
+                    metalness: 0.85,
+                    roughness: 0.2,
+                    emissive: 0x4a2080,
+                    emissiveIntensity: 0.15
+                });
+                const epicBlade = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.14, 1.75, 0.08),
+                    epicBladeMat
+                );
+                epicBlade.position.y = 0.9;
+                epicSwordGroup.add(epicBlade);
+                // cạnh sáng
+                const epicEdge = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.02, 1.7, 0.09),
+                    new THREE.MeshBasicMaterial({ color: 0xffffff })
+                );
+                epicEdge.position.set(0.06, 0.9, 0);
+                epicSwordGroup.add(epicEdge);
+                // guard tím
+                const epicGuardMat = new THREE.MeshStandardMaterial({
+                    color: 0x7b2cbf,
+                    metalness: 0.5,
+                    roughness: 0.35,
+                    emissive: 0x4a1080,
+                    emissiveIntensity: 0.35
+                });
+                const epicGuard = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.55, 0.12, 0.18),
+                    epicGuardMat
+                );
+                epicGuard.position.y = 0.12;
+                epicSwordGroup.add(epicGuard);
+                // wing guard
+                [-1, 1].forEach(function(side) {
+                    const wing = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.18, 0.28, 0.1),
+                        epicGuardMat
+                    );
+                    wing.position.set(side * 0.28, 0.18, 0);
+                    wing.rotation.z = side * 0.35;
+                    epicSwordGroup.add(wing);
+                });
+                // chuôi tím đậm
+                const epicHandle = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.1, 0.55, 0.1),
+                    new THREE.MeshStandardMaterial({ color: 0x4a1080, roughness: 0.5, metalness: 0.3 })
+                );
+                epicHandle.position.y = -0.22;
+                epicSwordGroup.add(epicHandle);
+                // gem vàng trên guard
+                const epicGem = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.06, 8, 8),
+                    new THREE.MeshStandardMaterial({
+                        color: 0xffe066, emissive: 0xffaa00, emissiveIntensity: 0.6
+                    })
+                );
+                epicGem.position.y = 0.14;
+                epicSwordGroup.add(epicGem);
+                epicSwordGroup.scale.set(1.5, 1.5, 1.5);
+
                 const godBladeMat =
                     new THREE.MeshStandardMaterial({
                         color: 0xffffff,
@@ -7393,6 +7703,7 @@
                 swordGroup.add(
                     commonSwordGroup,
                     rareSwordGroup,
+                    epicSwordGroup,
                     legendarySwordGroup,
                     godSwordGroup,
                     hackSwordGroup,
@@ -7411,6 +7722,7 @@
 
                 commonSwordGroup.visible = false;
                 rareSwordGroup.visible = false;
+                epicSwordGroup.visible = false;
                 godSwordGroup.visible = false;
                 hackSwordGroup.visible = false;
                 errorSwordGroup.visible = false;
@@ -7426,6 +7738,7 @@
                         const showNorm = !showGoD && !showH && !showG && !showE;
                         commonSwordGroup.visible = equippedItemType === 'common' && showNorm;
                         rareSwordGroup.visible = equippedItemType === 'rare' && showNorm;
+                        epicSwordGroup.visible = equippedItemType === 'epic' && showNorm;
                         legendarySwordGroup.visible = equippedItemType === 'legendary' && showNorm;
                         godSwordGroup.visible = showGoD;
                         hackSwordGroup.visible = showH;
@@ -8757,22 +9070,70 @@
                 // Mặt con trai: mắt trắng 100%, lông mày, miệng
                 const playerFaceTexture = pixelTexture(g => {
                     g.clearRect(0, 0, 16, 16);
-                    // Glowing cyan-white cosmic eyes
-                    g.fillStyle = '#a8f0ff'; g.fillRect(2, 6, 5, 4); g.fillRect(9, 6, 5, 4);
-                    g.fillStyle = '#ffffff'; g.fillRect(3, 7, 3, 2); g.fillRect(10, 7, 3, 2);
-                    g.fillStyle = '#4de8ff'; g.fillRect(4, 7, 1, 1); g.fillRect(11, 7, 1, 1);
+                    // Mặt đen nam (hình 1): mắt trắng sáng đơn giản
+                    g.fillStyle = '#ffffff'; g.fillRect(2, 5, 5, 5); g.fillRect(9, 5, 5, 5);
+                    g.fillStyle = '#e8f0ff'; g.fillRect(3, 6, 3, 3); g.fillRect(10, 6, 3, 3);
+                    g.fillStyle = '#1a1a2a'; g.fillRect(4, 7, 2, 2); g.fillRect(11, 7, 2, 2);
+                    g.fillStyle = '#ffffff'; g.fillRect(4, 7, 1, 1); g.fillRect(11, 7, 1, 1);
                 });
 
-                // Mặt con gái: mắt trắng 100%, lông mi, má hồng, môi hồng
-                const girlFaceTexture = pixelTexture(g => {
-                    g.clearRect(0, 0, 16, 16);
-                    // Glowing eyes + soft blush for girl cosmic
-                    g.fillStyle = '#d8f8ff'; g.fillRect(2, 6, 5, 4); g.fillRect(9, 6, 5, 4);
-                    g.fillStyle = '#ffffff'; g.fillRect(3, 7, 3, 2); g.fillRect(10, 7, 3, 2);
-                    g.fillStyle = '#7af0ff'; g.fillRect(4, 7, 1, 1); g.fillRect(11, 7, 1, 1);
-                    g.fillStyle = 'rgba(255,120,200,0.5)'; g.fillRect(2, 11, 2, 1); g.fillRect(12, 11, 2, 1);
-                    g.fillStyle = '#ff6ec7'; g.fillRect(6, 13, 4, 1);
-                });
+                // Mặt con gái (hình 2): da đen, mắt hồng phát sáng, má hồng, miệng nhỏ
+                // Mắt oval hồng mềm phát sáng (như hình — chỉ hồng, không trắng)
+                function makeGirlFaceTex(blink) {
+                    const c = document.createElement('canvas');
+                    c.width = c.height = 64;
+                    const g = c.getContext('2d');
+                    g.clearRect(0, 0, 64, 64);
+                    function almond(cx, cy) {
+                        // Soft outer glow (hồng)
+                        const glow = g.createRadialGradient(cx, cy, 2, cx, cy, 14);
+                        glow.addColorStop(0, 'rgba(255,120,190,0.55)');
+                        glow.addColorStop(0.55, 'rgba(230,70,160,0.35)');
+                        glow.addColorStop(1, 'rgba(200,40,130,0)');
+                        g.fillStyle = glow;
+                        g.beginPath();
+                        g.ellipse(cx, cy, 14, 9, 0, 0, Math.PI * 2);
+                        g.fill();
+                        // Core oval hồng đặc
+                        const core = g.createRadialGradient(cx, cy - 1, 0, cx, cy, 9);
+                        core.addColorStop(0, '#ff7ac0');
+                        core.addColorStop(0.45, '#f050a8');
+                        core.addColorStop(1, '#d03890');
+                        g.fillStyle = core;
+                        g.beginPath();
+                        g.ellipse(cx, cy, 11, 6.5, 0, 0, Math.PI * 2);
+                        g.fill();
+                    }
+                    function blinkEye(cx, cy) {
+                        g.strokeStyle = '#e05098';
+                        g.lineWidth = 3;
+                        g.lineCap = 'round';
+                        g.beginPath();
+                        g.moveTo(cx - 10, cy);
+                        g.quadraticCurveTo(cx, cy + 3, cx + 10, cy);
+                        g.stroke();
+                    }
+                    if (blink) {
+                        blinkEye(20, 28);
+                        blinkEye(44, 28);
+                    } else {
+                        almond(20, 28);
+                        almond(44, 28);
+                    }
+                    // Miệng nhỏ
+                    g.fillStyle = '#c84888';
+                    g.beginPath();
+                    g.ellipse(32, 48, 4, 1.5, 0, 0, Math.PI * 2);
+                    g.fill();
+                    const t = new THREE.CanvasTexture(c);
+                    t.magFilter = THREE.LinearFilter;
+                    t.minFilter = THREE.LinearFilter;
+                    t.encoding = THREE.sRGBEncoding;
+                    t.needsUpdate = true;
+                    return t;
+                }
+                const girlFaceTexture = makeGirlFaceTex(false);
+                const girlFaceBlinkTexture = makeGirlFaceTex(true);
 
                 // Mặt boss Error: chỉ có mắt trắng bóc, không có miệng
                 const errorFaceTexture = pixelTexture(g => {
@@ -8829,18 +9190,47 @@
                     P.hips = new THREE.Group();
                     P.hips.position.y = 0.95;
                     root.add(P.hips);
-                    mk(box(bodyW - 0.06, 0.24, 0.42), mats.armorDark, 0, 0.02, 0, P.hips);
                     if (female) {
-                        // Váy ngắn vuông
-                        mk(box(0.8, 0.3, 0.5), mats.armorLight, 0, -0.1, 0, P.hips);
+                        // Không váy dài — chỉ hông ngắn + lộ chân
+                        mk(box(0.70, 0.22, 0.40), mats.armorDark, 0, 0.02, 0, P.hips);
+                        // Quần / đáy áo ngắn (không che chân)
+                        mk(box(0.68, 0.14, 0.38), mats.armor, 0, -0.10, 0, P.hips);
+                    } else {
+                        // Hông áo đỏ + đáy áo
+                        mk(box(bodyW + 0.02, 0.28, 0.46), mats.armor, 0, 0.02, 0, P.hips);
+                        mk(box(bodyW - 0.04, 0.12, 0.40), mats.armorDark, 0, -0.12, 0, P.hips);
                     }
 
                     // Thân
                     P.torso = new THREE.Group();
                     P.torso.position.y = 0.1;
                     P.hips.add(P.torso);
-                    mk(box(bodyW, 0.8, 0.44), mats.armor, 0, 0.42, 0, P.torso);
-                    mk(box(bodyW + 0.02, 0.08, 0.46), mats.armorDark, 0, 0.05, 0, P.torso);
+                    if (female) {
+                        // Áo ngắn trắng galaxy (không váy) — lộ chân
+                        mk(box(bodyW - 0.06, 0.68, 0.40), mats.armor, 0, 0.40, 0, P.torso);
+                        // Cổ áo mềm
+                        mk(box(bodyW - 0.10, 0.12, 0.36), mats.armorLight, 0, 0.78, 0.02, P.torso);
+                        // Vai xòe nhẹ (không cape dài)
+                        mk(box(0.20, 0.22, 0.24), mats.armorLight, -0.40, 0.62, 0, P.torso);
+                        mk(box(0.20, 0.22, 0.24), mats.armorLight, 0.40, 0.62, 0, P.torso);
+                    } else {
+                        // Áo khoác đỏ (hình 1): thân + cổ áo + túi
+                        mk(box(bodyW, 0.82, 0.46), mats.armor, 0, 0.42, 0, P.torso);
+                        // Cổ áo đứng
+                        mk(box(bodyW + 0.06, 0.16, 0.48), mats.armorDark, 0, 0.86, 0.02, P.torso);
+                        mk(box(0.18, 0.14, 0.12), mats.armorDark, -0.28, 0.88, 0.22, P.torso);
+                        mk(box(0.18, 0.14, 0.12), mats.armorDark, 0.28, 0.88, 0.22, P.torso);
+                        // Nẹp giữa / nút
+                        mk(box(0.08, 0.55, 0.06), mats.armorLight, 0, 0.38, 0.24, P.torso);
+                        mk(box(0.06, 0.06, 0.05), mats.bow, 0, 0.55, 0.27, P.torso);
+                        mk(box(0.06, 0.06, 0.05), mats.bow, 0, 0.40, 0.27, P.torso);
+                        mk(box(0.06, 0.06, 0.05), mats.bow, 0, 0.25, 0.27, P.torso);
+                        // Túi ngực
+                        mk(box(0.22, 0.16, 0.08), mats.armorDark, -0.22, 0.48, 0.24, P.torso);
+                        mk(box(0.22, 0.16, 0.08), mats.armorDark, 0.22, 0.48, 0.24, P.torso);
+                        // Viền dưới
+                        mk(box(bodyW + 0.04, 0.08, 0.48), mats.armorDark, 0, 0.02, 0, P.torso);
+                    }
 
                     // Đầu hơi tròn
                     P.head = new THREE.Group();
@@ -8864,28 +9254,44 @@
 
                     if (withHair) {
                         if (female) {
-                            // Tóc cosmic girl: dài, spiky, nơ phát sáng
-                            mk(roundedBox(0.76, 0.18, 0.72, 0.08), mats.hair, 0, 0.84, 0, P.head);
-                            mk(box(0.74, 0.20, 0.10), mats.hair, 0, 0.72, 0.32, P.head);
-                            mk(box(0.22, 0.30, 0.14), mats.hair, -0.24, 0.90, 0.08, P.head);
-                            mk(box(0.22, 0.32, 0.14), mats.hair, 0.24, 0.92, 0.06, P.head);
-                            mk(box(0.18, 0.36, 0.14), mats.hair, 0.0, 0.98, -0.04, P.head);
-                            mk(box(0.76, 1.15, 0.10), mats.hair, 0, 0.28, -0.36, P.head);
-                            mk(box(0.10, 1.05, 0.52), mats.hair, -0.40, 0.28, -0.06, P.head);
-                            mk(box(0.10, 1.05, 0.52), mats.hair, 0.40, 0.28, -0.06, P.head);
-                            mk(box(0.14, 0.14, 0.09), mats.bow, -0.46, 0.78, 0.24, P.head);
-                            mk(box(0.14, 0.14, 0.09), mats.bow, 0.46, 0.78, 0.24, P.head);
-                            mk(box(0.12, 0.12, 0.09), mats.bow, 0, 0.78, 0.26, P.head);
+                            // Tóc hồng dài kiểu hình 2: mái ngang + 2 bên dài + nơ nhỏ
+                            mk(roundedBox(0.78, 0.22, 0.74, 0.1), mats.hair, 0, 0.86, 0, P.head);
+                            // Bangs / mái che trán
+                            mk(box(0.76, 0.22, 0.12), mats.hair, 0, 0.70, 0.34, P.head);
+                            mk(box(0.28, 0.18, 0.14), mats.hair, -0.22, 0.62, 0.30, P.head);
+                            mk(box(0.28, 0.18, 0.14), mats.hair, 0.22, 0.62, 0.30, P.head);
+                            // Side spikes / volume top
+                            mk(box(0.24, 0.34, 0.16), mats.hair, -0.28, 0.95, 0.06, P.head);
+                            mk(box(0.24, 0.36, 0.16), mats.hair, 0.28, 0.97, 0.04, P.head);
+                            mk(box(0.20, 0.40, 0.16), mats.hair, 0.0, 1.02, -0.06, P.head);
+                            // Long side hair (xuống vai)
+                            mk(box(0.14, 1.25, 0.48), mats.hair, -0.42, 0.20, -0.02, P.head);
+                            mk(box(0.14, 1.25, 0.48), mats.hair, 0.42, 0.20, -0.02, P.head);
+                            // Back hair length
+                            mk(box(0.72, 1.20, 0.14), mats.hair, 0, 0.22, -0.38, P.head);
+                            // Soft hair bow accents
+                            mk(box(0.16, 0.12, 0.10), mats.bow, -0.48, 0.72, 0.20, P.head);
+                            mk(box(0.16, 0.12, 0.10), mats.bow, 0.48, 0.72, 0.20, P.head);
+                            mk(box(0.14, 0.10, 0.10), mats.bow, 0, 0.78, 0.28, P.head);
                         } else {
-                            // Tóc cosmic boy: mái spiky + volume galaxy
-                            mk(roundedBox(0.74, 0.18, 0.70, 0.08), mats.hair, 0, 0.82, 0, P.head);
-                            mk(box(0.72, 0.22, 0.10), mats.hair, 0, 0.72, 0.32, P.head);
-                            mk(box(0.20, 0.28, 0.14), mats.hair, -0.22, 0.88, 0.10, P.head);
-                            mk(box(0.20, 0.30, 0.14), mats.hair, 0.22, 0.90, 0.08, P.head);
-                            mk(box(0.18, 0.34, 0.14), mats.hair, 0.0, 0.95, -0.05, P.head);
-                            mk(box(0.70, 0.12, 0.55), mats.hair, 0, 0.68, -0.12, P.head);
-                            mk(box(0.10, 0.36, 0.48), mats.hair, -0.36, 0.62, -0.02, P.head);
-                            mk(box(0.10, 0.36, 0.48), mats.hair, 0.36, 0.62, -0.02, P.head);
+                            // Tóc/mũ hồng kiểu hình 1: búi hồng + vành mũ tối + đai vàng
+                            // Vành mũ tối (rim)
+                            mk(roundedBox(0.78, 0.12, 0.78, 0.06), mats.armorDark, 0, 0.78, 0, P.head);
+                            // Mái tóc hồng phía trên
+                            mk(roundedBox(0.72, 0.28, 0.68, 0.1), mats.hair, 0, 0.96, 0, P.head);
+                            mk(box(0.70, 0.18, 0.12), mats.hair, 0, 0.78, 0.34, P.head);
+                            // Búi tóc hồng 2 bên + giữa
+                            mk(box(0.22, 0.32, 0.18), mats.hair, -0.26, 1.02, 0.04, P.head);
+                            mk(box(0.22, 0.34, 0.18), mats.hair, 0.26, 1.04, 0.02, P.head);
+                            mk(box(0.20, 0.30, 0.16), mats.hair, 0.0, 1.08, -0.08, P.head);
+                            // Tóc hồng sau
+                            mk(box(0.68, 0.22, 0.14), mats.hair, 0, 0.88, -0.34, P.head);
+                            // Đai vàng / crown band
+                            mk(box(0.76, 0.08, 0.76), mats.bow, 0, 0.86, 0, P.head);
+                            mk(box(0.18, 0.10, 0.08), mats.bow, 0, 0.90, 0.38, P.head);
+                            // Ngọc trai nhỏ trên đai (đơn giản)
+                            mk(box(0.10, 0.10, 0.10), mats.armorLight, -0.32, 0.92, 0.28, P.head);
+                            mk(box(0.10, 0.10, 0.10), mats.armorLight, 0.32, 0.92, 0.28, P.head);
                         }
                     }
 
@@ -8895,16 +9301,18 @@
                         const shoulder = new THREE.Group();
                         shoulder.position.set(side * (bodyW / 2 + armW / 2 + 0.03), 0.74, 0);
                         P.torso.add(shoulder);
-                        mk(box(armW + 0.06, 0.3, armW + 0.06), mats.armor, 0, -0.08, 0, shoulder);
-                        mk(box(armW, 0.2, armW), mats.skin, 0, -0.3, 0, shoulder);
+                        // Tay áo (đỏ cho nam, trắng váy cho nữ)
+                        mk(box(armW + 0.08, 0.36, armW + 0.08), mats.armor, 0, -0.10, 0, shoulder);
+                        mk(box(armW + 0.02, 0.18, armW + 0.02), mats.armorDark, 0, -0.32, 0, shoulder);
                         const elbow = new THREE.Group();
-                        elbow.position.y = -0.4;
+                        elbow.position.y = -0.42;
                         shoulder.add(elbow);
-                        mk(box(armW - 0.02, 0.34, armW - 0.02), mats.skin, 0, -0.14, 0, elbow);
+                        // Cẳng tay tối (galaxy / đen)
+                        mk(box(armW - 0.02, 0.32, armW - 0.02), mats.skin, 0, -0.12, 0, elbow);
                         const hand = new THREE.Group();
-                        hand.position.y = -0.36;
+                        hand.position.y = -0.34;
                         elbow.add(hand);
-                        mk(box(armW, 0.2, armW - 0.02), mats.skin, 0, 0, 0, hand);
+                        mk(box(armW, 0.18, armW - 0.02), mats.skin, 0, 0, 0, hand);
                         return { shoulder, elbow, hand };
                     };
                     P.armL = makeArm(-1);
@@ -8916,11 +9324,13 @@
                         const hip = new THREE.Group();
                         hip.position.set(side * (female ? 0.17 : 0.19), -0.06, 0);
                         P.hips.add(hip);
-                        mk(box(legW, 0.46, legW), female ? mats.skin : mats.armor, 0, -0.2, 0, hip);
+                        // Nam: chân galaxy tối; Nữ: da tối
+                        const legMat = mats.skin;
+                        mk(box(legW, 0.46, legW), legMat, 0, -0.2, 0, hip);
                         const knee = new THREE.Group();
                         knee.position.y = -0.42;
                         hip.add(knee);
-                        mk(box(legW - 0.03, 0.3, legW - 0.03), female ? mats.skin : mats.armor, 0, -0.1, 0, knee);
+                        mk(box(legW - 0.03, 0.3, legW - 0.03), legMat, 0, -0.1, 0, knee);
                         mk(box(legW, 0.22, legW + 0.05), mats.boot, 0, -0.32, 0.03, knee);
                         return { hip, knee };
                     };
@@ -9160,6 +9570,93 @@
                     return tex;
                 }
                 const galaxyBodyTex = createGalaxyBodyTexture();
+
+                // ===== WHITE GALAXY DRESS TEXTURE (female player — image 2 style) =====
+                function createWhiteGalaxyDressTexture() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 1024;
+                    canvas.height = 1024;
+                    const ctx = canvas.getContext('2d');
+                    // Soft white / pearl base
+                    const bg = ctx.createLinearGradient(0, 0, 0, 1024);
+                    bg.addColorStop(0, '#f8f4ff');
+                    bg.addColorStop(0.45, '#ebe6f8');
+                    bg.addColorStop(1, '#d8d0ea');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, 1024, 1024);
+                    // Soft pearl sheen
+                    for (let i = 0; i < 12; i++) {
+                        const x = Math.random() * 1024, y = Math.random() * 1024;
+                        const r = 80 + Math.random() * 180;
+                        const ng = ctx.createRadialGradient(x, y, 0, x, y, r);
+                        ng.addColorStop(0, 'rgba(255,255,255,0.55)');
+                        ng.addColorStop(1, 'rgba(255,255,255,0)');
+                        ctx.fillStyle = ng;
+                        ctx.beginPath();
+                        ctx.arc(x, y, r, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // Dark galaxy swirl cores (like image 2 dress)
+                    function drawDarkSwirl(cx, cy, scale, rot) {
+                        ctx.save();
+                        ctx.translate(cx, cy);
+                        ctx.rotate(rot);
+                        for (let arm = 0; arm < 5; arm++) {
+                            ctx.strokeStyle = arm % 2 === 0 ? 'rgba(20,18,40,0.55)' : 'rgba(40,30,70,0.35)';
+                            ctx.lineWidth = 3.2 * scale;
+                            ctx.beginPath();
+                            for (let t = 0; t < 36; t++) {
+                                const a = (t / 36) * Math.PI * 2.4 + arm * (Math.PI * 2 / 5);
+                                const rad = (6 + t * 2.8) * scale;
+                                const px = Math.cos(a) * rad;
+                                const py = Math.sin(a) * rad * 0.78;
+                                if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                            }
+                            ctx.stroke();
+                        }
+                        const core = ctx.createRadialGradient(0, 0, 0, 0, 0, 28 * scale);
+                        core.addColorStop(0, 'rgba(8,6,20,0.9)');
+                        core.addColorStop(0.35, 'rgba(40,30,80,0.45)');
+                        core.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = core;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, 28 * scale, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                    }
+                    drawDarkSwirl(380, 420, 2.4, 0.2);
+                    drawDarkSwirl(680, 620, 1.8, 1.1);
+                    drawDarkSwirl(520, 280, 1.5, -0.6);
+                    drawDarkSwirl(280, 700, 1.3, 0.9);
+                    // Tiny star sparkles
+                    for (let i = 0; i < 80; i++) {
+                        const x = Math.random() * 1024, y = Math.random() * 1024;
+                        const s = 1 + Math.random() * 2.5;
+                        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.9)' : 'rgba(180,200,255,0.7)';
+                        ctx.beginPath();
+                        ctx.arc(x, y, s, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // Soft pastel tint patches
+                    [[0.15,0.2,'rgba(255,180,220,0.12)'],[0.7,0.35,'rgba(180,220,255,0.1)'],[0.4,0.75,'rgba(200,180,255,0.1)']].forEach(function(p) {
+                        const x = p[0]*1024, y = p[1]*1024;
+                        const ng = ctx.createRadialGradient(x, y, 0, x, y, 200);
+                        ng.addColorStop(0, p[2]);
+                        ng.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = ng;
+                        ctx.beginPath();
+                        ctx.arc(x, y, 200, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    const tex = new THREE.CanvasTexture(canvas);
+                    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                    tex.repeat.set(1, 1);
+                    tex.encoding = THREE.sRGBEncoding;
+                    tex.needsUpdate = true;
+                    return tex;
+                }
+                const whiteGalaxyDressTex = createWhiteGalaxyDressTexture();
+
                 // Gắn texture Alien X lên skinMat (đầu/simple) — hoa văn quay theo mesh
                 if (typeof skinMat !== 'undefined' && skinMat) {
                     skinMat.map = galaxyBodyTex;
@@ -9204,8 +9701,23 @@
                 const girlCosmicHairTexture = pixelTexture(g => {
                     for (let y = 0; y < 16; y++)
                         for (let x = 0; x < 16; x++) {
-                            const v = 50 + Math.floor(Math.random() * 90);
-                            const r = Math.min(255, v + 100), b = Math.min(255, v + 160), gg = Math.floor(v * 0.35);
+                            // Soft pink hair like image 2
+                            const v = 60 + Math.floor(Math.random() * 70);
+                            const r = Math.min(255, 200 + Math.floor(v * 0.4));
+                            const gg = Math.min(255, 80 + Math.floor(v * 0.5));
+                            const b = Math.min(255, 140 + Math.floor(v * 0.55));
+                            g.fillStyle = `rgb(${r},${gg},${b})`;
+                            g.fillRect(x, y, 1, 1);
+                        }
+                });
+                // Tóc hồng nam (hình áo đỏ) — hồng nhạt + highlight
+                const boyPinkHairTexture = pixelTexture(g => {
+                    for (let y = 0; y < 16; y++)
+                        for (let x = 0; x < 16; x++) {
+                            const v = 70 + Math.floor(Math.random() * 60);
+                            const r = Math.min(255, 220 + Math.floor(v * 0.25));
+                            const gg = Math.min(255, 100 + Math.floor(v * 0.45));
+                            const b = Math.min(255, 150 + Math.floor(v * 0.4));
                             g.fillStyle = `rgb(${r},${gg},${b})`;
                             g.fillRect(x, y, 1, 1);
                         }
@@ -9279,27 +9791,140 @@
                     roughness: 0.25
                 });
 
+                // Áo đỏ nam (hình 1) — jacket đỏ bóng
+                const boyJacketMat = new THREE.MeshStandardMaterial({
+                    color: 0xb01830,
+                    emissive: 0x4a0810,
+                    emissiveIntensity: 0.35,
+                    metalness: 0.35,
+                    roughness: 0.42,
+                    envMapIntensity: 0.85
+                });
+                const boyJacketMatDark = new THREE.MeshStandardMaterial({
+                    color: 0x6e1020,
+                    emissive: 0x2a0610,
+                    emissiveIntensity: 0.3,
+                    metalness: 0.4,
+                    roughness: 0.45,
+                    envMapIntensity: 0.8
+                });
+                const boyJacketMatLight = new THREE.MeshStandardMaterial({
+                    color: 0xd03048,
+                    emissive: 0x601018,
+                    emissiveIntensity: 0.4,
+                    metalness: 0.3,
+                    roughness: 0.38,
+                    envMapIntensity: 0.9
+                });
+                const boySkinMat = new THREE.MeshStandardMaterial({
+                    map: galaxyBodyTex,
+                    color: 0x1a1a28,
+                    emissive: 0x223344,
+                    emissiveMap: galaxyBodyTex,
+                    emissiveIntensity: 0.55,
+                    metalness: 0.25,
+                    roughness: 0.4,
+                    envMapIntensity: 0.9
+                });
+                const boyHairMat = new THREE.MeshStandardMaterial({
+                    map: boyPinkHairTexture,
+                    color: 0xffb0d8,
+                    emissive: 0xff66aa,
+                    emissiveIntensity: 1.45,
+                    metalness: 0.25,
+                    roughness: 0.32
+                });
+                const boyGoldMat = new THREE.MeshStandardMaterial({
+                    color: 0xe8c878,
+                    emissive: 0xaa8840,
+                    emissiveIntensity: 0.9,
+                    metalness: 0.85,
+                    roughness: 0.25
+                });
                 const blockyMats = {
-                    armor: cosmicBodyMat,
-                    armorLight: cosmicBodyMatLight,
-                    armorDark: cosmicBodyMatDark,
-                    skin: cosmicSkinMat,
+                    armor: boyJacketMat,
+                    armorLight: boyJacketMatLight,
+                    armorDark: boyJacketMatDark,
+                    skin: boySkinMat,
                     boot: cosmicBootMat,
                     sole: cosmicBootMat,
-                    hair: cosmicHairMat,
-                    bow: cosmicBowMat
+                    hair: boyHairMat,
+                    bow: boyGoldMat
                 };
 
+                // Girl mats: white galaxy dress (image 2) + pink hair + dark limbs
+                const girlDressMat = new THREE.MeshStandardMaterial({
+                    map: whiteGalaxyDressTex,
+                    color: 0xffffff,
+                    emissive: 0x8899bb,
+                    emissiveMap: whiteGalaxyDressTex,
+                    emissiveIntensity: 0.55,
+                    metalness: 0.12,
+                    roughness: 0.42,
+                    envMapIntensity: 0.95,
+                    transparent: true,
+                    opacity: 0.88,
+                    depthWrite: true,
+                    side: THREE.DoubleSide
+                });
+                const girlDressMatLight = new THREE.MeshStandardMaterial({
+                    map: whiteGalaxyDressTex,
+                    color: 0xffffff,
+                    emissive: 0xaabbcc,
+                    emissiveMap: whiteGalaxyDressTex,
+                    emissiveIntensity: 0.6,
+                    metalness: 0.1,
+                    roughness: 0.38,
+                    envMapIntensity: 1.0,
+                    transparent: true,
+                    opacity: 0.78,
+                    depthWrite: false,
+                    side: THREE.DoubleSide
+                });
+                const girlDressMatDark = new THREE.MeshStandardMaterial({
+                    map: whiteGalaxyDressTex,
+                    color: 0xe8e4f0,
+                    emissive: 0x667788,
+                    emissiveMap: whiteGalaxyDressTex,
+                    emissiveIntensity: 0.4,
+                    metalness: 0.15,
+                    roughness: 0.48,
+                    envMapIntensity: 0.85,
+                    transparent: true,
+                    opacity: 0.92,
+                    depthWrite: true,
+                    side: THREE.DoubleSide
+                });
+                const girlSkinMat = new THREE.MeshStandardMaterial({
+                    color: 0x0a0a12,
+                    emissive: 0x111118,
+                    emissiveIntensity: 0.25,
+                    metalness: 0.15,
+                    roughness: 0.55,
+                    envMapIntensity: 0.6
+                });
                 const girlMats = Object.assign({}, blockyMats, {
+                    armor: girlDressMat,
+                    armorLight: girlDressMatLight,
+                    armorDark: girlDressMatDark,
+                    skin: girlSkinMat,
                     hair: new THREE.MeshStandardMaterial({
                         map: girlCosmicHairTexture,
-                        color: 0xff88ee,
-                        emissive: 0xaa00ff,
-                        emissiveIntensity: 1.35,
-                        metalness: 0.3,
-                        roughness: 0.35
+                        color: 0xff9ad8,
+                        emissive: 0xff44aa,
+                        emissiveIntensity: 1.5,
+                        metalness: 0.25,
+                        roughness: 0.32
                     }),
-                    bow: cosmicBowMat
+                    bow: new THREE.MeshStandardMaterial({
+                        color: 0xffa0e0,
+                        emissive: 0xff66cc,
+                        emissiveIntensity: 1.6,
+                        metalness: 0.4,
+                        roughness: 0.28
+                    }),
+                    boot: girlSkinMat,
+                    sole: girlSkinMat
                 });
 
                 Object.values(blockyMats).forEach(m => { m.envMapIntensity = 0.4; });
@@ -9307,8 +9932,11 @@
                 [blockyMats.armorDark, blockyMats.boot, blockyMats.sole].forEach(m => m.color.convertSRGBToLinear());
 
                 const GENDER_KEY = 'mystic_temple_gender';
-                let playerGender = 'boy';
-                try { if (localStorage.getItem(GENDER_KEY) === 'girl') playerGender = 'girl'; } catch (e) {}
+                let playerGender = 'girl'; // default: nữ cosmic (hình 2)
+                try {
+                    const stored = localStorage.getItem(GENDER_KEY);
+                    if (stored === 'boy' || stored === 'girl') playerGender = stored;
+                } catch (e) {}
 
                 let blockyPlayer = null;
                 let blockyP = null;
@@ -9415,26 +10043,63 @@
                 cosmicOrbitGroup.add(aura);
 
                 // Eye glow (chỉ mesh, không PointLight để chống lag)
+                // Nữ: mắt hồng; Nam: mắt xanh cosmic
+                let _girlBlinkUntil = 0;
+                let _girlBlinkNext = 0;
                 function attachCosmicEyeGlow() {
                     if (!blockyP || !blockyP.head) return;
-                    const olds = blockyP.head.children.filter(c => c.userData && c.userData.isEyeGlow);
+                    const olds = blockyP.head.children.filter(c => c.userData && (c.userData.isEyeGlow || c.userData.isBlinkFace));
                     olds.forEach(o => blockyP.head.remove(o));
 
-                    [-0.14, 0.14].forEach(ex => {
-                        const glow = new THREE.Mesh(
-                            new THREE.CircleGeometry(0.09, 8),
-                            new THREE.MeshBasicMaterial({
-                                color: 0xaaddff,
-                                transparent: true,
-                                opacity: 0.85,
-                                depthWrite: false,
-                                blending: THREE.AdditiveBlending
-                            })
-                        );
-                        glow.position.set(ex, 0.44, 0.34);
-                        glow.userData.isEyeGlow = true;
-                        blockyP.head.add(glow);
-                    });
+                    const isGirl = (typeof playerGender !== 'undefined' && playerGender === 'girl');
+
+                    if (isGirl) {
+                        // Glow hồng mềm (NormalBlending — không bị trắng)
+                        [-0.14, 0.14].forEach(ex => {
+                            const glow = new THREE.Mesh(
+                                new THREE.CircleGeometry(0.1, 12),
+                                new THREE.MeshBasicMaterial({
+                                    color: 0xf060b0,
+                                    transparent: true,
+                                    opacity: 0.4,
+                                    depthWrite: false,
+                                    blending: THREE.NormalBlending
+                                })
+                            );
+                            glow.position.set(ex, 0.44, 0.335);
+                            glow.scale.set(1.4, 0.75, 1);
+                            glow.userData.isEyeGlow = true;
+                            blockyP.head.add(glow);
+                        });
+                    } else {
+                        [-0.14, 0.14].forEach(ex => {
+                            const glow = new THREE.Mesh(
+                                new THREE.CircleGeometry(0.09, 8),
+                                new THREE.MeshBasicMaterial({
+                                    color: 0xaaddff,
+                                    transparent: true,
+                                    opacity: 0.85,
+                                    depthWrite: false,
+                                    blending: THREE.AdditiveBlending
+                                })
+                            );
+                            glow.position.set(ex, 0.44, 0.34);
+                            glow.userData.isEyeGlow = true;
+                            blockyP.head.add(glow);
+                        });
+                    }
+
+                    // Lưu ref mặt để chớp mắt
+                    if (blockyP.face && blockyP.face.material) {
+                        blockyP.face.userData.openMap = isGirl ? girlFaceTexture : playerFaceTexture;
+                        blockyP.face.userData.blinkMap = isGirl ? girlFaceBlinkTexture : null;
+                        if (isGirl) {
+                            blockyP.face.material.map = girlFaceTexture;
+                            blockyP.face.material.needsUpdate = true;
+                        }
+                    }
+                    _girlBlinkNext = performance.now() + 1800 + Math.random() * 800;
+                    _girlBlinkUntil = 0;
                 }
                 attachCosmicEyeGlow();
 
@@ -9443,6 +10108,40 @@
                 window.__onGender = function(p) {
                     if (_origOnGender) _origOnGender(p);
                     attachCosmicEyeGlow();
+                };
+
+                // Chớp mắt ~ mỗi 2 giây (chỉ nhân vật nữ)
+                window.__updateGirlBlink = function(now) {
+                    if (typeof playerGender === 'undefined' || playerGender !== 'girl') return;
+                    if (!blockyP || !blockyP.face || !blockyP.face.material) return;
+                    const face = blockyP.face;
+                    const mat = face.material;
+                    if (!face.userData.blinkMap) return;
+                    now = now || performance.now();
+                    if (now < _girlBlinkUntil) {
+                        // đang nhắm
+                        if (mat.map !== face.userData.blinkMap) {
+                            mat.map = face.userData.blinkMap;
+                            mat.needsUpdate = true;
+                        }
+                        // ẩn glow khi nhắm
+                        blockyP.head.children.forEach(function(c) {
+                            if (c.userData && c.userData.isEyeGlow) c.visible = false;
+                        });
+                        return;
+                    }
+                    // mắt mở
+                    if (mat.map !== face.userData.openMap) {
+                        mat.map = face.userData.openMap;
+                        mat.needsUpdate = true;
+                    }
+                    blockyP.head.children.forEach(function(c) {
+                        if (c.userData && c.userData.isEyeGlow) c.visible = true;
+                    });
+                    if (now >= _girlBlinkNext) {
+                        _girlBlinkUntil = now + 120; // nhắm ~120ms
+                        _girlBlinkNext = now + 1800 + Math.random() * 900; // lần sau ~2s
+                    }
                 };
 
                 // Animate orbits inside updateRealism or animate loop later
@@ -9538,6 +10237,9 @@
                     // Cosmic orbit rings + planets animation
                     if (typeof window.__updateCosmicOrbit === 'function') {
                         window.__updateCosmicOrbit(t);
+                    }
+                    if (typeof window.__updateGirlBlink === 'function') {
+                        window.__updateGirlBlink(performance.now());
                     }
 
                     // Ẩn nhân vật cũ, đưa vòng halo lên trên đầu mới
@@ -11920,58 +12622,251 @@ const octopusMonster =
                 function drawEquippedSwordIcon() {
                     const c = document.getElementById('sword-icon-canvas');
                     if (!c || !c.getContext) return;
+                    if (c.width < 64) { c.width = 64; c.height = 64; }
                     const ctx = c.getContext('2d');
                     const W = c.width, H = c.height;
                     ctx.clearRect(0, 0, W, H);
-                    // background
-                    ctx.fillStyle = 'rgba(20,10,40,0.5)';
-                    ctx.fillRect(0, 0, W, H);
 
-                    let blade = '#c0c0c0';
-                    let glow = null;
-                    let label = 'C';
-                    if (hasElectronSword) {
-                        blade = '#44ccff'; glow = '#00aaff'; label = '⚡';
-                    } else if (hasGlitchSword || equippedItemType === 'glitch' || equippedItemType === 'error') {
-                        blade = '#ff3355'; glow = '#ff0033'; label = 'E';
-                    } else if (hasHackSword || equippedItemType === 'hack') {
-                        blade = '#00ffff'; glow = '#00ccff'; label = 'H';
-                    } else if (hasGoDSword || equippedItemType === 'god') {
-                        blade = '#ffd700'; glow = '#ffaa00'; label = 'G';
-                    } else if (equippedItemType === 'legendary' || swordLevel >= 3) {
-                        blade = '#ffd700'; glow = '#c9a000'; label = 'L';
-                    } else if (equippedItemType === 'epic' || swordLevel === 2) {
-                        blade = '#a335ee'; glow = '#7b2cbf'; label = 'E';
-                    } else if (equippedItemType === 'rare' || swordLevel === 1) {
-                        blade = '#0088ff'; glow = '#0066cc'; label = 'R';
+                    const s = W / 16;
+                    function drawPixels(map, palette) {
+                        for (let y = 0; y < map.length; y++) {
+                            const row = map[y];
+                            for (let x = 0; x < row.length; x++) {
+                                const ch = row[x];
+                                if (ch === '.' || ch === ' ') continue;
+                                const col = palette[ch];
+                                if (!col) continue;
+                                ctx.fillStyle = col;
+                                ctx.fillRect(Math.round(x * s), Math.round(y * s), Math.ceil(s), Math.ceil(s));
+                            }
+                        }
                     }
 
-                    if (glow) {
-                        ctx.shadowColor = glow;
-                        ctx.shadowBlur = 8;
+                    let kind = 'common';
+                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword) kind = 'electron';
+                    else if ((typeof hasGlitchSword !== 'undefined' && hasGlitchSword) || equippedItemType === 'glitch' || equippedItemType === 'error') kind = 'error';
+                    else if ((typeof hasHackSword !== 'undefined' && hasHackSword) || equippedItemType === 'hack') kind = 'hack';
+                    else if ((typeof hasGoDSword !== 'undefined' && hasGoDSword) || equippedItemType === 'god') kind = 'god';
+                    else if (equippedItemType === 'legendary' || (typeof swordLevel === 'number' && swordLevel >= 3)) kind = 'legendary';
+                    else if (equippedItemType === 'epic' || (typeof swordLevel === 'number' && swordLevel === 2)) kind = 'epic';
+                    else if (equippedItemType === 'rare' || (typeof swordLevel === 'number' && swordLevel === 1)) kind = 'rare';
+                    else if (equippedItemType === 'common') kind = 'common';
+
+                    if (kind === 'common') {
+                        // H1: bạc-xanh + vàng
+                        drawPixels([
+                            '.......W......',
+                            '......WSW.....',
+                            '.....WSBS.....',
+                            '....WSBBS.....',
+                            '...WSBBBS.....',
+                            '..WSBBBBS.....',
+                            '.WSBBBBD......',
+                            'WSBBBBD.......',
+                            '.YYYYY........',
+                            '.YGGGY........',
+                            '..YCCY........',
+                            '...CC.........',
+                            '...CC.........',
+                            '...YY.........',
+                            '..............',
+                            '..............'
+                        ], { W:'#f0f6ff', S:'#b8d4f0', B:'#6aa8e0', D:'#3a78b0', Y:'#ffd24a', G:'#e8b020', C:'#5a9ad4' });
+                    } else if (kind === 'rare') {
+                        // H2: xanh dương pixel
+                        drawPixels([
+                            '.......A......',
+                            '......ABA.....',
+                            '.....AB BBA...'.replace(' ', ''),
+                            '....ABBBBBA...',
+                            '...ABBBBBBA...',
+                            '..ABBBBBBBA...',
+                            '.ABBBBBBBBA...',
+                            'ABBBBBBBBA....',
+                            '.HDDDH.......',
+                            '..HDDH.......',
+                            '...HH........',
+                            '...HH........',
+                            '...HH........',
+                            '...DD........',
+                            '..............',
+                            '..............'
+                        ], { A:'#5a7aff', B:'#2a48e0', H:'#1a2a9a', D:'#0a1858' });
+                        ctx.clearRect(0,0,W,H);
+                        drawPixels([
+                            '.......A......',
+                            '......ABA.....',
+                            '.....ABBBA....',
+                            '....ABBBBBA...',
+                            '...ABBBBBBA...',
+                            '..ABBBBBBBA...',
+                            '.ABBBBBBBBA...',
+                            'ABBBBBBBBA....',
+                            '.HDDDH.......',
+                            '..HDDH.......',
+                            '...HH........',
+                            '...HH........',
+                            '...HH........',
+                            '...DD........',
+                            '..............',
+                            '..............'
+                        ], { A:'#5a7aff', B:'#2a48e0', H:'#1a2a9a', D:'#0a1858' });
+                    } else if (kind === 'epic') {
+                        // H3: bạc + tím
+                        drawPixels([
+                            '........W.....',
+                            '.......WSW....',
+                            '......WSBS....',
+                            '.....WSBBS....',
+                            '....WSBBBS....',
+                            '...WSBBBBS....',
+                            '..WSBBBBBS....',
+                            '.WSBBBBBS.....',
+                            'PPYPPPP.......',
+                            'PPPPPPP.......',
+                            '.P.VV.........',
+                            '...VV.........',
+                            '...VV.........',
+                            '...PP.........',
+                            '..............',
+                            '..............'
+                        ], { W:'#f8f8fc', S:'#d8d8e0', B:'#b0b0bc', P:'#8b3dff', Y:'#ffe066', V:'#4a1088' });
+                    } else if (kind === 'legendary') {
+                        // H4: vàng
+                        drawPixels([
+                            '.......Y......',
+                            '......YGY.....',
+                            '.....YGAGY....',
+                            '....YGAAGY....',
+                            '...YGAAGGY....',
+                            '..YGAAGGGY....',
+                            '.YGAAGGGY.....',
+                            'YGAAGGGY......',
+                            '.YOOOY........',
+                            '..YOOY........',
+                            '...OO.........',
+                            '...OO.........',
+                            '...OO.........',
+                            '...YY.........',
+                            '..............',
+                            '..............'
+                        ], { Y:'#ffe566', G:'#ffcc33', A:'#ffb000', O:'#c9920a' });
+                    } else if (kind === 'god') {
+                        // H5: cầu vồng
+                        ctx.shadowColor = '#ffee66';
+                        ctx.shadowBlur = 10;
+                        drawPixels([
+                            '......WWW.....',
+                            '.....WRRRW....',
+                            '....WOOOOW....',
+                            '...WYYYYW.....',
+                            '..WGGGGW......',
+                            '.WBBBBW.......',
+                            'WIIIIW........',
+                            '.WVVVW........',
+                            '..YGGY........',
+                            '...KK.........',
+                            '...KK.........',
+                            '...KK.........',
+                            '...YY.........',
+                            '..............',
+                            '..............',
+                            '..............'
+                        ], { W:'#ffffff', R:'#ff3355', O:'#ff8833', Y:'#ffee33', G:'#44ff66', B:'#3399ff', I:'#8866ff', V:'#ff66cc', K:'#5a4030' });
+                        ctx.shadowBlur = 0;
+                    } else if (kind === 'hack') {
+                        // H6: hồng neon
+                        ctx.shadowColor = '#ff44cc';
+                        ctx.shadowBlur = 12;
+                        drawPixels([
+                            '......P.......',
+                            '.....PMP......',
+                            '....PMMMP.....',
+                            '...PMMMM P....'.replace(' ',''),
+                            '..PMMMMMP.....',
+                            '.PMMMMMP......',
+                            'PMMMMMP.......',
+                            '.PMMMP........',
+                            '..NNN.........',
+                            '...NBN........',
+                            '....BB........',
+                            '....BB........',
+                            '....BB........',
+                            '....NN........',
+                            '..............',
+                            '..............'
+                        ], { P:'#ff99ee', M:'#ff22aa', N:'#e8c070', B:'#8b6914' });
+                        ctx.clearRect(0,0,W,H);
+                        ctx.shadowColor = '#ff44cc';
+                        ctx.shadowBlur = 12;
+                        drawPixels([
+                            '......P.......',
+                            '.....PMP......',
+                            '....PMMMP.....',
+                            '...PMMMM P....'.replace(' ',''),
+                            '..PMMMMMP.....',
+                            '.PMMMMMP......',
+                            'PMMMMMP.......',
+                            '.PMMMP........',
+                            '..NNN.........',
+                            '...NBN........',
+                            '....BB........',
+                            '....BB........',
+                            '....BB........',
+                            '....NN........',
+                            '..............',
+                            '..............'
+                        ], { P:'#ff99ee', M:'#ff22aa', N:'#e8c070', B:'#8b6914' });
+                        ctx.shadowBlur = 0;
+                    } else if (kind === 'error') {
+                        // H7: tím + xanh cyber
+                        ctx.shadowColor = '#44ff88';
+                        ctx.shadowBlur = 10;
+                        drawPixels([
+                            '.......G......',
+                            '......GVG.....',
+                            '.....GVVVG....',
+                            '....GVVVVG....',
+                            '...GVVVVG.....',
+                            '..GVVVVG......',
+                            '.GVVVVG.......',
+                            'GVVVVG........',
+                            '.XXXX.........',
+                            'XXGGXX........',
+                            '.XXXX.........',
+                            '..HH..........',
+                            '..HH..........',
+                            '..HH..........',
+                            '..GG..........',
+                            '..............'
+                        ], { V:'#5a20cc', G:'#44ff88', X:'#2a1040', H:'#1a0a30' });
+                        ctx.shadowBlur = 0;
+                    } else {
+                        // electron
+                        ctx.shadowColor = '#00ccff';
+                        ctx.shadowBlur = 10;
+                        drawPixels([
+                            '.......C......',
+                            '......CWC.....',
+                            '.....CWBWC....',
+                            '....CWBBWC....',
+                            '...CWBBBWC....',
+                            '..CWBBBBWC....',
+                            '.CWBBBBWC.....',
+                            'CWBBBBWC......',
+                            '.YYYY.........',
+                            '..YYY.........',
+                            '...YY.........',
+                            '...YY.........',
+                            '...YY.........',
+                            '...CC.........',
+                            '..............',
+                            '..............'
+                        ], { C:'#00e8ff', W:'#e0ffff', B:'#0088aa', Y:'#ffd700' });
+                        ctx.shadowBlur = 0;
                     }
-                    // blade
-                    ctx.fillStyle = blade;
-                    ctx.beginPath();
-                    ctx.moveTo(W * 0.5, 3);
-                    ctx.lineTo(W * 0.62, H * 0.55);
-                    ctx.lineTo(W * 0.5, H * 0.62);
-                    ctx.lineTo(W * 0.38, H * 0.55);
-                    ctx.closePath();
-                    ctx.fill();
-                    // guard
-                    ctx.shadowBlur = 0;
-                    ctx.fillStyle = '#5a4030';
-                    ctx.fillRect(W * 0.28, H * 0.55, W * 0.44, 3);
-                    // handle
-                    ctx.fillStyle = '#3a2818';
-                    ctx.fillRect(W * 0.44, H * 0.58, W * 0.12, H * 0.28);
-                    // pommel
-                    ctx.fillStyle = blade;
-                    ctx.beginPath();
-                    ctx.arc(W * 0.5, H * 0.9, 2.5, 0, Math.PI * 2);
-                    ctx.fill();
                 }
+
 
                 function updateInventoryUI() {
 
@@ -12985,6 +13880,7 @@ const octopusMonster =
 
                 function toggleCameraView() {
                     isFirstPerson = !isFirstPerson;
+                    if (typeof refreshKillHeadLabel === 'function') refreshKillHeadLabel();
                     // FP: ẩn hết model (không thấy tóc/thân). TP: hiện lại
                     playerGroup.visible = !isFirstPerson;
                     if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
@@ -15217,7 +16113,7 @@ const octopusMonster =
                                 checkUpgradeSword();
                                 if (killCount > 999) killCount = 999;
 
-                                document.getElementById('val-kills').innerText = killCount;
+                                document.getElementById('val-kills').innerText = killCount; if (typeof updateKillTally==='function') updateKillTally(); if (typeof updateKillTally==='function') updateKillTally();
                                 document.getElementById('val-power').innerText = formatNum(power);
 
                                 for (let i = 0; i < monstersKilledInOneHit; i++) {
@@ -15432,13 +16328,17 @@ const octopusMonster =
                                 ) {
 
                                     finalBossKillCount++;
-
-
                                     showBossCommandBar(true);
-
-                                    finalBossHP =
-                                        finalBossMaxHP;
-
+                                    finalBossHP = finalBossMaxHP;
+                                    const _bt = document.getElementById('boss-title');
+                                    if (_bt) _bt.innerText = currentLang === 'vi'
+                                        ? ('👑 [BOSS] CUỐI (Đã hạ: ' + finalBossKillCount + '/' + FINAL_BOSS_KILLS_NEEDED + ')')
+                                        : ('👑 FINAL [BOSS] (Defeated: ' + finalBossKillCount + '/' + FINAL_BOSS_KILLS_NEEDED + ')');
+                                    const _hpct = document.getElementById('boss-hp-percent');
+                                    if (_hpct) {
+                                        const pct = Math.min(100, finalBossKillCount / FINAL_BOSS_KILLS_NEEDED * 100);
+                                        _hpct.innerText = (currentLang === 'vi' ? 'Đã tiêu diệt: ' : 'Destroyed: ') + pct.toFixed(2) + '%';
+                                    }
                                 }
 
                             }
@@ -18208,6 +19108,7 @@ const octopusMonster =
                         'val-kills'
                     ).innerText =
                         killCount;
+                        if (typeof updateKillTally === 'function') updateKillTally(); if (typeof updateKillTally==='function') updateKillTally();
 
                     document.getElementById(
                         'val-loop'
@@ -20461,6 +21362,7 @@ const octopusMonster =
                                     'val-kills'
                                 ).innerText =
                                     killCount;
+                        if (typeof updateKillTally === 'function') updateKillTally(); if (typeof updateKillTally==='function') updateKillTally();
 
                                 document.getElementById(
                                     'val-loop'
@@ -21600,6 +22502,7 @@ const octopusMonster =
                         : '🏝️ Hub island — walk into the arrow portal to choose a world!'
                     );
                     if (typeof showBossCommandBar === 'function') showBossCommandBar(false);
+                    if (typeof refreshRedKillBar === 'function') refreshRedKillBar();
                     if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
                 }
 
@@ -21650,6 +22553,9 @@ const octopusMonster =
                         if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(true);
                         if (platformGroup) platformGroup.visible = false;
                         finalBossHP = finalBossMaxHP;
+                        // Ẩn thanh kill mob đỏ — hiện FINAL BOSS bar
+                        const rkb = document.getElementById('red-kill-bar');
+                        if (rkb) rkb.style.display = 'none';
                         if (finalBossMonster) {
                             finalBossMonster.visible = true;
                             finalBossMonster.position.set(0, 0, -6);
@@ -21659,8 +22565,17 @@ const octopusMonster =
                         if (bar) bar.style.display = 'block';
                         const bt = document.getElementById('boss-title');
                         if (bt) bt.innerText = currentLang === 'vi'
-                            ? `👑 [BOSS] CUỐI (Đã hạ: ${finalBossKillCount}/${FINAL_BOSS_KILLS_NEEDED})`
-                            : `👑 FINAL [BOSS] (Defeated: ${finalBossKillCount}/${FINAL_BOSS_KILLS_NEEDED})`;
+                            ? ('👑 [BOSS] CUỐI (Đã hạ: ' + finalBossKillCount + '/' + FINAL_BOSS_KILLS_NEEDED + ')')
+                            : ('👑 FINAL [BOSS] (Defeated: ' + finalBossKillCount + '/' + FINAL_BOSS_KILLS_NEEDED + ')');
+                        const ht = document.getElementById('boss-hp-text');
+                        if (ht) ht.innerText = formatNum(finalBossHP) + ' / ' + formatNum(finalBossMaxHP);
+                        const hi = document.getElementById('boss-hp-inner');
+                        if (hi) hi.style.width = '100%';
+                        const hpct = document.getElementById('boss-hp-percent');
+                        if (hpct) {
+                            const pct = finalBossKillCount >= FINAL_BOSS_KILLS_NEEDED ? 100 : (finalBossKillCount / FINAL_BOSS_KILLS_NEEDED * 100);
+                            hpct.innerText = (currentLang === 'vi' ? 'Đã tiêu diệt: ' : 'Destroyed: ') + pct.toFixed(2) + '%';
+                        }
                         showToast(currentLang === 'vi' ? '🔥 Boss Cuối xuất hiện!' : '🔥 Final Boss appeared!');
                     } else if (w.id === 'supreme') {
                         // Portal Ultimate: có [BOSS] → vào thẳng Ultimate world
@@ -21912,6 +22827,7 @@ const octopusMonster =
                 applyLanguageToUI();
 
                 if (typeof autoEquipBestSword === 'function') autoEquipBestSword({ force: true });
+                if (typeof updateKillTally === 'function') updateKillTally();
                 if (typeof tryLoadKingFromStorage === 'function') tryLoadKingFromStorage();
                 if (typeof refreshKingUI === 'function') refreshKingUI();
 
