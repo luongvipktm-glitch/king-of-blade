@@ -1,5 +1,7 @@
 
 
+
+
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -989,13 +991,15 @@
             height: 100vh;
             background: #000;
             color: #ff0000;
-            display: none;
+            display: none !important; /* FORCE ẩn chữ NO */
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 9999;
             font-family: monospace;
             text-align: center;
+            visibility: hidden !important;
+            pointer-events: none !important;
         }
 
         #error-no h1 {
@@ -2312,28 +2316,13 @@
         }
 
         function triggerNO() {
-
-            const hud =
-                document.getElementById('hud');
-
-            const instructions =
-                document.getElementById('instructions');
-
-            const error =
-                document.getElementById('error-no');
-
-            if (hud)
-                hud.style.display = 'none';
-
-            if (instructions)
-                instructions.style.display = 'none';
-
-            if (error)
-                error.style.display = 'flex';
-
+            // DISABLED: không hiện chữ NO — game vẫn cố chạy
+            console.warn('[Mystic Temple] triggerNO bị tắt — bỏ qua lỗi hiển thị NO');
             document.body.classList.remove('is-loading');
             const ld = document.getElementById('game-loading');
             if (ld) ld.style.display = 'none';
+            const error = document.getElementById('error-no');
+            if (error) error.style.display = 'none';
         }
 
         function playBeepSound() {
@@ -2649,13 +2638,11 @@
             };
 
         if (typeof THREE === 'undefined') {
+            console.warn('THREE.js chưa load — vẫn cố khởi động game');
+            // Không gọi triggerNO() nữa
+        }
 
-            triggerNO();
-
-        } else {
-
-            try {
-
+        try {
                 if (typeof setLoadProgress === 'function')
                     setLoadProgress(18, 'Loading');
 
@@ -22835,11 +22822,10 @@ const octopusMonster =
 
                 console.error(err);
 
-                triggerNO();
+                // triggerNO() đã bị tắt — game vẫn chạy, chỉ log lỗi
+                console.warn('Init error (NO screen disabled):', err);
 
             }
-
-        }
 
     </script>
 
