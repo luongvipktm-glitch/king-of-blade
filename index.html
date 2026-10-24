@@ -6,7 +6,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mystic Temple 3D - @viluong673</title>
+    <title>King of Sword — Mystic Temple 3D</title>
 
     <style>
         * {
@@ -1104,7 +1104,7 @@
             visibility: hidden !important;
         }
 
-        /* ===== LOADING SCREEN (style như màn chờ hình 2) ===== */
+        /* ===== LOADING SCREEN — King of Sword (glitch hub style) ===== */
         #game-loading {
             position: fixed;
             inset: 0;
@@ -1113,8 +1113,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            background:
-                radial-gradient(ellipse at 50% 30%, #3a1a5c 0%, #12081f 45%, #05020a 100%);
+            background: #001408;
             overflow: hidden;
             transition: opacity 0.55s ease, visibility 0.55s ease;
         }
@@ -1123,134 +1122,413 @@
             visibility: hidden;
             pointer-events: none;
         }
-        #game-loading .ld-stars {
+
+        /* Matrix / glitch rain background */
+        #game-loading .ld-matrix {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse at 50% 40%, #003318 0%, #001408 55%, #000805 100%);
+            overflow: hidden;
+        }
+        #game-loading .ld-matrix-rain {
             position: absolute;
             inset: 0;
             background-image:
-                radial-gradient(1.5px 1.5px at 12% 18%, #fff 40%, transparent 50%),
-                radial-gradient(1.5px 1.5px at 78% 22%, #cde 40%, transparent 50%),
-                radial-gradient(1px 1px at 45% 8%, #fff 40%, transparent 50%),
-                radial-gradient(1.5px 1.5px at 88% 55%, #f8f 40%, transparent 50%),
-                radial-gradient(1px 1px at 22% 70%, #fff 40%, transparent 50%),
-                radial-gradient(1.5px 1.5px at 60% 85%, #aef 40%, transparent 50%);
-            opacity: 0.7;
-            pointer-events: none;
+                repeating-linear-gradient(
+                    0deg,
+                    transparent 0 18px,
+                    rgba(0, 255, 80, 0.04) 18px 19px
+                ),
+                repeating-linear-gradient(
+                    90deg,
+                    transparent 0 28px,
+                    rgba(0, 255, 100, 0.03) 28px 29px
+                );
+            animation: ldMatrixScroll 12s linear infinite;
+            opacity: 0.9;
         }
-        #game-loading .ld-planet {
+        @keyframes ldMatrixScroll {
+            from { background-position: 0 0, 0 0; }
+            to { background-position: 0 200px, 0 0; }
+        }
+        #game-loading .ld-glitch-words {
             position: absolute;
-            border-radius: 50%;
-            filter: blur(0.5px);
-            opacity: 0.85;
+            inset: 0;
+            z-index: 1;
             pointer-events: none;
+            overflow: hidden;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-weight: 900;
+            color: rgba(0, 255, 120, 0.22);
+            font-size: clamp(28px, 5vw, 48px);
+            letter-spacing: 4px;
+            user-select: none;
         }
-        #game-loading .ld-planet.a {
-            width: 90px; height: 90px; top: 12%; right: 14%;
-            background: radial-gradient(circle at 35% 35%, #f5d0a8, #c88a4a 55%, #6a3a18);
-            box-shadow: 0 0 40px rgba(255,180,100,0.35);
-        }
-        #game-loading .ld-planet.b {
-            width: 48px; height: 48px; top: 22%; left: 18%;
-            background: radial-gradient(circle at 40% 30%, #e8c4ff, #9b5cff 60%, #3a1860);
-            box-shadow: 0 0 28px rgba(160,100,255,0.4);
-        }
-        #game-loading .ld-gate {
+        #game-loading .ld-glitch-words span {
             position: absolute;
-            top: 8%;
+            white-space: nowrap;
+            text-shadow: 0 0 12px rgba(0,255,100,0.35);
+            animation: ldFloatWord 8s ease-in-out infinite;
+        }
+        #game-loading .ld-glitch-words span:nth-child(1) { top: 8%; left: 6%; animation-delay: 0s; }
+        #game-loading .ld-glitch-words span:nth-child(2) { top: 14%; right: 10%; animation-delay: 1.2s; color: rgba(255,40,60,0.2); }
+        #game-loading .ld-glitch-words span:nth-child(3) { top: 28%; left: 18%; animation-delay: 0.6s; }
+        #game-loading .ld-glitch-words span:nth-child(4) { top: 22%; right: 22%; animation-delay: 2s; color: rgba(255,40,60,0.18); }
+        #game-loading .ld-glitch-words span:nth-child(5) { bottom: 30%; left: 8%; animation-delay: 1.5s; }
+        #game-loading .ld-glitch-words span:nth-child(6) { bottom: 22%; right: 12%; animation-delay: 0.3s; color: rgba(0,200,255,0.18); }
+        #game-loading .ld-glitch-words span:nth-child(7) { top: 40%; left: 4%; animation-delay: 2.4s; font-size: 0.7em; }
+        #game-loading .ld-glitch-words span:nth-child(8) { top: 50%; right: 5%; animation-delay: 1.8s; font-size: 0.75em; color: rgba(255,40,60,0.16); }
+        @keyframes ldFloatWord {
+            0%, 100% { transform: translateY(0); opacity: 0.85; }
+            50% { transform: translateY(-10px); opacity: 1; }
+        }
+
+        /* Soft floor ring like hub plaza */
+        #game-loading .ld-floor {
+            position: absolute;
             left: 50%;
+            bottom: -8%;
             transform: translateX(-50%);
-            width: min(420px, 70vw);
-            height: 140px;
+            width: min(900px, 140vw);
+            height: min(320px, 48vh);
+            z-index: 2;
+            pointer-events: none;
             background:
-                linear-gradient(180deg, rgba(120,80,200,0.25), transparent 80%);
-            border-radius: 12px 12px 0 0;
-            opacity: 0.55;
+                radial-gradient(ellipse at 50% 30%,
+                    rgba(200, 230, 255, 0.55) 0%,
+                    rgba(160, 200, 230, 0.25) 35%,
+                    transparent 70%);
+            border-radius: 50%;
+            filter: blur(1px);
+        }
+        #game-loading .ld-floor-ring {
+            position: absolute;
+            left: 50%;
+            bottom: 6%;
+            transform: translateX(-50%);
+            width: min(520px, 78vw);
+            height: min(90px, 14vh);
+            z-index: 2;
+            border-radius: 50%;
+            border: 3px solid rgba(180, 220, 255, 0.35);
+            box-shadow:
+                0 0 40px rgba(100, 180, 255, 0.2),
+                inset 0 0 30px rgba(150, 200, 255, 0.15);
             pointer-events: none;
         }
-        #game-loading .ld-gate::before,
-        #game-loading .ld-gate::after {
+
+        /* Pastel trees (CSS blobs) */
+        #game-loading .ld-trees {
+            position: absolute;
+            inset: 0;
+            z-index: 3;
+            pointer-events: none;
+        }
+        #game-loading .ld-tree {
+            position: absolute;
+            bottom: 12%;
+        }
+        #game-loading .ld-tree .trunk {
+            width: 14px;
+            height: 48px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, #a07850, #6a4a30);
+            border-radius: 4px;
+        }
+        #game-loading .ld-tree .canopy {
+            width: 56px;
+            height: 56px;
+            margin: 0 auto -8px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 30%, #fff 0%, var(--c1) 40%, var(--c2) 100%);
+            box-shadow:
+                18px 10px 0 -8px var(--c2),
+                -16px 14px 0 -10px var(--c1),
+                0 22px 0 -12px var(--c3);
+            opacity: 0.92;
+        }
+        #game-loading .ld-tree.t1 { left: 8%; --c1: #b8f0e8; --c2: #7ec8d8; --c3: #d0a8f0; transform: scale(1.15); }
+        #game-loading .ld-tree.t2 { left: 18%; bottom: 10%; --c1: #e8b8f8; --c2: #c090e0; --c3: #a8e0f0; transform: scale(0.9); }
+        #game-loading .ld-tree.t3 { right: 10%; --c1: #a8f0d8; --c2: #70d0c0; --c3: #d8b0f8; transform: scale(1.2); }
+        #game-loading .ld-tree.t4 { right: 22%; bottom: 9%; --c1: #f0c0e8; --c2: #d090d0; --c3: #90e0f0; transform: scale(0.85); }
+        #game-loading .ld-tree.t5 { left: 28%; bottom: 8%; --c1: #c8f0ff; --c2: #88d0f0; --c3: #e0b0ff; transform: scale(0.7); opacity: 0.8; }
+
+        /* ERROR robot silhouette (center, behind UI) */
+        #game-loading .ld-robot {
+            position: absolute;
+            left: 50%;
+            top: 42%;
+            transform: translate(-50%, -50%);
+            z-index: 4;
+            width: min(160px, 28vw);
+            opacity: 0.55;
+            filter: drop-shadow(0 0 24px rgba(255, 40, 60, 0.45));
+            pointer-events: none;
+            animation: ldRobotPulse 3s ease-in-out infinite;
+        }
+        @keyframes ldRobotPulse {
+            0%, 100% { filter: drop-shadow(0 0 20px rgba(255,40,60,0.4)); opacity: 0.5; }
+            50% { filter: drop-shadow(0 0 36px rgba(255,40,60,0.7)); opacity: 0.65; }
+        }
+        #game-loading .ld-robot .rb-head {
+            width: 70%;
+            height: 36px;
+            margin: 0 auto 4px;
+            background:
+                repeating-linear-gradient(0deg, #8b0010 0 4px, #c01020 4px 8px);
+            border-radius: 6px;
+            position: relative;
+            box-shadow: inset 0 0 0 1px rgba(255,100,100,0.3);
+        }
+        #game-loading .ld-robot .rb-head::before,
+        #game-loading .ld-robot .rb-head::after {
             content: '';
             position: absolute;
-            bottom: 0;
-            width: 36px;
-            height: 120px;
-            background: linear-gradient(180deg, #9b7ad8, #5a3a9a);
-            border-radius: 8px 8px 0 0;
-            box-shadow: 0 0 20px rgba(140,100,255,0.35);
+            top: 10px;
+            width: 18px;
+            height: 12px;
+            background: #fff;
+            border-radius: 2px;
+            box-shadow: 0 0 8px #fff;
         }
-        #game-loading .ld-gate::before { left: 8%; }
-        #game-loading .ld-gate::after { right: 8%; }
+        #game-loading .ld-robot .rb-head::before { left: 12px; }
+        #game-loading .ld-robot .rb-head::after { right: 12px; }
+        #game-loading .ld-robot .rb-body {
+            width: 85%;
+            height: 70px;
+            margin: 0 auto;
+            background:
+                repeating-linear-gradient(0deg, #7a0010 0 5px, #b01018 5px 10px);
+            border-radius: 8px;
+            position: relative;
+        }
+        #game-loading .ld-robot .rb-arm {
+            position: absolute;
+            top: 8px;
+            width: 22px;
+            height: 48px;
+            background: repeating-linear-gradient(0deg, #7a0010 0 5px, #b01018 5px 10px);
+            border-radius: 6px;
+        }
+        #game-loading .ld-robot .rb-arm.l { left: -20px; transform: rotate(12deg); }
+        #game-loading .ld-robot .rb-arm.r { right: -20px; transform: rotate(-12deg); }
+        #game-loading .ld-robot .rb-legs {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 4px;
+        }
+        #game-loading .ld-robot .rb-leg {
+            width: 22px;
+            height: 36px;
+            background: repeating-linear-gradient(0deg, #7a0010 0 5px, #b01018 5px 10px);
+            border-radius: 4px;
+        }
+        #game-loading .ld-robot-ring {
+            position: absolute;
+            left: 50%;
+            top: 28%;
+            transform: translateX(-50%);
+            width: min(200px, 36vw);
+            height: 28px;
+            border: 2px solid rgba(200, 180, 255, 0.5);
+            border-radius: 50%;
+            z-index: 4;
+            pointer-events: none;
+            box-shadow: 0 0 16px rgba(160, 120, 255, 0.35);
+            animation: ldRingSpin 6s linear infinite;
+        }
+        @keyframes ldRingSpin {
+            from { transform: translateX(-50%) rotateX(70deg) rotateZ(0deg); }
+            to { transform: translateX(-50%) rotateX(70deg) rotateZ(360deg); }
+        }
 
-        /* Ornate purple load bar */
+        /* Dark vignette so UI stays readable */
+        #game-loading .ld-vignette {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            background:
+                radial-gradient(ellipse at 50% 42%, transparent 25%, rgba(0, 8, 4, 0.55) 75%, rgba(0, 4, 2, 0.85) 100%);
+            pointer-events: none;
+        }
+
+        /* ===== Center UI card (title + bar + tip) ===== */
+        #ld-ui {
+            position: relative;
+            z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: min(520px, 92vw);
+            padding: 28px 24px 22px;
+            border-radius: 20px;
+            background: linear-gradient(165deg, rgba(8, 18, 12, 0.82) 0%, rgba(4, 10, 8, 0.88) 100%);
+            border: 1.5px solid rgba(0, 255, 120, 0.28);
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,0.5),
+                0 12px 40px rgba(0,0,0,0.45),
+                0 0 40px rgba(0, 255, 80, 0.08),
+                inset 0 1px 0 rgba(255,255,255,0.06);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Title with sword through K */
+        #ld-title {
+            position: relative;
+            margin: 0 0 6px;
+            font-size: clamp(32px, 8vw, 56px);
+            font-weight: 900;
+            letter-spacing: 1px;
+            font-family: Impact, 'Arial Black', 'Segoe UI', sans-serif;
+            text-align: center;
+            line-height: 1;
+            color: #ffe566;
+            text-shadow:
+                0 2px 0 #a07010,
+                0 4px 0 #6a4808,
+                0 0 28px rgba(255, 200, 40, 0.5);
+            -webkit-text-stroke: 1px rgba(60, 30, 0, 0.3);
+        }
+        #ld-title .k-wrap {
+            position: relative;
+            display: inline-block;
+        }
+        #ld-title .k-wrap .sword {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 1.35em;
+            height: 0.22em;
+            transform: translate(-50%, -50%) rotate(-28deg);
+            background: linear-gradient(90deg,
+                #6a4a18 0%,
+                #c9a24a 15%,
+                #fff8d0 40%,
+                #ffe566 55%,
+                #c9a24a 80%,
+                #8b6914 100%);
+            border-radius: 2px;
+            box-shadow:
+                0 0 10px rgba(255, 200, 60, 0.7),
+                0 1px 0 rgba(255,255,255,0.4);
+            z-index: 2;
+            pointer-events: none;
+        }
+        #ld-title .k-wrap .sword::before {
+            /* tip */
+            content: '';
+            position: absolute;
+            right: -0.18em;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0; height: 0;
+            border-top: 0.14em solid transparent;
+            border-bottom: 0.14em solid transparent;
+            border-left: 0.22em solid #ffe566;
+            filter: drop-shadow(1px 0 3px rgba(255,200,60,0.6));
+        }
+        #ld-title .k-wrap .sword::after {
+            /* hilt */
+            content: '';
+            position: absolute;
+            left: -0.08em;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0.16em;
+            height: 0.42em;
+            background: linear-gradient(180deg, #ffe566, #a07020);
+            border-radius: 2px;
+            box-shadow: 0 0 6px rgba(255,200,60,0.5);
+        }
+        #ld-title .ld-sub {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.32em;
+            letter-spacing: 5px;
+            color: #ff3344;
+            text-shadow: 0 2px 0 #660010, 0 0 14px rgba(255, 50, 60, 0.45);
+            -webkit-text-stroke: 0;
+            font-family: Impact, 'Arial Black', sans-serif;
+        }
+
+        /* Sword progress bar */
         #ld-bar-wrap {
             position: relative;
-            width: min(520px, 88vw);
-            margin-top: 8px;
-            z-index: 2;
+            width: 100%;
+            margin-top: 18px;
         }
         #ld-bar-frame {
             position: relative;
-            height: 42px;
-            border-radius: 10px;
-            background: linear-gradient(180deg, #1a0e2e 0%, #0d0618 100%);
-            border: 2px solid #6b4aa8;
+            height: 22px;
+            border-radius: 6px;
+            background: linear-gradient(180deg, #1a1810 0%, #0a0804 100%);
+            border: 2px solid #c9a24a;
             box-shadow:
-                0 0 24px rgba(140, 80, 255, 0.45),
-                inset 0 0 12px rgba(0,0,0,0.6);
-            overflow: hidden;
+                0 0 16px rgba(255, 180, 40, 0.28),
+                inset 0 0 8px rgba(0,0,0,0.65);
+            overflow: visible;
         }
         #ld-bar-frame::before {
             content: '';
             position: absolute;
-            left: -2px; top: -6px; bottom: -6px;
-            width: 28px;
-            background: linear-gradient(135deg, #8a6ad0, #4a2a80);
-            border-radius: 12px 4px 4px 12px;
-            border: 2px solid #c9a8ff;
-            box-shadow: 0 0 12px rgba(180,120,255,0.5);
-            z-index: 3;
+            left: -12px; top: 50%;
+            transform: translateY(-50%);
+            width: 18px; height: 18px;
+            border-radius: 3px;
+            background: radial-gradient(circle at 40% 35%, #ffe9a0, #c9a24a 55%, #6a4a18);
+            border: 2px solid #ffe566;
+            box-shadow: 0 0 8px rgba(255,200,80,0.45);
+            z-index: 4;
         }
         #ld-bar-frame::after {
-            content: '⚔️';
+            content: '';
             position: absolute;
-            right: -4px; top: 50%;
+            right: -14px; top: 50%;
             transform: translateY(-50%);
-            font-size: 28px;
-            filter: drop-shadow(0 0 8px rgba(255,200,80,0.7));
-            z-index: 3;
+            width: 0; height: 0;
+            border-top: 10px solid transparent;
+            border-bottom: 10px solid transparent;
+            border-left: 16px solid #c9a24a;
+            filter: drop-shadow(0 0 5px rgba(255,200,80,0.4));
+            z-index: 4;
         }
         #ld-bar-track {
             position: absolute;
-            left: 24px;
-            right: 36px;
-            top: 8px;
-            bottom: 8px;
-            border-radius: 6px;
-            background: rgba(20, 8, 40, 0.9);
+            left: 8px;
+            right: 6px;
+            top: 4px;
+            bottom: 4px;
+            border-radius: 3px;
+            background: rgba(15, 10, 4, 0.95);
             overflow: hidden;
         }
         #ld-bar-fill {
             height: 100%;
             width: 0%;
-            border-radius: 6px;
+            border-radius: 3px;
             background:
                 linear-gradient(90deg,
-                    #4a1a8a 0%,
-                    #8b3dff 25%,
-                    #e0a0ff 45%,
-                    #ffe066 55%,
-                    #ff9a3c 70%,
-                    #c44dff 100%);
+                    #6a4808 0%,
+                    #c9a24a 25%,
+                    #ffe566 48%,
+                    #fff8d0 55%,
+                    #ffb020 78%,
+                    #c07010 100%);
             background-size: 200% 100%;
-            box-shadow: 0 0 18px rgba(255, 180, 80, 0.65), inset 0 1px 0 rgba(255,255,255,0.35);
+            box-shadow: 0 0 12px rgba(255, 200, 60, 0.7), inset 0 1px 0 rgba(255,255,255,0.4);
             transition: width 0.25s ease;
-            animation: ldEnergyFlow 1.8s linear infinite;
+            animation: ldEnergyFlow 1.6s linear infinite;
             position: relative;
         }
         #ld-bar-fill::after {
             content: '';
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(255,255,255,0.35) 0%, transparent 45%, rgba(0,0,0,0.15) 100%);
+            background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, transparent 42%, rgba(0,0,0,0.12) 100%);
             border-radius: inherit;
             pointer-events: none;
         }
@@ -1258,95 +1536,497 @@
             0% { background-position: 0% 50%; }
             100% { background-position: 200% 50%; }
         }
+        #ld-pct-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            width: 100%;
+            gap: 10px;
+        }
         #ld-pct-pill {
-            margin: 10px auto 0;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 16px;
+            gap: 5px;
+            padding: 4px 12px;
             border-radius: 99px;
-            background: rgba(255,255,255,0.92);
-            color: #2a2035;
+            background: rgba(0, 20, 10, 0.75);
+            color: #ffe566;
             font-weight: 800;
-            font-size: 14px;
+            font-size: 13px;
             font-family: 'Segoe UI', sans-serif;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+            border: 1px solid rgba(201, 162, 74, 0.5);
         }
         #ld-status {
-            margin-top: 14px;
-            color: #d8c8ff;
-            font-size: 13px;
-            font-weight: 600;
+            color: #a8e8c0;
+            font-size: 12px;
+            font-weight: 700;
             letter-spacing: 0.3px;
-            text-shadow: 0 0 10px rgba(140,100,255,0.5);
-            z-index: 2;
+            text-shadow: 0 0 8px rgba(0,255,100,0.25);
+            text-align: right;
+            flex: 1;
         }
-        #ld-title {
-            position: relative;
-            z-index: 2;
-            margin-bottom: 18px;
-            font-size: clamp(18px, 4vw, 26px);
+        #ld-tip {
+            margin-top: 14px;
+            width: 100%;
+            text-align: center;
+            color: #f0fff5;
+            font-size: clamp(13px, 3vw, 15px);
+            font-weight: 700;
+            line-height: 1.4;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+            min-height: 2.4em;
+            padding: 10px 12px;
+            border-radius: 12px;
+            background: rgba(0, 30, 15, 0.45);
+            border: 1px solid rgba(0, 255, 120, 0.15);
+        }
+        #ld-tip .tip-label {
+            color: #ffe566;
             font-weight: 900;
-            color: #ffd700;
-            text-shadow: 0 0 18px rgba(255,215,0,0.45);
-            letter-spacing: 1px;
-            font-family: 'Segoe UI', sans-serif;
+        }
+        #ld-tip-text {
+            transition: opacity 0.35s ease;
         }
 
-        /* Voxel mascot row (pink + 2 white ghosts) */
-        #ld-mascots {
+
+
+        /* Spotlight under loading character */
+        #game-loading .ld-spotlight {
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: min(420px, 85vw);
+            height: min(200px, 32vh);
+            z-index: 6;
+            pointer-events: none;
+            background: radial-gradient(ellipse at 50% 70%,
+                rgba(180, 255, 200, 0.22) 0%,
+                rgba(80, 180, 120, 0.08) 40%,
+                transparent 70%);
+        }
+        #game-loading .ld-floor-ring {
+            border-color: rgba(160, 255, 200, 0.45) !important;
+            box-shadow:
+                0 0 50px rgba(80, 255, 160, 0.18),
+                inset 0 0 40px rgba(100, 220, 160, 0.12) !important;
+            bottom: 8% !important;
+            height: min(110px, 16vh) !important;
+        }
+        #game-loading .ld-tree {
+            filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35));
+        }
+        #game-loading .ld-tree.t1 { left: 4% !important; bottom: 10% !important; transform: scale(1.25) !important; }
+        #game-loading .ld-tree.t2 { left: 14% !important; bottom: 8% !important; }
+        #game-loading .ld-tree.t3 { right: 4% !important; bottom: 10% !important; transform: scale(1.3) !important; }
+        #game-loading .ld-tree.t4 { right: 15% !important; bottom: 7% !important; }
+        #game-loading .ld-tree.t5 { left: 24% !important; bottom: 6% !important; opacity: 0.85 !important; }
+        #game-loading .ld-tree.t6 {
+            position: absolute; right: 26%; bottom: 6%;
+            --c1: #d0f0e8; --c2: #90d0c8; --c3: #e0c0f0;
+            transform: scale(0.75); opacity: 0.8;
+        }
+
+
+        /* Loading battle arena — cute combat while loading */
+        #ld-battle {
+            position: absolute;
+            left: 0; right: 0;
+            bottom: 0;
+            height: min(42vh, 320px);
+            z-index: 7;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        #ld-battle .ld-battle-ground {
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 120%;
+            height: 55%;
+            background: radial-gradient(ellipse at 50% 100%,
+                rgba(255, 60, 80, 0.28) 0%,
+                rgba(120, 20, 40, 0.12) 45%,
+                transparent 70%);
+            border-radius: 50% 50% 0 0;
+            transition: background 0.6s ease;
+        }
+        #game-loading.ld-phase-red {
+            background: #2a0610 !important;
+        }
+        #game-loading.ld-phase-red .ld-matrix {
+            background: radial-gradient(ellipse at 50% 35%, #8a1830 0%, #4a0c18 40%, #1a0508 75%, #0a0204 100%) !important;
+        }
+        #game-loading.ld-phase-red .ld-matrix-rain {
+            opacity: 0.35 !important;
+            filter: hue-rotate(-30deg) saturate(1.4);
+        }
+        #game-loading.ld-phase-red .ld-glitch-words {
+            color: rgba(255, 70, 90, 0.35) !important;
+        }
+        #game-loading.ld-phase-red .ld-glitch-words span {
+            color: rgba(255, 80, 100, 0.32) !important;
+        }
+        #game-loading.ld-phase-red .ld-floor {
+            background: radial-gradient(ellipse at 50% 30%,
+                rgba(255, 80, 100, 0.35) 0%,
+                rgba(180, 40, 60, 0.2) 40%,
+                transparent 70%) !important;
+        }
+        #game-loading.ld-phase-red .ld-floor-ring {
+            border-color: rgba(255, 120, 130, 0.65) !important;
+            box-shadow: 0 0 60px rgba(255, 40, 60, 0.4), inset 0 0 40px rgba(255, 60, 80, 0.2) !important;
+        }
+        #game-loading.ld-phase-red .ld-spotlight {
+            background: radial-gradient(ellipse at 50% 70%,
+                rgba(255, 80, 100, 0.35) 0%,
+                rgba(180, 30, 50, 0.12) 45%,
+                transparent 70%) !important;
+        }
+        #game-loading.ld-phase-red #ld-ui {
+            border-color: rgba(255, 80, 100, 0.4) !important;
+            box-shadow: 0 0 0 1px rgba(0,0,0,0.5), 0 12px 40px rgba(0,0,0,0.45), 0 0 40px rgba(255, 40, 60, 0.15) !important;
+        }
+        #ld-battle .ld-mob {
+            position: absolute;
+            bottom: 12%;
+            width: min(72px, 16vw);
+            height: auto;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            filter: drop-shadow(0 6px 10px rgba(0,0,0,0.4));
+            animation: ldMobIdle 0.9s ease-in-out infinite;
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+        #ld-battle .ld-mob.hit {
+            animation: ldMobHit 0.35s ease-out;
+            filter: brightness(2) drop-shadow(0 0 12px #ff4466);
+        }
+        #ld-battle .ld-mob.dead {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.5) rotate(15deg);
+        }
+        @keyframes ldMobIdle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        @keyframes ldMobHit {
+            0% { transform: translateX(0) scale(1); }
+            30% { transform: translateX(8px) scale(1.08); }
+            100% { transform: translateX(0) scale(1); }
+        }
+        #ld-battle .ld-slash {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 3px solid rgba(255, 230, 120, 0.9);
+            box-shadow: 0 0 16px rgba(255, 200, 60, 0.7), inset 0 0 10px rgba(255,255,200,0.4);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9;
+        }
+        #ld-battle .ld-slash.show {
+            animation: ldSlash 0.4s ease-out forwards;
+        }
+        @keyframes ldSlash {
+            0% { opacity: 1; transform: scale(0.3) rotate(0deg); }
+            100% { opacity: 0; transform: scale(1.6) rotate(50deg); }
+        }
+        #ld-battle .ld-dmg {
+            position: absolute;
+            color: #ffe566;
+            font-weight: 900;
+            font-size: 16px;
+            text-shadow: 0 0 8px #ff4400, 0 2px 0 #000;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #ld-battle .ld-dmg.show {
+            animation: ldDmgFloat 0.7s ease-out forwards;
+        }
+        @keyframes ldDmgFloat {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-36px) scale(1.2); }
+        }
+
+            100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+        }
+
+        #ld-char {
+            position: absolute;
+            left: 50%;
+            bottom: 4%;
+            transform: translateX(-50%);
+            z-index: 8;
+            width: min(100px, 24vw);
+            height: min(145px, 24vh);
             display: flex;
             align-items: flex-end;
             justify-content: center;
-            gap: 18px;
-            margin: 28px 0 22px;
-            z-index: 2;
-            filter: drop-shadow(0 8px 20px rgba(255,120,200,0.25));
+            pointer-events: none;
+            filter: drop-shadow(0 6px 14px rgba(0,0,0,0.5));
+            transition: left 0.45s ease-in-out;
+            will-change: left, transform;
         }
-        .ld-vox {
+        #ld-char img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center bottom;
             image-rendering: pixelated;
-            display: grid;
-            gap: 0;
+            image-rendering: crisp-edges;
+            opacity: 1;
+            transform-origin: center bottom;
         }
-        .ld-vox .row { display: flex; }
-        .ld-vox .px {
-            width: 10px; height: 10px;
-            flex-shrink: 0;
+        #ld-char.ld-run img {
+            animation: ldRunBob 0.28s ease-in-out infinite;
         }
-        .ld-vox.pink { transform: scale(1.35); }
-        .ld-vox.ghost { opacity: 0.92; transform: scale(1.15); }
-        .ld-ring {
-            position: absolute;
-            width: 180px; height: 180px;
-            border-radius: 50%;
-            border: 2px solid rgba(255,160,220,0.35);
-            box-shadow: 0 0 30px rgba(255,120,200,0.25), inset 0 0 30px rgba(180,100,255,0.15);
-            animation: ldSpin 8s linear infinite;
+        #ld-char.ld-idle img {
+            animation: ldIdleBob 1.2s ease-in-out infinite;
+        }
+        #ld-char.ld-attack img {
+            animation: ldSwing 0.4s ease-out;
+        }
+        #ld-char.ld-face-left img {
+            transform: scaleX(-1);
+        }
+        #ld-char.ld-face-left.ld-run img {
+            animation: ldRunBobFlip 0.28s ease-in-out infinite;
+        }
+        @keyframes ldIdleBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        @keyframes ldRunBob {
+            0%, 100% { transform: translateY(0) rotate(-4deg); }
+            50% { transform: translateY(-10px) rotate(4deg); }
+        }
+        @keyframes ldRunBobFlip {
+            0%, 100% { transform: scaleX(-1) translateY(0) rotate(-4deg); }
+            50% { transform: scaleX(-1) translateY(-10px) rotate(4deg); }
+        }
+        @keyframes ldSwing {
+            0% { transform: rotate(0deg); }
+            30% { transform: rotate(-18deg) translateX(6px); }
+            60% { transform: rotate(22deg) translateX(-8px); }
+            100% { transform: rotate(0deg); }
+        }
+        #ld-char.ld-face-left.ld-attack img {
+            animation: ldSwingFlip 0.4s ease-out;
+        }
+        @keyframes ldSwingFlip {
+            0% { transform: scaleX(-1) rotate(0deg); }
+            30% { transform: scaleX(-1) rotate(18deg) translateX(6px); }
+            60% { transform: scaleX(-1) rotate(-22deg) translateX(-8px); }
+            100% { transform: scaleX(-1) rotate(0deg); }
+        }
+        #ld-ui {
+            margin-bottom: min(10vh, 80px);
+        }
+/* ===== World-entry loading ===== */
+        #world-loading {
+            position: fixed;
+            inset: 0;
+            z-index: 99990;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #050208;
+            overflow: hidden;
+            transition: opacity 0.35s ease;
+        }
+        #world-loading.show {
+            display: flex !important;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        #world-loading.hide {
+            opacity: 0;
             pointer-events: none;
-            z-index: 1;
         }
-        @keyframes ldSpin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        #ld-grass {
+        #world-loading .wl-scene {
             position: absolute;
-            bottom: 0; left: 0; right: 0;
-            height: 18%;
-            background: linear-gradient(180deg, transparent, #1a3a22 30%, #0e2416 100%);
-            pointer-events: none;
+            inset: 0;
+            overflow: hidden;
+            z-index: 0;
         }
-        #ld-grass::before {
+        #world-loading .wl-scene::before {
             content: '';
             position: absolute;
             inset: 0;
-            background-image: repeating-linear-gradient(
-                90deg,
-                transparent 0 14px,
-                rgba(60,140,70,0.35) 14px 18px,
-                transparent 18px 32px
-            );
-            opacity: 0.5;
+            background: var(--wl-bg, linear-gradient(180deg, #1a0a20, #050208));
+        }
+        /* Terrain floor */
+        #world-loading .wl-scene::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 140%;
+            height: 42%;
+            background:
+                var(--wl-ground, radial-gradient(ellipse at 50% 100%, rgba(100,60,120,0.45), transparent 70%)),
+                linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.35) 100%);
+            border-radius: 50% 50% 0 0 / 20% 20% 0 0;
+            pointer-events: none;
+        }
+        #world-loading .wl-particles {
+            position: absolute;
+            inset: 0;
+            background-image: var(--wl-particles, none);
+            background-size: cover;
+            opacity: 0.6;
+            pointer-events: none;
+            animation: ldMatrixScroll 10s linear infinite;
+        }
+        #world-loading .wl-ground-glow {
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: min(640px, 98vw);
+            height: 45%;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at 50% 100%,
+                var(--wl-glow, rgba(255,80,100,0.4)) 0%,
+                transparent 68%);
+        }
+        /* Decor pillars / orbs */
+        #world-loading .wl-decor {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 2;
+        }
+        #world-loading .wl-decor .pillar {
+            position: absolute;
+            bottom: 16%;
+            width: 32px;
+            height: 160px;
+            border-radius: 8px 8px 4px 4px;
+            background: linear-gradient(180deg,
+                color-mix(in srgb, var(--wl-accent, #ff6680) 50%, transparent),
+                rgba(40, 10, 20, 0.55));
+            box-shadow: 0 0 28px var(--wl-glow, rgba(255,60,80,0.3));
+        }
+        #world-loading .wl-decor .pillar.l { left: 10%; }
+        #world-loading .wl-decor .pillar.r { right: 10%; }
+        #world-loading .wl-decor .orb {
+            position: absolute;
+            width: 14px; height: 14px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fff 0%, var(--wl-accent, #ff6680) 50%, transparent 70%);
+            box-shadow: 0 0 18px var(--wl-glow, rgba(255,60,80,0.6));
+            animation: wlOrb 3s ease-in-out infinite;
+        }
+        #world-loading .wl-decor .orb.a { top: 18%; left: 18%; }
+        #world-loading .wl-decor .orb.b { top: 26%; right: 16%; animation-delay: 0.8s; }
+        #world-loading .wl-decor .orb.c { top: 14%; left: 52%; animation-delay: 1.4s; width: 10px; height: 10px; }
+        @keyframes wlOrb {
+            0%, 100% { transform: translateY(0); opacity: 0.75; }
+            50% { transform: translateY(-14px); opacity: 1; }
+        }
+        /* Mobs */
+        #world-loading .wl-mobs {
+            position: absolute;
+            left: 50%;
+            bottom: 10%;
+            transform: translateX(-50%);
+            z-index: 4;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 24px;
+            pointer-events: none;
+            filter: drop-shadow(0 14px 22px rgba(0,0,0,0.55));
+            min-height: 120px;
+        }
+        #world-loading .wl-mobs img {
+            width: min(120px, 26vw);
+            height: auto;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            animation: wlMobBob 1.5s ease-in-out infinite;
+        }
+        #world-loading .wl-mobs img:nth-child(2) {
+            animation-delay: 0.3s;
+            width: min(130px, 28vw);
+        }
+        @keyframes wlMobBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+        #world-loading .wl-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            background:
+                radial-gradient(ellipse at 50% 28%, transparent 20%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.45) 100%);
+            pointer-events: none;
+        }
+        /* Load card — always on top */
+        #world-loading .wl-card {
+            position: relative;
+            z-index: 20;
+            width: min(440px, 92vw);
+            padding: 22px 22px 18px;
+            border-radius: 16px;
+            background: rgba(6, 4, 14, 0.92);
+            border: 2px solid var(--wl-accent, rgba(255,215,0,0.55));
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,0.4),
+                0 12px 40px rgba(0,0,0,0.55),
+                0 0 32px var(--wl-glow, rgba(255,200,40,0.2));
+            text-align: center;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            margin-bottom: min(28vh, 200px);
+        }
+        #world-loading .wl-title {
+            font-size: clamp(22px, 5vw, 30px);
+            font-weight: 900;
+            color: #ffe566;
+            text-shadow: 0 0 18px rgba(255,200,40,0.5), 0 2px 0 rgba(0,0,0,0.5);
+            margin: 0 0 4px;
+            letter-spacing: 0.4px;
+            line-height: 1.2;
+        }
+        #world-loading .wl-sub {
+            color: #d0c8e8;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+        #world-loading .wl-bar {
+            height: 12px;
+            border-radius: 99px;
+            background: rgba(0,0,0,0.55);
+            border: 1.5px solid var(--wl-accent, rgba(255,215,0,0.45));
+            overflow: hidden;
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.5);
+        }
+        #world-loading .wl-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #c9a24a, #ffe566 45%, #fff0b0 55%, #ffb020);
+            box-shadow: 0 0 14px rgba(255,200,60,0.65);
+            transition: width 0.12s linear;
+        }
+        #world-loading .wl-tip {
+            margin-top: 12px;
+            color: #f0eef8;
+            font-size: 13px;
+            font-weight: 700;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.7);
+            line-height: 1.4;
         }
 
         </style>
@@ -1362,31 +2042,88 @@
 
 <body>
 
-    <!-- LOADING SCREEN -->
+    <!-- LOADING SCREEN — King of Sword (glitch hub) -->
     <div id="game-loading">
-        <div class="ld-stars"></div>
-        <div class="ld-planet a"></div>
-        <div class="ld-planet b"></div>
-        <div class="ld-gate"></div>
-        <div class="ld-ring" style="top:42%;left:50%;margin-left:-90px;margin-top:-90px;"></div>
-        <div id="ld-title">MYSTIC TEMPLE 3D</div>
-        <div id="ld-mascots">
-            <!-- left white ghost (simple blocks via inline) -->
-            <div class="ld-vox ghost" aria-hidden="true" id="ld-ghost-l"></div>
-            <div class="ld-vox pink" aria-hidden="true" id="ld-pink"></div>
-            <div class="ld-vox ghost" aria-hidden="true" id="ld-ghost-r"></div>
+        <div class="ld-matrix"><div class="ld-matrix-rain"></div></div>
+        <div class="ld-glitch-words" aria-hidden="true">
+            <span>GLITCH</span><span>ERROR</span><span>GLITCH</span><span>ERROR</span>
+            <span>GLITCH</span><span>SYSTEM</span><span>404</span><span>ERROR</span>
         </div>
-        <div id="ld-bar-wrap">
-            <div id="ld-bar-frame">
-                <div id="ld-bar-track">
-                    <div id="ld-bar-fill"></div>
+        <div class="ld-floor"></div>
+        <div class="ld-floor-ring"></div>
+        <div class="ld-trees" aria-hidden="true">
+            <div class="ld-tree t1"><div class="canopy"></div><div class="trunk"></div></div>
+            <div class="ld-tree t2"><div class="canopy"></div><div class="trunk"></div></div>
+            <div class="ld-tree t3"><div class="canopy"></div><div class="trunk"></div></div>
+            <div class="ld-tree t4"><div class="canopy"></div><div class="trunk"></div></div>
+            <div class="ld-tree t5"><div class="canopy"></div><div class="trunk"></div></div>
+            <div class="ld-tree t6"><div class="canopy"></div><div class="trunk"></div></div>
+        </div>
+        <div class="ld-robot-ring"></div>
+        <div class="ld-robot" aria-hidden="true">
+            <div class="rb-head"></div>
+            <div class="rb-body">
+                <div class="rb-arm l"></div>
+                <div class="rb-arm r"></div>
+            </div>
+            <div class="rb-legs"><div class="rb-leg"></div><div class="rb-leg"></div></div>
+        </div>
+        <div class="ld-vignette"></div>
+
+        <div class="ld-spotlight"></div>
+                <div id="ld-battle" aria-hidden="true">
+            <div class="ld-battle-ground"></div>
+            <img class="ld-mob" data-i="0" style="left:18%;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHYAAACRCAYAAAAW5kwrAAABwklEQVR4nO3dsW3bQBiAUSvICE5hF1HrDZJCWcMTeCxN4DWsIqnTqFWKqEh2sCeQDRAHmvz8XivgeMCHH+BJJHR1BQAAAAAAAAAAAAAAAAAA8M42oxd8fnh4Hr3mR7DZ74e2+DRyMZZD2Chho4SNEjZK2Chho4SNEjZK2Chho4SN+jx6wfPv4+glmcDERgkbJWyUsFHCRgkbtfn7becZpSATGyVslLBRwkYJGzX8R4Apbn4+DVvr/P3HavcwkomNEjZK2Chho4SNEjZqEcedS7Zfthc/O/07fZg9TGFio4SNEjZK2ChhoxZ9V7yEu84l7GEKExslbJSwUcJGCRslbJQ3AaJMbJSwUcJGCRslbJSwUcP/7MHxaZrbXwd/9sDbhI0SNkrYKGGjFv3M02sO5/+zXGd3cz3LdUYzsVHCRgkbJWyUsFHCRq32uLPWY8hcTGyUsFHCRgkbJWzU8Lviub6c53UmNkrYKGGjhI0SNkrYKGGjhI0SNkrYKGGjhI0SNmr4i8+XPH69G/pC9P2f4yx7X+u+TWyUsFHCRgkbJWyUsFHCRgkbJWyUsFHCRgkbJWyUsFHCRgkbJWyUsAAAAKzJCzjuL3jBPztfAAAAAElFTkSuQmCC" alt="" />
+            <img class="ld-mob" data-i="1" style="left:32%;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHYAAACRCAYAAAAW5kwrAAABwklEQVR4nO3dsW3bQBiAUSvICE5hF1HrDZJCWcMTeCxN4DWsIqnTqFWKqEh2sCeQDRAHmvz8XivgeMCHH+BJJHR1BQAAAAAAAAAAAAAAAAAA8M42oxd8fnh4Hr3mR7DZ74e2+DRyMZZD2Chho4SNEjZK2Chho4SNEjZK2Chho4SN+jx6wfPv4+glmcDERgkbJWyUsFHCRgkbtfn7becZpSATGyVslLBRwkYJGzX8R4Apbn4+DVvr/P3HavcwkomNEjZK2Chho4SNEjZqEcedS7Zfthc/O/07fZg9TGFio4SNEjZK2ChhoxZ9V7yEu84l7GEKExslbJSwUcJGCRslbJQ3AaJMbJSwUcJGCRslbJSwUcP/7MHxaZrbXwd/9sDbhI0SNkrYKGGjFv3M02sO5/+zXGd3cz3LdUYzsVHCRgkbJWyUsFHCRq32uLPWY8hcTGyUsFHCRgkbJWzU8Lviub6c53UmNkrYKGGjhI0SNkrYKGGjhI0SNkrYKGGjhI0SNmr4i8+XPH69G/pC9P2f4yx7X+u+TWyUsFHCRgkbJWyUsFHCRgkbJWyUsFHCRgkbJWyUsFHCRgkbJWyUsAAAAKzJCzjuL3jBPztfAAAAAElFTkSuQmCC" alt="" />
+            <img class="ld-mob" data-i="2" style="right:30%; left:auto;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHYAAACRCAYAAAAW5kwrAAABwklEQVR4nO3dsW3bQBiAUSvICE5hF1HrDZJCWcMTeCxN4DWsIqnTqFWKqEh2sCeQDRAHmvz8XivgeMCHH+BJJHR1BQAAAAAAAAAAAAAAAAAA8M42oxd8fnh4Hr3mR7DZ74e2+DRyMZZD2Chho4SNEjZK2Chho4SNEjZK2Chho4SN+jx6wfPv4+glmcDERgkbJWyUsFHCRgkbtfn7becZpSATGyVslLBRwkYJGzX8R4Apbn4+DVvr/P3HavcwkomNEjZK2Chho4SNEjZqEcedS7Zfthc/O/07fZg9TGFio4SNEjZK2ChhoxZ9V7yEu84l7GEKExslbJSwUcJGCRslbJQ3AaJMbJSwUcJGCRslbJSwUcP/7MHxaZrbXwd/9sDbhI0SNkrYKGGjFv3M02sO5/+zXGd3cz3LdUYzsVHCRgkbJWyUsFHCRq32uLPWY8hcTGyUsFHCRgkbJWzU8Lviub6c53UmNkrYKGGjhI0SNkrYKGGjhI0SNkrYKGGjhI0SNmr4i8+XPH69G/pC9P2f4yx7X+u+TWyUsFHCRgkbJWyUsFHCRgkbJWyUsFHCRgkbJWyUsFHCRgkbJWyUsAAAAKzJCzjuL3jBPztfAAAAAElFTkSuQmCC" alt="" />
+            <img class="ld-mob" data-i="3" style="right:16%; left:auto;" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHYAAACRCAYAAAAW5kwrAAABwklEQVR4nO3dsW3bQBiAUSvICE5hF1HrDZJCWcMTeCxN4DWsIqnTqFWKqEh2sCeQDRAHmvz8XivgeMCHH+BJJHR1BQAAAAAAAAAAAAAAAAAA8M42oxd8fnh4Hr3mR7DZ74e2+DRyMZZD2Chho4SNEjZK2Chho4SNEjZK2Chho4SN+jx6wfPv4+glmcDERgkbJWyUsFHCRgkbtfn7becZpSATGyVslLBRwkYJGzX8R4Apbn4+DVvr/P3HavcwkomNEjZK2Chho4SNEjZqEcedS7Zfthc/O/07fZg9TGFio4SNEjZK2ChhoxZ9V7yEu84l7GEKExslbJSwUcJGCRslbJQ3AaJMbJSwUcJGCRslbJSwUcP/7MHxaZrbXwd/9sDbhI0SNkrYKGGjFv3M02sO5/+zXGd3cz3LdUYzsVHCRgkbJWyUsFHCRq32uLPWY8hcTGyUsFHCRgkbJWzU8Lviub6c53UmNkrYKGGjhI0SNkrYKGGjhI0SNkrYKGGjhI0SNmr4i8+XPH69G/pC9P2f4yx7X+u+TWyUsFHCRgkbJWyUsFHCRgkbJWyUsFHCRgkbJWyUsFHCRgkbJWyUsAAAAKzJCzjuL3jBPztfAAAAAElFTkSuQmCC" alt="" />
+            <div class="ld-slash" id="ld-slash"></div>
+            <div class="ld-dmg" id="ld-dmg">12</div>
+        </div>
+        <div id="ld-char" aria-hidden="true">
+            <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHAAAACgCAYAAADU3uhkAAAG3klEQVR4nO2cPUwcRxiGv42IlFiAImQjQAoUYAWaFKTwSXak4EiuKM6SKyeSKS4NipTGhRtSQEuThhRQ4CIunEimODeOYkcKkS5FXJACopwLEykggpCDEYmEpUthz2V2bv9mZ3ZnPvI+Dbu3u3PfzMP87OzsEQEAAAAAAAAAAAAAAAAAAAAATiuB6wB0+WOp3ioy/aHZaVZl8prrAIAZEMgcCGSO9+196+FGoX1eGsHld70uI9RA5kAgcyCQOd617677vDR86xNRA5kDgcyBQOZ0uQ5AZWdrO7Q/OD4ced7ei77CY+nvOuiIxze8E0hEdNT9dnu7DFFx7L3oo6Pu8JiqUW/V5P3KdLBSalAKTgWqhUFEdHSwkena/q4D6/GoZPnnicoDUXliSx0Sx2VWpu9gY7n76Pf2flwTWhZqE6o+bsqSJ6LihBYqMC1zUZlSn/cNVtcsR6XHzlo1tJ/1eaHIe7OblqOO777x8u/NSmDkwHoTmiTNdX9RJiKvi43WMhHRwD/h42K/UW/VTMrFikDX/QAHRI0TyELl8tMtMyOBUeIgLRtC6McfBCtyOYrtrOWYq/0tciitMxe6/Wavra/tYPjvw8jPdedCFxutxPyofaBu2WoFU8Y9kCwwTVBcIdsg7rsfnRu5SkQ0MxasZUlHV6Aga1lrjajSEsvLarNVFdtTfz69J7aLFJQXUQPlmGVUsXkFCtLKPlWgSQcbh5p5OdPcHyepedvfp3sxpxJR9tuIOA+Z7NsQJ2csa/NDRDQ6PO5U6JPtLaP7tG+b/9XAHiK6MEr35eNBEEzrpKc6iQ3OljwhTkeaDHeBDUngcyIaOUc/n++lXfGZrkCisJvI2whTeXlr22mnh4jO99Lub4c0YJJOZfrlrUej3qp1CLQhD9KSkWtg3vISEiPvQfLIM20q40hrQptPNxOvHxuZSDyedn0QmM1Vyk1oFJWxIDApOytTaah1Zoiyy1OO7SUVeWsf5NljZixYi7u/jMNoTQzk2UdXYu4m1JW8Zn0+8fjExHta56dd7wIhMUv5YlUacyCQOW2BYvCSdY0H8AMvlxVq8cvXod3Nu7eMrj85PjaNqFRCTahOLcwz5AXZyDqAadRbtY4+EBLdoiOPKGYQA4lu0JVXmQ5WrD0PLGsutDl/66fQCZNnLtj8Pnp8HEo/mJmpmCRney5UdZI4iJEfW8gXRWEyn/d/RrfWEYU9pI5ChUQ5kTSReB6YzHNpO6180tbEZLqNUPvENJFyUEU1rRwR4noynGt1VVrexGVsrYn54YvkcdXswp3E40tz1xOPv/9ZOCu218SoVMbM1oXmupGPq5FJXxhVK6OOcUfNW57aRpT9sZ7RTEzU7YauTKLsayx9ImvMjWbMIPTZq+OGa26tTKXJXxonUz1PJk7UarNVvfv5p6HP9nrH2tv9h81c8WbhnUsfEhHR3PxmNeq49j/Xs/hDJiv/vHs/UCVpTYwo5CL4df07IsrfB7bzPtDxfuD3REQ0RJtERJWhYDZniETk4Ru6RGGxvq8LTc2TEPjWq/0z9KV8mJVAlSxCV76ai3zD9dGP39gPSGHq4jWqfbTwSZ5r2+MDdSbGskCnj5PimtAsYqcuXrMfUA5cvw/p1e9+6VDGg2cbcrLMhZqkz1YgF4oWiDUxzIFA5ni3JubhjTmvX/C8fHvBq24HNZA5EMgcCGRO4X3g6pWa132aLr7lBzWQORDIHAhkjnf3gds7O0bXbynXjw8OGqXnO6iBzIFA5kAgcyCQORDIHAhkDgQyBwKZA4HMgUDmQCBzIJA5EMgcCGQOBDLHu+eB3Dlb3Q/t7z+4mnh+fakaWmMzPbumte4UNZA5EMgcCGSO932gusZFxXTNi+3099fOhvbVPlFFt89TQQ1kDgQyBwKZA4HMgUDmQCBzIJA5hd8H3li8onX+7ZsPQvtFv9ugm75ufu6vJ/9+qSmogcyBQOZAIHO8mwtNm5t0nZ4upnOdaaAGMgcCmQOBzIFA5kAgcyCQORDIHK9++zKK6+OXtH6b7M7WemKebKfnGtRA5kAgcyCQORDIHAhkDgQyBwKZA4HMgUDmQCBzIJA5EMgcCGQOBDIHApkDgcyBQOZAIHMgkDnevRuhsn5k990G2+m5BjWQORDIHAhkjvd9YA4mXQdQJqdR4InrAMrEV4Emtci2QDWWx5bTN8I3gaKwTCTYFqimJ2L0QqQvAlVxPgsUeCHSB4GT1CmOg0DBJDmU6IPAE+It0CkQWH56VvHh3bdRShfoshBfj9mX/z4pL5wwp7EG2sanWDrwVaDPeBWjbwI54UXMPkxme1EQBjiN3weBwAAIZI4PAv9yHYAhTuP/F5df91CsAVZhAAAAAElFTkSuQmCC" alt="" />
+        </div>
+        <div id="ld-ui">
+            <div id="ld-title">
+                <span class="k-wrap">K<span class="sword"></span></span>ING OF SWORD
+                <span class="ld-sub">MYSTIC TEMPLE</span>
+            </div>
+            <div id="ld-bar-wrap">
+                <div id="ld-bar-frame">
+                    <div id="ld-bar-track">
+                        <div id="ld-bar-fill"></div>
+                    </div>
+                </div>
+                <div id="ld-pct-row">
+                    <div id="ld-pct-pill"><span>⚔️</span> <span id="ld-pct-num">0</span>%</div>
+                    <div id="ld-status">Loading..</div>
                 </div>
             </div>
-            <div style="text-align:center;">
-                <div id="ld-pct-pill"><span>❤</span> <span id="ld-pct-num">0</span> / 100</div>
-            </div>
+            <div id="ld-tip"><span class="tip-label">Tip:</span> <span id="ld-tip-text">Đang tải…</span></div>
         </div>
-        <div id="ld-status">Loading</div>
+    </div>
+
+    <!-- WORLD TRANSITION LOADING -->
+    <div id="world-loading">
+        <div class="wl-scene" id="wl-scene">
+            <div class="wl-particles" id="wl-particles"></div>
+            <div class="wl-ground-glow"></div>
+            <div class="wl-decor" id="wl-decor" aria-hidden="true">
+                <div class="pillar l"></div>
+                <div class="pillar r"></div>
+                <div class="orb a"></div>
+                <div class="orb b"></div>
+                <div class="orb c"></div>
+            </div>
+            <div class="wl-mobs" id="wl-mobs"></div>
+        </div>
+        <div class="wl-overlay"></div>
+        <div class="wl-card">
+            <div class="wl-title" id="wl-title">Loading..</div>
+            <div class="wl-sub" id="wl-sub">Entering world…</div>
+            <div class="wl-bar"><div class="wl-fill" id="wl-fill"></div></div>
+            <div class="wl-tip" id="wl-tip"></div>
+        </div>
     </div>
 
 
@@ -2187,7 +2924,58 @@
             const pctNum = document.getElementById('ld-pct-num');
             const status = document.getElementById('ld-status');
             const overlay = document.getElementById('game-loading');
+            const tipText = document.getElementById('ld-tip-text');
             let progress = 0;
+
+            const TIPS_VI = [
+                'Bạn có thể chia sẻ phòng với bạn bè!',
+                'Nâng cấp kiếm để tăng sát thương mạnh hơn!',
+                'Hạ 999 mob đỏ để mở khóa Boss Cuối!',
+                'Nhấn E gần portal có mũi tên để vào thế giới!',
+                'Đảo trung tâm (Hub) — chọn portal để phiêu lưu!',
+                'Thu thập vàng để mua và nâng cấp kiếm huyền thoại!',
+                'Boss càng cao tầng HP càng lớn — trang bị tốt trước!',
+                'Nhấn Q để chơi 2 người (multiplayer)!',
+                'Kiếm mạnh rơi từ boss hiếm — đừng bỏ lỡ!',
+                'ESC để xem cập nhật phiên bản game!'
+            ];
+            const TIPS_EN = [
+                'You can share your room with your friends!',
+                'Upgrade your sword to deal more damage!',
+                'Defeat 999 red mobs to unlock the Final Boss!',
+                'Press E near an arrow portal to enter a world!',
+                'Hub island — pick a portal to start your adventure!',
+                'Collect gold to buy and upgrade legendary swords!',
+                'Higher bosses have huge HP — gear up first!',
+                'Press Q to play with a friend (multiplayer)!',
+                'Strong swords drop from rare bosses — don’t miss them!',
+                'Press ESC to check the game update notes!'
+            ];
+            let tipIdx = 0;
+            function currentTips() {
+                // Chỉ màn load đầu game — đọc ngôn ngữ từ localStorage (currentLang có thể chưa sẵn)
+                try {
+                    var lang = null;
+                    try { lang = localStorage.getItem('mystic_lang'); } catch (e) {}
+                    if (!lang && typeof currentLang !== 'undefined') lang = currentLang;
+                    if (lang === 'en') return TIPS_EN;
+                } catch (e) {}
+                return TIPS_VI;
+            }
+            function showNextTip() {
+                const tips = currentTips();
+                if (!tipText || !tips.length) return;
+                tipText.style.opacity = '0';
+                setTimeout(function() {
+                    tipIdx = (tipIdx + 1) % tips.length;
+                    tipText.textContent = tips[tipIdx];
+                    tipText.style.opacity = '1';
+                }, 280);
+            }
+            if (tipText) {
+                tipText.textContent = currentTips()[0];
+            }
+            window._ldTipTimer = setInterval(showNextTip, 5000);
 
             window.setLoadProgress = function(p, msg) {
                 progress = Math.max(progress, Math.min(100, p));
@@ -2197,7 +2985,9 @@
             };
 
             window.hideGameLoading = function() {
-                window.setLoadProgress(100, 'Loading');
+                window.setLoadProgress(100, 'Xong!');
+                try { if (window._ldTipTimer) clearInterval(window._ldTipTimer); } catch (e) {}
+                try { if (window._ldBattleTimer) clearInterval(window._ldBattleTimer); } catch (e) {}
                 if (!overlay) return;
                 setTimeout(function() {
                     overlay.classList.add('hide');
@@ -2207,97 +2997,16 @@
                 }, 280);
             };
 
-            // Build simple voxel mascots (pixel grid)
-            function paintVox(el, grid, palette) {
-                if (!el) return;
-                el.innerHTML = '';
-                grid.forEach(function(row) {
-                    const r = document.createElement('div');
-                    r.className = 'row';
-                    for (let i = 0; i < row.length; i++) {
-                        const c = row[i];
-                        const px = document.createElement('div');
-                        px.className = 'px';
-                        if (c !== '.') {
-                            px.style.background = palette[c] || 'transparent';
-                        } else {
-                            px.style.background = 'transparent';
-                        }
-                        r.appendChild(px);
-                    }
-                    el.appendChild(r);
-                });
-            }
-
-            // Cute pixel mascots (loading) — giống hình: hồng tóc vàng + 2 ghost trắng
-            const pinkGrid = [
-                '.....YYYYY.....',
-                '....YYYYYYY....',
-                '...YYYYYYYYY...',
-                '...YYPPPPPYY...',
-                '..YPPPPPPPPPY..',
-                '..PPWPPPPPWP...',
-                '..PPPPPPPPPP...',
-                '..PPMMMMMMMP...',
-                '..PPMMMMMMMP...',
-                '..PPPPPPPPPP...',
-                '...PPCPPPCPP...',
-                '...PPPPPPPPP...',
-                '....PPPPPPP....',
-                '....FP.....FP...',
-                '....FF.....FF...'
-            ];
-            // Y=tóc vàng  P=da hồng  W=mắt trắng  M=miệng đen  C=má  F=giày trắng
-            const pinkPal = {
-                Y: '#f5d76e',
-                P: '#ff9b8a',
-                W: '#ffffff',
-                M: '#2a1520',
-                C: '#ff6b8a',
-                F: '#f5f5f5',
-                '.': 'transparent'
-            };
-
-            const ghostGrid = [
-                '....WWWWW....',
-                '...WWWWWWW...',
-                '..WWWWWWWWW..',
-                '..WDDWWWDWW..',
-                '..WWWWWWWWW..',
-                '..WWWGGGWWW..',
-                '..WWWWWWWWW..',
-                '...WWWWWWW...',
-                '...WW.W.WW...',
-                '...W...W.W...'
-            ];
-            // W=trắng  D=mắt  G=miệng
-            const ghostPal = {
-                W: '#f2f6ff',
-                D: '#5a6a88',
-                G: '#7a8aaa',
-                '.': 'transparent'
-            };
-
-            paintVox(document.getElementById('ld-pink'), pinkGrid, pinkPal);
-            paintVox(document.getElementById('ld-ghost-l'), ghostGrid, ghostPal);
-            paintVox(document.getElementById('ld-ghost-r'), ghostGrid, ghostPal);
-
-            // Fake smooth progress while scripts boot (max 90 — real init finishes to 100)
-            let fake = 0;
-            const fakeTimer = setInterval(function() {
-                if (progress >= 92 || window._gameReady) {
-                    clearInterval(fakeTimer);
+            let fake = 3;
+            window._ldFakeTimer = setInterval(function() {
+                if (window._gameReady) {
+                    try { clearInterval(window._ldFakeTimer); } catch (e) {}
                     return;
                 }
-                fake += 1 + Math.random() * 2.2;
-                if (fake > 90) fake = 90;
-                if (fake > progress) {
-                    window.setLoadProgress(fake, progress < 40 ? 'Đang tải thư viện…' : (progress < 70 ? 'Khởi tạo 3D…' : 'Sắp xong…'));
-                }
-            }, 120);
-            window._ldFakeTimer = fakeTimer;
+                fake = Math.min(92, fake + (fake < 40 ? 2.2 : (fake < 70 ? 1.4 : 0.6)));
+                window.setLoadProgress(fake, fake < 40 ? 'Đang tải thư viện…' : (fake < 70 ? 'Khởi tạo 3D…' : 'Sắp xong…'));
+            }, 220);
 
-            // Timeout: nếu kẹt loading > 18s → hiện lỗi + nút tải lại (không treo mãi)
             window._ldWatchdog = setTimeout(function() {
                 if (window._gameReady) return;
                 try { if (window._ldFakeTimer) clearInterval(window._ldFakeTimer); } catch(e) {}
@@ -2314,7 +3023,275 @@
 
             document.body.classList.add('is-loading');
             window.setLoadProgress(3, 'Đang tải…');
+
+
+            // Cute loading battle: hero RUNS to red mobs, attacks, red stage
+            (function startLoadingBattle() {
+                const overlay = document.getElementById('game-loading');
+                const hero = document.getElementById('ld-char');
+                const slash = document.getElementById('ld-slash');
+                const dmg = document.getElementById('ld-dmg');
+                const battle = document.getElementById('ld-battle');
+                if (!overlay || !hero || !battle) return;
+                overlay.classList.add('ld-phase-red');
+                hero.classList.add('ld-idle');
+                hero.style.left = '50%';
+
+                function getMobs() {
+                    return Array.prototype.slice.call(battle.querySelectorAll('.ld-mob'));
+                }
+                function respawnAll() {
+                    getMobs().forEach(function(m) {
+                        m.classList.remove('dead', 'hit');
+                        m.style.opacity = '1';
+                        m.style.visibility = 'visible';
+                    });
+                }
+                function aliveMobs() {
+                    return getMobs().filter(function(m) {
+                        return !m.classList.contains('dead');
+                    });
+                }
+                function mobCenterPct(m) {
+                    const br = battle.getBoundingClientRect();
+                    const r = m.getBoundingClientRect();
+                    if (!br.width) return 50;
+                    return ((r.left + r.width / 2) - br.left) / br.width * 100;
+                }
+                let busy = false;
+                function attackCycle() {
+                    if (window._gameReady || busy) return;
+                    let targets = aliveMobs();
+                    if (!targets.length) {
+                        respawnAll();
+                        targets = aliveMobs();
+                    }
+                    if (!targets.length) return;
+                    // pick nearest or sequential
+                    const t = targets[Math.floor(Math.random() * targets.length)];
+                    const pct = mobCenterPct(t);
+                    busy = true;
+                    // face direction
+                    const cur = parseFloat(hero.style.left) || 50;
+                    if (pct < cur - 2) {
+                        hero.classList.add('ld-face-left');
+                    } else {
+                        hero.classList.remove('ld-face-left');
+                    }
+                    // RUN to mob
+                    hero.classList.remove('ld-idle', 'ld-attack');
+                    hero.classList.add('ld-run');
+                    hero.style.left = pct + '%';
+
+                    setTimeout(function() {
+                        if (window._gameReady) { busy = false; return; }
+                        // ATTACK
+                        hero.classList.remove('ld-run');
+                        hero.classList.add('ld-attack');
+                        t.classList.add('hit');
+                        if (slash) {
+                            const br = battle.getBoundingClientRect();
+                            const r = t.getBoundingClientRect();
+                            slash.style.left = (r.left - br.left + r.width * 0.25) + 'px';
+                            slash.style.bottom = (br.bottom - r.bottom + r.height * 0.35) + 'px';
+                            slash.classList.remove('show');
+                            void slash.offsetWidth;
+                            slash.classList.add('show');
+                        }
+                        if (dmg) {
+                            const br = battle.getBoundingClientRect();
+                            const r = t.getBoundingClientRect();
+                            dmg.textContent = String(10 + Math.floor(Math.random() * 25));
+                            dmg.style.left = (r.left - br.left + r.width * 0.15) + 'px';
+                            dmg.style.bottom = (br.bottom - r.bottom + r.height) + 'px';
+                            dmg.classList.remove('show');
+                            void dmg.offsetWidth;
+                            dmg.classList.add('show');
+                        }
+                        setTimeout(function() {
+                            t.classList.remove('hit');
+                            t.classList.add('dead');
+                            hero.classList.remove('ld-attack');
+                            hero.classList.add('ld-idle');
+                            busy = false;
+                        }, 380);
+                    }, 480);
+                }
+                // first run after short delay, then repeat
+                setTimeout(attackCycle, 500);
+                window._ldBattleTimer = setInterval(attackCycle, 1400);
+                const stopCheck = setInterval(function() {
+                    if (window._gameReady) {
+                        try { clearInterval(window._ldBattleTimer); } catch (e) {}
+                        clearInterval(stopCheck);
+                        if (overlay) overlay.classList.remove('ld-phase-red');
+                        if (hero) {
+                            hero.style.left = '50%';
+                            hero.classList.remove('ld-run', 'ld-attack', 'ld-face-left');
+                            hero.classList.add('ld-idle');
+                        }
+                    }
+                }, 200);
+            })();
+
+
+
+            /* World themes — background giống từng thế giới */
+            const WORLD_THEME = {
+                temple: {
+                    bg: 'radial-gradient(ellipse at 50% 28%, #8a2040 0%, #4a1020 32%, #2a0a14 58%, #100408 85%, #050204 100%)',
+                    ground: 'radial-gradient(ellipse at 50% 110%, rgba(220,70,90,0.5) 0%, rgba(100,30,40,0.35) 28%, rgba(40,12,18,0.2) 48%, transparent 68%), linear-gradient(180deg, transparent 55%, rgba(30,8,12,0.85) 100%)',
+                    particles: 'radial-gradient(2px 2px at 18% 25%, rgba(255,120,120,0.55) 40%, transparent 50%), radial-gradient(2px 2px at 72% 40%, rgba(255,180,100,0.4) 40%, transparent 50%), radial-gradient(1.5px 1.5px at 45% 70%, rgba(255,80,100,0.4) 40%, transparent 50%), radial-gradient(2px 2px at 88% 20%, rgba(255,200,100,0.35) 40%, transparent 50%), radial-gradient(1.5px 1.5px at 30% 55%, rgba(255,150,80,0.3) 40%, transparent 50%)',
+                    accent: 'rgba(255, 100, 110, 0.65)',
+                    glow: 'rgba(255, 50, 70, 0.32)'
+                },
+                final: {
+                    bg: 'linear-gradient(180deg, #3a2800 0%, #1a1200 45%, #080500 100%)',
+                    ground: 'radial-gradient(ellipse at 50% 100%, rgba(255,200,40,0.35) 0%, transparent 65%)',
+                    particles: 'radial-gradient(2px 2px at 25% 40%, rgba(255,220,80,0.5) 40%, transparent 50%), radial-gradient(2px 2px at 80% 20%, rgba(255,180,40,0.4) 40%, transparent 50%)',
+                    accent: 'rgba(255, 215, 0, 0.55)',
+                    glow: 'rgba(255, 200, 40, 0.22)'
+                },
+                supreme: {
+                    bg: 'linear-gradient(180deg, #2a1050 0%, #120828 45%, #060310 100%)',
+                    ground: 'radial-gradient(ellipse at 50% 100%, rgba(160,80,255,0.4) 0%, transparent 65%)',
+                    particles: 'radial-gradient(2px 2px at 30% 25%, rgba(200,120,255,0.5) 40%, transparent 50%), radial-gradient(2px 2px at 65% 70%, rgba(160,80,255,0.4) 40%, transparent 50%)',
+                    accent: 'rgba(180, 100, 255, 0.55)',
+                    glow: 'rgba(160, 80, 255, 0.22)'
+                },
+                universe: {
+                    bg: 'linear-gradient(180deg, #2a0038 0%, #120020 40%, #050010 100%)',
+                    ground: 'radial-gradient(ellipse at 50% 100%, rgba(255,0,255,0.35) 0%, transparent 65%)',
+                    particles: 'radial-gradient(2px 2px at 15% 35%, rgba(255,100,255,0.55) 40%, transparent 50%), radial-gradient(1.5px 1.5px at 55% 15%, #fff 40%, transparent 50%), radial-gradient(2px 2px at 85% 55%, rgba(200,80,255,0.4) 40%, transparent 50%)',
+                    accent: 'rgba(255, 0, 255, 0.5)',
+                    glow: 'rgba(255, 0, 200, 0.2)'
+                },
+                cosmic: {
+                    bg: 'linear-gradient(180deg, #003050 0%, #001828 45%, #000810 100%)',
+                    ground: 'radial-gradient(ellipse at 50% 100%, rgba(40,180,255,0.4) 0%, transparent 65%)',
+                    particles: 'radial-gradient(2px 2px at 22% 28%, rgba(100,220,255,0.55) 40%, transparent 50%), radial-gradient(1.5px 1.5px at 70% 50%, #fff 40%, transparent 50%)',
+                    accent: 'rgba(68, 204, 255, 0.55)',
+                    glow: 'rgba(40, 180, 255, 0.2)'
+                },
+                atomic: {
+                    bg: 'linear-gradient(180deg, #003820 0%, #001810 45%, #000808 100%)',
+                    ground: 'radial-gradient(ellipse at 50% 100%, rgba(0,255,100,0.35) 0%, transparent 65%)',
+                    particles: 'radial-gradient(2px 2px at 35% 30%, rgba(80,255,160,0.5) 40%, transparent 50%), radial-gradient(2px 2px at 75% 60%, rgba(0,255,120,0.4) 40%, transparent 50%)',
+                    accent: 'rgba(0, 255, 100, 0.55)',
+                    glow: 'rgba(0, 255, 100, 0.2)'
+                },
+                error: {
+                    bg: 'linear-gradient(180deg, #001408 0%, #000a04 40%, #000402 100%)',
+                    ground: 'radial-gradient(ellipse at 50% 100%, rgba(0,255,80,0.25) 0%, transparent 65%)',
+                    particles: 'repeating-linear-gradient(0deg, transparent 0 16px, rgba(0,255,80,0.06) 16px 17px)',
+                    accent: 'rgba(255, 40, 60, 0.55)',
+                    glow: 'rgba(255, 40, 60, 0.22)'
+                },
+                electron: {
+                    bg: 'linear-gradient(180deg, #002040 0%, #001020 45%, #000510 100%)',
+                    ground: 'radial-gradient(ellipse at 50% 100%, rgba(0,140,255,0.4) 0%, transparent 65%)',
+                    particles: 'radial-gradient(2px 2px at 28% 35%, rgba(80,180,255,0.55) 40%, transparent 50%), radial-gradient(2px 2px at 80% 25%, rgba(255,255,120,0.4) 40%, transparent 50%)',
+                    accent: 'rgba(0, 140, 255, 0.55)',
+                    glow: 'rgba(0, 140, 255, 0.2)'
+                }
+            };
+
+            const MOB_SPRITES = {
+                'temple': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAACQCAYAAADDc689AAABw0lEQVR4nO3dMU5bQRRAUYPoaUKbFFBQJwUsIitggayARUABtYu4SFrSsAJSR+JbiuQn8i/nlC7+2Lp60mg0X95sAAAAAAAAAAAAAAAAAAAAAIB9jqYXeL25eZ1eY82Obm9HGxxPPpz3J3CcwHECxwkcJ3CcwHECxwkcJ3CcwHEn0wvstrvpJdjDBMcJHCdwnMBxAsct3ib48fXKTYwVuXh6eLOlCY4TOE7gOIHjBI4bP4v+V+eP9wd5zu7b9SrWnWaC4wSOEzhO4DiB4/67XfSSs7Mvb37+/Pwzue6hmOA4geMEjhM4TuC41eyi32vXupbd8hITHCdwnMBxAscJHOdedIR70R+UwHECxwkcJ3CcwHECxwkcJ3CcwHECx43/68r0mfb298vk4zeXn05Hn790hnwoJjhO4DiB4wSOEzhuNfeil0zvctfOBMcJHCdwnMBxAscJHCdwnMBxAscJHCdw3PhZ9PSNC/YzwXECxwkcJ3CcwHECxwkcJ3CcwHECxwkcN/524ZK7z5cHeevw+6/t6G9Yy/dcYoLjBI4TOE7gOIHjBI4TOE7gOIHjBI4TOE7gOIHjBI4TOE7gOIEBAAD+8geGBTLUyavN2AAAAABJRU5ErkJggg==',
+                'final': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIQAAACoCAYAAAAhKkbqAAABzUlEQVR4nO3coU7DQACA4Y2g0OhpsGh4kT0MgofZi4DGgp5GY4flFyMpdLmVfJ9ucpf2zyVt7rpaAQAAAAAAAAAAAAAA8Bvr0RP4q8Pb6jB6Dt+tb5d9Ty9GT4DzIghCEIQgCEEQgiAEQQiCEAQhCEIQhCAIQRCCIARBCIIQBAAAACc07AzB9u7prM5TnJvd6+OQZ+M7BCEIQhCEIAhBEIIgBEEIghAEIQhCEIQgCEEQgiAEQQiCEARxOWrg/cf7qKH5gRWCEAQhCEIQhCCIyXv/5zpPMfUt4/lqnreSh8+bRYy7uZ52/TFTz3dYIQhBEIIgBEEIghAEIQhCEIQgCEEQgiAEQQiCEAQhCEIQhCCIYecyppq642jp445ihSAEQQiCEAQhCEIQhCAIQRCCIARBCIIQBCEIQhCEIAhBEIIgBEEIghAEIQhCEIQgiMl/sp3L/WY7yx9x/6uX/W7Is7FCEIIgBEEIghAEIQhCEIQgCEEQgiAEQQiCEAQhCEIQhCAIQRDDdkwdM9dOqlPvOFrKPKeyQhCCIARBCIIQBCEIQhCEIAhBEIIgBEEIghAEIQhCEIQgCEEQgiAEQQiCEAQhCEIQAAAAAAAALMYXTqYmWJxUQ2sAAAAASUVORK5CYII=',
+                'supreme': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIQAAACoCAYAAAAhKkbqAAABwUlEQVR4nO3cIU7EQBiA0V2C4hBgOQcCLBrFCeAscAIUGguCc2DhENiiP0GyhW6Gkvf0JvNn+2VMZ7rZAAAAAAAAAAAAAAAA8BPb0QPsbJqm0SP8yna7iv/6YPQA/C2CIARBCIIQBCEIQhCEIAhBEIIgBAEAAAAAAMBqDLsrcPrwuu57Fnv2dn025Nl420kIghAEIQhCEIQgCEEQgiAEQQiCEAQhCEIQhCAIQRCCIARBCIIQBCEIQhCEIAhBELPP/i91n+Lz8WnW79+f75ZYdnNycbuKdY+uLhdZd+79DjsEIQhCEIQgCEEQgiAEQQiCEAQhCEIQhCAIQRCCIARBCIIQBHE4eoBdzT1xtPZ1R7FDEIIgBEEIghAEIQhCEIQgCEEQgiAEQQiCEAQhCEIQhCAIQRCCIARBCIIQBCEIQhDE7C/ZLuX4/GaRL+L+Vx8v90OejR2CEAQhCEIQhCAIQRCCIARBCIIQBCEIQhCEIAhBEIIgBEEIghh2Yuo7S52k2veJo7XMOZcdghAEIQhCEIQgCEEQgiAEQQiCEAQhCEIQhCAIQRCCIARBCIIQBCEIQhCEIAhBEIIAAAAAAABgNb4A914imHmvnRQAAAAASUVORK5CYII=',
+                'universe': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIQAAACcCAYAAAC+wQNRAAACRUlEQVR4nO3dzW3UQAAF4CyiGKgADrQRKqAsKoA2coAKoJvlgHx4Ixwz6/lb7fcdo2Q1sp+fvfZ48vQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA41xmD6B0/XK9zh7DSJevl6X2wZvZA2AtAkEQCIJAEASCIBAEgSAIBEEgCAJBEAjC29kDKH1/+Xnq758/fWg0kjpnx70KDUFYriFKs474WrXjXLVRNARhmWfxreZBzDryWjXZ7PkRGoIwPI21TbDqufas2kYZ1RwagtA9df/bCNsR8O3dj4eaU/n598fYB7XbqzUNQeh2H+Io6bOvpldVbpe97bj9vPV21BCE5g2xl+hejfD8q/IO4fu6by29P//IUWO0bgoNQTjdEKMb4dHtNUa5H27d/hqC0PwaQjOMtW3vVs+CNATh5oZodc6ijbIpbv32oSEI1Q2hGdZ2tik0BEEgCAJBWH7W9ZHWzw5Gf/5qNARBIAgCQRAIgkAQqr9ltLpnTh9n7yRrCMLN9yE0xVrMmKKLbrOuNcUYrf97gIYgnG6I3rOASb1nuWsIQrdZ13tvGJW/x+tGvyOrIQjd5kMcvS+gMf7N+hAsxRpTk1hjiruwzHnbOpV/zb6W0hCEZRpiU65Cdy9rXdfamqxchW42DUFYKp2vabV+5axV61drgj0agnD3b27Vqr2Kf7SVdTUEQSAIAkEQCIJAEASCIBAEgSAIBEEgCAJBEAiCQBAEgiAQBIEgCARBIAgCQRAIgkAAAAAAAAAAAAAAAABAA38AQrvUMw3buRUAAAAASUVORK5CYII=',
+                'cosmic': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAACcCAYAAAC0sW9GAAABe0lEQVR4nO3d0UkDQRRA0UQsRmsxHxahVWkR+UhqMd3ECvwYXH3h5pzvZR/sZWAZBma3AwAAAAAAAAAAAAAAAAAAAAAAAAAAAGDSfmrw6+l6nZo94XjYj3zrh4mh/B+B4wSOEzhO4DiB4wSOEzhO4DiB4wSOEzhO4DiB4wSOEzhO4LjHqcGX43lq9F2xguMEjhM4TuA4geOW/6K3Os+8+hf99fGy9Pzz+229f6vvtnq+2gqOEzhO4DiB4wSOEzhO4DiB4wSOEzhO4LixEx2rVvd+b+39U6zgOIHjBI4TOE7gOIHjBI4TOE7gOIHjBI4TOE7gOIHjBI4TOE7gOIHjBI4TOE7gOIHjBI4bu7vw6e10V3cXXj4P7i5kewLHCRwncJzAcQLHCRwncJzAcQLHCRw3thf9k632qFf3fqfm/jUrOE7gOIHjBI4TOE7gOIHjBI4TOE7gOIHjBI4TOE7gOIHjBI4TOE7gOIHjBI4TOE7gOIEBAAAAAIBf+QYq8CTGL/DjyQAAAABJRU5ErkJggg==',
+                'atomic': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIQAAACQCAYAAADJA8MqAAADLUlEQVR4nO3du23cQBQFUK7hipx4y3ARihQ7UAkOHK8SFeEyqMSVuId1Igp4NAYkxeF86HMyA+vFLPXm8nH4GwYAAAAAAAAAAAAAAAAAAADqu9QeQGm3+3jf8vnHy/W/2kafag+AtigIAgVBoCAIFATB59oDKGZ8umX5f9cfjzmG0yoJQXC+Y+xUErzN7N3rEAvf3zsJQdB/D1F6H5/6/pP0GhKCoL8eopeZ2Ms4ZyQEnRqfbh9eS2hBJ+OXEATt9hCd7oMXNf67JARBewkxzaCdM+fhPo5ZxrPg5XK97vqCTL83FwlB0E5CrJwppWZ+botJ0khSSAiCZs9l7E2C3fv2ldaOM/W5UuNcS0IQ1O8h3vadD1+/fVnz8dZm1Fprk+Tl9dfvYRiq9RISgqB4QkwzZZoJqWToNQm2SvYWs+1TantICIJiRxm9dNmlJX//7JzHe7IevL0kBMFhPcTSvvHwLvr+c9PV1ZtdvpfpvxaOwnInhoQgyN5DLPYKHVw11KJp+823b+7eQkIQZNsPrk6GUitwZ+khJrPtd9RRm4Qg2N1DWF+o46ieQkIQZD/KkAxlpZLioyQEwYc75XlFLq7Jlz6/f7ajjMnC9lz9d0mQEATbq3zrzHv98zwMg4TIZevv2jhOCUGgIE7u4T6OW45AFASBgiBQEAQKgkBBECgIAgVBoCAIFATB9ush3tbGN5/tLK3WuYajLZwbcraTrBQEgYIg2L2fbf7KqbM4+EqpiYQgOOzeTldfl5H7uZ0SgmB3QpS6K5nIvZ0UkX01r7m7wHtX6K7viYQgOOzezmRPMT1jik1K3WUvIQiKnRH8ZyWt8jOdm5d4+pznVFJUsSfZLvUWqc+f3eLzPKd/e9Y1NdS/qsj7MoLavZWEIKifEJOVK3JrtfbOrZTWVnAlBEGzb+VLzfC9b8GrpZfeR0IQtNNDTLz7uyoJQdBeQkzmd3w1MoN2a/x3SQg6NT7dun4bTyfjlxAE7fYQKY3vg9/1Ms4ZCUHQX0LMtTITWxnHThKCoP+EmEt18rlm7NHfX5mEIDhfQqTkWgM4SRKkSAgAAAAAAAAAAAAAAFjtL8E0hfp8yM5cAAAAAElFTkSuQmCC',
+                'error': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAACcCAYAAAC0sW9GAAABwUlEQVR4nO3dsU0DQRBAUYOITEBCAhVQBCVQkKkACqIEF0EFOCEhwCk0wJH4Vuf7eq8Ar8XXSNZo0W42AAAAAAAAAAAAAAAAAAAAAMB/LkYf8Hb78DP6jDV7+nwf2uBy5IezPIHjBI4TOE7guKvRB+yPX6OP4B8mOE7gOIHjBI4TOG74r+jH7c3oI9bteBj68SY4TuA4geMEjhM47ux20S/fH7Oc+3x9v4pzRzPBcQLHCRwncJzAcZO/onfbu1nuMy+1i17LubvNZpa/8+vx8Of9ahMcJ3CcwHECxwkcd3a76P1Cu9ylzh3NBMcJHCdwnMBxAse5F72w0f99aYLjBI4TOE7gOIHjzm4XzbxMcJzAcQLHCRwncJxd9MLsojmJwHECxwkcJ3CcXXScCY4TOE7gOIHjBI7zduHCvF3ISQSOEzhO4DiB4+yi40xwnMBxAscJHCdwnHvRS/N2IacQOE7gOIHjBI6zi44zwXECxwkcJ3CcwHHD70VPmettxKk3++aylu85xQTHCRwncJzAcQLHCRwncJzAcQLHCRwncJzAcQLHCRwncJzAcQLHCRwncJzAcQLHCRwnMAAAAAAAcJJf2Rw8R86z9PwAAAAASUVORK5CYII=',
+                'electron': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAHgAAACcCAYAAAC0sW9GAAABqklEQVR4nO3d0UkEMRRA0YzYiZZhCZahPViCPWgRfljClqG1jA2oMBjJej3ne0mWvQTCY5YZAwAAAAAAAAAAAAAAAAAAAAD4zrb6C/C5fX/YZ6xzMWMRzpfAcQLHCRwncJzAcQLHCRwncJzAcQLHXa7a+OZ1nzJr/StOt9uSub8THCdwnMBxAscJHLfsFs33tu1xyq3bCY4TOE7gOIHjBI4TOE7gOIHjBI4TOE7guGWz6NPL+6qt/xUnOE7gOIHjBI4TOO7wLXrW88xHb9H709Whz2/357X+tN/t4PPVTnCcwHECxwkcJ3CcwHECxwkcJ3CcwHECx/2Zfxcenf2e2/qrOMFxAscJHCdwnMBxAscJHCdwnMBxAscJHCdwnMBxAscJHCdwnMBxAscJHCdwnMBxAscJHLfkfXpjjDHu3v7VuwvH87V3FzKfwHECxwkcJ3CcwHECxwkcJ3CcwHECx62bRX9l1oz66Ox31b6/zAmOEzhO4DiB4wSOEzhO4DiB4wSOEzhO4DiB4wSOEzhO4DiB4wSOEzhO4DiB4wSOEzhOYAAAAAAA4Ec+AL6PJfZz/2eeAAAAAElFTkSuQmCC',
+                'temple2': 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIQAAACoCAYAAAAhKkbqAAAB7ElEQVR4nO3dIU4DQQBA0ZbgMGg0GoPpDbAcFcsNajBoNBqDLvoLCJMszG76nm66k+3PJN3Zyex2AAAAS9rPHsB/O709nkY+v799Oqt7dDF7AKyLIAhBEIIgBEFczh7Ab63t38HaxrMUMwQhCEIQhCAIQRCCIARBCIIQBCEIQhDE6p6vj64RbN3a1jjMEIQgCEEQgiAEQQiCEAQhCEIQhCAIQRCCIARBCIIQBCEIQhAAAAD8oWl7Ao6v72e1/2LU4e5mym/jOQQhCEIQhCAIQRCCIARBCIIQBCEIQhDEtLWMj8+TtYwfXF/trWUwnyAIQRCCIARBCIIQBCEIQhCEIAhBEMNnf8/aT3G4f1jke44vz5u47lL3eXR/hxmCEAQhCEIQhCAIQRCCIARBCIIQBCEIQhCEIAhBEIIgBEEIghh+Y2qW0TeOtn7dWcwQhCAIQRCCIARBCIIQBCEIQhCEIAhBEIIgBEEIghAEIQhCEIQgCEEQgiAEQQiCEAThVL6VciofqyAIQhCEIAhBEIIgBEEIghAEIQhCEIQgCEEQgiAEQQiCEAQx7Y2p78w683rUVsY5ygxBCIIQBCEIQhCEIAhBEIIgBEEIghAEIQhCEIQgCEEQgiAEQQiCEAQhCEIQhCAIQQAAAAAAALAZX5s9NzyDvUhZAAAAAElFTkSuQmCC',
+            };
+            const WORLD_MOBS = {
+                temple: ['temple', 'temple2'],
+                final: ['final'],
+                supreme: ['supreme'],
+                universe: ['universe'],
+                cosmic: ['cosmic'],
+                atomic: ['atomic'],
+                error: ['error'],
+                electron: ['electron']
+            };
+            window.showWorldLoading = function(worldId, name) {
+                const el = document.getElementById('world-loading');
+                if (!el) return;
+                const scene = document.getElementById('wl-scene');
+                const particles = document.getElementById('wl-particles');
+                const title = document.getElementById('wl-title');
+                const sub = document.getElementById('wl-sub');
+                const tip = document.getElementById('wl-tip');
+                const wfill = document.getElementById('wl-fill');
+                const theme = (typeof WORLD_THEME !== 'undefined' && WORLD_THEME[worldId])
+                    ? WORLD_THEME[worldId]
+                    : { bg: 'linear-gradient(180deg,#2a1050,#060310)', ground: 'radial-gradient(ellipse at 50% 100%, rgba(160,80,255,0.4), transparent 65%)', particles: 'none', accent: 'rgba(180,100,255,0.6)', glow: 'rgba(160,80,255,0.3)' };
+                el.style.setProperty('--wl-bg', theme.bg);
+                el.style.setProperty('--wl-ground', theme.ground);
+                el.style.setProperty('--wl-accent', theme.accent);
+                el.style.setProperty('--wl-glow', theme.glow);
+                if (scene) {
+                    scene.style.setProperty('--wl-bg', theme.bg);
+                    scene.style.setProperty('--wl-ground', theme.ground);
+                    scene.style.setProperty('--wl-accent', theme.accent);
+                    scene.style.setProperty('--wl-glow', theme.glow);
+                }
+                if (particles) {
+                    particles.style.backgroundImage = theme.particles || 'none';
+                }
+                if (title) title.textContent = name || 'Loading..';
+                var lang = 'en';
+                try {
+                    if (typeof window.currentLang === 'string' && window.currentLang) lang = window.currentLang;
+                    else if (typeof currentLang === 'string' && currentLang) lang = currentLang;
+                    else lang = localStorage.getItem('mystic_lang') || 'en';
+                } catch (e) {}
+                if (sub) sub.textContent = (lang === 'en') ? 'Entering world…' : 'Đang vào thế giới…';
+                var tipsW = (lang === 'en') ? TIPS_EN : TIPS_VI;
+                if (tip) tip.innerHTML = '<span style="color:#ffe566">Tip:</span> ' + tipsW[Math.floor(Math.random() * tipsW.length)];
+                var mobBox = document.getElementById('wl-mobs');
+                if (mobBox) {
+                    mobBox.innerHTML = '';
+                    var keys = WORLD_MOBS[worldId] || [worldId];
+                    keys.forEach(function(k) {
+                        var src = MOB_SPRITES[k];
+                        if (!src) return;
+                        var im = document.createElement('img');
+                        im.src = src;
+                        im.alt = k;
+                        mobBox.appendChild(im);
+                    });
+                }
+                if (wfill) wfill.style.width = '0%';
+                el.classList.remove('hide');
+                el.classList.add('show');
+                el.style.display = 'flex';
+                var p = 0;
+                try { if (window._wlTimer) clearInterval(window._wlTimer); } catch (e) {}
+                // ~1.2s loading so player sees bar + mobs
+                window._wlTimer = setInterval(function() {
+                    p = Math.min(100, p + 4);
+                    if (wfill) wfill.style.width = p + '%';
+                    if (p >= 100) {
+                        clearInterval(window._wlTimer);
+                        setTimeout(function() {
+                            el.classList.add('hide');
+                            setTimeout(function() {
+                                el.classList.remove('show');
+                                el.classList.remove('hide');
+                                el.style.display = 'none';
+                            }, 350);
+                        }, 220);
+                    }
+                }, 45);
+            };
+
         })();
+
+
 
 
         let audioCtx = null;
@@ -2808,6 +3785,7 @@
                 let gameLoop = 1;
 
                 let currentLang = (function(){ try { return localStorage.getItem('mystic_lang') || 'en'; } catch(e) { return 'en'; } })();
+                window.currentLang = currentLang;
 
                 let hasGoDSword = false;
 
@@ -10061,6 +11039,11 @@
 
                 makeOrbitRing(1.4, 0.016, orbitRingMat, Math.PI / 2.4, 0.3);
                 makeOrbitRing(1.85, 0.012, orbitRingMat2, Math.PI / 2.1, -0.4);
+                // Mặc định FP → ẩn vòng
+                try {
+                    if (typeof isFirstPerson !== 'undefined' && isFirstPerson)
+                        cosmicOrbitGroup.visible = false;
+                } catch (e) {}
 
                 // Orbiting planets (giảm số lượng + low poly chống lag)
                 const planetColors = [0x66aaff, 0xff88cc, 0xaaddff];
@@ -13779,7 +14762,7 @@ const octopusMonster =
                         : 'vi';
 
                     applyLanguageToUI();
-                    try { localStorage.setItem('mystic_lang', currentLang); } catch(e) {}
+                    try { localStorage.setItem('mystic_lang', currentLang); window.currentLang = currentLang; } catch(e) {}
 
                     showToast(
                         currentLang === 'vi'
@@ -13943,6 +14926,13 @@ const octopusMonster =
                     playerGroup.visible = !isFirstPerson;
                     if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
                         blockyPlayer.visible = !isFirstPerson;
+                    // Ẩn vòng orbit / aura khi góc nhìn thứ nhất
+                    if (typeof cosmicOrbitGroup !== 'undefined' && cosmicOrbitGroup)
+                        cosmicOrbitGroup.visible = !isFirstPerson;
+                    if (typeof haloRing !== 'undefined' && haloRing)
+                        haloRing.visible = !isFirstPerson;
+                    if (typeof rainbowHaloGroup !== 'undefined' && rainbowHaloGroup)
+                        rainbowHaloGroup.visible = !isFirstPerson;
                     showToast(
                         currentLang === 'vi'
                         ? (isFirstPerson ? '👁️ Góc nhìn từ mắt (không thấy thân)' : '👤 Góc nhìn thứ ba')
@@ -21610,6 +22600,10 @@ const octopusMonster =
                         playerGroup.visible = false;
                         if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
                             blockyPlayer.visible = false;
+                        if (typeof cosmicOrbitGroup !== 'undefined' && cosmicOrbitGroup)
+                            cosmicOrbitGroup.visible = false;
+                        if (typeof haloRing !== 'undefined' && haloRing)
+                            haloRing.visible = false;
 
                         const pitch = cameraPitch;
                         const lookDistance = 16;
@@ -21637,6 +22631,10 @@ const octopusMonster =
                         playerGroup.visible = true;
                         if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
                             blockyPlayer.visible = true;
+                        if (typeof cosmicOrbitGroup !== 'undefined' && cosmicOrbitGroup)
+                            cosmicOrbitGroup.visible = true;
+                        if (typeof haloRing !== 'undefined' && haloRing)
+                            haloRing.visible = true;
 
                         const elev = cameraAngleY;
                         const horizontalDistance =
@@ -22077,7 +23075,7 @@ const octopusMonster =
 
                     // Đảo trung tâm
                     const islandMat = new THREE.MeshStandardMaterial({
-                        color: 0x3d8a4a, roughness: 0.85, metalness: 0.05
+                        color: 0x4a9e6a, roughness: 0.82, metalness: 0.05, emissive: 0x0a2818, emissiveIntensity: 0.06
                     });
                     const rockMat = new THREE.MeshStandardMaterial({
                         color: 0x6a6a78, roughness: 0.7, metalness: 0.15
@@ -22086,7 +23084,7 @@ const octopusMonster =
                         color: 0xffd700, roughness: 0.3, metalness: 0.85, emissive: 0xaa8800, emissiveIntensity: 0.35
                     });
 
-                    const island = new THREE.Mesh(new THREE.CylinderGeometry(28, 32, 4, 32), islandMat);
+                    const island = new THREE.Mesh(new THREE.CylinderGeometry(40, 46, 4.5, 40), islandMat);
                     island.position.y = -2;
                     island.receiveShadow = true;
                     hubWorldGroup.add(island);
@@ -22097,9 +23095,10 @@ const octopusMonster =
 
                     // Đất pastel cầu vồng mượt (vệt mềm, không chia miếng cứng)
                     const ground = new THREE.Mesh(
-                        new THREE.CylinderGeometry(10.2, 10.6, 0.5, 56),
+                        new THREE.CylinderGeometry(14.5, 15.2, 0.5, 56),
                         new THREE.MeshStandardMaterial({
-                            color: 0xf5f0ff, roughness: 0.88, metalness: 0.04
+                            color: 0x9ec9b8, roughness: 0.82, metalness: 0.06,
+                            emissive: 0x1a4038, emissiveIntensity: 0.08
                         })
                     );
                     ground.position.y = 0.12;
@@ -22232,7 +23231,7 @@ const octopusMonster =
 
                     // Viền galaxy quanh khu đất
                     const rim = new THREE.Mesh(
-                        new THREE.TorusGeometry(10.3, 0.14, 8, 48),
+                        new THREE.TorusGeometry(14.8, 0.16, 8, 48),
                         new THREE.MeshStandardMaterial({
                             color: 0xaa88ff, metalness: 0.7, roughness: 0.3,
                             emissive: 0x5533aa, emissiveIntensity: 0.4
@@ -22278,7 +23277,7 @@ const octopusMonster =
                     const n = HUB_WORLDS.length;
                     HUB_WORLDS.forEach(function(w, i) {
                         const ang = (i / n) * Math.PI * 2 - Math.PI / 2;
-                        const r = 14; // gần tâm hơn — thấy rõ các khu từ giữa đảo
+                        const r = 20; // hub rộng hơn — portal vẫn thấy từ tâm
                         const px = Math.cos(ang) * r;
                         const pz = Math.sin(ang) * r;
                         const pad = new THREE.Group();
@@ -22304,15 +23303,33 @@ const octopusMonster =
                         ring.position.y = 0.4;
                         pad.add(ring);
 
-                        // Mũi tên chỉ vào portal (chỉ hiện nếu đã mở khóa)
+                        // Mũi tên chỉ portal cần đánh (refreshHubLocks bật/tắt)
                         const arrow = new THREE.Mesh(
-                            new THREE.ConeGeometry(0.55, 1.4, 6),
-                            new THREE.MeshBasicMaterial({ color: 0xffee66 })
+                            new THREE.ConeGeometry(0.65, 1.6, 6),
+                            new THREE.MeshBasicMaterial({ color: 0xffee44, transparent: true, opacity: 0.95 })
                         );
                         arrow.rotation.x = Math.PI;
-                        arrow.position.y = 3.2;
+                        arrow.position.y = 3.6;
                         arrow.userData.hubArrow = true;
                         pad.add(arrow);
+                        // Vòng sáng dẫn đường dưới mũi tên
+                        const guideRing = new THREE.Mesh(
+                            new THREE.TorusGeometry(1.1, 0.08, 8, 24),
+                            new THREE.MeshBasicMaterial({ color: 0xffee66, transparent: true, opacity: 0.85 })
+                        );
+                        guideRing.rotation.x = Math.PI / 2;
+                        guideRing.position.y = 2.4;
+                        guideRing.userData.hubGuide = true;
+                        guideRing.userData.hubArrow = false;
+                        pad.add(guideRing);
+                        // Beam nhẹ từ trên chỉ xuống
+                        const guideBeam = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.06, 0.18, 2.2, 8),
+                            new THREE.MeshBasicMaterial({ color: 0xffe566, transparent: true, opacity: 0.55 })
+                        );
+                        guideBeam.position.y = 5.0;
+                        guideBeam.userData.hubGuide = true;
+                        pad.add(guideBeam);
 
                         // Khóa = dấu "?" (không dùng cục đen)
                         const lock = new THREE.Group();
@@ -22477,7 +23494,7 @@ const octopusMonster =
                     });
 
                     // Rào vô hình: không cho đi ra ngoài đảo / vũ trụ
-                    const HUB_RADIUS = 26;
+                    const HUB_RADIUS = 38;
                     if (typeof collisionObstacles !== 'undefined') {
                         const nWall = 24;
                         for (let w = 0; w < nWall; w++) {
@@ -22499,14 +23516,37 @@ const octopusMonster =
                     refreshHubLocks();
                 }
 
+                function getHubNextTargetIndex() {
+                    // Thế giới nên đánh tiếp theo = portal mới mở nhất (hubUnlockIndex)
+                    var max = (typeof HUB_WORLDS !== 'undefined' && HUB_WORLDS) ? (HUB_WORLDS.length - 1) : 0;
+                    var idx = (typeof hubUnlockIndex === 'number') ? hubUnlockIndex : 0;
+                    if (idx < 0) idx = 0;
+                    if (idx > max) idx = max;
+                    return idx;
+                }
                 function refreshHubLocks() {
                     if (!hubWorldGroup) return;
+                    var nextIdx = getHubNextTargetIndex();
                     hubWorldGroup.children.forEach(function(pad) {
                         if (pad.userData.hubWorldIndex == null) return;
                         const i = pad.userData.hubWorldIndex;
                         const unlocked = i <= hubUnlockIndex;
+                        const isNext = (i === nextIdx);
                         pad.children.forEach(function(ch) {
-                            if (ch.userData.hubArrow) ch.visible = unlocked;
+                            // Mũi tên vàng chỉ hiện ở portal cần đánh tiếp
+                            if (ch.userData.hubArrow) {
+                                ch.visible = unlocked && isNext;
+                                if (ch.visible) {
+                                    ch.scale.set(1.35, 1.35, 1.35);
+                                    if (ch.material) {
+                                        ch.material.color.setHex(0xffee44);
+                                        ch.material.opacity = 1;
+                                    }
+                                }
+                            }
+                            if (ch.userData.hubGuide) {
+                                ch.visible = unlocked && isNext;
+                            }
                             if (ch.userData.hubLock) ch.visible = !unlocked;
                             if (ch.userData.hubPreview) ch.visible = unlocked;
                             if (ch.userData.hubLabel && ch.userData.drawLabel) {
@@ -22554,10 +23594,18 @@ const octopusMonster =
                         scene.background = new THREE.Color(0x050218);
                         if (scene.fog) scene.fog = null;
                     }
+                    if (typeof refreshHubLocks === 'function') refreshHubLocks();
+                    var nextI = (typeof getHubNextTargetIndex === 'function') ? getHubNextTargetIndex() : 0;
+                    var nextNm = '';
+                    try {
+                        if (typeof HUB_WORLDS !== 'undefined' && HUB_WORLDS[nextI]) {
+                            nextNm = (currentLang === 'en') ? HUB_WORLDS[nextI].nameEn : HUB_WORLDS[nextI].nameVi;
+                        }
+                    } catch (e) {}
                     showToast(
                         currentLang === 'vi'
-                        ? '🏝️ Đảo trung tâm — đi vào portal có mũi tên để chọn thế giới!'
-                        : '🏝️ Hub island — walk into the arrow portal to choose a world!'
+                        ? ('🏝️ Hub — theo mũi tên vàng tới: ' + (nextNm || 'thế giới tiếp theo') + '!')
+                        : ('🏝️ Hub — follow the gold arrow to: ' + (nextNm || 'next world') + '!')
                     );
                     if (typeof showBossCommandBar === 'function') showBossCommandBar(false);
                     if (typeof refreshRedKillBar === 'function') refreshRedKillBar();
@@ -22571,6 +23619,13 @@ const octopusMonster =
                     }
                     const w = HUB_WORLDS[idx];
                     if (!w) return;
+                    // Màn loading theo thế giới sắp vào (background = theme world)
+                    try {
+                        if (typeof showWorldLoading === 'function') {
+                            const nm = (currentLang === 'en') ? w.nameEn : w.nameVi;
+                            showWorldLoading(w.id, nm);
+                        }
+                    } catch (e) {}
                     // Gỡ collider chùa hub khi vào world khác
                     if (typeof collisionObstacles !== 'undefined' && collisionObstacles) {
                         for (let i = collisionObstacles.length - 1; i >= 0; i--) {
@@ -22767,6 +23822,22 @@ const octopusMonster =
                 }
 
                 function updateHubPortalTrigger() {
+                    // Nhún mũi tên dẫn đường
+                    if (hubWorldGroup && gameStage === 0) {
+                        const t = performance.now() * 0.004;
+                        hubWorldGroup.children.forEach(function(pad) {
+                            if (pad.userData.hubWorldIndex == null) return;
+                            pad.children.forEach(function(ch) {
+                                if (ch.userData.hubArrow && ch.visible) {
+                                    ch.position.y = 3.6 + Math.sin(t + pad.userData.hubWorldIndex) * 0.35;
+                                }
+                                if (ch.userData.hubGuide && ch.visible && ch.geometry && ch.geometry.type === 'TorusGeometry') {
+                                    ch.rotation.z = t * 0.8;
+                                }
+                            });
+                        });
+                    }
+
                     if (typeof fixFinalStuckToUltimate === 'function') fixFinalStuckToUltimate();
                     // Chỉ hiện gợi ý gần portal — vào bằng phím E (tránh đơ / vào lặp)
                     if (gameStage !== 0 || !hubWorldGroup || !playerGroup) return;
