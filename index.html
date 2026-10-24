@@ -1,7 +1,6 @@
 
 
 
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -991,15 +990,13 @@
             height: 100vh;
             background: #000;
             color: #ff0000;
-            display: none !important; /* FORCE ẩn chữ NO */
+            display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 9999;
             font-family: monospace;
             text-align: center;
-            visibility: hidden !important;
-            pointer-events: none !important;
         }
 
         #error-no h1 {
@@ -1354,6 +1351,9 @@
 
         </style>
 
+    <!-- Preload CDN → mở lại trang nhanh hơn, ít kẹt -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" as="script" crossorigin>
+    <link rel="preload" href="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" as="script" crossorigin>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/geometries/RoundedBoxGeometry.js"></script>
@@ -1393,9 +1393,14 @@
     <div id="error-no">
         <h1>NO</h1>
         <p>
-            <b>3D GRAPHICS FAILED TO LOAD!</b><br>
-            Your browser has WebGL disabled or the Three.js library failed to load.
+            <b>KHÔNG TẢI ĐƯỢC ĐỒ HỌA 3D!</b><br>
+            Trình duyệt tắt WebGL, GPU lỗi, hoặc Three.js không load được.<br>
+            Thử: bật Hardware Acceleration · tắt extension · dùng Chrome/Edge · tải lại trang.
         </p>
+        <button type="button" id="error-reload-btn" onclick="location.reload()"
+            style="margin-top:22px;background:#a335ee;color:#fff;border:none;padding:14px 32px;border-radius:10px;font-weight:bold;font-size:18px;cursor:pointer;box-shadow:0 0 15px rgba(163,53,238,0.7);">
+            🔄 TẢI LẠI TRANG
+        </button>
     </div>
 
     <div id="press-p-hint" style="position:absolute;bottom:18px;left:18px;z-index:30;pointer-events:none;font-family:'Segoe UI',sans-serif;font-size:13px;font-weight:700;color:rgba(200,180,255,0.92);text-shadow:0 0 10px rgba(120,80,255,0.55),0 1px 2px rgba(0,0,0,0.7);letter-spacing:0.4px;">
@@ -2277,23 +2282,38 @@
             paintVox(document.getElementById('ld-ghost-l'), ghostGrid, ghostPal);
             paintVox(document.getElementById('ld-ghost-r'), ghostGrid, ghostPal);
 
-            // Fake smooth progress while scripts boot
+            // Fake smooth progress while scripts boot (max 90 — real init finishes to 100)
             let fake = 0;
             const fakeTimer = setInterval(function() {
-                if (progress >= 92) {
+                if (progress >= 92 || window._gameReady) {
                     clearInterval(fakeTimer);
                     return;
                 }
                 fake += 1 + Math.random() * 2.2;
-                if (fake > 88) fake = 88;
+                if (fake > 90) fake = 90;
                 if (fake > progress) {
-                    window.setLoadProgress(fake, 'Loading');
+                    window.setLoadProgress(fake, progress < 40 ? 'Đang tải thư viện…' : (progress < 70 ? 'Khởi tạo 3D…' : 'Sắp xong…'));
                 }
             }, 120);
             window._ldFakeTimer = fakeTimer;
 
+            // Timeout: nếu kẹt loading > 18s → hiện lỗi + nút tải lại (không treo mãi)
+            window._ldWatchdog = setTimeout(function() {
+                if (window._gameReady) return;
+                try { if (window._ldFakeTimer) clearInterval(window._ldFakeTimer); } catch(e) {}
+                console.error('[MysticTemple] Loading timeout — WebGL/init failed or too slow');
+                if (typeof triggerNO === 'function') triggerNO();
+                else {
+                    document.body.classList.remove('is-loading');
+                    const ld = document.getElementById('game-loading');
+                    if (ld) ld.style.display = 'none';
+                    const err = document.getElementById('error-no');
+                    if (err) err.style.display = 'flex';
+                }
+            }, 18000);
+
             document.body.classList.add('is-loading');
-            window.setLoadProgress(3, 'Loading');
+            window.setLoadProgress(3, 'Đang tải…');
         })();
 
 
@@ -2316,13 +2336,35 @@
         }
 
         function triggerNO() {
-            // DISABLED: không hiện chữ NO — game vẫn cố chạy
-            console.warn('[Mystic Temple] triggerNO bị tắt — bỏ qua lỗi hiển thị NO');
+            try { if (window._ldFakeTimer) clearInterval(window._ldFakeTimer); } catch(e) {}
+            try { if (window._ldWatchdog) clearTimeout(window._ldWatchdog); } catch(e) {}
+
+            const hud = document.getElementById('hud');
+            const instructions = document.getElementById('instructions');
+            const qa = document.getElementById('quick-actions');
+            const error = document.getElementById('error-no');
+
+            if (hud) hud.style.display = 'none';
+            if (instructions) instructions.style.display = 'none';
+            if (qa) qa.style.display = 'none';
+            if (error) error.style.display = 'flex';
+
             document.body.classList.remove('is-loading');
             const ld = document.getElementById('game-loading');
-            if (ld) ld.style.display = 'none';
-            const error = document.getElementById('error-no');
-            if (error) error.style.display = 'none';
+            if (ld) {
+                ld.classList.add('hide');
+                ld.style.display = 'none';
+            }
+        }
+
+        // Kiểm tra WebGL trước khi tạo renderer
+        function canUseWebGL() {
+            try {
+                const c = document.createElement('canvas');
+                return !!(c.getContext('webgl') || c.getContext('experimental-webgl'));
+            } catch (e) {
+                return false;
+            }
         }
 
         function playBeepSound() {
@@ -2638,13 +2680,17 @@
             };
 
         if (typeof THREE === 'undefined') {
-            console.warn('THREE.js chưa load — vẫn cố khởi động game');
-            // Không gọi triggerNO() nữa
-        }
+            console.error('[MysticTemple] THREE.js missing');
+            triggerNO();
+        } else if (!canUseWebGL()) {
+            console.error('[MysticTemple] WebGL not available');
+            triggerNO();
+        } else {
 
-        try {
+            try {
+
                 if (typeof setLoadProgress === 'function')
-                    setLoadProgress(18, 'Loading');
+                    setLoadProgress(18, 'Khởi tạo engine…');
 
                 let power = 10;
 
@@ -3616,18 +3662,43 @@
                         5000
                     );
 
-                const renderer =
-                    new THREE.WebGLRenderer({
+                // Tạo WebGL renderer an toàn hơn (fallback nếu high-perf / antialias lỗi)
+                let renderer = null;
+                try {
+                    renderer = new THREE.WebGLRenderer({
                         antialias: true,
-                        powerPreference: 'high-performance'
+                        powerPreference: 'high-performance',
+                        failIfMajorPerformanceCaveat: false
                     });
+                } catch (e1) {
+                    console.warn('[MysticTemple] WebGL high-perf failed, retry simple…', e1);
+                    try {
+                        renderer = new THREE.WebGLRenderer({
+                            antialias: false,
+                            powerPreference: 'default',
+                            failIfMajorPerformanceCaveat: false
+                        });
+                    } catch (e2) {
+                        console.error('[MysticTemple] WebGLRenderer failed', e2);
+                        throw e2;
+                    }
+                }
 
-                renderer.shadowMap.enabled = true;
-                renderer.shadowMap.type = THREE.PCFSoftShadowMap; // bóng mềm chân thật
-                renderer.outputEncoding = THREE.sRGBEncoding;
-                renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                renderer.toneMappingExposure = 1.18;
-                renderer.physicallyCorrectLights = true;
+                if (!renderer || !renderer.getContext || !renderer.getContext()) {
+                    throw new Error('WebGL context is null');
+                }
+
+                try {
+                    renderer.shadowMap.enabled = true;
+                    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                    renderer.outputEncoding = THREE.sRGBEncoding;
+                    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                    renderer.toneMappingExposure = 1.18;
+                    if ('physicallyCorrectLights' in renderer)
+                        renderer.physicallyCorrectLights = true;
+                } catch (eOpt) {
+                    console.warn('[MysticTemple] renderer options partial fail', eOpt);
+                }
 
                 renderer.setSize(
                     window.innerWidth,
@@ -3637,7 +3708,7 @@
                 renderer.setPixelRatio(
                     Math.min(
                         window.devicePixelRatio || 1,
-                        1.75
+                        1.5
                     )
                 );
 
@@ -3646,7 +3717,7 @@
                 );
 
                 if (typeof setLoadProgress === 'function')
-                    setLoadProgress(35, 'Loading');
+                    setLoadProgress(35, 'Tạo thế giới…');
 
                 // Ánh sáng bầu trời + mặt đất (màu tự nhiên hơn)
                 const hemiLight =
@@ -11225,7 +11296,7 @@ const redMonster =
                     createRedMonster();
 
                 if (typeof setLoadProgress === 'function')
-                    setLoadProgress(72, 'Loading');
+                    setLoadProgress(72, 'Xây dựng map…');
 
                 // Universe / Cosmic boss = cute blocky (sau khi factory đã sẵn sàng)
                 (function rebuildCuteWorldBosses() {
@@ -22769,10 +22840,12 @@ const octopusMonster =
                     } catch (e) { console.error('hub start', e); }
                 }, 400);
 
-                // Màn chờ xong → ẩn loading
+                // Màn chờ xong → ẩn loading (đánh dấu ready để watchdog không bắn lỗi)
+                window._gameReady = true;
+                try { if (window._ldWatchdog) clearTimeout(window._ldWatchdog); } catch(e) {}
                 if (typeof hideGameLoading === 'function') {
                     if (window._ldFakeTimer) try { clearInterval(window._ldFakeTimer); } catch(e) {}
-                    window.setLoadProgress(100, 'Loading');
+                    window.setLoadProgress(100, 'Xong!');
                     document.body.classList.remove('is-loading');
                     hideGameLoading();
                 }
@@ -22819,13 +22892,12 @@ const octopusMonster =
                 if (typeof refreshKingUI === 'function') refreshKingUI();
 
             } catch(err) {
-
-                console.error(err);
-
-                // triggerNO() đã bị tắt — game vẫn chạy, chỉ log lỗi
-                console.warn('Init error (NO screen disabled):', err);
-
+                console.error('[MysticTemple] Init error:', err);
+                window._gameReady = false;
+                triggerNO();
             }
+
+        }
 
     </script>
 
