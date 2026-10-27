@@ -2223,7 +2223,7 @@
             </div>
         </div>
         <div class="upd-body">
-            <div class="upd-ver">Version 1.27 · Error Boss DMG</div>
+            <div class="upd-ver">Version 1.28.7 · Small Straight Sword</div>
             <p class="upd-desc lang-txt"
                data-vi="Update giúp thế giới đẹp & chân thật hơn: cây cối giống đời thật, địa hình gọn (cỏ · đá · quái), bỏ vùng vũ trụ trống ngoài Error/Glitch. Nhân vật & boss chi tiết hơn."
                data-en="Update helps the world look more beautiful & realistic: lifelike trees, compact terrain (grass · rock · mobs), no empty cosmic voids outside Error/Glitch. Richer characters & bosses.">
@@ -4639,6 +4639,8 @@
                         0.1,
                         5000
                     );
+                // Cần add camera vào scene để render được viewmodel (tay/kiếm FP) gắn trên camera
+                scene.add(camera);
 
                 // Tạo WebGL renderer an toàn hơn (fallback nếu high-perf / antialias lỗi)
                 let renderer = null;
@@ -8780,6 +8782,8 @@
                         hackSwordGroup.visible = showH;
                         errorSwordGroup.visible = showG;
                         electronSwordGroup.visible = showE;
+                        // Đồng bộ màu kiếm góc nhìn từ mắt
+                        try { if (typeof refreshFpSwordColors === 'function') refreshFpSwordColors(); } catch (e) {}
                     };
 
                 playerGroup.add(
@@ -14911,11 +14915,213 @@ const octopusMonster =
 
                 playerGroup.visible = false;
 
+
+
+
+
+                /* ============================================================
+                   FIRST-PERSON — chỉ KIẾM góc dưới-phải (trong FOV, không che tâm)
+                   Material unlit để luôn thấy; animation vung khi đánh
+                ============================================================ */
+                let fpViewGroup = null;
+                let fpItemRoot = null;
+                let fpIdleTime = 0;
+                let fpEquipProg = 1;
+
+                // Vị trí nghỉ: trong khung nhìn, góc dưới-phải (FOV 68°)
+                // z ~ -0.5 → nửa chiều cao khung ~0.34; y=-0.22 vẫn trong màn
+                /* Minecraft FP item: nhỏ, góc dưới-phải, gần như thẳng (ít nghiêng)
+                   Tỷ lệ ~ ảnh MC — không chiếm nhiều FOV */
+                const FP_REST = {
+                    pos: [0.42, -0.32, -0.55],
+                    rot: [0.0, 0.08, -0.08],
+                    scale: 0.28
+                };
+
+                function getFpSwordColor() {
+                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword)
+                        return { blade: 0x44ccff, core: 0xe8ffff, guard: 0x0088ff, handle: 0x2a4060 };
+                    if (typeof hasGlitchSword !== 'undefined' && hasGlitchSword)
+                        return { blade: 0xff3355, core: 0xffcccc, guard: 0xaa0022, handle: 0x3a1018 };
+                    if (typeof hasHackSword !== 'undefined' && hasHackSword)
+                        return { blade: 0x66eaff, core: 0xffffff, guard: 0x00ffff, handle: 0x1a3040 };
+                    if (typeof hasGoDSword !== 'undefined' && hasGoDSword)
+                        return { blade: 0xffd700, core: 0xfff8d0, guard: 0xffaa00, handle: 0x5a4010 };
+                    const t = (typeof equippedItemType !== 'undefined') ? equippedItemType : null;
+                    if (t === 'legendary')
+                        return { blade: 0xffd700, core: 0xfff0a0, guard: 0xc9a24a, handle: 0x4a3010 };
+                    if (t === 'epic')
+                        return { blade: 0xb050ff, core: 0xe0b0ff, guard: 0x7a20cc, handle: 0x2a1040 };
+                    if (t === 'rare')
+                        return { blade: 0x4488ff, core: 0xaaccff, guard: 0x2266cc, handle: 0x1a2840 };
+                    if (t === 'common')
+                        return { blade: 0xc0c0c8, core: 0xe0e0e8, guard: 0x888890, handle: 0x3a3a40 };
+                    return { blade: 0xc4a060, core: 0xe8d090, guard: 0x8b6914, handle: 0x6b4423 };
+                }
+
+                function buildFpItemMesh(cols) {
+                    const g = new THREE.Group();
+                    // MeshBasicMaterial = luôn sáng, không phụ thuộc đèn scene
+                    const bladeMat = new THREE.MeshBasicMaterial({ color: cols.blade });
+                    const coreMat = new THREE.MeshBasicMaterial({ color: cols.core });
+                    const guardMat = new THREE.MeshBasicMaterial({ color: cols.guard });
+                    const handleMat = new THREE.MeshBasicMaterial({ color: cols.handle || 0x6b4423 });
+
+                    // Kiếm phẳng kiểu sprite MC
+                    const blade = new THREE.Mesh(new THREE.BoxGeometry(0.18, 1.2, 0.06), bladeMat);
+                    blade.position.set(0, 0.65, 0);
+                    const edge = new THREE.Mesh(new THREE.BoxGeometry(0.05, 1.15, 0.07), coreMat);
+                    edge.position.set(-0.05, 0.65, 0);
+                    const tip = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.18, 0.06), bladeMat);
+                    tip.position.set(0, 1.32, 0);
+                    const guard = new THREE.Mesh(new THREE.BoxGeometry(0.45, 0.1, 0.1), guardMat);
+                    guard.position.set(0, 0.08, 0);
+                    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.4, 0.11), handleMat);
+                    handle.position.set(0, -0.15, 0);
+                    const pommel = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.12, 0.12), guardMat);
+                    pommel.position.set(0, -0.38, 0);
+
+                    g.add(blade, edge, tip, guard, handle, pommel);
+                    g.userData.bladeMat = bladeMat;
+                    g.userData.coreMat = coreMat;
+                    g.userData.guardMat = guardMat;
+                    g.userData.handleMat = handleMat;
+                    // Item thẳng đứng kiểu MC (gần như không nghiêng)
+                    g.rotation.set(0.0, 0.2, 0.05);
+                    g.scale.setScalar(1);
+                    g.traverse(function(c) {
+                        if (c.isMesh) {
+                            c.renderOrder = 1000;
+                            c.frustumCulled = false;
+                            if (c.material) {
+                                c.material.depthTest = false; // luôn vẽ trên world
+                                c.material.depthWrite = false;
+                            }
+                        }
+                    });
+                    return g;
+                }
+
+                function ensureFpView() {
+                    if (fpViewGroup) return fpViewGroup;
+
+                    fpViewGroup = new THREE.Group();
+                    fpViewGroup.name = 'fpSwordOnly';
+                    fpViewGroup.renderOrder = 1000;
+                    fpViewGroup.frustumCulled = false;
+
+                    fpItemRoot = new THREE.Group();
+                    const item = buildFpItemMesh(getFpSwordColor());
+                    fpItemRoot.add(item);
+                    fpItemRoot.userData.item = item;
+                    fpViewGroup.add(fpItemRoot);
+
+                    fpViewGroup.position.set(FP_REST.pos[0], FP_REST.pos[1], FP_REST.pos[2]);
+                    fpViewGroup.rotation.set(FP_REST.rot[0], FP_REST.rot[1], FP_REST.rot[2]);
+                    fpViewGroup.scale.setScalar(FP_REST.scale);
+
+                    if (typeof camera !== 'undefined' && camera) {
+                        camera.add(fpViewGroup);
+                    }
+                    fpViewGroup.visible = false;
+                    return fpViewGroup;
+                }
+
+                function refreshFpSwordColors() {
+                    if (!fpItemRoot) return;
+                    const cols = getFpSwordColor();
+                    let item = fpItemRoot.userData.item;
+                    if (!item) {
+                        while (fpItemRoot.children.length) fpItemRoot.remove(fpItemRoot.children[0]);
+                        item = buildFpItemMesh(cols);
+                        fpItemRoot.add(item);
+                        fpItemRoot.userData.item = item;
+                        fpEquipProg = 0;
+                        return;
+                    }
+                    if (item.userData.bladeMat) item.userData.bladeMat.color.setHex(cols.blade);
+                    if (item.userData.coreMat) item.userData.coreMat.color.setHex(cols.core);
+                    if (item.userData.guardMat) item.userData.guardMat.color.setHex(cols.guard);
+                    if (item.userData.handleMat) item.userData.handleMat.color.setHex(cols.handle || 0x6b4423);
+                }
+
+                function updateFpView(dt) {
+                    ensureFpView();
+                    if (!fpViewGroup) return;
+
+                    if (typeof camera !== 'undefined' && camera && fpViewGroup.parent !== camera) {
+                        if (fpViewGroup.parent) fpViewGroup.parent.remove(fpViewGroup);
+                        camera.add(fpViewGroup);
+                    }
+
+                    const dead = (typeof isDeathAnimPlaying !== 'undefined' && isDeathAnimPlaying);
+                    const show = !!isFirstPerson && !dead;
+                    fpViewGroup.visible = show;
+                    if (!show) return;
+
+                    // Đảm bảo near plane không cắt viewmodel
+                    if (camera && camera.near > 0.05) {
+                        camera.near = 0.05;
+                        camera.updateProjectionMatrix();
+                    }
+
+                    refreshFpSwordColors();
+                    fpIdleTime += (dt || 0.016);
+                    if (fpEquipProg < 1) fpEquipProg = Math.min(1, fpEquipProg + (dt || 0.016) * 4);
+
+                    let swingT = 0;
+                    if (typeof attackSwingProgress === 'number' && attackSwingProgress > 0 && typeof ATTACK_SWING_DURATION === 'number') {
+                        swingT = 1 - (attackSwingProgress / Math.max(0.001, ATTACK_SWING_DURATION));
+                    }
+
+                    const bx = FP_REST.pos[0], by = FP_REST.pos[1], bz = FP_REST.pos[2];
+                    const rx = FP_REST.rot[0], ry = FP_REST.rot[1], rz = FP_REST.rot[2];
+
+                    if (swingT > 0) {
+                        const back = swingT < 0.28 ? (swingT / 0.28) : Math.max(0, 1 - (swingT - 0.28) / 0.12);
+                        const slash = swingT < 0.28 ? 0 : Math.min(1, (swingT - 0.28) / 0.62);
+                        const s = slash * slash * (3 - 2 * slash);
+
+                        fpViewGroup.position.set(
+                            bx - 0.08 * s,
+                            by + 0.04 * back - 0.06 * s,
+                            bz - 0.03 * s
+                        );
+                        // Vung nhỏ, thẳng — khớp item size MC
+                        fpViewGroup.rotation.set(
+                            rx - 0.12 * back + 0.55 * s,
+                            ry + 0.04 * back - 0.18 * s,
+                            rz - 0.05 * back + 0.28 * s
+                        );
+                        if (fpItemRoot) fpItemRoot.rotation.set(-0.06 * s, 0.03 * s, 0.08 * s);
+                    } else {
+                        const equipY = (1 - fpEquipProg) * -0.2;
+                        const bob = Math.sin(fpIdleTime * 1.6) * 0.008;
+                        let walk = 0;
+                        try {
+                            if (typeof keys !== 'undefined' && keys &&
+                                (keys['w'] || keys['a'] || keys['s'] || keys['d'] ||
+                                 keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright'])) {
+                                walk = Math.sin(fpIdleTime * 9.0) * 0.018;
+                            }
+                        } catch (e) {}
+
+                        fpViewGroup.position.set(bx, by + bob + walk * 0.3 + equipY, bz);
+                        fpViewGroup.rotation.set(rx + walk * 0.06, ry, rz);
+                        fpViewGroup.scale.setScalar(FP_REST.scale);
+                        if (fpItemRoot) fpItemRoot.rotation.set(0, 0, 0);
+                    }
+                }
+
                 function setPlayerModelVisibleForCamera() {
                     const show = !isFirstPerson;
                     if (playerGroup) playerGroup.visible = show;
                     if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
                         blockyPlayer.visible = show;
+                    if (typeof ensureFpView === 'function') {
+                        ensureFpView();
+                        if (fpViewGroup) fpViewGroup.visible = !show && !(typeof isDeathAnimPlaying !== 'undefined' && isDeathAnimPlaying);
+                    }
                 }
 
 
@@ -14933,10 +15139,18 @@ const octopusMonster =
                         haloRing.visible = !isFirstPerson;
                     if (typeof rainbowHaloGroup !== 'undefined' && rainbowHaloGroup)
                         rainbowHaloGroup.visible = !isFirstPerson;
+                    // FP viewmodel: tay + kiếm
+                    try {
+                        if (typeof ensureFpView === 'function') ensureFpView();
+                        if (fpViewGroup) {
+                            fpViewGroup.visible = !!isFirstPerson && !isDeathAnimPlaying;
+                            if (isFirstPerson) refreshFpSwordColors();
+                        }
+                    } catch (eFp) {}
                     showToast(
                         currentLang === 'vi'
-                        ? (isFirstPerson ? '👁️ Góc nhìn từ mắt (không thấy thân)' : '👤 Góc nhìn thứ ba')
-                        : (isFirstPerson ? '👁️ Eye view (body hidden)' : '👤 Third-person view')
+                        ? (isFirstPerson ? '👁️ Góc nhìn từ mắt — thấy kiếm' : '👤 Góc nhìn thứ ba')
+                        : (isFirstPerson ? '👁️ Eye view — weapon only' : '👤 Third-person view')
                     );
                 }
 
@@ -17144,6 +17358,7 @@ const octopusMonster =
                             const maxHp = (typeof RED_MOB_MAX_HP === 'number') ? RED_MOB_MAX_HP : 100;
                             const dmgToMob = Math.min(totalDmg, redMonsterCurrentHP);
                             redMonsterCurrentHP = Math.max(0, redMonsterCurrentHP - totalDmg);
+                            if (typeof triggerHitFlash === 'function') triggerHitFlash(redMonster, 100);
                             if (typeof updateRedMobHPSprite === 'function') updateRedMobHPSprite();
 
                             if (redMonsterCurrentHP > 0) {
@@ -17194,6 +17409,7 @@ const octopusMonster =
 
                             octopusHP -=
                                 totalDmg;
+                            if (typeof triggerHitFlash === "function") triggerHitFlash(octopusMonster, 100);
 
                             handleItemDrop();
 
@@ -17265,6 +17481,7 @@ const octopusMonster =
 
                             bossHP -=
                                 totalDmg;
+                            if (typeof triggerHitFlash === "function") triggerHitFlash(bossMonster, 100);
 
                             document.getElementById(
                                 'val-power'
@@ -17370,6 +17587,7 @@ const octopusMonster =
 
                                 finalBossHP -=
                                     totalDmg;
+                            if (typeof triggerHitFlash === "function") triggerHitFlash(finalBossMonster, 100);
 
                                 if (
                                     finalBossHP <= 0
@@ -17470,6 +17688,7 @@ const octopusMonster =
 
                             supremeBossHP -=
                                 totalDmg;
+                            if (typeof triggerHitFlash === "function") triggerHitFlash(finalBossMonster, 100);
 
                             power +=
                                 Math.max(
@@ -17555,6 +17774,7 @@ const octopusMonster =
                                 cosmicBossMonster.visible = true;
 
                             cosmicBossHP -= totalDmg;
+                            if (typeof triggerHitFlash === "function") triggerHitFlash(cosmicBossMonster, 100);
 
                             document.getElementById(
                                 'val-power'
@@ -17673,6 +17893,7 @@ const octopusMonster =
 
                             atomicBossHP -=
                                 totalDmg;
+                            if (typeof triggerHitFlash === "function") triggerHitFlash(atomicBossMonster, 100);
 
                             // Electron Sword: +10 điểm % vào rate (1.555% → 11.555%)
                             {
@@ -18041,6 +18262,7 @@ const octopusMonster =
 
                             universeBossHP -=
                                 totalDmg;
+                            if (typeof triggerHitFlash === "function") triggerHitFlash(universeBossMonster, 100);
 
                             power =
                                 Math.floor(
@@ -21335,11 +21557,477 @@ const octopusMonster =
                    GAME LOOP
                 ========================= */
 
+
+                /* ============================================================
+                   ANIMATION + HIT-FLASH + MOB SKILLS SYSTEM (v1.28)
+                   - Breathing idle for player & mobs
+                   - Hit flash red 0.1s (player + mobs)
+                   - Minecraft-style attack with visible weapon
+                   - World/character skills (knife throw, ink blast, etc.)
+                ============================================================ */
+                const HIT_FLASH_MS = 100;
+                const _hitFlashStore = new WeakMap(); // object -> { until, mats: [{mat, origEmissive, origIntensity, origColor}] }
+                const _projiles = []; // flying projectiles from mob skills
+
+                function _collectFlashMats(root) {
+                    const list = [];
+                    if (!root) return list;
+                    root.traverse(function(ch) {
+                        if (!ch.isMesh || !ch.material) return;
+                        const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
+                        mats.forEach(function(m) {
+                            if (!m || m.userData && m.userData._noHitFlash) return;
+                            list.push({
+                                mat: m,
+                                origEmissive: m.emissive ? m.emissive.clone() : null,
+                                origIntensity: (typeof m.emissiveIntensity === 'number') ? m.emissiveIntensity : 0,
+                                origColor: m.color ? m.color.clone() : null
+                            });
+                        });
+                    });
+                    return list;
+                }
+
+                function triggerHitFlash(root, durationMs) {
+                    if (!root || !root.visible) return;
+                    durationMs = durationMs || HIT_FLASH_MS;
+                    const now = performance.now();
+                    let entry = _hitFlashStore.get(root);
+                    if (!entry) {
+                        entry = { until: 0, mats: _collectFlashMats(root) };
+                        _hitFlashStore.set(root, entry);
+                    }
+                    entry.until = now + durationMs;
+                    entry.mats.forEach(function(item) {
+                        const m = item.mat;
+                        if (m.emissive) {
+                            m.emissive.setHex(0xff2200);
+                            m.emissiveIntensity = Math.max(m.emissiveIntensity || 0, 1.4);
+                        }
+                        if (m.color) {
+                            m.color.lerp(new THREE.Color(0xff3333), 0.55);
+                        }
+                    });
+                }
+
+                function updateHitFlashes() {
+                    const now = performance.now();
+                    const roots = [];
+                    if (typeof playerGroup !== 'undefined' && playerGroup) roots.push(playerGroup);
+                    if (typeof redMonster !== 'undefined' && redMonster) roots.push(redMonster);
+                    if (typeof octopusMonster !== 'undefined' && octopusMonster) roots.push(octopusMonster);
+                    if (typeof bossMonster !== 'undefined' && bossMonster) roots.push(bossMonster);
+                    if (typeof finalBossMonster !== 'undefined' && finalBossMonster) roots.push(finalBossMonster);
+                    if (typeof universeBossMonster !== 'undefined' && universeBossMonster) roots.push(universeBossMonster);
+                    if (typeof cosmicBossMonster !== 'undefined' && cosmicBossMonster) roots.push(cosmicBossMonster);
+                    if (typeof atomicBossMonster !== 'undefined' && atomicBossMonster) roots.push(atomicBossMonster);
+                    if (typeof errorBossMonster !== 'undefined' && errorBossMonster) roots.push(errorBossMonster);
+                    if (typeof electronBossMonster !== 'undefined' && electronBossMonster) roots.push(electronBossMonster);
+                    if (typeof cosmicDinoMonster !== 'undefined' && cosmicDinoMonster) roots.push(cosmicDinoMonster);
+                    roots.forEach(function(root) {
+                        const entry = _hitFlashStore.get(root);
+                        if (!entry || entry.until <= 0) return;
+                        if (now >= entry.until) {
+                            entry.until = 0;
+                            entry.mats.forEach(function(item) {
+                                const m = item.mat;
+                                if (item.origEmissive && m.emissive) m.emissive.copy(item.origEmissive);
+                                if (typeof item.origIntensity === 'number') m.emissiveIntensity = item.origIntensity;
+                                if (item.origColor && m.color) m.color.copy(item.origColor);
+                            });
+                        }
+                    });
+                }
+
+                // Hook: flash player when HP drops
+                let _prevPlayerHPForFlash = null;
+                function checkPlayerHitFlash() {
+                    if (typeof playerHP !== 'number') return;
+                    if (_prevPlayerHPForFlash === null) {
+                        _prevPlayerHPForFlash = playerHP;
+                        return;
+                    }
+                    if (playerHP < _prevPlayerHPForFlash && playerHP > 0) {
+                        triggerHitFlash(playerGroup, HIT_FLASH_MS);
+                    }
+                    _prevPlayerHPForFlash = playerHP;
+                }
+
+                // Breathing / idle bob for a humanoid group with userData.armL/armR/legL/legR/body/head
+                function applyBreathing(group, t, amp) {
+                    if (!group || !group.visible) return;
+                    amp = amp || 1;
+                    const breath = Math.sin(t * 1.8) * 0.018 * amp;
+                    const soft = Math.sin(t * 1.15) * 0.012 * amp;
+                    group.traverse(function(ch) {
+                        if (!ch.isMesh && !ch.isGroup) return;
+                    });
+                    // Prefer known parts
+                    if (group.userData) {
+                        if (group.userData.bodyMesh) {
+                            group.userData.bodyMesh.scale.y = 1 + breath * 0.9;
+                            group.userData.bodyMesh.scale.x = 1 - breath * 0.35;
+                            group.userData.bodyMesh.scale.z = 1 - breath * 0.35;
+                        }
+                        if (group.userData.headMesh) {
+                            group.userData.headMesh.position.y = (group.userData.headBaseY || group.userData.headMesh.position.y) + soft * 1.2;
+                        }
+                    }
+                    // Fallback: scale whole group slightly on Y via position bob
+                    if (!group.userData._breathBaseY) group.userData._breathBaseY = group.position.y;
+                    // Don't fight ground clamping — only micro bob if not jumping/pulling
+                }
+
+                function applyPlayerBreathing(t) {
+                    if (!playerGroup || isDeathAnimPlaying) return;
+                    if (typeof wasJumping !== 'undefined' && wasJumping) return;
+                    if (typeof attackSwingProgress === 'number' && attackSwingProgress > 0) return;
+                    const breath = Math.sin(t * 1.7) * 0.025;
+                    const chest = Math.sin(t * 1.7) * 0.012;
+                    try {
+                        if (typeof body !== 'undefined' && body) {
+                            body.scale.y = 1 + chest;
+                            body.scale.x = 1 - chest * 0.4;
+                            body.scale.z = 1 - chest * 0.4;
+                        }
+                        if (typeof head !== 'undefined' && head) {
+                            if (head.userData._breathBaseY == null) head.userData._breathBaseY = head.position.y;
+                            head.position.y = head.userData._breathBaseY + breath * 0.6;
+                        }
+                        // Subtle arm hang sway when idle
+                        if (typeof isMoving !== 'undefined' && !isMoving) {
+                            if (typeof armL !== 'undefined' && armL) armL.rotation.z = -0.06 + Math.sin(t * 1.3) * 0.03;
+                            if (typeof armR !== 'undefined' && armR) armR.rotation.z = 0.06 + Math.sin(t * 1.3 + 1) * 0.03;
+                        }
+                    } catch (e) {}
+                }
+
+                /* ---- Projectile helpers (knife, ink, etc.) ---- */
+                function spawnMobProjectile(opts) {
+                    opts = opts || {};
+                    const geo = opts.geo || new THREE.BoxGeometry(0.12, 0.12, 0.55);
+                    const mat = opts.mat || new THREE.MeshStandardMaterial({
+                        color: opts.color || 0xc4a060,
+                        metalness: 0.35,
+                        roughness: 0.4,
+                        emissive: opts.emissive || 0x442200,
+                        emissiveIntensity: 0.35
+                    });
+                    const mesh = new THREE.Mesh(geo, mat);
+                    mesh.position.copy(opts.from);
+                    if (opts.rotation) mesh.rotation.copy(opts.rotation);
+                    scene.add(mesh);
+                    const dir = opts.dir.clone().normalize();
+                    _projiles.push({
+                        mesh: mesh,
+                        dir: dir,
+                        speed: opts.speed || 0.55,
+                        dmg: opts.dmg || 50000,
+                        life: opts.life || 2200,
+                        born: performance.now(),
+                        spin: opts.spin || 0.35,
+                        owner: opts.owner || null,
+                        onHit: opts.onHit || null
+                    });
+                    return mesh;
+                }
+
+                function updateMobProjectiles() {
+                    if (!_projiles.length) return;
+                    const now = performance.now();
+                    for (let i = _projiles.length - 1; i >= 0; i--) {
+                        const p = _projiles[i];
+                        p.mesh.position.x += p.dir.x * p.speed;
+                        p.mesh.position.y += p.dir.y * p.speed;
+                        p.mesh.position.z += p.dir.z * p.speed;
+                        p.mesh.rotation.x += p.spin;
+                        p.mesh.rotation.z += p.spin * 0.6;
+                        const alive = now - p.born < p.life;
+                        let hit = false;
+                        if (playerGroup && typeof playerHP === 'number') {
+                            const dx = playerGroup.position.x - p.mesh.position.x;
+                            const dy = (playerGroup.position.y + 1.2) - p.mesh.position.y;
+                            const dz = playerGroup.position.z - p.mesh.position.z;
+                            if (Math.hypot(dx, dy, dz) < 1.35) {
+                                hit = true;
+                                playerHP = Math.max(0, playerHP - p.dmg);
+                                lastDamageTakenTime = now;
+                                triggerHitFlash(playerGroup, HIT_FLASH_MS);
+                                if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+                                if (typeof showDmgPopup === 'function') {
+                                    showDmgPopup('-' + (typeof formatNum === 'function' ? formatNum(p.dmg) : p.dmg));
+                                }
+                                if (playerHP <= 0) {
+                                    if (typeof playDeathDismemberAndRespawn === 'function') playDeathDismemberAndRespawn();
+                                    else {
+                                        playerHP = playerMaxHP;
+                                        power = Math.max(1, Math.floor(power * 0.9));
+                                        const vp = document.getElementById('val-power');
+                                        if (vp) vp.innerText = typeof formatNum === 'function' ? formatNum(power) : power;
+                                        if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+                                    }
+                                }
+                                if (typeof p.onHit === 'function') p.onHit();
+                            }
+                        }
+                        if (!alive || hit) {
+                            scene.remove(p.mesh);
+                            if (p.mesh.geometry) p.mesh.geometry.dispose();
+                            if (p.mesh.material) p.mesh.material.dispose();
+                            _projiles.splice(i, 1);
+                        }
+                    }
+                }
+
+                /* ---- Red mob: aim + knife throw skill ---- */
+                function redMobAimAndThrow(now) {
+                    if (!redMonster || !redMonster.visible || !playerGroup) return;
+                    const ud = redMonster.userData;
+                    if (!ud.nextThrowTime) ud.nextThrowTime = 0;
+                    if (!ud.throwPhase) ud.throwPhase = 0; // 0 idle, 1 windup, 2 throw
+                    if (!ud.throwPhaseUntil) ud.throwPhaseUntil = 0;
+
+                    const dx = playerGroup.position.x - redMonster.position.x;
+                    const dz = playerGroup.position.z - redMonster.position.z;
+                    const dist = Math.hypot(dx, dz);
+
+                    // Windup: raise arm toward player (aim)
+                    if (ud.throwPhase === 1) {
+                        const face = Math.atan2(dx, dz);
+                        redMonster.rotation.y = face;
+                        if (ud.armR) {
+                            const progress = 1 - Math.max(0, (ud.throwPhaseUntil - now) / 480);
+                            ud.armR.rotation.x = -1.4 * progress;
+                            ud.armR.rotation.z = 0.25 * progress;
+                            if (ud.woodSword) {
+                                ud.woodSword.rotation.x = 0.35 - 0.9 * progress;
+                                ud.woodSword.rotation.z = -0.15 + 0.5 * progress;
+                            }
+                        }
+                        if (now >= ud.throwPhaseUntil) {
+                            // Release projectile (flying knife)
+                            ud.throwPhase = 2;
+                            ud.throwPhaseUntil = now + 200;
+                            const from = new THREE.Vector3(
+                                redMonster.position.x + Math.sin(face) * 0.9,
+                                redMonster.position.y + 1.6,
+                                redMonster.position.z + Math.cos(face) * 0.9
+                            );
+                            const target = new THREE.Vector3(
+                                playerGroup.position.x,
+                                playerGroup.position.y + 1.15,
+                                playerGroup.position.z
+                            );
+                            const dir = target.clone().sub(from);
+                            // Slight lead for beauty
+                            dir.y += 0.08;
+                            const knifeGeo = new THREE.BoxGeometry(0.08, 0.08, 0.62);
+                            const knifeMat = new THREE.MeshStandardMaterial({
+                                color: 0xc9a24a,
+                                metalness: 0.55,
+                                roughness: 0.32,
+                                emissive: 0x5a3a10,
+                                emissiveIntensity: 0.4
+                            });
+                            const knife = new THREE.Mesh(knifeGeo, knifeMat);
+                            knife.position.copy(from);
+                            knife.lookAt(target);
+                            scene.add(knife);
+                            _projiles.push({
+                                mesh: knife,
+                                dir: dir.normalize(),
+                                speed: 0.72,
+                                dmg: 85000,
+                                life: 2500,
+                                born: now,
+                                spin: 0.55,
+                                owner: redMonster
+                            });
+                            // Arm snap forward
+                            if (ud.armR) {
+                                ud.armR.rotation.x = -0.2;
+                                ud.armR.rotation.z = 0.15;
+                            }
+                            if (ud.woodSword) {
+                                ud.woodSword.rotation.x = 0.9;
+                            }
+                            if (typeof showToast === 'function' && Math.random() < 0.35) {
+                                showToast(currentLang === 'vi' ? '🗡️ Mob đỏ phóng dao!' : '🗡️ Red mob throws a knife!');
+                            }
+                        }
+                        return;
+                    }
+
+                    if (ud.throwPhase === 2) {
+                        if (now >= ud.throwPhaseUntil) {
+                            ud.throwPhase = 0;
+                            if (ud.woodSword) {
+                                ud.woodSword.rotation.x = 0.35;
+                                ud.woodSword.rotation.z = -0.15;
+                            }
+                        }
+                        return;
+                    }
+
+                    // Trigger throw when in mid range (not melee)
+                    if (dist > 4.5 && dist < 22 && now >= ud.nextThrowTime && !isGameEnded) {
+                        ud.throwPhase = 1;
+                        ud.throwPhaseUntil = now + 480;
+                        ud.nextThrowTime = now + 2800 + Math.random() * 1600;
+                    }
+                }
+
+                /* ---- Octopus: ink blob skill ---- */
+                function octopusInkSkill(now) {
+                    if (!octopusMonster || !octopusMonster.visible || gameStage !== 2 || octopusDefeated) return;
+                    const ud = octopusMonster.userData;
+                    if (!ud.nextInkTime) ud.nextInkTime = now + 1500;
+                    if (!ud.inkWindupUntil) ud.inkWindupUntil = 0;
+                    if (ud.inkWindupUntil > now) {
+                        // Squash / charge
+                        octopusMonster.scale.y = 0.85 + Math.sin((ud.inkWindupUntil - now) * 0.02) * 0.08;
+                        return;
+                    }
+                    if (octopusMonster.scale.y !== 1.15 && octopusMonster.scale.y < 1.2) {
+                        octopusMonster.scale.y += (1.15 - octopusMonster.scale.y) * 0.15;
+                    }
+                    if (now < ud.nextInkTime || isGameEnded) return;
+                    const dx = playerGroup.position.x - octopusMonster.position.x;
+                    const dz = playerGroup.position.z - octopusMonster.position.z;
+                    const dist = Math.hypot(dx, dz);
+                    if (dist < 3 || dist > 28) return;
+                    ud.nextInkTime = now + 3200 + Math.random() * 1800;
+                    ud.inkWindupUntil = now + 350;
+                    octopusMonster.scale.y = 0.75;
+                    // Fire after short delay via phase flag
+                    setTimeout(function() {
+                        if (!octopusMonster || !octopusMonster.visible || octopusDefeated) return;
+                        const from = octopusMonster.position.clone();
+                        from.y += 1.4;
+                        const target = playerGroup.position.clone();
+                        target.y += 1.1;
+                        const dir = target.sub(from).normalize();
+                        const blob = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.28, 10, 8),
+                            new THREE.MeshStandardMaterial({
+                                color: 0x224466,
+                                emissive: 0x112233,
+                                emissiveIntensity: 0.5,
+                                transparent: true,
+                                opacity: 0.88
+                            })
+                        );
+                        blob.position.copy(from);
+                        scene.add(blob);
+                        _projiles.push({
+                            mesh: blob,
+                            dir: dir,
+                            speed: 0.42,
+                            dmg: 120000,
+                            life: 2800,
+                            born: performance.now(),
+                            spin: 0.12,
+                            owner: octopusMonster
+                        });
+                    }, 360);
+                }
+
+                /* ---- Demon boss: ground pulse skill (stage 3) ---- */
+                function demonBossPulseSkill(now) {
+                    if (!bossMonster || !bossMonster.visible || gameStage !== 3) return;
+                    const ud = bossMonster.userData;
+                    if (!ud.nextPulse) ud.nextPulse = now + 4000;
+                    if (now < ud.nextPulse || isGameEnded) return;
+                    const dx = playerGroup.position.x - bossMonster.position.x;
+                    const dz = playerGroup.position.z - bossMonster.position.z;
+                    const dist = Math.hypot(dx, dz);
+                    if (dist > 14) return;
+                    ud.nextPulse = now + 5500 + Math.random() * 2500;
+                    // Visual ring
+                    const ring = new THREE.Mesh(
+                        new THREE.TorusGeometry(0.5, 0.08, 8, 32),
+                        new THREE.MeshBasicMaterial({ color: 0xaa44ff, transparent: true, opacity: 0.85 })
+                    );
+                    ring.rotation.x = Math.PI / 2;
+                    ring.position.set(bossMonster.position.x, 0.3, bossMonster.position.z);
+                    scene.add(ring);
+                    const born = now;
+                    const anim = function() {
+                        const life = (performance.now() - born) / 700;
+                        if (life >= 1) {
+                            scene.remove(ring);
+                            if (ring.geometry) ring.geometry.dispose();
+                            if (ring.material) ring.material.dispose();
+                            return;
+                        }
+                        ring.scale.setScalar(1 + life * 18);
+                        ring.material.opacity = 0.85 * (1 - life);
+                        requestAnimationFrame(anim);
+                    };
+                    requestAnimationFrame(anim);
+                    if (dist < 9 && typeof playerHP === 'number') {
+                        playerHP = Math.max(0, playerHP - 2000000);
+                        lastDamageTakenTime = now;
+                        triggerHitFlash(playerGroup, HIT_FLASH_MS);
+                        if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+                        if (typeof showDmgPopup === 'function') showDmgPopup('-2m');
+                        if (playerHP <= 0 && typeof playDeathDismemberAndRespawn === 'function') playDeathDismemberAndRespawn();
+                    }
+                }
+
+                /* ---- Generic boss idle + skill tick ---- */
+                function updateAllMobSkillsAndAnims(now, t) {
+                    // Red mob breathing + arm idle when not attacking
+                    if (redMonster && redMonster.visible) {
+                        const ud = redMonster.userData;
+                        if (ud.throwPhase === 0 && (!ud.attackSwing || ud.attackSwing <= 0)) {
+                            if (ud.armL) {
+                                ud.armL.rotation.x = Math.sin(t * 1.4) * 0.08;
+                                ud.armL.rotation.z = -0.05 + Math.sin(t * 1.1) * 0.04;
+                            }
+                            if (ud.armR && (!ud.attackSwing || ud.attackSwing <= 0)) {
+                                // mild idle unless throwing
+                                if (!ud.throwPhase) {
+                                    ud.armR.rotation.x = Math.sin(t * 1.4 + 1) * 0.08;
+                                }
+                            }
+                            // Head / body micro breath via scale on first mesh children
+                            redMonster.scale.y = 1.08 + Math.sin(t * 1.9) * 0.015;
+                        }
+                        redMobAimAndThrow(now);
+                    }
+
+                    if (octopusMonster && octopusMonster.visible && gameStage === 2) {
+                        octopusInkSkill(now);
+                        // Soft bob already in AI; add breath scale
+                        const s = octopusMonster.scale.x || 1.15;
+                        octopusMonster.scale.x = s;
+                        octopusMonster.scale.z = s;
+                    }
+
+                    demonBossPulseSkill(now);
+
+                    // Final / supreme bosses: arm raise pulse glow
+                    if (finalBossMonster && finalBossMonster.visible && (gameStage === 5 || gameStage === 6)) {
+                        finalBossMonster.rotation.y += 0.002;
+                        finalBossMonster.scale.y = (gameStage === 6 ? 7 : 1) * (1 + Math.sin(t * 2.2) * 0.02);
+                    }
+
+                    updateMobProjectiles();
+                }
+
+                // Flash mob when damaged — call from damage sites
+                window.triggerHitFlash = triggerHitFlash;
+                window.flashMobOnDamage = function(mob) {
+                    triggerHitFlash(mob, HIT_FLASH_MS);
+                };
+
                 let walkTime = 0;
                 let jumpVelocity = 0;
                 let wasJumping = false;
                 let attackSwingProgress = 0; // 0 idle, >0 swinging (Minecraft-style)
-                const ATTACK_SWING_DURATION = 0.28;
+                const ATTACK_SWING_DURATION = 0.32;
+
 
                 function animate() {
 
@@ -21635,6 +22323,16 @@ const octopusMonster =
                     }
 
                     updateRealism();
+
+                    // Animation system: breathing, hit flash, mob skills
+                    try {
+                        const _animNow = performance.now();
+                        const _animT = _animNow * 0.001;
+                        checkPlayerHitFlash();
+                        updateHitFlashes();
+                        applyPlayerBreathing(_animT);
+                        updateAllMobSkillsAndAnims(_animNow, _animT);
+                    } catch (eAnim) {}
 
                     // Multiplayer: gửi vị trí cho người kia
                     if (typeof mpSendPos === 'function') mpSendPos();
@@ -22142,10 +22840,12 @@ const octopusMonster =
                             distP <= RED_MOB_ATK_RANGE &&
                             nowRM >= redMonster.userData.nextAttackTime &&
                             redMonster.visible &&
-                            !isGameEnded
+                            !isGameEnded &&
+                            (!redMonster.userData.throwPhase || redMonster.userData.throwPhase === 0)
                         ) {
                             redMonster.userData.nextAttackTime = nowRM + RED_MOB_ATK_CD;
                             redMonster.userData.attackSwing = 1;
+                            if (typeof triggerHitFlash === 'function') triggerHitFlash(playerGroup, 100);
 
                             // Gây ~100k sát thương
                             if (typeof playerHP === 'number') {
@@ -22176,22 +22876,60 @@ const octopusMonster =
 
                     /* =========================
                        MINECRAFT-STYLE ATTACK SWING
+                       (visible weapon + arm color of equipped gear)
                     ========================= */
                     if (attackSwingProgress > 0) {
                         const dt = 1 / 60;
                         attackSwingProgress = Math.max(0, attackSwingProgress - dt);
                         const t = 1 - (attackSwingProgress / ATTACK_SWING_DURATION); // 0 → 1
-                        // Vung tay phải + kiếm: đưa lên trước rồi quật xuống (giống Minecraft)
-                        const swing = Math.sin(t * Math.PI); // peak mid-swing
-                        const raise = Math.sin(Math.min(t, 0.5) * Math.PI * 2); // early raise
-                        armR.rotation.x = -0.9 * raise - 1.35 * swing;
-                        armR.rotation.z = 0.35 * swing;
-                        handR.rotation.x = armR.rotation.x;
-                        if (swordGroup) {
-                            swordGroup.rotation.x = -0.6 * swing;
-                            swordGroup.rotation.z = 0.9 * swing;
-                        }
+                        // Minecraft-like: raise → chop down → recover
+                        const raise = Math.sin(Math.min(t, 0.35) / 0.35 * Math.PI * 0.5);
+                        const chop = t < 0.35 ? 0 : Math.sin(Math.min((t - 0.35) / 0.45, 1) * Math.PI);
+                        const recover = t > 0.8 ? (t - 0.8) / 0.2 : 0;
+                        const swingX = -0.55 * raise - 1.55 * chop * (1 - recover);
+                        const swingZ = 0.15 * raise + 0.55 * chop * (1 - recover);
+                        const swingY = 0.35 * chop * (1 - recover);
+                        try {
+                            if (typeof armR !== 'undefined' && armR) {
+                                armR.rotation.x = swingX;
+                                armR.rotation.z = swingZ;
+                                armR.rotation.y = swingY;
+                            }
+                            if (typeof handR !== 'undefined' && handR) {
+                                handR.rotation.x = swingX * 0.85;
+                                handR.rotation.z = swingZ * 0.5;
+                            }
+                            // Always show equipped weapon during swing
+                            if (typeof swordGroup !== 'undefined' && swordGroup) {
+                                swordGroup.visible = true;
+                                swordGroup.rotation.x = -0.35 * raise - 1.1 * chop * (1 - recover);
+                                swordGroup.rotation.z = 0.25 * raise + 1.05 * chop * (1 - recover);
+                                swordGroup.rotation.y = 0.2 * chop;
+                                // Slight push forward so blade is clearly visible
+                                if (swordGroup.userData && swordGroup.userData.inHand) {
+                                    swordGroup.position.set(0, -0.1 - 0.05 * chop, 0.05 + 0.12 * chop);
+                                }
+                            }
+                            if (typeof blockySwordHolder !== 'undefined' && blockySwordHolder) {
+                                blockySwordHolder.visible = true;
+                            }
+                        } catch (eSwing) {}
+                    } else {
+                        // Reset arm/sword residual when idle (breathing may re-apply mild sway)
+                        try {
+                            if (typeof armR !== 'undefined' && armR && !wasJumping) {
+                                armR.rotation.y *= 0.85;
+                            }
+                            if (typeof swordGroup !== 'undefined' && swordGroup && swordGroup.userData && swordGroup.userData.inHand) {
+                                swordGroup.position.set(0, -0.1, 0);
+                            }
+                        } catch (eReset) {}
                     }
+
+                    // First-person arm + weapon viewmodel
+                    try {
+                        if (typeof updateFpView === 'function') updateFpView(1 / 60);
+                    } catch (eFpAnim) {}
 
                     /* =========================
                        NPC ANIMATION
@@ -22597,6 +23335,7 @@ const octopusMonster =
 
                     if (isFirstPerson) {
                         // Góc nhìn từ mắt: ẩn toàn bộ model (tóc/thân) — chỉ nhìn thế giới
+                        // (tay + vũ khí FP viewmodel vẫn hiện, gắn vào camera)
                         playerGroup.visible = false;
                         if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
                             blockyPlayer.visible = false;
@@ -22604,6 +23343,16 @@ const octopusMonster =
                             cosmicOrbitGroup.visible = false;
                         if (typeof haloRing !== 'undefined' && haloRing)
                             haloRing.visible = false;
+                        try {
+                            if (typeof ensureFpView === 'function') ensureFpView();
+                            if (fpViewGroup) {
+                                if (fpViewGroup.parent !== camera && camera) {
+                                    if (fpViewGroup.parent) fpViewGroup.parent.remove(fpViewGroup);
+                                    camera.add(fpViewGroup);
+                                }
+                                fpViewGroup.visible = !isDeathAnimPlaying;
+                            }
+                        } catch (eFpCam) {}
 
                         const pitch = cameraPitch;
                         const lookDistance = 16;
@@ -22635,6 +23384,8 @@ const octopusMonster =
                             cosmicOrbitGroup.visible = true;
                         if (typeof haloRing !== 'undefined' && haloRing)
                             haloRing.visible = true;
+                        if (typeof fpViewGroup !== 'undefined' && fpViewGroup)
+                            fpViewGroup.visible = false;
 
                         const elev = cameraAngleY;
                         const horizontalDistance =
