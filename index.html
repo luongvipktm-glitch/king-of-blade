@@ -2,7 +2,7 @@
 
 
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -759,19 +759,352 @@
 
         #instructions {
             position: absolute;
-            bottom: 15px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(10, 5, 20, 0.85);
-            color: #ddd;
-            padding: 8px 18px;
-            border-radius: 20px;
+            bottom: 16px;
+            right: 16px;
+            left: auto;
+            transform: none;
+            background: linear-gradient(160deg, rgba(28, 18, 48, 0.94), rgba(14, 10, 28, 0.96));
+            color: #e8e0ff;
+            padding: 8px 16px;
+            border-radius: 999px;
             font-size: 13px;
+            font-weight: 700;
             text-align: center;
-            border: 1px solid #a335ee;
-            z-index: 10;
+            border: 1.5px solid rgba(140, 100, 220, 0.55);
+            box-shadow: 0 0 14px rgba(120, 80, 200, 0.35), inset 0 1px 0 rgba(255,255,255,0.08);
+            z-index: 25;
             cursor: pointer;
             user-select: none;
+            letter-spacing: 0.2px;
+        }
+        #instructions:hover {
+            border-color: rgba(180, 140, 255, 0.8);
+            box-shadow: 0 0 18px rgba(140, 100, 255, 0.5);
+        }
+
+
+        /* ===== ALWAYS-ON HOTBAR (bottom) ===== */
+        #game-hotbar {
+            position: absolute;
+            left: 50%;
+            bottom: 14px;
+            transform: translateX(-50%);
+            z-index: 24;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            pointer-events: none;
+            max-width: calc(100vw - 24px);
+        }
+        #game-hotbar * { pointer-events: auto; }
+        #inv-slot-bar {
+            display: flex;
+            align-items: stretch;
+            gap: 5px;
+            padding: 8px 10px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, rgba(18,24,34,0.94) 0%, rgba(8,12,18,0.96) 100%);
+            border: 1.5px solid rgba(0, 200, 255, 0.35);
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,0.5),
+                0 8px 28px rgba(0,0,0,0.45),
+                0 0 24px rgba(0, 140, 200, 0.18),
+                inset 0 1px 0 rgba(255,255,255,0.06);
+            overflow-x: auto;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .inv-slot {
+            flex: 0 0 auto;
+            width: 54px;
+            height: 58px;
+            border-radius: 10px;
+            background: linear-gradient(160deg, #1a2030, #0a0e16);
+            border: 1.5px solid rgba(120,140,160,0.35);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+        }
+        .inv-slot:hover {
+            border-color: rgba(0, 220, 255, 0.65);
+            box-shadow: 0 0 12px rgba(0,180,255,0.35);
+            transform: translateY(-2px);
+        }
+        .inv-slot.inv-slot-equipped {
+            border-color: #00e8ff !important;
+            box-shadow: 0 0 16px rgba(0,220,255,0.55), inset 0 0 10px rgba(0,180,255,0.12) !important;
+        }
+        .inv-slot.inv-slot-drag-over {
+            border-color: #ffd700 !important;
+            box-shadow: 0 0 18px rgba(255,215,0,0.55) !important;
+            transform: scale(1.06);
+        }
+        .inv-slot canvas { image-rendering: pixelated; pointer-events: none; }
+        .inv-slot .inv-qty {
+            position: absolute;
+            bottom: 2px;
+            right: 3px;
+            font-size: 10px;
+            font-weight: 900;
+            text-shadow: 0 0 3px #000;
+            pointer-events: none;
+        }
+        .inv-slot .inv-slot-empty {
+            display: none;
+            font-size: 7px;
+            font-weight: 800;
+            color: #5a6a7a;
+            letter-spacing: 0.3px;
+            text-align: center;
+            line-height: 1.15;
+            padding: 0 2px;
+            pointer-events: none;
+        }
+        #slot-equipped {
+            width: 60px;
+            height: 58px;
+            border-radius: 12px;
+            border: 2px solid #00e8ff;
+            box-shadow: 0 0 14px rgba(0,200,255,0.5), inset 0 0 12px rgba(0,180,255,0.12);
+            background: linear-gradient(160deg, rgba(20,40,60,0.95), rgba(8,16,28,0.98));
+            cursor: default;
+        }
+        #slot-equipped.inv-drop-target.inv-slot-drag-over {
+            border-color: #ffd700 !important;
+            box-shadow: 0 0 20px rgba(255,215,0,0.6) !important;
+        }
+        #hotbar-tab-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: linear-gradient(160deg, rgba(40,20,60,0.95), rgba(15,8,25,0.95));
+            border: 2px solid #a335ee;
+            box-shadow: 0 0 14px rgba(163,53,238,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            position: relative;
+            flex-shrink: 0;
+            align-self: center;
+        }
+        #hotbar-tab-btn .qa-badge {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            background: #ffd700;
+            color: #1a1a24;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 1px 4px;
+            border-radius: 5px;
+        }
+        #hotbar-tab-btn.has-new::after {
+            content: '';
+            position: absolute;
+            top: -3px;
+            right: -3px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #ff3344;
+            box-shadow: 0 0 8px #ff3344;
+            animation: hotbarPulse 1s ease-in-out infinite;
+        }
+        @keyframes hotbarPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.25); opacity: 0.7; }
+
+        /* Hotbar Minecraft-style selection + stronger frame */
+        #inv-slot-bar {
+            border: 2px solid rgba(0, 230, 255, 0.55) !important;
+            box-shadow:
+                0 0 0 2px rgba(0,0,0,0.55),
+                0 0 28px rgba(0, 180, 255, 0.35),
+                0 8px 32px rgba(0,0,0,0.5),
+                inset 0 0 20px rgba(0, 120, 180, 0.12) !important;
+            background: linear-gradient(180deg, rgba(12,22,36,0.96) 0%, rgba(6,10,18,0.98) 100%) !important;
+            padding: 10px 12px !important;
+        }
+        .inv-slot.hotbar-selected {
+            border-color: #ffd700 !important;
+            box-shadow:
+                0 0 0 2px rgba(255,215,0,0.85),
+                0 0 18px rgba(255,200,40,0.65),
+                inset 0 0 12px rgba(255,220,100,0.15) !important;
+            transform: translateY(-4px) scale(1.08);
+            z-index: 2;
+        }
+        .inv-slot.hotbar-selected::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid #ffd700;
+            filter: drop-shadow(0 0 4px #ffd700);
+        }
+
+        }
+        #fuse-progress-bar {
+            display: none;
+            width: min(420px, 90vw);
+            padding: 6px 10px;
+            border-radius: 10px;
+            background: rgba(10,8,20,0.9);
+            border: 1px solid rgba(255,215,0,0.35);
+            font-size: 11px;
+            color: #ffe566;
+            text-align: center;
+            font-weight: 700;
+        }
+        #fuse-progress-bar .fp-track {
+            height: 6px;
+            border-radius: 99px;
+            background: rgba(0,0,0,0.5);
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        #fuse-progress-bar .fp-fill {
+            height: 100%;
+            width: 0%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, #ff9900, #ffd700);
+            transition: width 0.3s ease;
+        }
+
+        /* Fly-to-slot pickup */
+        .fly-item {
+            position: fixed;
+            z-index: 99998;
+            pointer-events: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            filter: drop-shadow(0 0 8px rgba(255,220,80,0.8));
+            transition: left 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), top 0.55s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease 0.45s, transform 0.55s ease;
+            transform: scale(1.2);
+        }
+        .fly-item.fly-go {
+            transform: scale(0.5);
+            opacity: 0;
+        }
+
+        /* Hologram inventory modal */
+        #inventory-modal.hologram-panel {
+            border: 2px solid rgba(0, 230, 255, 0.55) !important;
+            background:
+                linear-gradient(180deg, rgba(6, 20, 28, 0.96), rgba(4, 10, 18, 0.98)) !important;
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,0.5),
+                0 0 40px rgba(0, 180, 255, 0.25),
+                inset 0 0 40px rgba(0, 120, 180, 0.08) !important;
+            overflow: hidden;
+        }
+        #inventory-modal.hologram-panel::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent 0 2px,
+                rgba(0, 255, 255, 0.03) 2px 3px
+            );
+            animation: holoScan 4s linear infinite;
+            opacity: 0.7;
+        }
+        @keyframes holoScan {
+            from { background-position: 0 0; }
+            to { background-position: 0 40px; }
+        }
+        #inventory-modal.hologram-show {
+            display: block !important;
+            animation: holoSlideIn 0.32s ease-out;
+        }
+        @keyframes holoSlideIn {
+            from { opacity: 0; transform: translate(-50%, -42%) scale(0.92); filter: blur(4px); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+        }
+
+        /* Hide old bottom-only TAB wrapper if present */
+        #qa-inventory-bottom { display: none !important; }
+
+        @media (max-width: 700px) {
+            .inv-slot { width: 46px; height: 52px; }
+            #slot-equipped { width: 52px; }
+            #game-hotbar { bottom: 10px; }
+        }
+
+
+        /* TAB inventory — bottom bar (horizontal slot style companion) */
+        #qa-inventory-bottom {
+            position: absolute;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #qa-inventory-bottom .qa-btn {
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            background: linear-gradient(160deg, rgba(40,20,60,0.95), rgba(15,8,25,0.95));
+            border: 2px solid #a335ee;
+            box-shadow: 0 0 16px rgba(163,53,238,0.55), inset 0 0 10px rgba(163,53,238,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+        #qa-inventory-bottom .qa-btn:hover {
+            box-shadow: 0 0 22px rgba(163,53,238,0.9), inset 0 0 10px rgba(163,53,238,0.25);
+        }
+        #qa-inventory-bottom .qa-btn:active {
+            transform: scale(0.92);
+        }
+        #qa-inventory-bottom .qa-badge {
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            background: #ffd700;
+            color: #1a1a24;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 1px 5px;
+            border-radius: 6px;
+            border: 1px solid rgba(0,0,0,0.4);
+            letter-spacing: 0.5px;
+        }
+        @media (max-width: 700px) {
+            #instructions {
+                bottom: 12px;
+                right: 10px;
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+            #qa-inventory-bottom {
+                bottom: 12px;
+            }
         }
 
         /* ===== QUICK ACTION ICON BUTTONS (top-right, like reference UI) ===== */
@@ -859,6 +1192,28 @@
         }
         #qa-outfit:hover {
             box-shadow: 0 0 18px rgba(255,102,204,0.85), inset 0 0 10px rgba(255,102,204,0.25);
+        }
+
+
+        #login-modal.modal-box {
+            width: min(360px, 92vw) !important;
+            max-height: min(88vh, 640px) !important;
+            overflow-y: auto !important;
+            padding: 14px 16px !important;
+        }
+        #login-modal input[type="text"] {
+            padding: 8px !important;
+            margin: 5px 0 !important;
+            font-size: 13px !important;
+        }
+        #login-modal button {
+            padding: 8px !important;
+            margin-top: 5px !important;
+            font-size: 13px !important;
+        }
+        #login-modal h3 {
+            font-size: 16px !important;
+            margin: 0 0 6px !important;
         }
 
         .modal-box {
@@ -1100,6 +1455,8 @@
         body.is-loading #hud,
         body.is-loading #quick-actions,
         body.is-loading #instructions,
+        body.is-loading #qa-inventory-bottom,
+        body.is-loading #game-hotbar,
         body.is-loading #press-p-hint {
             visibility: hidden !important;
         }
@@ -2099,7 +2456,7 @@
                     <div id="ld-status">Loading..</div>
                 </div>
             </div>
-            <div id="ld-tip"><span class="tip-label">Tip:</span> <span id="ld-tip-text">Đang tải…</span></div>
+            <div id="ld-tip"><span class="tip-label">Tip:</span> <span id="ld-tip-text">Loading…</span></div>
         </div>
     </div>
 
@@ -2130,13 +2487,13 @@
     <div id="error-no">
         <h1>NO</h1>
         <p>
-            <b>KHÔNG TẢI ĐƯỢC ĐỒ HỌA 3D!</b><br>
-            Trình duyệt tắt WebGL, GPU lỗi, hoặc Three.js không load được.<br>
-            Thử: bật Hardware Acceleration · tắt extension · dùng Chrome/Edge · tải lại trang.
+            <b>FAILED TO LOAD 3D GRAPHICS!</b><br>
+            WebGL disabled, GPU error, or Three.js failed to load.<br>
+            Try: enable Hardware Acceleration · disable extensions · use Chrome/Edge · reload.
         </p>
         <button type="button" id="error-reload-btn" onclick="location.reload()"
             style="margin-top:22px;background:#a335ee;color:#fff;border:none;padding:14px 32px;border-radius:10px;font-weight:bold;font-size:18px;cursor:pointer;box-shadow:0 0 15px rgba(163,53,238,0.7);">
-            🔄 TẢI LẠI TRANG
+            🔄 RELOAD PAGE
         </button>
     </div>
 
@@ -2154,59 +2511,59 @@
 
     <div
         id="gate-msg"
-        data-vi="🔒 CẦN ĐỦ 999 MẠNG ĐỂ MỞ CỔNG!"
+        data-vi="🔒 NEED 999 KILLS TO OPEN THE GATE!"
         data-en="🔒 NEED 999 KILLS TO OPEN GATE!"
     >
-        🔒 CẦN ĐỦ 999 MẠNG ĐỂ MỞ CỔNG!
+        🔒 NEED 999 KILLS TO OPEN THE GATE!
     </div>
 
     <div
         id="final-boss-msg"
         class="lang-txt"
-        data-vi="👑 BẠN CÓ MUỐN ĐỐI ĐẦU [BOSS] CUỐI? NHẤN [D]!"
+        data-vi="👑 FACE THE FINAL [BOSS]? PRESS [D]!"
         data-en="👑 DO YOU WANT TO FACE THE FINAL [BOSS]? PRESS [D]!"
     >
-        👑 BẠN CÓ MUỐN ĐỐI ĐẦU [BOSS] CUỐI? NHẤN [D]!
+        👑 FACE THE FINAL [BOSS]? PRESS [D]!
     </div>
 
     <div
         id="universe-world-msg"
         class="lang-txt"
-        data-vi="🌌 THẾ GIỚI VŨ TRỤ ĐÃ MỞ KHOÁ! NHẤN [D] ĐỂ BƯỚC VÀO!"
+        data-vi="🌌 UNIVERSE WORLD UNLOCKED! PRESS [D] TO ENTER!"
         data-en="🌌 UNIVERSE WORLD UNLOCKED! PRESS [D] TO ENTER!"
         style="border-color:#ff00ff;color:#ffffff;box-shadow:0 0 18px rgba(255,0,255,0.8);"
     >
-        🌌 THẾ GIỚI VŨ TRỤ ĐÃ MỞ KHOÁ! NHẤN [D] ĐỂ BƯỚC VÀO!
+        🌌 UNIVERSE WORLD UNLOCKED! PRESS [D] TO ENTER!
     </div>
 
     <div
         id="atomic-boss-msg"
         class="lang-txt"
-        data-vi="⚛️ BOSS HẠT NGUYÊN TỬ ĐÃ MỞ KHÓA! NHẤN [H] ĐỂ ĐỐI ĐẦU!"
+        data-vi="⚛️ ATOMIC BOSS UNLOCKED! PRESS [H] TO FIGHT!"
         data-en="⚛️ ATOMIC BOSS UNLOCKED! PRESS [H] TO FIGHT!"
         style="border-color:#00ff66;color:#ffffff;box-shadow:0 0 18px rgba(0,255,102,0.8);"
     >
-        ⚛️ BOSS HẠT NGUYÊN TỬ ĐÃ MỞ KHÓA! NHẤN [H] ĐỂ ĐỐI ĐẦU!
+        ⚛️ ATOMIC BOSS UNLOCKED! PRESS [H] TO FIGHT!
     </div>
 
     <div
         id="electron-world-msg"
         class="lang-txt"
-        data-vi="⚡ THẾ GIỚI ELECTRON ĐÃ MỞ KHÓA! NHẤN [D] ĐỂ VÀO!"
+        data-vi="⚡ ELECTRON WORLD UNLOCKED! PRESS [D] TO ENTER!"
         data-en="⚡ ELECTRON WORLD UNLOCKED! PRESS [D] TO ENTER!"
         style="border-color:#008cff;color:#ffffff;box-shadow:0 0 18px rgba(0,140,255,0.8);display:none;"
     >
-        ⚡ THẾ GIỚI ELECTRON ĐÃ MỞ KHÓA! NHẤN [D] ĐỂ VÀO!
+        ⚡ ELECTRON WORLD UNLOCKED! PRESS [D] TO ENTER!
     </div>
 
     <div
         id="supreme-boss-msg"
         class="lang-txt"
-        data-vi="🌌 NHIỆM VỤ MỚI MỞ KHOÁ: ĐẠI BOSS TỐI THƯỢNG! NHẤN [D]!"
+        data-vi="🌌 NEW QUEST UNLOCKED: ULTIMATE BOSS! PRESS [D]!"
         data-en="🌌 NEW QUEST UNLOCKED: THE ULTIMATE BOSS! PRESS [D]!"
         style="border-color:#00ffff;color:#00ffff;box-shadow:0 0 15px rgba(0,255,255,0.7);"
     >
-        🌌 NHIỆM VỤ MỚI MỞ KHOÁ: ĐẠI BOSS TỐI THƯỢNG! NHẤN [D]!
+        🌌 NEW QUEST UNLOCKED: ULTIMATE BOSS! PRESS [D]!
     </div>
 
     <div id="update-panel" onclick="event.stopPropagation()">
@@ -2225,30 +2582,25 @@
         <div class="upd-body">
             <div class="upd-ver">Version 1.28.7 · Small Straight Sword</div>
             <p class="upd-desc lang-txt"
-               data-vi="Update giúp thế giới đẹp & chân thật hơn: cây cối giống đời thật, địa hình gọn (cỏ · đá · quái), bỏ vùng vũ trụ trống ngoài Error/Glitch. Nhân vật & boss chi tiết hơn."
+               data-vi="Update helps the world look more beautiful & real: lifelike trees, clean terrain (grass · rock · mobs), no empty space outside Error/Glitch. More detailed characters & bosses.
                data-en="Update helps the world look more beautiful & realistic: lifelike trees, compact terrain (grass · rock · mobs), no empty cosmic voids outside Error/Glitch. Richer characters & bosses.">
-                Update giúp thế giới đẹp & chân thật hơn: cây cối giống đời thật, địa hình gọn (cỏ · đá · quái), bỏ vùng vũ trụ trống ngoài Error/Glitch. Nhân vật & boss chi tiết hơn.
+                Update helps the world look more beautiful & real: lifelike trees, clean terrain (grass · rock · mobs), no empty space outside Error/Glitch. More detailed characters & bosses.
             </p>
             <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
-                <div style="flex:1;min-width:90px;padding:8px;border-radius:10px;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.35);text-align:center;font-size:11px;color:#bbf7d0;">🌳 Cây thật</div>
-                <div style="flex:1;min-width:90px;padding:8px;border-radius:10px;background:rgba(148,163,184,0.12);border:1px solid rgba(148,163,184,0.35);text-align:center;font-size:11px;color:#e2e8f0;">🪨 Đá · Cỏ</div>
-                <div style="flex:1;min-width:90px;padding:8px;border-radius:10px;background:rgba(251,113,133,0.12);border:1px solid rgba(251,113,133,0.35);text-align:center;font-size:11px;color:#fecdd3;">👹 Boss rõ</div>
+                <div style="flex:1;min-width:90px;padding:8px;border-radius:10px;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.35);text-align:center;font-size:11px;color:#bbf7d0;">🌳 Real trees</div>
+                <div style="flex:1;min-width:90px;padding:8px;border-radius:10px;background:rgba(148,163,184,0.12);border:1px solid rgba(148,163,184,0.35);text-align:center;font-size:11px;color:#e2e8f0;">🪨 Rock · Grass</div>
+                <div style="flex:1;min-width:90px;padding:8px;border-radius:10px;background:rgba(251,113,133,0.12);border:1px solid rgba(251,113,133,0.35);text-align:center;font-size:11px;color:#fecdd3;">👹 Clear bosses</div>
             </div>
             <div style="margin-top:12px;text-align:center;font-size:13px;font-weight:700;color:#c4b5fd;letter-spacing:0.5px;">
                 press P 🧿
             </div>
-            <div style="text-align:center;font-size:10px;color:#888;margin-top:4px;">Nhấn ESC để ẩn</div>
+            <div style="text-align:center;font-size:10px;color:#888;margin-top:4px;">Press ESC to hide</div>
         </div>
     </div>
 
     <div id="quick-actions">
 
-        <div class="qa-btn" id="qa-inventory" onclick="toggleInventory()">
-            <span class="qa-badge">TAB</span>
-            🎒
-        </div>
-
-        <div class="qa-btn" id="qa-multi" onclick="toggleMultiplayer()" title="Chơi 2 người [Q]">
+        <div class="qa-btn" id="qa-multi" onclick="toggleMultiplayer()" title="2-Player [Q]">
             <span class="qa-badge">Q</span>
             👥
         </div>
@@ -2256,11 +2608,6 @@
         <div class="qa-btn" id="qa-login" onclick="toggleLogin()">
             <span class="qa-badge">J</span>
             🔑
-        </div>
-
-        <div class="qa-btn" id="qa-password" onclick="togglePasswordModal()">
-            <span class="qa-badge">Y</span>
-            🔐
         </div>
 
         <div class="qa-btn" id="qa-music" onclick="toggleMusic()">
@@ -2273,7 +2620,7 @@
             🗡️
         </div>
 
-        <div class="qa-btn" id="qa-outfit" onclick="toggleOutfitShop()" title="Trang điểm / Skin [O]">
+        <div class="qa-btn" id="qa-outfit" onclick="toggleOutfitShop()" title="Outfit / Skin [O]">
             <span class="qa-badge">O</span>
             🎨
         </div>
@@ -2381,7 +2728,7 @@
             5000000 / 5000000
         </div>
         <div id="boss-hp-percent" style="font-size:11px;margin-top:3px;color:#ffd700;font-weight:600;opacity:0.95;">
-            Đã tiêu diệt: 0%
+            Destroyed: 0%
         </div>
 
     </div>
@@ -2389,279 +2736,139 @@
     <div
         id="password-modal"
         class="modal-box"
-        style="border-color:#00ffff;display:none;"
+        style="border-color:#00ffff;display:none !important;"
     >
-        <h3 style="color:#00ffff;">🔑 ĐỔI MẬT KHẨU</h3>
-        <p style="font-size:12px;color:#ccc;">
-            Nhập theo dạng: <b>ii/99&gt;ii/100</b>
-        </p>
-        <p style="font-size:12px;color:#ccc;margin-top:-4px;">
-            Đổi nhân vật: <b>//boy</b> (nam) hoặc <b>//girl</b> (nữ)
-        </p>
-        <input
-            type="text"
-            id="password-change-input"
-            placeholder="ii/99&gt;ii/100  |  //boy  |  //girl"
-            autocomplete="off"
-            onkeydown="if(event.key==='Enter'){changePasswordFromMenu();}"
-        >
-        <button type="button" onclick="changePasswordFromMenu()">
-            Xác nhận đổi mật khẩu
-        </button>
-        <div id="password-change-status" style="text-align:center;font-size:12px;margin-top:8px;color:#ff6666;"></div>
-        <div style="text-align:center;font-size:11px;margin-top:12px;color:#aaa;">Nhấn [Y] để đóng</div>
+        <!-- Merged into Login [J] — kept for compatibility -->
     </div>
 
-    <!-- INVENTORY -->
+    <!-- INVENTORY / UPGRADE HOLOGRAM -->
 
-    <div id="inventory-modal" class="modal-box">
+    <div id="inventory-modal" class="modal-box hologram-panel" style="width:min(480px,94vw);max-width:94vw;padding:18px 18px 14px;display:none;">
 
         <h3
             class="lang-txt"
-            data-vi="🎒 TÚI ĐỒ & NÂNG CẤP"
-            data-en="🎒 INVENTORY & UPGRADE"
+            data-vi="⚡ UPGRADE & FUSE"
+            data-en="⚡ UPGRADE & FUSE"
+            style="margin:0 0 10px;color:#7ef0ff;text-shadow:0 0 12px rgba(0,200,255,0.45);position:relative;z-index:1;"
         >
-            🎒 TÚI ĐỒ & NÂNG CẤP
+            ⚡ UPGRADE & FUSE
         </h3>
 
-        <div class="item-row">
+        <p style="font-size:12px;color:#9ab;text-align:center;margin:0 0 12px;position:relative;z-index:1;" class="lang-txt"
+            data-vi="Bottom hotbar = inventory. Drag icon to Equipped to equip. TAB closes panel."
+            data-en="Bottom hotbar = inventory. Drag icon to Equipped to equip. TAB closes panel.">
+            Bottom hotbar = inventory. Drag icon to Equipped to equip. TAB closes panel.
+        </p>
 
-            <span>
-                📦 Common
-                (<span id="inv-common">0</span>)
-                [Lv.<span id="lvl-common">1</span>]
-            </span>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-bottom:10px;position:relative;z-index:1;">
+            <button class="btn-up" onclick="upgradeItem('common')" style="width:auto;padding:7px 12px;font-size:12px;margin:0;">⬆ Common (<span id="rate-common">60</span>%)</button>
+            <button class="btn-up" onclick="upgradeItem('rare')" style="width:auto;padding:7px 12px;font-size:12px;margin:0;">⬆ Rare (<span id="rate-rare">45</span>%)</button>
+            <button class="btn-up" onclick="upgradeItem('epic')" style="width:auto;padding:7px 12px;font-size:12px;margin:0;">⬆ Epic (<span id="rate-epic">30</span>%)</button>
+            <button class="btn-up" onclick="upgradeItem('legendary')" style="width:auto;padding:7px 12px;font-size:12px;margin:0;">⬆ Legend (<span id="rate-legendary">0.09</span>%)</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin-bottom:10px;position:relative;z-index:1;">
+            <button class="btn-sell" onclick="sellItem('common')" style="width:auto;padding:7px 12px;font-size:12px;margin:0;">💰 Sell 10 Common</button>
+            <button class="btn-sell" onclick="sellItem('rare')" style="width:auto;padding:7px 12px;font-size:12px;margin:0;">💰 Sell 10 Rare</button>
+            <button class="btn-up" onclick="handleGAction()" style="width:auto;padding:7px 12px;font-size:12px;margin:0;background:#ff9900;">⚔️ FUSE [G]</button>
+        </div>
 
-            <div>
-                <button
-                    class="btn-sell"
-                    onclick="sellItem('common')"
-                >
-                    Bán 10 = 490
-                </button>
-
-                <button
-                    class="btn-up"
-                    onclick="upgradeItem('common')"
-                >
-                    Nâng
-                    (<span id="rate-common">60</span>%)
-                </button>
-
-                <button
-                    class="btn-equip"
-                    onclick="equipItem('common')"
-                >
-                    Đeo [F]
-                </button>
+        <div id="fuse-panel-info" style="background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:10px;margin-bottom:10px;font-size:12px;color:#ffe566;text-align:center;position:relative;z-index:1;">
+            <div id="fuse-info-text">Fuse: 2 Legend Lv.2 → GoD · 3 GoD → Hack · 20 Hack → Error</div>
+            <div class="fp-track" style="height:8px;border-radius:99px;background:rgba(0,0,0,0.45);margin-top:8px;overflow:hidden;">
+                <div id="fuse-panel-fill" class="fp-fill" style="height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#ff9900,#ffd700);transition:width .3s;"></div>
             </div>
-
         </div>
 
-        <div class="item-row">
-
-            <span>
-                🔷 Rare
-                (<span id="inv-rare">0</span>)
-                [Lv.<span id="lvl-rare">1</span>]
-            </span>
-
-            <div>
-                <button
-                    class="btn-sell"
-                    onclick="sellItem('rare')"
-                >
-                    Bán 10 = 555
-                </button>
-
-                <button
-                    class="btn-up"
-                    onclick="upgradeItem('rare')"
-                >
-                    Nâng
-                    (<span id="rate-rare">45</span>%)
-                </button>
-
-                <button
-                    class="btn-equip"
-                    onclick="equipItem('rare')"
-                >
-                    Đeo [F]
-                </button>
-            </div>
-
+        <div style="display:flex;flex-wrap:wrap;gap:10px 14px;justify-content:center;font-size:11px;color:#9ab;margin-bottom:6px;position:relative;z-index:1;">
+            <span>Common Lv.<span id="lvl-common">1</span></span>
+            <span>Rare Lv.<span id="lvl-rare">1</span></span>
+            <span>Epic Lv.<span id="lvl-epic">1</span></span>
+            <span>Legend Lv.<span id="lvl-legendary">1</span></span>
+            <span style="color:#7ef0ff;">Equipped: <b id="txt-equipped-label" style="color:#00ffcc;">None</b></span>
         </div>
 
-        <div class="item-row">
-
-            <span>
-                💜 Epic
-                (<span id="inv-epic">0</span>)
-                [Lv.<span id="lvl-epic">1</span>]
-            </span>
-
-            <div>
-
-                <button
-                    class="btn-up"
-                    onclick="upgradeItem('epic')"
-                >
-                    Nâng
-                    (<span id="rate-epic">30</span>%)
-                </button>
-
-                <button
-                    class="btn-equip"
-                    onclick="equipItem('epic')"
-                >
-                    Đeo [F]
-                </button>
-
-            </div>
-
-        </div>
-
-        <div class="item-row">
-
-            <span>
-                👑 Legendary
-                (<span id="inv-legendary">0</span>)
-                [Lv.<span id="lvl-legendary">1</span>]
-            </span>
-
-            <div>
-
-                <span style="font-size:10px;color:#ffd700;">
-                    MAX RATE
-                </span>
-
-                <button
-                    class="btn-up"
-                    onclick="upgradeItem('legendary')"
-                >
-                    Nâng
-                    (<span id="rate-legendary">0.09</span>%)
-                </button>
-
-                <button
-                    class="btn-equip"
-                    onclick="equipItem('legendary')"
-                >
-                    Đeo [F]
-                </button>
-
-            </div>
-
-        </div>
-
-        <div class="item-row">
-
-            <span>
-                🌟 GoD Sword
-                (<span id="inv-god">0</span>)
-                [Lv.<span id="lvl-god">1</span>]
-            </span>
-
-            <div>
-                <span style="font-size:10px;color:#ffd700;">
-                    x5 DMG
-                </span>
-            </div>
-
-        </div>
-
-        <div class="item-row">
-
-            <span>
-                🌀 Hack Sword
-                (<span id="inv-hack">0</span>)
-                [Lv.<span id="lvl-hack">2</span>]
-            </span>
-
-            <div>
-                <span style="font-size:10px;color:#00ffff;">
-                    x10 DMG
-                </span>
-            </div>
-
-        </div>
-
-        <div class="item-row">
-
-            <span>
-                ⚡ Error Sword
-                (<span id="inv-error">0</span>)
-                [Lv.3]
-            </span>
-
-            <div>
-                <span style="font-size:10px;color:#ff3355;">
-                    x101 DMG
-                </span>
-            </div>
-
-        </div>
-
-        <div class="item-row">
-
-            <span>
-                ⚡ Electron Sword
-                (<span id="inv-electron">0</span>)
-                [Lv.4]
-            </span>
-
-            <div>
-                <span style="font-size:10px;color:#44ccff;">
-                    +10% POWER &amp; GOLD
-                </span>
-            </div>
-
-        </div>
-
-        <div
-            style="
-                background:rgba(255,255,255,0.08);
-                padding:9px;
-                border-radius:6px;
-                margin-top:10px;
-                font-size:12px;
-                text-align:center;
-            "
-        >
-            ✨
-            <span
-                class="lang-txt"
-                data-vi="Đang đeo"
-                data-en="Equipped"
-            >
-                Đang đeo
-            </span>:
-
-            <span
-                id="txt-equipped"
-                style="color:#00ffcc;font-weight:bold;"
-            >
-                Chưa có
-            </span>
-        </div>
-
-        <div
-            style="
-                text-align:center;
-                font-size:11px;
-                margin-top:10px;
-                color:#aaa;
-            "
+        <div style="text-align:center;font-size:11px;margin-top:8px;color:#7a8a9a;position:relative;z-index:1;"
             class="lang-txt"
-            data-vi="Bấm [TAB] để đóng | Bấm [V] đổi ngôn ngữ | Bấm [G] gộp 2 Legendary Lv.2 thành GoD Lv.1, đủ 3 GoD Lv.1 thành Hack, đủ 20 Hack thành Error Sword"
-            data-en="Press [TAB] to close | Press [V] change language | Press [G] to fuse 2 Legendary Lv.2 into GoD Lv.1, 3 GoD Lv.1 into Hack, 20 Hack into Error Sword"
-        >
-            Bấm [TAB] để đóng | Bấm [V] đổi ngôn ngữ | Bấm [G] gộp 2 Legendary Lv.2 thành GoD Lv.1, đủ 3 GoD Lv.1 thành Hack, đủ 20 Hack thành Error Sword
+            data-vi="[TAB] close · [V] language · Drag sword to Equipped on hotbar"
+            data-en="[TAB] close · [V] language · Drag sword to Equipped slot on hotbar">
+            [TAB] close · [V] language · Drag sword to Equipped on hotbar
         </div>
 
+        <span id="txt-equipped" style="display:none;">None</span>
+        <span id="txt-equipped-x" style="display:none;"></span>
+        <span id="inv-common-x" style="display:none;">x0</span>
+        <span id="inv-rare-x" style="display:none;">x0</span>
+        <span id="inv-epic-x" style="display:none;">x0</span>
+        <span id="inv-legendary-x" style="display:none;">x0</span>
+        <span id="inv-god-x" style="display:none;">x0</span>
+        <span id="inv-hack-x" style="display:none;">x0</span>
+        <span id="inv-error-x" style="display:none;">x0</span>
+        <span id="inv-electron-x" style="display:none;">x0</span>
     </div>
 
-    <!-- NPC CUSTOMIZE -->
+    <!-- ALWAYS-ON HOTBAR -->
+    <div id="game-hotbar">
+        <div id="fuse-progress-bar">
+            <span id="fuse-progress-label">Fuse progress</span>
+            <div class="fp-track"><div class="fp-fill" id="fuse-hotbar-fill"></div></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <div id="inv-slot-bar">
+                <div class="inv-slot inv-drop-target" id="slot-equipped" data-kind="equipped" title="Equipped — drop sword here">
+                    <canvas id="icon-equipped" width="40" height="40" style="width:34px;height:34px;"></canvas>
+                    <span id="hotbar-equipped-x" class="inv-qty" style="color:#ffe566;"></span>
+                </div>
+                <div style="width:2px;align-self:stretch;background:linear-gradient(180deg,transparent,rgba(0,200,255,0.4),transparent);margin:4px 2px;flex-shrink:0;"></div>
+                <div class="inv-slot" id="slot-common" data-kind="common" draggable="true" title="Common" onclick="equipItem('common')">
+                    <canvas id="icon-common" width="32" height="32" style="width:28px;height:28px;"></canvas>
+                    <span class="inv-slot-empty">EMPTY<br>SLOT</span>
+                    <span class="inv-qty" id="hotbar-common-x" style="color:#ffe566;">x0</span>
+                </div>
+                <div class="inv-slot" id="slot-rare" data-kind="rare" draggable="true" title="Rare" onclick="equipItem('rare')">
+                    <canvas id="icon-rare" width="32" height="32" style="width:28px;height:28px;"></canvas>
+                    <span class="inv-slot-empty">EMPTY<br>SLOT</span>
+                    <span class="inv-qty" id="hotbar-rare-x" style="color:#66aaff;">x0</span>
+                </div>
+                <div class="inv-slot" id="slot-epic" data-kind="epic" draggable="true" title="Epic" onclick="equipItem('epic')">
+                    <canvas id="icon-epic" width="32" height="32" style="width:28px;height:28px;"></canvas>
+                    <span class="inv-slot-empty">EMPTY<br>SLOT</span>
+                    <span class="inv-qty" id="hotbar-epic-x" style="color:#cc88ff;">x0</span>
+                </div>
+                <div class="inv-slot" id="slot-legendary" data-kind="legendary" draggable="true" title="Legendary" onclick="equipItem('legendary')">
+                    <canvas id="icon-legendary" width="32" height="32" style="width:28px;height:28px;"></canvas>
+                    <span class="inv-slot-empty">EMPTY<br>SLOT</span>
+                    <span class="inv-qty" id="hotbar-legendary-x" style="color:#ffd700;">x0</span>
+                </div>
+                <div class="inv-slot" id="slot-god" data-kind="god" title="GoD Sword">
+                    <canvas id="icon-god" width="32" height="32" style="width:28px;height:28px;"></canvas>
+                    <span class="inv-slot-empty">EMPTY<br>SLOT</span>
+                    <span class="inv-qty" id="hotbar-god-x" style="color:#ffd700;">x0</span>
+                </div>
+                <div class="inv-slot" id="slot-hack" data-kind="hack" title="Hack Sword">
+                    <canvas id="icon-hack" width="32" height="32" style="width:28px;height:28px;"></canvas>
+                    <span class="inv-slot-empty">EMPTY<br>SLOT</span>
+                    <span class="inv-qty" id="hotbar-hack-x" style="color:#00ffff;">x0</span>
+                </div>
+                <div class="inv-slot" id="slot-error" data-kind="error" title="Error Sword">
+                    <canvas id="icon-error" width="32" height="32" style="width:28px;height:28px;"></canvas>
+                    <span class="inv-slot-empty">EMPTY<br>SLOT</span>
+                    <span class="inv-qty" id="hotbar-error-x" style="color:#ff3355;">x0</span>
+                </div>
+                <div class="inv-slot" id="slot-electron" data-kind="electron" title="Electron Sword">
+                    <canvas id="icon-electron" width="32" height="32" style="width:28px;height:28px;"></canvas>
+                    <span class="inv-slot-empty">EMPTY<br>SLOT</span>
+                    <span class="inv-qty" id="hotbar-electron-x" style="color:#44ccff;">x0</span>
+                </div>
+            </div>
+            <div id="hotbar-tab-btn" onclick="toggleInventory()" title="Upgrade panel [TAB]">
+                <span class="qa-badge">TAB</span>
+                🎒
+            </div>
+        </div>
+    </div>
+
+    
+<!-- NPC CUSTOMIZE -->
 
     <div
         id="color-modal"
@@ -2672,42 +2879,42 @@
         <h3
             style="color:#00ffcc;"
             class="lang-txt"
-            data-vi="🎨 SKIN & MÀU DA"
+            data-vi="🎨 SKIN & COLOR"
             data-en="🎨 SKIN & COLOR"
         >
-            🎨 SKIN & MÀU DA
+            🎨 SKIN & COLOR
         </h3>
 
         <label>
-            <span class="lang-txt" data-vi="Màu da (nhân vật)" data-en="Skin Color">Màu da (nhân vật)</span>:
+            <span class="lang-txt" data-vi="Màu da (nhân vật)" data-en="Skin Color">Skin Color</span>:
             <input type="color" id="picker-skin" value="#0a0a12">
         </label>
         <label>
-            <span class="lang-txt" data-vi="Màu áo / giáp" data-en="Body / Armor Color">Màu áo / giáp</span>:
+            <span class="lang-txt" data-vi="Màu áo / giáp" data-en="Body / Armor Color">Body / Armor Color</span>:
             <input type="color" id="picker-body" value="#0a0a18">
         </label>
         <label>
-            <span class="lang-txt" data-vi="Màu hào quang" data-en="Halo Color">Màu hào quang</span>:
+            <span class="lang-txt" data-vi="Màu hào quang" data-en="Halo Color">Halo Color</span>:
             <input type="color" id="picker-halo" value="#88ccff">
         </label>
         <p style="font-size:11px;color:#9ab;text-align:center;margin:6px 0 8px;line-height:1.4;">
-            🌌 Da mặc định: <b style="color:#cde;">đen vũ trụ Alien X</b> — hoa văn hành tinh gắn trên da, quay theo nhân vật (UV)
+            🌌 Default skin: <b style="color:#cde;">Alien X cosmic black</b> — planet patterns on skin (UV)
         </p>
         <div id="skin-shop-section" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,215,0,0.25);max-height:280px;overflow-y:auto;">
             <div style="font-size:14px;font-weight:900;color:#ffd700;text-align:center;margin-bottom:8px;">🛒 SKIN SHOP · GOLD</div>
             <div style="font-size:11px;color:#ccc;text-align:center;margin-bottom:10px;">
-                Công thức: <b style="color:#ffe566;">gold ≈ log₁₀(power) / 67</b> mỗi đòn (rất chậm)<br>
-                Mua skin tăng tốc &amp; hiện trên người
+                Formula: <b style="color:#ffe566;">gold ≈ log₁₀(power) / 67</b> per hit (very slow)<br>
+                Buy skins for speed boost &amp; appearance
             </div>
             <div id="skin-shop-list"></div>
         </div>
         <div
             style="text-align:center;font-size:11px;margin-top:15px;color:#aaa;"
             class="lang-txt"
-            data-vi="Bấm [O] để đóng"
+            data-vi="Press [O] to close"
             data-en="Press [O] to close"
         >
-            Bấm [O] để đóng
+            Press [O] to close
         </div>
 
     </div>
@@ -2717,45 +2924,40 @@
     <div
         id="login-modal"
         class="modal-box"
-        style="border-color:#ffd700;"
+        style="border-color:#ffd700;width:min(360px,92vw);max-height:min(88vh,640px);overflow-y:auto;padding:14px 16px;font-size:13px;"
     >
 
         <h3
             style="color:#ffd700;"
             class="lang-txt"
-            data-vi="🔑 ĐĂNG NHẬP / LƯU TIẾN TRÌNH"
+            data-vi="🔑 LOGIN / SAVE PROGRESS"
             data-en="🔑 LOGIN / SAVE PROGRESS"
         >
-            🔑 ĐĂNG NHẬP / LƯU TIẾN TRÌNH
+            🔑 LOGIN / SAVE PROGRESS
         </h3>
 
-        <p
-            class="lang-txt"
-            style="font-size:12px;color:#ccc;"
-            data-vi="Nhập tên/mã (vd: vv/6726). Để đổi mật khẩu, nhập: ii//11>ii/45445"
-            data-en="Enter name/code (e.g. vv/6726). To change a password, enter: ii//11>ii/45445"
-        >
-            Nhập tên/mã (vd: vv/6726). Để đổi mật khẩu, nhập: ii//11>ii/45445
-        </p>
+        <p class="lang-txt" style="font-size:11px;color:#ccc;margin:4px 0 8px;line-height:1.35;"
+            data-vi="name/code · password change below"
+            data-en="name/code · password change below">name/code · password below</p>
 
         <input
             type="text"
             id="login-name"
-            placeholder="Tên tài khoản"
+            placeholder="Account name"
             autocomplete="off"
         >
 
         <input
             type="text"
             id="login-pass"
-            placeholder="Mật khẩu"
+            placeholder="Password"
             autocomplete="off"
         >
 
         <input
             type="text"
             id="login-input"
-            placeholder="Hoặc nhập nhanh: ten/matkhau"
+            placeholder="Quick: name/password"
             autocomplete="off"
         >
 
@@ -2768,7 +2970,7 @@
                 data-vi="Xác nhận"
                 data-en="Confirm"
             >
-                Xác nhận
+                Confirm
             </span>
         </button>
 
@@ -2777,6 +2979,22 @@
             style="text-align:center;font-size:12px;margin-top:8px;color:#ff6666;"
         ></div>
 
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,215,0,0.25);">
+            <div style="font-size:12px;font-weight:800;color:#ffd700;text-align:center;margin-bottom:4px;">👤 Character</div>
+            <div style="display:flex;gap:8px;justify-content:center;">
+                <button type="button" id="btn-gender-boy" onclick="setPlayerGender('boy');updateGenderButtons();" style="flex:1;max-width:120px;background:#3366aa;padding:6px;border-radius:8px;border:2px solid transparent;font-weight:800;cursor:pointer;margin:0;font-size:12px;">👦 Boy</button>
+                <button type="button" id="btn-gender-girl" onclick="setPlayerGender('girl');updateGenderButtons();" style="flex:1;max-width:120px;background:#aa4488;padding:6px;border-radius:8px;border:2px solid transparent;font-weight:800;cursor:pointer;margin:0;font-size:12px;">👧 Girl</button>
+            </div>
+        </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,215,0,0.25);">
+            <div style="font-size:12px;font-weight:800;color:#00ffff;text-align:center;margin-bottom:4px;">🔐 Password</div>
+            <input type="text" id="password-change-input" placeholder="old/pass>new/pass" autocomplete="off"
+                onkeydown="if(event.key==='Enter'){changePasswordFromMenu();}"
+                style="width:100%;padding:7px;border-radius:6px;border:none;margin:4px 0;font-size:12px;box-sizing:border-box;">
+            <button type="button" onclick="changePasswordFromMenu()" style="width:100%;background:#00aaaa;color:#fff;border:none;padding:7px;border-radius:6px;font-weight:bold;cursor:pointer;margin:0;font-size:12px;">Change password</button>
+            <div id="password-change-status" style="text-align:center;font-size:11px;margin-top:4px;color:#ff6666;"></div>
+        </div>
+
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
             <button type="button" onclick="exportSaveCode()" style="flex:1;background:#4488ff;min-width:120px;">📋 Export save</button>
             <button type="button" onclick="(function(){var c=prompt(currentLang==='vi'?'Dán mã lưu acc:':'Paste save code:');if(c)importSaveCode(c);})()" style="flex:1;background:#00aa88;min-width:120px;">📥 Import save</button>
@@ -2784,49 +3002,49 @@
         <div
             style="text-align:center;font-size:11px;margin-top:10px;color:#aaa;"
             class="lang-txt"
-            data-vi="Bấm [J] để đóng · Export mã để chơi máy mới"
-            data-en="Press [J] to close · Export code to play on new PC"
+            data-vi="Press [J] to close · Export / gender / password all here"
+            data-en="Press [J] to close · Export / gender / password all here"
         >
-            Bấm [J] để đóng · Export mã để chơi máy mới
+            Press [J] to close · Boy/Girl · Password · Export save
         </div>
 
     </div>
 
     <!-- MULTIPLAYER 2P -->
     <div id="multi-modal" class="modal-box" style="border-color:#00ffcc;display:none;width:min(720px,96vw);">
-        <h3 style="color:#00ffcc;margin-bottom:6px;">👥 CHƠI 2 NGƯỜI</h3>
+        <h3 style="color:#00ffcc;margin-bottom:6px;">👥 2-PLAYER</h3>
         <p style="font-size:12px;color:#ccc;text-align:center;margin:0 0 10px;">
-            Tối đa 1 phòng = 2 người · Chỉ thấy nhau &amp; đi chung
+            1 room = 2 players · See each other &amp; explore together
         </p>
         <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-            <span style="font-size:12px;color:#aaa;">Tên hiển thị:</span>
+            <span style="font-size:12px;color:#aaa;">Display name:</span>
             <span id="multi-my-name" style="font-size:16px;font-weight:bold;color:#ffd700;">Player</span>
         </div>
         <!-- Horizontal action row -->
         <div style="display:flex;flex-direction:row;gap:10px;align-items:stretch;justify-content:center;flex-wrap:wrap;margin:8px 0 12px;">
             <button type="button" onclick="mpRandomMatch()" style="flex:1 1 140px;min-height:72px;background:linear-gradient(160deg,#7c3aed,#4c1d95);border:none;border-radius:12px;color:#fff;font-weight:bold;font-size:14px;cursor:pointer;padding:12px 10px;">
-                🎲<br>Chơi ngẫu nhiên
+                🎲<br>Random match
             </button>
             <button type="button" onclick="mpCreateRoom()" style="flex:1 1 140px;min-height:72px;background:linear-gradient(160deg,#10b981,#047857);border:none;border-radius:12px;color:#fff;font-weight:bold;font-size:14px;cursor:pointer;padding:12px 10px;">
-                🏠<br>Tạo phòng
+                🏠<br>Create room
             </button>
             <div style="flex:1 1 160px;min-height:72px;display:flex;flex-direction:column;gap:6px;">
-                <input type="text" id="multi-join-input" placeholder="Dán mã phòng..." autocomplete="off" style="width:100%;padding:8px 10px;border-radius:8px;border:none;font-size:13px;box-sizing:border-box;background:#1a1a2e;color:#fff;">
+                <input type="text" id="multi-join-input" placeholder="Paste room code..." autocomplete="off" style="width:100%;padding:8px 10px;border-radius:8px;border:none;font-size:13px;box-sizing:border-box;background:#1a1a2e;color:#fff;">
                 <button type="button" onclick="mpJoinRoom()" style="flex:1;background:linear-gradient(160deg,#3b82f6,#1d4ed8);border:none;border-radius:8px;color:#fff;font-weight:bold;font-size:13px;cursor:pointer;padding:8px;">
-                    🚪 Vào phòng
+                    🚪 Join room
                 </button>
             </div>
             <button type="button" onclick="mpLeaveRoom()" style="flex:0 0 90px;min-height:72px;background:linear-gradient(160deg,#ef4444,#b91c1c);border:none;border-radius:12px;color:#fff;font-weight:bold;font-size:13px;cursor:pointer;padding:12px 8px;">
-                ✖<br>Rời phòng
+                ✖<br>Leave room
             </button>
         </div>
         <div id="multi-room-code" style="display:none;text-align:center;margin:8px 0;padding:10px;background:rgba(0,255,200,0.1);border-radius:8px;border:1px solid #00ffcc;">
-            <div style="font-size:11px;color:#aaa;">Mã phòng (sao chép gửi bạn chơi):</div>
-            <div id="multi-code-text" style="font-size:22px;font-weight:900;color:#00ffcc;letter-spacing:2px;user-select:all;cursor:pointer;" title="Bấm để copy" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText(this.innerText);showToast&amp;&amp;showToast('📋 Đã copy mã phòng!');"></div>
-            <div id="multi-status" style="font-size:12px;color:#ffcc00;margin-top:6px;">Đang chờ người chơi...</div>
+            <div style="font-size:11px;color:#aaa;">Room code (copy & share):</div>
+            <div id="multi-code-text" style="font-size:22px;font-weight:900;color:#00ffcc;letter-spacing:2px;user-select:all;cursor:pointer;" title="Click to copy" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText(this.innerText);showToast&amp;&amp;showToast('📋 Đã copy mã phòng!');"></div>
+            <div id="multi-status" style="font-size:12px;color:#ffcc00;margin-top:6px;">Waiting for player...</div>
         </div>
         <div style="text-align:center;font-size:11px;margin-top:10px;color:#aaa;">
-            🎲 Ngẫu nhiên = tự tìm người · 🏠 Tạo phòng = copy ID chia sẻ · Nhấn [Q] đóng
+            🎲 Random = auto match · 🏠 Create room = copy ID to share · Press [Q] to close
         </div>
     </div>
 
@@ -2846,21 +3064,20 @@
         </div>
     </div>
 
+    <!-- TAB inventory — bottom center -->
+    <div id="qa-inventory-bottom">
+        <div class="qa-btn" id="qa-inventory" onclick="toggleInventory()" title="Inventory [TAB]">
+            <span class="qa-badge">TAB</span>
+            🎒
+        </div>
+    </div>
+
+    <!-- Language — bottom right -->
     <div id="instructions" onclick="toggleLanguage()">
-
         🌐
-        <span
-            class="lang-txt"
-            data-vi="Ngôn ngữ"
-            data-en="Language"
-        >
-            Ngôn ngữ
-        </span>:
-
-        <span id="lang-indicator">VI</span>
-
-        <b style="opacity:0.6;font-weight:normal;">[V]</b>
-
+        <span class="lang-txt" data-vi="Ngôn ngữ" data-en="Language">Language</span>:
+        <span id="lang-indicator">EN</span>
+        <b style="opacity:0.65;font-weight:700;">[V]</b>
     </div>
 
     <div id="error-glitch-overlay" style="display:none;position:fixed;inset:0;z-index:99999;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,0,0,.10) 0 2px,rgba(0,255,255,.08) 2px 4px,rgba(0,0,0,.18) 4px 7px);mix-blend-mode:screen;animation:errorGlitch .08s infinite;">
@@ -2894,10 +3111,10 @@
         >
             <span
                 class="lang-txt"
-                data-vi="Chơi lại"
+                data-vi="Play again"
                 data-en="Play"
             >
-                Chơi lại
+                Play again
             </span> -->
         </button>
 
@@ -3022,7 +3239,7 @@
             }, 18000);
 
             document.body.classList.add('is-loading');
-            window.setLoadProgress(3, 'Đang tải…');
+            window.setLoadProgress(3, 'Loading…');
 
 
             // Cute loading battle: hero RUNS to red mobs, attacks, red stage
@@ -3784,7 +4001,8 @@
 
                 let gameLoop = 1;
 
-                let currentLang = (function(){ try { return localStorage.getItem('mystic_lang') || 'en'; } catch(e) { return 'en'; } })();
+                let currentLang = 'en';
+                try { localStorage.setItem('mystic_lang', 'en'); } catch (e) {}
                 window.currentLang = currentLang;
 
                 let hasGoDSword = false;
@@ -3845,9 +4063,9 @@
 
                 // Skins theo boss / địa hình
                 const SKIN_CATALOG = [
-                    { id: 'default', boss: 'Start', name: 'Lính tập sự', price: 0, speed: 1.0, color: '#1a1a24', emoji: '👤' },
-                    { id: 'grass_scout', boss: 'Start', name: 'Do thám cỏ', price: 50, speed: 1.08, color: '#2d6a3e', emoji: '🌿' },
-                    { id: 'rock_guard', boss: 'Start', name: 'Vệ binh đá', price: 120, speed: 1.05, color: '#6b6570', emoji: '🪨' },
+                    { id: 'default', boss: 'Start', name: 'Trainee', price: 0, speed: 1.0, color: '#1a1a24', emoji: '👤' },
+                    { id: 'grass_scout', boss: 'Start', name: 'Grass Scout', price: 50, speed: 1.08, color: '#2d6a3e', emoji: '🌿' },
+                    { id: 'rock_guard', boss: 'Start', name: 'Rock Guard', price: 120, speed: 1.05, color: '#6b6570', emoji: '🪨' },
                     { id: 'boss1_crimson', boss: 'Boss 1', name: 'Crimson Striker', price: 400, speed: 1.12, color: '#8b0000', emoji: '🔥' },
                     { id: 'boss1_shadow', boss: 'Boss 1', name: 'Shadow Blade', price: 600, speed: 1.15, color: '#1a1028', emoji: '🌑' },
                     { id: 'boss1_gold', boss: 'Boss 1', name: 'Golden Knight', price: 900, speed: 1.1, color: '#b8860b', emoji: '✨' },
@@ -3858,7 +4076,7 @@
                     { id: 'boss3_neon', boss: 'Boss 3+', name: 'Neon Ronin', price: 12000, speed: 1.3, color: '#1a8a7a', emoji: '⚡' },
                     { id: 'bossn_legend', boss: 'Boss N', name: 'Legend Aura', price: 50000, speed: 1.4, color: '#ffd700', emoji: '👑' },
                     { id: 'bossn_glitch', boss: 'Boss N', name: 'Glitch Skin', price: 99999, speed: 1.5, color: '#ff3355', emoji: '👾' },
-                    { id: 'glitch_armor', boss: 'Glitch', name: 'Áo Giáp Glitch', price: 100000, speed: 1.55, color: '#0a1a3a', emoji: '🛡️' }
+                    { id: 'glitch_armor', boss: 'Glitch', name: 'Glitch Armor', price: 100000, speed: 1.55, color: '#0a1a3a', emoji: '🛡️' }
                 ];
 
 
@@ -4178,7 +4396,7 @@
                 let atomicBossDefeated = false;
                 let atomicBossKillCount = 0;
                 let hasAtomicTitle = false;
-                const ATOMIC_BOSS_KILLS_NEEDED = 1000000000;
+                const ATOMIC_BOSS_KILLS_NEEDED = 99;
 
                 let cosmicDinoUnlocked = false;
                 let cosmicDinoActive = false;
@@ -4219,13 +4437,24 @@
                 let errorReverseForm = false;
                 let errorReverseTexture = null;
 
-                const atomicBossMaxHP =
-                    10000000000 * 1000000000000000000000000000;
+                // Atomic HP: 10 oc → 100 → 1000 → … (×10 mỗi lần hạ)
+                // killCount = số boss đã hạ → maxHP = 10^(killCount+1)
+                let atomicBossMaxHP = 10;
+                let atomicBossHP = 10;
+                const ATOMIC_POWER_PER_HIT = 1.20; // +20% power mỗi click
 
-                let atomicBossHP =
-                    atomicBossMaxHP;
-
-                const ATOMIC_POWER_PER_HIT = 1.01555;
+                function refreshAtomicBossHPCap() {
+                    const kills = Math.max(0, atomicBossKillCount | 0);
+                    const exp = kills + 1; // 0→10, 1→100, 2→1000
+                    if (exp >= 308) {
+                        atomicBossMaxHP = Number.POSITIVE_INFINITY;
+                    } else {
+                        atomicBossMaxHP = Math.pow(10, exp);
+                    }
+                    atomicBossHP = atomicBossMaxHP;
+                    return atomicBossMaxHP;
+                }
+                window.refreshAtomicBossHPCap = refreshAtomicBossHPCap;
                 let atomicNextRushTime = performance.now() + 5000 + Math.random() * 5000;
                 let atomicRushActive = false;
                 let atomicRushEndTime = 0;
@@ -4590,6 +4819,71 @@
                         : '💀 DEAD! Limbs separating...'
                     );
                 }
+
+                
+                /* Boss floating name above head */
+                function ensureBossNameTag(root, label) {
+                    if (!root) return null;
+                    function roundRect(ctx, x, y, w, h, r) {
+                        ctx.beginPath();
+                        ctx.moveTo(x + r, y);
+                        ctx.arcTo(x + w, y, x + w, y + h, r);
+                        ctx.arcTo(x + w, y + h, x, y + h, r);
+                        ctx.arcTo(x, y + h, x, y, r);
+                        ctx.arcTo(x, y, x + w, y, r);
+                        ctx.closePath();
+                    }
+                    try {
+                        if (root.userData && root.userData.nameTag) {
+                            root.userData.nameTag.visible = true;
+                            return root.userData.nameTag;
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = 512;
+                        canvas.height = 96;
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, 512, 96);
+                        ctx.fillStyle = 'rgba(5,10,25,0.85)';
+                        ctx.strokeStyle = '#44e0ff';
+                        ctx.lineWidth = 4;
+                        roundRect(ctx, 16, 12, 480, 72, 16);
+                        ctx.fill();
+                        ctx.stroke();
+                        ctx.font = 'bold 34px Segoe UI,sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillStyle = '#e8ffff';
+                        ctx.fillText(String(label || 'BOSS').slice(0, 28), 256, 50);
+                        const tex = new THREE.CanvasTexture(canvas);
+                        const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+                            map: tex, transparent: true, depthTest: false
+                        }));
+                        spr.scale.set(7, 1.3, 1);
+                        spr.position.set(0, 6.2, 0);
+                        spr.userData.isBossNameTag = true;
+                        root.add(spr);
+                        if (!root.userData) root.userData = {};
+                        root.userData.nameTag = spr;
+                        return spr;
+                    } catch (e) { console.warn('nameTag', e); return null; }
+                }
+                window.ensureBossNameTag = ensureBossNameTag;
+
+                /* Passive HP regen for player */
+                let _lastHpRegen = 0;
+                function tickPlayerHpRegen(now) {
+                    now = now || performance.now();
+                    if (typeof isGameEnded !== 'undefined' && isGameEnded) return;
+                    if (typeof playerHP !== 'number' || typeof playerMaxHP !== 'number') return;
+                    if (playerHP <= 0 || playerHP >= playerMaxHP) return;
+                    if (now - _lastHpRegen < 400) return;
+                    _lastHpRegen = now;
+                    // ~2.5% max HP mỗi 0.4s (~6%/s), Electron world nhanh hơn
+                    const rate = (typeof gameStage === 'number' && gameStage === 12) ? 0.04 : 0.025;
+                    playerHP = Math.min(playerMaxHP, playerHP + playerMaxHP * rate);
+                    if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+                }
+                window.tickPlayerHpRegen = tickPlayerHpRegen;
 
                 function refreshPlayerMaxHP() {
 
@@ -5739,6 +6033,60 @@
                         -5
                     );
 
+                // World-themed NPC look (body color + stars)
+                window.styleWorldNPC = function(stage) {
+                    try {
+                        if (!upgradeNPC) return;
+                        const themes = {
+                            0:  { body: 0xff8800, emissive: 0x442200, eInt: 0.15, stars: false, label: 'hub' },
+                            1:  { body: 0xcc2233, emissive: 0x660010, eInt: 0.35, stars: false, label: 'red mob' },
+                            2:  { body: 0x2288aa, emissive: 0x003344, eInt: 0.25, stars: false, label: 'ocean' },
+                            3:  { body: 0x8844aa, emissive: 0x330055, eInt: 0.3, stars: false, label: 'demon' },
+                            5:  { body: 0x2a1050, emissive: 0x6644ff, eInt: 0.55, stars: true, label: 'final' },
+                            6:  { body: 0x0a3040, emissive: 0x00e8ff, eInt: 0.5, stars: true, label: 'supreme' },
+                            7:  { body: 0x4a0a5a, emissive: 0xff44ff, eInt: 0.55, stars: true, label: 'universe' },
+                            8:  { body: 0x0a2848, emissive: 0x44aaff, eInt: 0.5, stars: true, label: 'cosmic' },
+                            9:  { body: 0x0a4028, emissive: 0x00ff88, eInt: 0.45, stars: true, label: 'atomic' },
+                            11: { body: 0x1a0810, emissive: 0xff2244, eInt: 0.6, stars: false, label: 'error' },
+                            12: { body: 0x082038, emissive: 0x00aaff, eInt: 0.5, stars: true, label: 'electron' }
+                        };
+                        const t = themes[stage] || themes[0];
+                        upgradeNPC.traverse(function(ch) {
+                            if (!ch.isMesh || !ch.material) return;
+                            const mat = ch.material;
+                            // body is the large orange box ~ y 1.25
+                            if (ch.geometry && ch.geometry.type === 'BoxGeometry') {
+                                const p = ch.geometry.parameters;
+                                if (p && Math.abs(p.width - 0.9) < 0.05) {
+                                    mat.color.setHex(t.body);
+                                    if (mat.emissive) {
+                                        mat.emissive.setHex(t.emissive);
+                                        mat.emissiveIntensity = t.eInt;
+                                    }
+                                }
+                            }
+                        });
+                        // Cosmic star ornaments
+                        if (!upgradeNPC.userData.starGroup) {
+                            const sg = new THREE.Group();
+                            sg.name = 'npcStars';
+                            for (let i = 0; i < 8; i++) {
+                                const star = new THREE.Mesh(
+                                    new THREE.OctahedronGeometry(0.06 + Math.random() * 0.04, 0),
+                                    new THREE.MeshBasicMaterial({ color: 0xffffff })
+                                );
+                                const a = (i / 8) * Math.PI * 2;
+                                star.position.set(Math.cos(a) * 0.7, 1.6 + Math.sin(i) * 0.3, Math.sin(a) * 0.45);
+                                sg.add(star);
+                            }
+                            upgradeNPC.add(sg);
+                            upgradeNPC.userData.starGroup = sg;
+                        }
+                        upgradeNPC.userData.starGroup.visible = !!t.stars;
+                    } catch (err) { console.warn('styleWorldNPC', err); }
+                };
+                window.styleWorldNPC(0);
+
                 /* =========================
                    GATE — mystic deluxe (đẹp & ngầu hơn)
                 ========================= */
@@ -6191,15 +6539,15 @@
 
                 const universeFloor =
                     new THREE.Mesh(
-                        new THREE.PlaneGeometry(120, 120),
+                        new THREE.PlaneGeometry(200, 200),
                         new THREE.MeshStandardMaterial({
                             map: universeFloorTexture,
-                            color: 0xffffff,
-                            emissive: 0x1a0840,
+                            color: 0x121218,
+                            emissive: 0x040406,
                             emissiveMap: universeFloorTexture,
-                            emissiveIntensity: 0.55,
-                            roughness: 0.6,
-                            metalness: 0.15,
+                            emissiveIntensity: 0.2,
+                            roughness: 0.75,
+                            metalness: 0.4,
                             side: THREE.DoubleSide
                         })
                     );
@@ -6540,11 +6888,12 @@
                     new THREE.PlaneGeometry(500, 500),
                     new THREE.MeshStandardMaterial({
                         map: bhFloorTex,
-                        color: 0xffffff,
-                        emissive: 0x0a0420,
+                        color: 0x1a1a22,
+                        emissive: 0x050508,
                         emissiveMap: bhFloorTex,
-                        emissiveIntensity: 0.4,
-                        roughness: 0.7
+                        emissiveIntensity: 0.22,
+                        roughness: 0.85,
+                        metalness: 0.35
                     })
                 );
                 blackHoleFloor.rotation.x = -Math.PI / 2;
@@ -6557,9 +6906,9 @@
                 for (let i = 0; i < 1200; i++) {
                     dustPositions.push((Math.random() - 0.5) * 480, 1 + Math.random() * 70, (Math.random() - 0.5) * 480);
                     const hue = Math.random();
-                    if (hue < 0.4) { dustColors.push(0.8, 0.7, 1); }
-                    else if (hue < 0.7) { dustColors.push(1, 0.85, 0.6); }
-                    else { dustColors.push(0.6, 0.85, 1); }
+                    if (hue < 0.4) { dustColors.push(0.85, 0.9, 1); }
+                    else if (hue < 0.7) { dustColors.push(1, 0.95, 0.85); }
+                    else { dustColors.push(0.7, 0.85, 1); }
                 }
                 spaceDust.setAttribute('position', new THREE.Float32BufferAttribute(dustPositions, 3));
                 spaceDust.setAttribute('color', new THREE.Float32BufferAttribute(dustColors, 3));
@@ -6849,6 +7198,52 @@
                         group.add(blade);
                     }
 
+                    // Halloween: bí ngô treo trên cành
+                    (function addHalloweenPumpkins() {
+                        const pumpMat = new THREE.MeshStandardMaterial({
+                            color: 0xff7a18, roughness: 0.55, metalness: 0.05,
+                            emissive: 0x4a1a00, emissiveIntensity: 0.25
+                        });
+                        const stemMat = new THREE.MeshStandardMaterial({
+                            color: 0x2d5a1e, roughness: 0.9, metalness: 0
+                        });
+                        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1a0800 });
+                        const nPump = 1 + (Math.random() < 0.45 ? 1 : 0);
+                        for (let pi = 0; pi < nPump; pi++) {
+                            const pg = new THREE.Group();
+                            const body = new THREE.Mesh(new THREE.SphereGeometry(0.22 * s, 10, 8), pumpMat);
+                            body.scale.set(1.15, 0.95, 1.05);
+                            pg.add(body);
+                            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03 * s, 0.04 * s, 0.14 * s, 5), stemMat);
+                            stem.position.y = 0.22 * s;
+                            pg.add(stem);
+                            // Jack-o-lantern face
+                            const eyeL = new THREE.Mesh(new THREE.ConeGeometry(0.04 * s, 0.07 * s, 3), eyeMat);
+                            eyeL.position.set(-0.07 * s, 0.04 * s, 0.2 * s);
+                            eyeL.rotation.x = Math.PI;
+                            const eyeR = eyeL.clone();
+                            eyeR.position.x = 0.07 * s;
+                            pg.add(eyeL, eyeR);
+                            const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.12 * s, 0.035 * s, 0.04 * s), eyeMat);
+                            mouth.position.set(0, -0.06 * s, 0.2 * s);
+                            pg.add(mouth);
+                            // Hang from canopy height
+                            const ang = Math.random() * Math.PI * 2;
+                            const rad = (0.35 + Math.random() * 0.55) * s;
+                            const hy = trunkH * (0.65 + Math.random() * 0.35);
+                            pg.position.set(Math.cos(ang) * rad, hy, Math.sin(ang) * rad);
+                            // String
+                            const string = new THREE.Mesh(
+                                new THREE.CylinderGeometry(0.012 * s, 0.012 * s, 0.35 * s, 4),
+                                new THREE.MeshBasicMaterial({ color: 0x3a2a1a })
+                            );
+                            string.position.set(0, 0.28 * s, 0);
+                            pg.add(string);
+                            pg.userData.isPumpkin = true;
+                            group.add(pg);
+                        }
+                    })();
+
                     group.position.set(x, 0, z);
                     group.userData.isTree = true;
                     group.userData.baseY = 0;
@@ -6949,25 +7344,8 @@
                     }
                 })();
 
-                // Fill black-hole / universe empty space with mystic forest
-                for (let i = 0; i < 60; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const r = 25 + Math.random() * 200;
-                    const tx = Math.cos(angle) * r;
-                    const tz = Math.sin(angle) * r;
-                    if (Math.hypot(tx, tz) < 18) continue; // keep black-hole cores clear
-                    blackHoleWorld.add(createMysticTree(tx, tz, 0.9 + Math.random() * 0.85));
-                }
-                // Fill planet world empty ground with forest
-                for (let i = 0; i < 45; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const r = 15 + Math.random() * 85;
-                    planetWorld.add(createMysticTree(
-                        Math.cos(angle) * r,
-                        Math.sin(angle) * r,
-                        0.85 + Math.random() * 0.75
-                    ));
-                }
+                // NO green trees in space worlds (Ultimate / Universe) — keep void clean
+                // (trees only on temple / dirt stages via platformGroup)
                 // Also scatter climbable rocks in black-hole zone edges
                 for (let i = 0; i < 18; i++) {
                     const angle = Math.random() * Math.PI * 2;
@@ -7379,10 +7757,16 @@
                 }
 
                 function setExpandedWorld(stage) {
+                    if (typeof styleWorldNPC === 'function') styleWorldNPC(typeof stage === 'number' ? stage : gameStage);
+
                     // Chỉ 1 thế giới được hiện — tránh chồng chất (planet/blackhole/error/electron)
                     hellWorld.visible = stage === 3;
                     blackHoleWorld.visible = stage === 5 || stage === 6 || stage === 10;
-                    planetWorld.visible = stage === 7 || stage === 8 || stage === 9;
+                    // Stage 7 Universe: dark floor only — no planet green world/trees
+                    planetWorld.visible = stage === 8 || stage === 9;
+                    if (planetWorld && planetWorld.visible === false) {
+                        // strip any leftover green trees if group was shown before
+                    }
                     forestWorld.visible = false;
                     if (electronWorld) electronWorld.visible = (stage === 12);
                     if (typeof glitchWorldGroup !== 'undefined') {
@@ -7466,7 +7850,9 @@
                         if (typeof bossMonster !== 'undefined' && bossMonster)
                             bossMonster.visible = (s === 3);
                         if (typeof finalBossMonster !== 'undefined' && finalBossMonster)
-                            finalBossMonster.visible = (s === 5 || s === 6);
+                            finalBossMonster.visible = (s === 5);
+                        if (typeof supremeBossMonster !== 'undefined' && supremeBossMonster)
+                            supremeBossMonster.visible = (s === 6 && !supremeBossDefeated);
                         if (typeof universeBossMonster !== 'undefined' && universeBossMonster)
                             universeBossMonster.visible = (s === 7 && !universeBossDefeated);
                         if (typeof cosmicBossMonster !== 'undefined' && cosmicBossMonster)
@@ -7475,8 +7861,14 @@
                             oldCharacterBossMonster.visible = (s === 8 && cosmicBossType === 1 && !cosmicBossDefeated);
                         if (typeof atomicBossMonster !== 'undefined' && atomicBossMonster)
                             atomicBossMonster.visible = (s === 9 && atomicBossActive && !atomicBossDefeated);
-                        if (typeof cosmicDinoMonster !== 'undefined' && cosmicDinoMonster)
-                            cosmicDinoMonster.visible = (s === 10 && cosmicDinoActive && !cosmicDinoDefeated);
+                        if (typeof cosmicDinoMonster !== 'undefined' && cosmicDinoMonster) {
+                            const showDino = (s === 10 && cosmicDinoActive && !cosmicDinoDefeated);
+                            cosmicDinoMonster.visible = !!showDino;
+                            if (!showDino && s !== 10) {
+                                // never leak T-Rex into Atomic / other worlds
+                                try { cosmicDinoActive = (s === 10) ? cosmicDinoActive : false; } catch(e) {}
+                            }
+                        }
                         if (typeof errorBossMonster !== 'undefined' && errorBossMonster) {
                             if (s !== 11) errorBossMonster.visible = false;
                         }
@@ -7784,6 +8176,60 @@
                 const galaxySkybox =
                     createGalaxyNebulaSkybox();
 
+                // Deep space — pure black + stars (Ultimate / Universe) — NOT purple/pink
+                function createDeepSpaceSkybox() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 1024;
+                    canvas.height = 1024;
+                    const ctx = canvas.getContext('2d');
+                    // Pure near-black void
+                    const bg = ctx.createRadialGradient(512, 512, 40, 512, 512, 700);
+                    bg.addColorStop(0, '#050508');
+                    bg.addColorStop(0.45, '#020204');
+                    bg.addColorStop(1, '#000000');
+                    ctx.fillStyle = bg;
+                    ctx.fillRect(0, 0, 1024, 1024);
+                    // Distant faint milky band (very subtle grey, not purple)
+                    ctx.save();
+                    ctx.translate(512, 512);
+                    ctx.rotate(-0.4);
+                    const band = ctx.createLinearGradient(0, -80, 0, 80);
+                    band.addColorStop(0, 'rgba(0,0,0,0)');
+                    band.addColorStop(0.5, 'rgba(180,190,210,0.06)');
+                    band.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = band;
+                    ctx.fillRect(-700, -90, 1400, 180);
+                    ctx.restore();
+                    // Stars only
+                    for (let i = 0; i < 900; i++) {
+                        const x = Math.random() * 1024;
+                        const y = Math.random() * 1024;
+                        const s = Math.random() * 1.6 + 0.2;
+                        const a = 0.35 + Math.random() * 0.65;
+                        ctx.fillStyle = 'rgba(255,255,255,' + a + ')';
+                        ctx.beginPath();
+                        ctx.arc(x, y, s, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    // A few brighter stars
+                    for (let i = 0; i < 40; i++) {
+                        const x = Math.random() * 1024;
+                        const y = Math.random() * 1024;
+                        ctx.fillStyle = 'rgba(220,235,255,0.95)';
+                        ctx.beginPath();
+                        ctx.arc(x, y, 1.8 + Math.random(), 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = 'rgba(180,210,255,0.35)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(x - 5, y); ctx.lineTo(x + 5, y);
+                        ctx.moveTo(x, y - 5); ctx.lineTo(x, y + 5);
+                        ctx.stroke();
+                    }
+                    return new THREE.CanvasTexture(canvas);
+                }
+                const deepSpaceSkybox = createDeepSpaceSkybox();
+
                 // Đất / đền: trời đêm tím đen + quả cầu
                 const dirtSkyColor =
                     new THREE.Color(0x06030d);
@@ -7824,12 +8270,14 @@
                 function applyWorldSky(stage) {
                     const s = (typeof stage === 'number') ? stage : gameStage;
 
-                    const isUniverse = (s === 5 || s === 6 || s === 10);
-                    const isBlue = (s === 7 || s === 8 || s === 9);
+                    // Ultimate(6) + Universe(7) + Final arena(5) + BH(10) = deep black space
+                    const isDeepSpace = (s === 5 || s === 6 || s === 7 || s === 10);
+                    const isBlue = (s === 8 || s === 9); // cosmic/atomic can keep cooler sky
                     const isDirt = (s === 1 || s === 2 || s === 4 || s === 0);
                     const isHell = (s === 3);
                     const isError = (s === 11);
                     const isElectron = (s === 12);
+                    const isUniverse = isDeepSpace; // compat
 
                     // Hiện/ẩn 6 quả cầu pastel (chỉ thế giới đất)
                     if (typeof skyPlanets !== 'undefined' && skyPlanets) {
@@ -7848,12 +8296,16 @@
                         starField.visible = !isBlue;
                     }
 
-                    if (isUniverse) {
-                        scene.background = galaxySkybox;
+                    if (isDeepSpace) {
+                        // Black space void — stars, no purple nebula wash
+                        scene.background = (typeof deepSpaceSkybox !== 'undefined') ? deepSpaceSkybox : new THREE.Color(0x000000);
+                        try { if (typeof deepSpaceSkybox !== 'undefined') scene.environment = deepSpaceSkybox; } catch (e) {}
                         if (scene.fog) {
-                            scene.fog.color.setHex(0x0a0518);
-                            scene.fog.density = 0.0018;
+                            scene.fog.color.setHex(0x000000);
+                            scene.fog.density = 0.0006;
                         }
+                        if (typeof starField !== 'undefined' && starField)
+                            starField.visible = true;
                     } else if (isBlue) {
                         scene.background = blueSkyColor;
                         if (scene.fog) {
@@ -9166,7 +9618,7 @@
                                     });
                                     mpPeer.on('error', () => {
                                         mpSetStatus('Không ghép được — thử lại');
-                                        showToast('❌ Thử lại Chơi ngẫu nhiên');
+                                        showToast('❌ Thử lại Random match');
                                     });
                                 } else {
                                     mpSetStatus('Lỗi: ' + ((err && err.type) || 'unknown'));
@@ -12291,34 +12743,47 @@ const redMonster =
                         if (universeBossMonster && universeBossMonster.parent)
                             universeBossMonster.parent.remove(universeBossMonster);
                     } catch (e) {}
-                    universeBossMonster = createCuteBlockyCreature({
-                        bodyColor: 0x4a2a6a,
-                        accentColor: 0xcc66ff,
-                        cheekColor: 0xaa88cc,
-                        earColor: 0xdd88ff,
-                        scale: 8,
-                        hasEars: true,
-                        hasDiamond: true
-                    });
-                    universeBossMonster.position.set(0, 0, -7);
-                    universeBossMonster.visible = false;
-                    // Màu xanh nước biển
-                    universeBossMonster.traverse(function(child) {
-                        if (child.isMesh && child.material && child.material.color) {
-                            child.material = child.material.clone();
-                            const hex = child.material.color.getHex();
-                            if (hex === 0xff6b6b || hex === 0xfff5f8 || hex === 0xffffff || hex === 0xffb6c1) {
-                                child.material.color.setHex(0x1e90ff);
-                            } else {
-                                child.material.color.setHex(0x00bfff);
-                                if (child.material.emissive) {
-                                    child.material.emissive.setHex(0x0077aa);
-                                    child.material.emissiveIntensity = 0.35;
-                                }
-                            }
+                    // Universe boss = planet core + orbit rings (không dùng cute face)
+                    (function buildUniverseBoss() {
+                        const g = new THREE.Group();
+                        const coreMat = new THREE.MeshStandardMaterial({
+                            color: 0x220044, metalness: 0.5, roughness: 0.4,
+                            emissive: 0x6600aa, emissiveIntensity: 0.4
+                        });
+                        const core = new THREE.Mesh(new THREE.IcosahedronGeometry(1.6, 1), coreMat);
+                        core.position.y = 2.2;
+                        g.add(core);
+                        const ringMat = new THREE.MeshBasicMaterial({ color: 0xff44ff, transparent: true, opacity: 0.75, side: THREE.DoubleSide });
+                        for (let i = 0; i < 3; i++) {
+                            const ring = new THREE.Mesh(new THREE.TorusGeometry(2.2 + i * 0.45, 0.06, 8, 48), ringMat.clone());
+                            ring.material.color.setHex([0xff44ff, 0x44aaff, 0xffaa00][i]);
+                            ring.position.y = 2.2;
+                            ring.rotation.x = Math.PI / 2 + i * 0.4;
+                            ring.rotation.y = i * 0.5;
+                            g.add(ring);
                         }
-                    });
-                    scene.add(universeBossMonster);
+                        // Eyes as stars
+                        const starMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                        for (const s of [-1, 1]) {
+                            const eye = new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 0), starMat);
+                            eye.position.set(s * 0.55, 2.5, 1.35);
+                            g.add(eye);
+                        }
+                        // Arms floating rocks
+                        for (const s of [-1, 1]) {
+                            const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(0.4, 0), coreMat.clone());
+                            rock.position.set(s * 2.8, 2.0, 0);
+                            g.add(rock);
+                        }
+                        g.scale.setScalar(3.2);
+                        g.position.set(0, 0, -7);
+                        g.visible = false;
+                        g.traverse(c => { if (c.isMesh) { c.castShadow = true; } });
+                        universeBossMonster = g;
+                        scene.add(universeBossMonster);
+                        if (typeof polishBossMaterials === 'function')
+                            polishBossMaterials(universeBossMonster, { metal: 0.8, rough: 0.2, envInt: 1.3 });
+                    })();
 
                     // cosmicBossMonster is const — refill with cute clone of universe
                     if (typeof cosmicBossMonster !== 'undefined' && cosmicBossMonster) {
@@ -12476,18 +12941,22 @@ const redMonster =
                     if (child.isMesh && child.material && child.material.color) {
                         child.material = child.material.clone();
                         const hex = child.material.color.getHex();
-                        // Body → tím rõ
+                        // Body → deep violet metal (reflective)
                         if (hex === 0xff6b6b || hex === 0xfff5f8 || hex === 0xffffff) {
-                            child.material.color.setHex(0x7b3fe4);
+                            child.material.color.setHex(0x5a2ecc);
                         } else if (hex === 0xff3355 || hex === 0xff4466 || hex === 0xffa0a8) {
-                            child.material.color.setHex(0xaa66ff);
+                            child.material.color.setHex(0xcc88ff);
                             if (child.material.emissive) {
-                                child.material.emissive.setHex(0x6622cc);
-                                child.material.emissiveIntensity = 0.45;
+                                child.material.emissive.setHex(0x4422aa);
+                                child.material.emissiveIntensity = 0.35;
                             }
                         } else {
-                            child.material.color.setHex(0x8b5cf6);
+                            child.material.color.setHex(0x6b4ae0);
                         }
+                        child.material.metalness = 0.7;
+                        child.material.roughness = 0.25;
+                        child.material.envMapIntensity = 1.25;
+                        child.material.needsUpdate = true;
                     }
                 });
 
@@ -12619,6 +13088,119 @@ const redMonster =
                 finalBossMonster.add(
                     finalBossAura
                 );
+
+                /* =========================
+                   SUPREME / ULTIMATE BOSS
+                   (riêng biệt — không dùng final)
+                   Giáp vàng + lõi cyan + sừng
+                ========================= */
+                function createSupremeBossMonster() {
+                    const g = new THREE.Group();
+                    const gold = new THREE.MeshStandardMaterial({
+                        color: 0xffe566, metalness: 0.95, roughness: 0.12,
+                        emissive: 0xaa7700, emissiveIntensity: 0.4, envMapIntensity: 1.5
+                    });
+                    const dark = new THREE.MeshStandardMaterial({
+                        color: 0x0a0a12, metalness: 0.75, roughness: 0.28,
+                        emissive: 0x111122, emissiveIntensity: 0.15, envMapIntensity: 1.2
+                    });
+                    const cyan = new THREE.MeshStandardMaterial({
+                        color: 0x66f0ff, metalness: 0.9, roughness: 0.15,
+                        emissive: 0x00ccee, emissiveIntensity: 0.65, envMapIntensity: 1.6
+                    });
+                    const eye = new THREE.MeshBasicMaterial({ color: 0xff2244 });
+                    // Torso
+                    const body = new THREE.Mesh(new THREE.BoxGeometry(2.2, 2.4, 1.4), dark);
+                    body.position.y = 2.0;
+                    g.add(body);
+                    // Chest plate gold
+                    const chest = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.2, 0.35), gold);
+                    chest.position.set(0, 2.3, 0.65);
+                    g.add(chest);
+                    // Core crystal
+                    const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.45, 0), cyan);
+                    core.position.set(0, 2.2, 0.9);
+                    g.add(core);
+                    // Head
+                    const head = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.3, 1.3), dark);
+                    head.position.y = 3.7;
+                    g.add(head);
+                    // Crown
+                    const crown = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.35, 1.5), gold);
+                    crown.position.y = 4.4;
+                    g.add(crown);
+                    // Horns
+                    for (const s of [-1, 1]) {
+                        const horn = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.9, 6), gold);
+                        horn.position.set(s * 0.7, 4.85, 0);
+                        horn.rotation.z = s * 0.35;
+                        g.add(horn);
+                    }
+                    // Eyes
+                    for (const s of [-1, 1]) {
+                        const e = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.18, 0.1), eye);
+                        e.position.set(s * 0.35, 3.75, 0.7);
+                        g.add(e);
+                    }
+                    // Arms
+                    for (const s of [-1, 1]) {
+                        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.8, 0.55), dark);
+                        arm.position.set(s * 1.5, 2.0, 0);
+                        g.add(arm);
+                        const gaunt = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.5, 0.65), gold);
+                        gaunt.position.set(s * 1.5, 1.1, 0);
+                        g.add(gaunt);
+                    }
+                    // Legs
+                    for (const s of [-1, 1]) {
+                        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.5, 0.7), dark);
+                        leg.position.set(s * 0.55, 0.75, 0);
+                        g.add(leg);
+                        const boot = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.35, 0.9), gold);
+                        boot.position.set(s * 0.55, 0.15, 0.1);
+                        g.add(boot);
+                    }
+                    // Aura ring
+                    const ring = new THREE.Mesh(
+                        new THREE.TorusGeometry(2.2, 0.08, 8, 32),
+                        new THREE.MeshBasicMaterial({ color: 0x00e8ff, transparent: true, opacity: 0.7 })
+                    );
+                    ring.rotation.x = Math.PI / 2;
+                    ring.position.y = 2.2;
+                    g.add(ring);
+                    g.scale.setScalar(1.8);
+                    g.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+                    return g;
+                }
+                let supremeBossMonster = createSupremeBossMonster();
+                supremeBossMonster.position.set(0, 0, -6);
+                supremeBossMonster.visible = false;
+                scene.add(supremeBossMonster);
+
+                // High-gloss reflective polish for all major bosses
+                window.polishBossMaterials = function(root, opts) {
+                    opts = opts || {};
+                    const metal = opts.metal != null ? opts.metal : 0.72;
+                    const rough = opts.rough != null ? opts.rough : 0.22;
+                    const envInt = opts.envInt != null ? opts.envInt : 1.15;
+                    if (!root) return;
+                    root.traverse(function(ch) {
+                        if (!ch.isMesh || !ch.material) return;
+                        const mats = Array.isArray(ch.material) ? ch.material : [ch.material];
+                        mats.forEach(function(m) {
+                            if (!m) return;
+                            if (m.metalness != null) m.metalness = Math.max(m.metalness || 0, metal);
+                            if (m.roughness != null) m.roughness = Math.min(m.roughness != null ? m.roughness : 1, rough);
+                            m.envMapIntensity = envInt;
+                            // subtle clearcoat if supported (MeshPhysicalMaterial) — skip
+                            m.needsUpdate = true;
+                        });
+                    });
+                };
+                if (typeof finalBossMonster !== 'undefined')
+                    polishBossMaterials(finalBossMonster, { metal: 0.65, rough: 0.28, envInt: 1.2 });
+                if (typeof supremeBossMonster !== 'undefined')
+                    polishBossMaterials(supremeBossMonster, { metal: 0.88, rough: 0.16, envInt: 1.4 });
 
                 /* =========================
                    DANH HIỆU [BOSS] CẦU VỒNG
@@ -13606,6 +14188,7 @@ const octopusMonster =
                     ) {
 
                         inventory.legendary++;
+                        if (typeof flyItemToSlot === 'function') flyItemToSlot('legendary', window.innerWidth/2, window.innerHeight*0.4);
                         if (typeof autoEquipBestSword === 'function') autoEquipBestSword();
 
                         showToast(
@@ -13622,6 +14205,7 @@ const octopusMonster =
                     ) {
 
                         inventory.epic++;
+                        if (typeof flyItemToSlot === 'function') flyItemToSlot('epic', window.innerWidth/2, window.innerHeight*0.4);
                         if (typeof autoEquipBestSword === 'function') autoEquipBestSword();
 
                         showToast(
@@ -13636,6 +14220,7 @@ const octopusMonster =
                     ) {
 
                         inventory.rare++;
+                        if (typeof flyItemToSlot === 'function') flyItemToSlot('rare', window.innerWidth/2, window.innerHeight*0.4);
                         if (typeof autoEquipBestSword === 'function') autoEquipBestSword();
 
                         showToast(
@@ -13650,6 +14235,7 @@ const octopusMonster =
                     ) {
 
                         inventory.common++;
+                        if (typeof flyItemToSlot === 'function') flyItemToSlot('common', window.innerWidth/2, window.innerHeight*0.4);
                         if (typeof autoEquipBestSword === 'function') autoEquipBestSword();
 
                         showToast(
@@ -13664,10 +14250,9 @@ const octopusMonster =
                 }
 
 
-                function drawEquippedSwordIcon() {
-                    const c = document.getElementById('sword-icon-canvas');
+                function drawSwordIconOnCanvas(c, kind) {
                     if (!c || !c.getContext) return;
-                    if (c.width < 64) { c.width = 64; c.height = 64; }
+                    if (c.width < 32) { c.width = 32; c.height = 32; }
                     const ctx = c.getContext('2d');
                     const W = c.width, H = c.height;
                     ctx.clearRect(0, 0, W, H);
@@ -13687,17 +14272,9 @@ const octopusMonster =
                         }
                     }
 
-                    let kind = 'common';
-                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword) kind = 'electron';
-                    else if ((typeof hasGlitchSword !== 'undefined' && hasGlitchSword) || equippedItemType === 'glitch' || equippedItemType === 'error') kind = 'error';
-                    else if ((typeof hasHackSword !== 'undefined' && hasHackSword) || equippedItemType === 'hack') kind = 'hack';
-                    else if ((typeof hasGoDSword !== 'undefined' && hasGoDSword) || equippedItemType === 'god') kind = 'god';
-                    else if (equippedItemType === 'legendary' || (typeof swordLevel === 'number' && swordLevel >= 3)) kind = 'legendary';
-                    else if (equippedItemType === 'epic' || (typeof swordLevel === 'number' && swordLevel === 2)) kind = 'epic';
-                    else if (equippedItemType === 'rare' || (typeof swordLevel === 'number' && swordLevel === 1)) kind = 'rare';
-                    else if (equippedItemType === 'common') kind = 'common';
+                    kind = kind || 'common';
 
-                    if (kind === 'common') {
+if (kind === 'common') {
                         // H1: bạc-xanh + vàng
                         drawPixels([
                             '.......W......',
@@ -13913,27 +14490,76 @@ const octopusMonster =
                 }
 
 
+                function drawEquippedSwordIcon() {
+                    const c = document.getElementById('sword-icon-canvas');
+                    if (!c || !c.getContext) return;
+                    if (c.width < 64) { c.width = 64; c.height = 64; }
+
+                    let kind = 'common';
+                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword) kind = 'electron';
+                    else if ((typeof hasGlitchSword !== 'undefined' && hasGlitchSword) || equippedItemType === 'glitch' || equippedItemType === 'error') kind = 'error';
+                    else if ((typeof hasHackSword !== 'undefined' && hasHackSword) || equippedItemType === 'hack') kind = 'hack';
+                    else if ((typeof hasGoDSword !== 'undefined' && hasGoDSword) || equippedItemType === 'god') kind = 'god';
+                    else if (equippedItemType === 'legendary' || (typeof swordLevel === 'number' && swordLevel >= 3)) kind = 'legendary';
+                    else if (equippedItemType === 'epic' || (typeof swordLevel === 'number' && swordLevel === 2)) kind = 'epic';
+                    else if (equippedItemType === 'rare' || (typeof swordLevel === 'number' && swordLevel === 1)) kind = 'rare';
+                    else if (equippedItemType === 'common') kind = 'common';
+
+                    drawSwordIconOnCanvas(c, kind);
+                }
+
+
+
                 function updateInventoryUI() {
 
-                    document.getElementById(
-                        'inv-common'
-                    ).innerText =
-                        inventory.common;
+                    // Counts as xN + draw 2D sword icons + EMPTY SLOT state
+                    function setInvX(id, n, color) {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.innerText = 'x' + (n || 0);
+                            el.style.display = (n > 0) ? '' : 'none';
+                            if (color) el.style.color = color;
+                        }
+                        // hotbar mirror ids: inv-common-x -> hotbar-common-x
+                        const hb = id.replace('inv-', 'hotbar-');
+                        const el2 = document.getElementById(hb);
+                        if (el2) {
+                            el2.innerText = 'x' + (n || 0);
+                            el2.style.display = (n > 0) ? '' : 'none';
+                            if (color) el2.style.color = color;
+                        }
+                    }
+                    function setSlotState(slotId, iconId, qty) {
+                        const slot = document.getElementById(slotId);
+                        if (!slot) return;
+                        const canvas = document.getElementById(iconId);
+                        const empty = slot.querySelector('.inv-slot-empty');
+                        const has = qty > 0;
+                        if (canvas) canvas.style.display = has ? '' : 'none';
+                        if (empty) empty.style.display = has ? 'none' : 'block';
+                        if (has) {
+                            slot.style.borderColor = 'rgba(0, 200, 255, 0.45)';
+                            slot.style.boxShadow = '0 0 10px rgba(0,160,220,0.25)';
+                        } else {
+                            slot.style.borderColor = 'rgba(120,140,160,0.35)';
+                            slot.style.boxShadow = 'none';
+                        }
+                    }
+                    setInvX('inv-common-x', inventory.common, '#ffe566');
+                    setInvX('inv-rare-x', inventory.rare, '#66aaff');
+                    setInvX('inv-epic-x', inventory.epic, '#cc88ff');
+                    setInvX('inv-legendary-x', inventory.legendary, '#ffd700');
+                    setSlotState('slot-common', 'icon-common', inventory.common);
+                    setSlotState('slot-rare', 'icon-rare', inventory.rare);
+                    setSlotState('slot-epic', 'icon-epic', inventory.epic);
+                    setSlotState('slot-legendary', 'icon-legendary', inventory.legendary);
 
-                    document.getElementById(
-                        'inv-rare'
-                    ).innerText =
-                        inventory.rare;
-
-                    document.getElementById(
-                        'inv-epic'
-                    ).innerText =
-                        inventory.epic;
-
-                    document.getElementById(
-                        'inv-legendary'
-                    ).innerText =
-                        inventory.legendary;
+                    if (typeof drawSwordIconOnCanvas === 'function') {
+                        if (inventory.common > 0) drawSwordIconOnCanvas(document.getElementById('icon-common'), 'common');
+                        if (inventory.rare > 0) drawSwordIconOnCanvas(document.getElementById('icon-rare'), 'rare');
+                        if (inventory.epic > 0) drawSwordIconOnCanvas(document.getElementById('icon-epic'), 'epic');
+                        if (inventory.legendary > 0) drawSwordIconOnCanvas(document.getElementById('icon-legendary'), 'legendary');
+                    }
 
                     document.getElementById(
                         'lvl-common'
@@ -13983,41 +14609,20 @@ const octopusMonster =
                         ? 0
                         : upgradeRates.legendary;
 
-                    const invGod =
-                        document.getElementById(
-                            'inv-god'
-                        );
-
-                    if (invGod)
-                        invGod.innerText =
-                            godSwordCount;
-
-                    const invHack =
-                        document.getElementById(
-                            'inv-hack'
-                        );
-
-                    if (invHack)
-                        invHack.innerText =
-                            hackSwordCount;
-
-                    const invError =
-                        document.getElementById(
-                            'inv-error'
-                        );
-
-                    if (invError)
-                        invError.innerText =
-                            hasGlitchSword ? 1 : 0;
-
-                    const invElectron =
-                        document.getElementById(
-                            'inv-electron'
-                        );
-
-                    if (invElectron)
-                        invElectron.innerText =
-                            hasElectronSword ? 1 : 0;
+                    setInvX('inv-god-x', godSwordCount, '#ffd700');
+                    setInvX('inv-hack-x', hackSwordCount, '#00ffff');
+                    setInvX('inv-error-x', hasGlitchSword ? 1 : 0, '#ff3355');
+                    setInvX('inv-electron-x', hasElectronSword ? 1 : 0, '#44ccff');
+                    setSlotState('slot-god', 'icon-god', godSwordCount);
+                    setSlotState('slot-hack', 'icon-hack', hackSwordCount);
+                    setSlotState('slot-error', 'icon-error', hasGlitchSword ? 1 : 0);
+                    setSlotState('slot-electron', 'icon-electron', hasElectronSword ? 1 : 0);
+                    if (typeof drawSwordIconOnCanvas === 'function') {
+                        if (godSwordCount > 0) drawSwordIconOnCanvas(document.getElementById('icon-god'), 'god');
+                        if (hackSwordCount > 0) drawSwordIconOnCanvas(document.getElementById('icon-hack'), 'hack');
+                        if (hasGlitchSword) drawSwordIconOnCanvas(document.getElementById('icon-error'), 'error');
+                        if (hasElectronSword) drawSwordIconOnCanvas(document.getElementById('icon-electron'), 'electron');
+                    }
 
                     const lvlGod =
                         document.getElementById(
@@ -14039,6 +14644,72 @@ const octopusMonster =
 
                     if (typeof drawEquippedSwordIcon === 'function')
                         drawEquippedSwordIcon();
+
+                    // 2D icon + xN for currently held sword in inventory panel (slot ngang)
+                    (function refreshEquippedInvDisplay() {
+                        const te = document.getElementById('txt-equipped');
+                        const teLabel = document.getElementById('txt-equipped-label');
+                        const tx = document.getElementById('txt-equipped-x');
+                        const ic = document.getElementById('icon-equipped');
+                        const slotEq = document.getElementById('slot-equipped');
+                        let kind = null;
+                        let qty = 0;
+                        let label = (typeof currentLang !== 'undefined' && currentLang === 'vi') ? 'Chưa có' : 'None';
+                        if (typeof hasElectronSword !== 'undefined' && hasElectronSword) {
+                            kind = 'electron'; qty = 1; label = 'Electron';
+                        } else if ((typeof hasGlitchSword !== 'undefined' && hasGlitchSword) || equippedItemType === 'glitch' || equippedItemType === 'error') {
+                            kind = 'error'; qty = 1; label = 'Error';
+                        } else if ((typeof hasHackSword !== 'undefined' && hasHackSword) || equippedItemType === 'hack') {
+                            kind = 'hack'; qty = (typeof hackSwordCount === 'number') ? Math.max(1, hackSwordCount) : 1; label = 'Hack';
+                        } else if ((typeof hasGoDSword !== 'undefined' && hasGoDSword) || equippedItemType === 'god') {
+                            kind = 'god'; qty = (typeof godSwordCount === 'number') ? Math.max(1, godSwordCount) : 1; label = 'GoD';
+                        } else if (equippedItemType && typeof inventory !== 'undefined' && inventory[equippedItemType] !== undefined) {
+                            kind = equippedItemType;
+                            qty = inventory[equippedItemType] || 0;
+                            label = String(equippedItemType).toUpperCase();
+                            if (typeof itemLevels !== 'undefined' && itemLevels[equippedItemType])
+                                label += ' Lv.' + itemLevels[equippedItemType];
+                        }
+                        if (kind && typeof drawSwordIconOnCanvas === 'function' && ic) {
+                            if (ic.width < 40) { ic.width = 40; ic.height = 40; }
+                            drawSwordIconOnCanvas(ic, kind);
+                            ic.style.display = '';
+                        } else if (ic) {
+                            const ctx = ic.getContext && ic.getContext('2d');
+                            if (ctx) ctx.clearRect(0, 0, ic.width, ic.height);
+                        }
+                        if (tx) {
+                            tx.innerText = (kind && qty > 0) ? ('x' + qty) : '';
+                            tx.style.display = (kind && qty > 0) ? '' : 'none';
+                        }
+                        const hbx = document.getElementById('hotbar-equipped-x');
+                        if (hbx) {
+                            hbx.innerText = (kind && qty > 0) ? ('x' + qty) : '';
+                            hbx.style.display = (kind && qty > 0) ? '' : 'none';
+                        }
+                        if (typeof updateFuseProgressUI === 'function') updateFuseProgressUI();
+                        if (typeof refreshHotbarSelection === 'function') refreshHotbarSelection();
+                        if (te) te.innerText = label;
+                        if (teLabel) teLabel.innerText = label;
+                        // Highlight equipped type slot
+                        ['common','rare','epic','legendary','god','hack','error','electron'].forEach(function(k) {
+                            const s = document.getElementById('slot-' + k);
+                            if (!s) return;
+                            if (kind === k) {
+                                s.style.borderColor = '#00e8ff';
+                                s.style.boxShadow = '0 0 14px rgba(0,200,255,0.5)';
+                            }
+                        });
+                        if (slotEq) {
+                            if (kind) {
+                                slotEq.style.borderColor = '#00e8ff';
+                                slotEq.style.boxShadow = '0 0 16px rgba(0,220,255,0.6)';
+                            } else {
+                                slotEq.style.borderColor = 'rgba(80,120,160,0.4)';
+                                slotEq.style.boxShadow = 'none';
+                            }
+                        }
+                    })()
                 }
 
                 /* =========================
@@ -14278,6 +14949,8 @@ const octopusMonster =
                         ).innerText =
                             type.toUpperCase() +
                             ` (Lv.${itemLevels[type]})`;
+                        const _tel = document.getElementById('txt-equipped-label');
+                        if (_tel) _tel.innerText = type.toUpperCase() + ` (Lv.${itemLevels[type]})`;
 
                         showToast(
                             currentLang === 'vi'
@@ -14649,18 +15322,198 @@ const octopusMonster =
 
                 window.toggleInventory =
                     function() {
-
-                        isInvOpen =
-                            !isInvOpen;
-
-                        document.getElementById(
-                            'inventory-modal'
-                        ).style.display =
-                            isInvOpen
-                            ? 'block'
-                            : 'none';
-
+                        isInvOpen = !isInvOpen;
+                        const modal = document.getElementById('inventory-modal');
+                        if (!modal) return;
+                        if (isInvOpen) {
+                            modal.classList.add('hologram-show');
+                            modal.style.display = 'block';
+                            if (typeof updateFuseProgressUI === 'function') updateFuseProgressUI();
+                            if (typeof updateInventoryUI === 'function') updateInventoryUI();
+                            const tabBtn = document.getElementById('hotbar-tab-btn');
+                            if (tabBtn) tabBtn.classList.remove('has-new');
+                        } else {
+                            modal.classList.remove('hologram-show');
+                            modal.style.display = 'none';
+                        }
                     };
+
+
+                /* ===== HOTBAR: drag-drop equip + fly pickup + fuse UI ===== */
+                window.updateFuseProgressUI = function() {
+                    try {
+                        const leg = (typeof inventory !== 'undefined' && inventory.legendary) ? inventory.legendary : 0;
+                        const legLv = (typeof itemLevels !== 'undefined' && itemLevels.legendary) ? itemLevels.legendary : 1;
+                        const gods = (typeof godSwordCount === 'number') ? godSwordCount : 0;
+                        const hacks = (typeof hackSwordCount === 'number') ? hackSwordCount : 0;
+                        let label = '';
+                        let pct = 0;
+                        if (hacks > 0 || gods >= 3) {
+                            label = (typeof currentLang !== 'undefined' && currentLang === 'vi')
+                                ? ('Hack ' + hacks + '/20 → Error Sword')
+                                : ('Hack ' + hacks + '/20 → Error Sword');
+                            pct = Math.min(100, (hacks / 20) * 100);
+                        } else if (gods > 0) {
+                            label = (typeof currentLang !== 'undefined' && currentLang === 'vi')
+                                ? ('GoD ' + gods + '/3 → Hack')
+                                : ('GoD ' + gods + '/3 → Hack');
+                            pct = Math.min(100, (gods / 3) * 100);
+                        } else {
+                            const need = (legLv >= 2) ? Math.min(leg, 2) : 0;
+                            label = (typeof currentLang !== 'undefined' && currentLang === 'vi')
+                                ? ('Legend Lv.2: ' + (legLv >= 2 ? leg : 0) + '/2 → GoD')
+                                : ('Legend Lv.2: ' + (legLv >= 2 ? leg : 0) + '/2 → GoD');
+                            pct = legLv >= 2 ? Math.min(100, (leg / 2) * 100) : 0;
+                        }
+                        const bar = document.getElementById('fuse-progress-bar');
+                        const lab = document.getElementById('fuse-progress-label');
+                        const fill = document.getElementById('fuse-hotbar-fill');
+                        const pfill = document.getElementById('fuse-panel-fill');
+                        const ptext = document.getElementById('fuse-info-text');
+                        if (lab) lab.innerText = label;
+                        if (fill) fill.style.width = pct + '%';
+                        if (pfill) pfill.style.width = pct + '%';
+                        if (ptext) ptext.innerText = label + '  ·  [G] Fuse';
+                        if (bar) bar.style.display = (pct > 0 || gods > 0 || hacks > 0) ? 'block' : 'none';
+                    } catch (e) {}
+                };
+
+                window.flyItemToSlot = function(kind, fromX, fromY) {
+                    try {
+                        const slot = document.getElementById('slot-' + kind) || document.getElementById('slot-common');
+                        if (!slot) return;
+                        const rect = slot.getBoundingClientRect();
+                        const el = document.createElement('div');
+                        el.className = 'fly-item';
+                        const emoji = { common:'⚔️', rare:'🔷', epic:'💜', legendary:'👑', god:'🌟', hack:'🌀', error:'⚡', electron:'⚡' };
+                        el.innerText = emoji[kind] || '⚔️';
+                        el.style.left = (fromX || window.innerWidth / 2) + 'px';
+                        el.style.top = (fromY || window.innerHeight / 2) + 'px';
+                        document.body.appendChild(el);
+                        requestAnimationFrame(function() {
+                            el.style.left = (rect.left + rect.width / 2 - 18) + 'px';
+                            el.style.top = (rect.top + rect.height / 2 - 18) + 'px';
+                            el.classList.add('fly-go');
+                        });
+                        setTimeout(function() { try { el.remove(); } catch(e) {} }, 700);
+                        const tabBtn = document.getElementById('hotbar-tab-btn');
+                        if (tabBtn) tabBtn.classList.add('has-new');
+                        slot.style.boxShadow = '0 0 20px rgba(255,220,80,0.7)';
+                        setTimeout(function() { if (typeof updateInventoryUI === 'function') updateInventoryUI(); }, 100);
+                    } catch (e) {}
+                };
+
+                
+                /* ===== HOTBAR SELECT (Minecraft-style scroll) ===== */
+                window.hotbarSlotOrder = ['common','rare','epic','legendary','god','hack','error','electron'];
+                window.hotbarSelectedIndex = 0;
+
+                window.refreshHotbarSelection = function() {
+                    const order = window.hotbarSlotOrder || [];
+                    order.forEach(function(k, i) {
+                        const s = document.getElementById('slot-' + k);
+                        if (!s) return;
+                        if (i === window.hotbarSelectedIndex) s.classList.add('hotbar-selected');
+                        else s.classList.remove('hotbar-selected');
+                    });
+                };
+
+                window.selectHotbarSlot = function(index, doEquip) {
+                    const order = window.hotbarSlotOrder || [];
+                    if (!order.length) return;
+                    index = ((index % order.length) + order.length) % order.length;
+                    window.hotbarSelectedIndex = index;
+                    window.refreshHotbarSelection();
+                    const kind = order[index];
+                    if (doEquip !== false && kind && typeof equipItem === 'function') {
+                        let qty = 0;
+                        if (kind === 'god') qty = (typeof godSwordCount === 'number') ? godSwordCount : 0;
+                        else if (kind === 'hack') qty = (typeof hackSwordCount === 'number') ? hackSwordCount : 0;
+                        else if (kind === 'error') qty = (typeof hasGlitchSword !== 'undefined' && hasGlitchSword) ? 1 : 0;
+                        else if (kind === 'electron') qty = (typeof hasElectronSword !== 'undefined' && hasElectronSword) ? 1 : 0;
+                        else if (typeof inventory !== 'undefined') qty = inventory[kind] || 0;
+                        if (qty > 0 && ['common','rare','epic','legendary'].indexOf(kind) >= 0) {
+                            try { equipItem(kind); } catch (e) {}
+                        }
+                    }
+                };
+
+                // Number keys 1-8 select hotbar
+                window.addEventListener('keydown', function(e) {
+                    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+                    const n = parseInt(e.key, 10);
+                    if (n >= 1 && n <= 8) {
+                        window.selectHotbarSlot(n - 1, true);
+                    }
+                });
+
+
+                (function setupHotbarDragDrop() {
+                    let dragKind = null;
+                    function onDragStart(e) {
+                        const slot = e.currentTarget;
+                        const kind = slot.getAttribute('data-kind');
+                        if (!kind || kind === 'equipped') { e.preventDefault(); return; }
+                        // only if has items
+                        let qty = 0;
+                        if (kind === 'god') qty = (typeof godSwordCount === 'number') ? godSwordCount : 0;
+                        else if (kind === 'hack') qty = (typeof hackSwordCount === 'number') ? hackSwordCount : 0;
+                        else if (kind === 'error') qty = (typeof hasGlitchSword !== 'undefined' && hasGlitchSword) ? 1 : 0;
+                        else if (kind === 'electron') qty = (typeof hasElectronSword !== 'undefined' && hasElectronSword) ? 1 : 0;
+                        else if (typeof inventory !== 'undefined') qty = inventory[kind] || 0;
+                        if (qty <= 0) { e.preventDefault(); return; }
+                        dragKind = kind;
+                        e.dataTransfer.setData('text/plain', kind);
+                        e.dataTransfer.effectAllowed = 'move';
+                        slot.style.opacity = '0.55';
+                    }
+                    function onDragEnd(e) {
+                        e.currentTarget.style.opacity = '';
+                        dragKind = null;
+                        document.querySelectorAll('.inv-slot-drag-over').forEach(function(s) {
+                            s.classList.remove('inv-slot-drag-over');
+                        });
+                    }
+                    function onDragOver(e) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        e.currentTarget.classList.add('inv-slot-drag-over');
+                    }
+                    function onDragLeave(e) {
+                        e.currentTarget.classList.remove('inv-slot-drag-over');
+                    }
+                    function onDrop(e) {
+                        e.preventDefault();
+                        e.currentTarget.classList.remove('inv-slot-drag-over');
+                        const kind = e.dataTransfer.getData('text/plain') || dragKind;
+                        if (!kind) return;
+                        if (['common','rare','epic','legendary'].indexOf(kind) >= 0) {
+                            if (typeof equipItem === 'function') equipItem(kind);
+                        }
+                    }
+                    function bind() {
+                        ['common','rare','epic','legendary','god','hack','error','electron'].forEach(function(k, idx) {
+                            const s = document.getElementById('slot-' + k);
+                            if (!s) return;
+                            s.setAttribute('draggable', 'true');
+                            s.addEventListener('dragstart', onDragStart);
+                            s.addEventListener('dragend', onDragEnd);
+                            s.addEventListener('click', function() {
+                                if (typeof selectHotbarSlot === 'function') selectHotbarSlot(idx, true);
+                            });
+                        });
+                        if (typeof refreshHotbarSelection === 'function') refreshHotbarSelection();
+                        if (typeof updateGenderButtons === 'function') updateGenderButtons();
+                        const eq = document.getElementById('slot-equipped');
+                        if (eq) {
+                            eq.addEventListener('dragover', onDragOver);
+                            eq.addEventListener('dragleave', onDragLeave);
+                            eq.addEventListener('drop', onDrop);
+                        }
+                    }
+                    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+                    else setTimeout(bind, 500);
+                })();
 
                 window.toggleLogin =
                     function() {
@@ -14721,7 +15574,16 @@ const octopusMonster =
                     elements.forEach(el => {
                         const v = el.getAttribute('data-' + currentLang);
                         if (v) el.innerText = v;
+                        else if (currentLang === 'en') {
+                            const en = el.getAttribute('data-en');
+                            if (en) el.innerText = en;
+                        }
                     });
+                    // Sync language pill
+                    try {
+                        const ind = document.getElementById('lang-indicator');
+                        if (ind) ind.innerText = currentLang.toUpperCase();
+                    } catch (e) {}
 
                     // Force HUD short labels
                     const map = currentLang === 'vi' ? {
@@ -14744,7 +15606,7 @@ const octopusMonster =
 
                     // Multi modal title bits
                     const multiH = document.querySelector('#multi-modal h3');
-                    if (multiH) multiH.innerText = currentLang === 'vi' ? '👥 CHƠI 2 NGƯỜI' : '👥 2-PLAYER';
+                    if (multiH) multiH.innerText = currentLang === 'vi' ? '👥 2-PLAYER' : '👥 2-PLAYER';
 
                     // Press P hint
                     const pHint = document.getElementById('press-p-hint');
@@ -15312,7 +16174,8 @@ const octopusMonster =
                     }
                 );
 
-                // ESC exits pointer lock (browser default) + blur command input + toggle update panel
+                // ESC: blur command · double-ESC (within 500ms) toggles update panel
+                window._escLastTap = 0;
                 window.addEventListener('keydown', e => {
                     if (e.key === 'Escape') {
                         if (isPointerLocked) {
@@ -15322,9 +16185,24 @@ const octopusMonster =
                         if (cmdInput && document.activeElement === cmdInput) {
                             cmdInput.blur();
                         }
-                        // ESC không mở bảng update nữa
+                        const now = performance.now();
                         const up = document.getElementById('update-panel');
-                        if (up) up.classList.remove('show');
+                        if (now - window._escLastTap < 500) {
+                            if (up) up.classList.toggle('show');
+                            window._escLastTap = 0;
+                        } else {
+                            window._escLastTap = now;
+                            // single ESC closes update if open
+                            if (up && up.classList.contains('show')) {
+                                // wait for possible second press; if no second, close after 520ms
+                                setTimeout(function() {
+                                    if (window._escLastTap && performance.now() - window._escLastTap >= 500) {
+                                        if (up) up.classList.remove('show');
+                                        window._escLastTap = 0;
+                                    }
+                                }, 520);
+                            }
+                        }
                     }
                 }, true);
 
@@ -15335,21 +16213,18 @@ const octopusMonster =
                 window.addEventListener(
                     'wheel',
                     e => {
-
-                        if (isFirstPerson) return;
-
-                        cameraDistance +=
-                            e.deltaY * 0.01;
-
-                        cameraDistance =
-                            Math.max(
-                                4,
-                                Math.min(
-                                    18,
-                                    cameraDistance
-                                )
-                            );
-
+                        // Minecraft-style: scroll selects hotbar weapon
+                        // Ctrl / Shift + scroll = camera zoom
+                        if (e.ctrlKey || e.shiftKey) {
+                            if (isFirstPerson) return;
+                            cameraDistance += e.deltaY * 0.01;
+                            cameraDistance = Math.max(4, Math.min(18, cameraDistance));
+                            return;
+                        }
+                        if (typeof selectHotbarSlot === 'function') {
+                            const dir = e.deltaY > 0 ? 1 : -1;
+                            selectHotbarSlot((window.hotbarSelectedIndex || 0) + dir, true);
+                        }
                     },
                     { passive: true }
                 );
@@ -15556,9 +16431,12 @@ const octopusMonster =
                     if (cosmicDinoMonster) cosmicDinoMonster.visible = false;
                     if (electronBossMonster) {
                         electronBossMonster.visible = true;
-                        electronBossMonster.position.set(14, electronHomeY, 0);
+                        electronBossMonster.position.set(0, 3.5, -12);
+                        electronBossMonster.scale.set(1.8, 1.8, 1.8);
+                        if (typeof ensureBossNameTag === 'function')
+                            ensureBossNameTag(electronBossMonster, '⚡ ELECTRON BOSS');
                     }
-                    playerGroup.position.set(0, 0, 24);
+                    playerGroup.position.set(0, 0, 10);
                     adminFlyMode = false;
                     playerGroup.position.y = 0;
                     jumpVelocity = 0;
@@ -15574,7 +16452,7 @@ const octopusMonster =
                     document.getElementById('boss-hp-inner').style.width = '100%';
                     document.getElementById('boss-hp-text').innerText = '10.5e / 10.5e';
                     document.getElementById('boss-hp-percent').innerText =
-                        currentLang === 'vi' ? 'Đã tiêu diệt: 0%' : 'Destroyed: 0%';
+                        currentLang === 'vi' ? 'Destroyed: 0%' : 'Destroyed: 0%';
                     document.getElementById('victory-screen').style.display = 'none';
                     const msgs = ['electron-world-msg','gate-msg','final-boss-msg','supreme-boss-msg','universe-world-msg','atomic-boss-msg'];
                     msgs.forEach(id => {
@@ -15698,10 +16576,13 @@ const octopusMonster =
                         atomicBossActive = false;
                         atomicBossDefeated = true;
                         hasAtomicTitle = true;
+                        atomicBossKillCount = Math.max(atomicBossKillCount || 0, typeof ATOMIC_BOSS_KILLS_NEEDED === 'number' ? ATOMIC_BOSS_KILLS_NEEDED : 1);
                         if (atomicBossMonster) atomicBossMonster.visible = false;
                         if (bar) bar.style.display = 'none';
+                        hubUnlockIndex = Math.max(hubUnlockIndex, 6);
                         killed = true;
                         toastKill(currentLang === 'vi' ? 'BOSS HẠT NGUYÊN TỬ' : 'ATOMIC BOSS');
+                        if (typeof returnToHubWorld === 'function') returnToHubWorld();
                     } else if (killStage === 10 || cosmicDinoActive) {
                         cosmicDinoHP = 0n;
                         cosmicDinoActive = false;
@@ -15722,8 +16603,11 @@ const octopusMonster =
                             if (bar) bar.style.display = 'none';
                             if (typeof winErrorGlitchBoss === 'function') winErrorGlitchBoss();
                         }
+                        hubUnlockIndex = Math.max(hubUnlockIndex, 7);
+                        electronWorldUnlocked = true;
                         killed = true;
                         toastKill('ERROR / GLITCH BOSS');
+                        if (typeof returnToHubWorld === 'function') returnToHubWorld();
                     } else if (killStage === 12 || electronBossActive) {
                         electronBossHits = ELECTRON_BOSS_EHP;
                         electronBossDefeated = true;
@@ -15842,6 +16726,7 @@ const octopusMonster =
                     const powerLabel = document.getElementById('val-power');
                     if (powerLabel) powerLabel.innerText = formatPowerDisplay();
                     if (typeof updatePowerBarUI === 'function') updatePowerBarUI();
+                    if (typeof tickPlayerHpRegen === 'function') tickPlayerHpRegen(performance.now());
                     if (typeof refreshPlayerMaxHP === 'function') refreshPlayerMaxHP();
                     if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
                     if (typeof setAdminCommandUI === 'function') setAdminCommandUI(false);
@@ -16717,16 +17602,7 @@ const octopusMonster =
 
                         }
 
-                        if (
-                            k === 'd' &&
-                            electronWorldUnlocked &&
-                            !electronBossActive &&
-                            !electronBossDefeated &&
-                            !isGameEnded
-                        ) {
-                            enterElectronWorld();
-                        }
-
+                        // Electron chỉ vào bằng portal hub [E] — không tự vào khi bấm D
                         if (k === 'd') {
 
                             const distToGateForBoss =
@@ -16812,14 +17688,12 @@ const octopusMonster =
                                 supremeBossHP =
                                     supremeBossMaxHP;
 
-                                finalBossMonster.visible =
-                                    true;
-
-                                finalBossMonster.scale.set(
-                                    7,
-                                    7,
-                                    7
-                                );
+                                if (finalBossMonster)
+                                    finalBossMonster.visible = false;
+                                if (typeof supremeBossMonster !== 'undefined' && supremeBossMonster) {
+                                    supremeBossMonster.visible = true;
+                                    supremeBossMonster.position.set(0, 0, -6);
+                                }
 
                                 finalBossMonster.position.set(
                                     0,
@@ -16979,10 +17853,17 @@ const octopusMonster =
                                 universeBossMonster.visible = false;
                                 cosmicBossMonster.visible = false;
                                 oldCharacterBossMonster.visible = false;
+                                cosmicDinoActive = false;
+                                if (cosmicDinoMonster) cosmicDinoMonster.visible = false;
                                 atomicBossMonster.visible = true;
 
                                 atomicBossMonster.position.set(0, 2.2, -7);
+                                atomicBossMonster.scale.set(2.5, 2.5, 2.5);
                                 playerGroup.position.z = 7;
+                                if (typeof universeFloor !== 'undefined' && universeFloor)
+                                    universeFloor.visible = false;
+                                if (typeof enforceStageMobVisibility === 'function')
+                                    enforceStageMobVisibility(9);
 
                                 document.getElementById('atomic-boss-msg').style.display = 'none';
                                 document.getElementById('victory-screen').style.display = 'none';
@@ -17461,7 +18342,7 @@ const octopusMonster =
                                     'boss-hp-percent'
                                 ).innerText =
                                     currentLang === 'vi'
-                                    ? 'Đã tiêu diệt: 0%'
+                                    ? 'Destroyed: 0%'
                                     : 'Destroyed: 0%';
 
                                 showToast(
@@ -17655,12 +18536,12 @@ const octopusMonster =
                                 readyForGoDTitle = true;
                                 if (typeof claimGoDTitle === 'function') claimGoDTitle();
                                 else hasBossTitle = true;
-                                // Mở Universe trên hub (bỏ supreme qua D)
-                                hubUnlockIndex = Math.max(hubUnlockIndex, 3);
+                                // Unlock Ultimate (supreme) on hub — NOT Universe yet
+                                hubUnlockIndex = Math.max(hubUnlockIndex, 2);
                                 showToast(
                                     currentLang === 'vi'
-                                    ? `👑 ĐÃ HẠ ĐỦ ${FINAL_BOSS_KILLS_NEEDED} [BOSS] CUỐI! Về hub chọn Boss Vũ Trụ!`
-                                    : `👑 DEFEATED ${FINAL_BOSS_KILLS_NEEDED} FINAL [BOSS]! Return to hub for Universe Boss!`
+                                    ? `👑 ĐÃ HẠ ĐỦ ${FINAL_BOSS_KILLS_NEEDED} [BOSS] CUỐI! Về hub chọn Đại Boss Tối Thượng!`
+                                    : `👑 DEFEATED ${FINAL_BOSS_KILLS_NEEDED} FINAL [BOSS]! Return to hub for Ultimate Boss!`
                                 );
                                 if (typeof returnToHubWorld === 'function') returnToHubWorld();
                                 saveCurrentAccount();
@@ -17733,6 +18614,7 @@ const octopusMonster =
                                 supremeBossActive = false;
                                 supremeBossDefeated = true;
                                 universeWorldUnlocked = true;
+                                hubUnlockIndex = Math.max(hubUnlockIndex, 3);
                                 setBossArenaSkybox(false);
 
                                 if (typeof bossTitleSprite !== 'undefined' && bossTitleSprite) {
@@ -17747,6 +18629,8 @@ const octopusMonster =
                                     finalBossMonster.visible = false;
                                     finalBossMonster.scale.set(4.5, 4.5, 4.5);
                                 }
+                                if (typeof supremeBossMonster !== 'undefined' && supremeBossMonster)
+                                    supremeBossMonster.visible = false;
 
                                 document.getElementById('boss-hp-bar').style.display = 'none';
                                 document.getElementById('victory-screen').style.display = 'none';
@@ -17824,8 +18708,8 @@ const octopusMonster =
 
                                     hubUnlockIndex = Math.max(hubUnlockIndex, 5);
                                     showToast(currentLang === 'vi'
-                                        ? '🌌 Cosmic xong! Về hub!'
-                                        : '🌌 Cosmic done! Back to hub!');
+                                        ? '🌌 Cosmic xong! Về hub → Atomic!'
+                                        : '🌌 Cosmic done! Back to hub → Atomic!');
                                     if (typeof returnToHubWorld === 'function') returnToHubWorld();
 
                                     bossTitleSprite.visible = false;
@@ -17839,10 +18723,6 @@ const octopusMonster =
                                     document.getElementById(
                                         'victory-screen'
                                     ).style.display = 'none';
-
-                                    gameStage = 4;
-                                    playerGroup.position.x = 0;
-                                    playerGroup.position.z = -15.5;
 
                                     document.getElementById(
                                         'win-title'
@@ -17895,7 +18775,7 @@ const octopusMonster =
                                 totalDmg;
                             if (typeof triggerHitFlash === "function") triggerHitFlash(atomicBossMonster, 100);
 
-                            // Electron Sword: +10 điểm % vào rate (1.555% → 11.555%)
+                            // Atomic: +20% POWER mỗi click (+10% thêm nếu Electron Sword)
                             {
                                 const aRate = (ATOMIC_POWER_PER_HIT - 1) + (hasElectronSword ? 0.10 : 0);
                                 power = Math.max(1, power * (1 + aRate));
@@ -17922,7 +18802,13 @@ const octopusMonster =
                             if (atomicBossHP <= 0) {
 
                                 atomicBossKillCount++;
-                                atomicBossHP = atomicBossMaxHP;
+                                // Mỗi lần hạ: máu ×10 (thêm một số 0)
+                                if (typeof refreshAtomicBossHPCap === 'function')
+                                    refreshAtomicBossHPCap();
+                                else {
+                                    atomicBossMaxHP = Math.pow(10, (atomicBossKillCount | 0) + 1);
+                                    atomicBossHP = atomicBossMaxHP;
+                                }
                                 atomicBossDefeated = false;
                                 atomicBossActive = true;
 
@@ -17931,7 +18817,7 @@ const octopusMonster =
 
                                 document.getElementById('boss-hp-inner').style.width = '100%';
                                 document.getElementById('boss-hp-text').innerText =
-                                    `${formatNum(atomicBossHP)} / ${formatNum(atomicBossMaxHP)}`;
+                                    `${formatNum(atomicBossHP)} / ${formatNum(atomicBossMaxHP)} oc`;
 
                                 if (atomicBossKillCount >= ATOMIC_BOSS_KILLS_NEEDED) {
 
@@ -17943,34 +18829,29 @@ const octopusMonster =
 
                                     document.getElementById('boss-hp-bar').style.display = 'none';
                                     setBossArenaSkybox(false);
-                                    gameStage = 4;
-                                    playerGroup.position.x = 0;
-                                    playerGroup.position.z = -15.5;
                                     document.getElementById('atomic-boss-msg').style.display = 'none';
-                                    document.getElementById('victory-screen').style.display = 'flex';
-                                    document.getElementById('win-title').innerText = '[↪🔱↩]';
-                                    document.getElementById('win-desc').innerText =
-                                        currentLang === 'vi'
-                                        ? '⚛️ BẠN ĐÃ HẠ 1 TỶ BOSS HẠT NGUYÊN TỬ VÀ NHẬN DANH HIỆU [↪🔱↩]!'
-                                        : '⚛️ YOU DEFEATED 1 BILLION ATOMIC BOSSES AND EARNED [↪🔱↩]!';
+                                    document.getElementById('victory-screen').style.display = 'none';
+                                    // Order: Atomic done → unlock Error/Glitch (index 6)
+                                    hubUnlockIndex = Math.max(hubUnlockIndex, 6);
                                     showToast(
                                         currentLang === 'vi'
-                                        ? '🔱 ĐÃ ĐỦ 1 TỶ BOSS! NHẬN DANH HIỆU [↪🔱↩]!'
-                                        : '🔱 1 BILLION BOSSES DEFEATED! TITLE [↪🔱↩] EARNED!'
+                                        ? '🔱 Atomic xong! Về hub → mở Error / Glitch!'
+                                        : '🔱 Atomic done! Back to hub → Error / Glitch unlocked!'
                                     );
+                                    if (typeof returnToHubWorld === 'function') returnToHubWorld();
                                     saveCurrentAccount();
 
                                 } else {
 
                                     document.getElementById('boss-title').innerText =
                                         currentLang === 'vi'
-                                        ? `⚛️ BOSS HẠT NGUYÊN TỬ (10 TỶ OC HP) - ${formatNum(atomicBossKillCount)}/${formatNum(ATOMIC_BOSS_KILLS_NEEDED)}`
-                                        : `⚛️ ATOMIC BOSS (10 BILLION OC HP) - ${formatNum(atomicBossKillCount)}/${formatNum(ATOMIC_BOSS_KILLS_NEEDED)}`;
+                                        ? `⚛️ ATOMIC (${formatNum(atomicBossMaxHP)} oc) - ${atomicBossKillCount}/${ATOMIC_BOSS_KILLS_NEEDED}`
+                                        : `⚛️ ATOMIC (${formatNum(atomicBossMaxHP)} oc) - ${atomicBossKillCount}/${ATOMIC_BOSS_KILLS_NEEDED}`;
 
                                     showToast(
                                         currentLang === 'vi'
-                                        ? `⚛️ ĐÃ HẠ ${formatNum(atomicBossKillCount)} BOSS HẠT NGUYÊN TỬ!`
-                                        : `⚛️ ${formatNum(atomicBossKillCount)} ATOMIC BOSSES DEFEATED!`
+                                        ? `⚛️ Hạ #${atomicBossKillCount}! Máu boss → ${formatNum(atomicBossMaxHP)} oc · +20% POWER/click`
+                                        : `⚛️ Kill #${atomicBossKillCount}! Boss HP → ${formatNum(atomicBossMaxHP)} oc · +20% POWER/click`
                                     );
                                     saveCurrentAccount();
                                 }
@@ -18240,7 +19121,7 @@ const octopusMonster =
                                     'boss-hp-percent'
                                 ).innerText =
                                     currentLang === 'vi'
-                                    ? 'Đã tiêu diệt: 0%'
+                                    ? 'Destroyed: 0%'
                                     : 'Destroyed: 0%';
 
                                 showToast(
@@ -19425,6 +20306,7 @@ const octopusMonster =
                         atomicBossActive: atomicBossActive,
                         atomicBossDefeated: atomicBossDefeated,
                         atomicBossHP: atomicBossHP,
+                        atomicBossMaxHP: atomicBossMaxHP,
                         atomicBossKillCount: atomicBossKillCount,
                         hasAtomicTitle: hasAtomicTitle,
 
@@ -19638,7 +20520,7 @@ const octopusMonster =
                         data.hasBossTitle || false;
                     if (hasBossTitle) {
                         finalBossKillCount = Math.max(finalBossKillCount || 0, FINAL_BOSS_KILLS_NEEDED);
-                        hubUnlockIndex = Math.max(typeof hubUnlockIndex === 'number' ? hubUnlockIndex : 0, 3);
+                        hubUnlockIndex = Math.max(typeof hubUnlockIndex === 'number' ? hubUnlockIndex : 0, 2);
                     }
 
                     readyForGoDTitle =
@@ -19649,6 +20531,10 @@ const octopusMonster =
 
                     supremeBossDefeated =
                         data.supremeBossDefeated || false;
+                    if (supremeBossDefeated) {
+                        hubUnlockIndex = Math.max(typeof hubUnlockIndex === 'number' ? hubUnlockIndex : 0, 3);
+                        universeWorldUnlocked = true;
+                    }
 
                     supremeBossHP =
                         (typeof data.supremeBossHP === 'number')
@@ -19714,6 +20600,11 @@ const octopusMonster =
 
                     atomicBossKillCount =
                         data.atomicBossKillCount || 0;
+                    if (typeof refreshAtomicBossHPCap === 'function') {
+                        refreshAtomicBossHPCap();
+                        if (typeof data.atomicBossHP === 'number' && data.atomicBossHP > 0 && data.atomicBossHP <= atomicBossMaxHP)
+                            atomicBossHP = data.atomicBossHP;
+                    }
 
                     hasAtomicTitle =
                         data.hasAtomicTitle || false;
@@ -20101,11 +20992,16 @@ const octopusMonster =
 
                     }
 
-                    finalBossMonster.scale.set(
-                        gameStage === 6 ? 7 : 4.5,
-                        gameStage === 6 ? 7 : 4.5,
-                        gameStage === 6 ? 7 : 4.5
-                    );
+                    if (finalBossMonster) {
+                        finalBossMonster.scale.set(4.5, 4.5, 4.5);
+                        if (gameStage === 6) finalBossMonster.visible = false;
+                    }
+                    if (typeof supremeBossMonster !== 'undefined' && supremeBossMonster) {
+                        if (gameStage === 6 && supremeBossActive && !supremeBossDefeated)
+                            supremeBossMonster.visible = true;
+                        else if (gameStage !== 6)
+                            supremeBossMonster.visible = false;
+                    }
 
                     document.getElementById(
                         'boss-hp-bar'
@@ -20123,8 +21019,8 @@ const octopusMonster =
                             'boss-title'
                         ).innerText =
                             currentLang === 'vi'
-                            ? '⚛️ BOSS HẠT NGUYÊN TỬ (10 TỶ OC HP)'
-                            : '⚛️ ATOMIC BOSS (10 BILLION OC HP)';
+                            ? ('⚛️ ATOMIC (' + formatNum(atomicBossMaxHP) + ' oc)')
+                            : ('⚛️ ATOMIC (' + formatNum(atomicBossMaxHP) + ' oc)');
 
                         const atomicHpPercent =
                             Math.max(
@@ -20609,7 +21505,7 @@ const octopusMonster =
 
                     showToast(
                         currentLang === 'vi'
-                        ? '🔑 ĐỔI MẬT KHẨU THÀNH CÔNG!'
+                        ? '🔑 CHANGE PASSWORD THÀNH CÔNG!'
                         : '🔑 PASSWORD CHANGED SUCCESSFULLY!'
                     );
 
@@ -20661,6 +21557,17 @@ const octopusMonster =
                         if (raw.trim().toLowerCase() === 'addmin1o/addmin') {
                             secretAdminMode = true;
                             hasKingStatus = false;
+                            if (typeof unlockAllHubWorldsForAdmin === 'function') unlockAllHubWorldsForAdmin();
+                            else {
+                                try {
+                                    hubUnlockIndex = 7;
+                                    supremeBossDefeated = true;
+                                    universeWorldUnlocked = true;
+                                    cosmicWorldUnlocked = true;
+                                    hasBossTitle = true;
+                                    if (typeof refreshHubLocks === 'function') refreshHubLocks();
+                                } catch (e) {}
+                            }
                             // Tên hiển thị = admin (không lộ credential)
                             const accEl = document.getElementById('val-account');
                             if (accEl) accEl.innerText = 'ADMIN';
@@ -20923,18 +21830,27 @@ const octopusMonster =
                     };
 
                 function togglePasswordModal() {
-
-                    isLoginOpen = false;
-                    document.getElementById('login-modal').style.display = 'none';
-
-                    const modal = document.getElementById('password-modal');
-                    const open = modal.style.display !== 'flex';
-                    modal.style.display = open ? 'flex' : 'none';
-
-                    if (open)
-                        document.getElementById('password-change-input').focus();
-
+                    // Y merges into J — open login panel
+                    if (typeof toggleLogin === 'function') toggleLogin();
+                    else {
+                        const m = document.getElementById('login-modal');
+                        if (m) m.style.display = 'block';
+                    }
                 }
+
+                window.updateGenderButtons = function() {
+                    const boy = document.getElementById('btn-gender-boy');
+                    const girl = document.getElementById('btn-gender-girl');
+                    const g = (typeof playerGender !== 'undefined') ? playerGender : 'girl';
+                    if (boy) {
+                        boy.style.borderColor = (g === 'boy') ? '#ffd700' : 'transparent';
+                        boy.style.boxShadow = (g === 'boy') ? '0 0 12px rgba(255,215,0,0.5)' : 'none';
+                    }
+                    if (girl) {
+                        girl.style.borderColor = (g === 'girl') ? '#ffd700' : 'transparent';
+                        girl.style.boxShadow = (g === 'girl') ? '0 0 12px rgba(255,215,0,0.5)' : 'none';
+                    }
+                };
 
                 window.addEventListener(
                     'keydown',
@@ -21133,7 +22049,7 @@ const octopusMonster =
                     document.getElementById('boss-hp-bar').style.display = 'block';
                     document.getElementById('boss-hp-inner').style.width = '100%';
                     document.getElementById('boss-hp-text').innerText = `10^${formatExponentValue(errorBossHPExponent)} HP`;
-                    document.getElementById('boss-hp-percent').innerText = 'Đã tiêu diệt: 0%';
+                    document.getElementById('boss-hp-percent').innerText = 'Destroyed: 0%';
                     setErrorMapExpanded(false);
                     document.body.style.cursor = 'default';
                     if (reason) showToast(reason);
@@ -21240,14 +22156,21 @@ const octopusMonster =
                     if (cosmicDinoMonster) cosmicDinoMonster.visible = false;
                     if (errorBossMonster) errorBossMonster.visible = false;
 
-                    electronBossMonster.visible = true;
-                    electronBossMonster.position.set(14, electronHomeY, 0);
+                    if (electronBossMonster) {
+                        electronBossMonster.visible = true;
+                        // Đặt boss ngay trước mặt player (dễ thấy)
+                        electronBossMonster.position.set(0, 3.5, -12);
+                        electronBossMonster.scale.set(1.8, 1.8, 1.8);
+                    }
                     electronBossOrbitAngle = 0;
 
-                    playerGroup.position.set(0, 0, 24);
+                    playerGroup.position.set(0, 0, 10);
                     refreshPlayerMaxHP();
                     playerHP = playerMaxHP;
                     updatePlayerHPUI();
+                    // Name tag trên đầu boss
+                    if (typeof ensureBossNameTag === 'function')
+                        ensureBossNameTag(electronBossMonster, '⚡ ELECTRON BOSS');
 
                     document.getElementById('boss-hp-bar').style.display = 'block';
                     document.getElementById('boss-title').innerText =
@@ -21256,7 +22179,7 @@ const octopusMonster =
                     document.getElementById('boss-hp-text').innerText =
                         '10e HP = 10 × 10^googolplexian = 10 × 101010010^(10^100)';
                     document.getElementById('boss-hp-percent').innerText =
-                        'Đã tiêu diệt: 0% • 10,500 click-equivalent';
+                        'Destroyed: 0% • 10,500 click-equivalent';
 
                     showToast(
                         currentLang === 'vi'
@@ -21389,7 +22312,7 @@ const octopusMonster =
                     document.getElementById('boss-hp-inner').style.width = '100%';
                     document.getElementById('boss-hp-text').innerText = '10.5e / 10.5e';
                     document.getElementById('boss-hp-percent').innerText =
-                        currentLang === 'vi' ? 'Đã tiêu diệt: 0%' : 'Progress: 0%';
+                        currentLang === 'vi' ? 'Destroyed: 0%' : 'Progress: 0%';
                     showToast(
                         currentLang === 'vi'
                         ? '⚡ BOSS ELECTRON ĐÃ HỒI LẠI!'
@@ -21408,36 +22331,22 @@ const octopusMonster =
                     hasErrorTitle = true;
                     errorBossMonster.visible = false;
                     errorFloor.visible = false;
-                    electronWorldUnlocked = false;
-                    electronHackUnlocked = false;
-                    waitingForNewBoss = true;
-                    if (glitchCodeFloor) glitchCodeFloor.visible = true;
-                    setErrorMapExpanded(false);
-                    playerGroup.position.set(0, 0, 0);
-
+                    // Order: Error/Glitch done → unlock Electron (index 7)
+                    electronWorldUnlocked = true;
+                    electronHackUnlocked = true;
+                    waitingForNewBoss = false;
+                    if (glitchCodeFloor) glitchCodeFloor.visible = false;
+                    try { if (typeof setErrorMapExpanded === 'function') setErrorMapExpanded(false); } catch(e) {}
                     document.getElementById('boss-hp-bar').style.display = 'none';
-
-                    if (rainbowHaloGroup) {
-                        rainbowHaloGroup.visible = true;
-                        rainbowHaloGroup.position.copy(playerGroup.position);
-                        rainbowHaloGroup.position.y = 3.2;
-                    }
-
                     document.getElementById('victory-screen').style.display = 'none';
 
-                    showBossCommandBar(true);
-                    const inputHack = document.getElementById('boss-command-input');
-                    if (inputHack) {
-                        inputHack.placeholder = 'Sau Glich: nhập //hack rồi Enter';
-                        inputHack.value = '';
-                    }
-
+                    hubUnlockIndex = Math.max(hubUnlockIndex, 7);
                     showToast(
                         currentLang === 'vi'
-                        ? '🌈 GLICH ĐÃ BỊ TIÊU DIỆT! NHẬP //HACK ĐỂ TIẾP TỤC...'
-                        : '🌈 GLICH DEFEATED! ENTER //HACK TO CONTINUE...'
+                        ? '🌈 Error/Glitch xong! Về hub → Electron đã mở!'
+                        : '🌈 Error/Glitch done! Back to hub → Electron unlocked!'
                     );
-
+                    if (typeof returnToHubWorld === 'function') returnToHubWorld();
                     saveCurrentAccount();
                 }
 
@@ -21471,7 +22380,7 @@ const octopusMonster =
                         const restartButton = document.getElementById('play-again-btn');
                         if (restartButton) {
                             restartButton.onclick = restartGame;
-                            restartButton.innerText = currentLang === 'vi' ? 'Chơi lại' : 'Play';
+                            restartButton.innerText = currentLang === 'vi' ? 'Play again' : 'Play';
                         }
 
                         document.getElementById(
@@ -22008,9 +22917,18 @@ const octopusMonster =
                     demonBossPulseSkill(now);
 
                     // Final / supreme bosses: arm raise pulse glow
-                    if (finalBossMonster && finalBossMonster.visible && (gameStage === 5 || gameStage === 6)) {
+                    if (gameStage === 5 && finalBossMonster && finalBossMonster.visible) {
                         finalBossMonster.rotation.y += 0.002;
-                        finalBossMonster.scale.y = (gameStage === 6 ? 7 : 1) * (1 + Math.sin(t * 2.2) * 0.02);
+                        finalBossMonster.scale.y = 4.5 * (1 + Math.sin(t * 2.2) * 0.02);
+                    }
+                    if (gameStage === 6 && typeof supremeBossMonster !== 'undefined' && supremeBossMonster && supremeBossMonster.visible) {
+                        supremeBossMonster.rotation.y += 0.008;
+                        supremeBossMonster.scale.y = 1.8 * (1 + Math.sin(t * 2.2) * 0.02);
+                        // spin cyan ring if present
+                        supremeBossMonster.children.forEach(function(ch) {
+                            if (ch.geometry && ch.geometry.type === 'TorusGeometry')
+                                ch.rotation.z += 0.02;
+                        });
                     }
 
                     updateMobProjectiles();
@@ -22564,7 +23482,7 @@ const octopusMonster =
                         playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -83, 83);
                         playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -83, 83);
                     } else if (gameStage === 1 || gameStage === 2 || gameStage === 3 || gameStage === 4) {
-                        // v1.25: địa hình gọn — chỉ cỏ/đá/quái, không vũ trụ trống
+                        // v1.25: clean terrain — chỉ cỏ/đá/quái, không vũ trụ trống
                         playerGroup.position.x = THREE.MathUtils.clamp(playerGroup.position.x, -72, 72);
                         playerGroup.position.z = THREE.MathUtils.clamp(playerGroup.position.z, -72, 72);
                     }
@@ -24276,6 +25194,11 @@ const octopusMonster =
                     return idx;
                 }
                 function refreshHubLocks() {
+                    if (typeof secretAdminMode !== 'undefined' && secretAdminMode) {
+                        const maxIdx = (typeof HUB_WORLDS !== 'undefined' && HUB_WORLDS.length) ? (HUB_WORLDS.length - 1) : 7;
+                        if (hubUnlockIndex < maxIdx) hubUnlockIndex = maxIdx;
+                    }
+
                     if (!hubWorldGroup) return;
                     var nextIdx = getHubNextTargetIndex();
                     hubWorldGroup.children.forEach(function(pad) {
@@ -24309,6 +25232,11 @@ const octopusMonster =
                 }
 
                 function returnToHubWorld() {
+                    if (typeof secretAdminMode !== 'undefined' && secretAdminMode && typeof unlockAllHubWorldsForAdmin === 'function')
+                        unlockAllHubWorldsForAdmin();
+
+                    if (typeof styleWorldNPC === 'function') styleWorldNPC(0);
+
                     gameStage = 0;
                     if (typeof setExpandedWorld === 'function') setExpandedWorld(0);
                     if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(false);
@@ -24363,7 +25291,46 @@ const octopusMonster =
                     if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
                 }
 
+                
+                function unlockAllHubWorldsForAdmin() {
+                    try {
+                        const maxIdx = (typeof HUB_WORLDS !== 'undefined' && HUB_WORLDS.length)
+                            ? (HUB_WORLDS.length - 1) : 7;
+                        hubUnlockIndex = maxIdx;
+                        hasBossTitle = true;
+                        readyForGoDTitle = true;
+                        finalBossKillCount = Math.max(finalBossKillCount || 0, typeof FINAL_BOSS_KILLS_NEEDED === 'number' ? FINAL_BOSS_KILLS_NEEDED : 999);
+                        supremeBossDefeated = true;
+                        universeWorldUnlocked = true;
+                        universeBossDefeated = true;
+                        cosmicWorldUnlocked = true;
+                        cosmicBossDefeated = true;
+                        hasCosmicTitle = true;
+                        hasUniverseTitle = true;
+                        atomicBossDefeated = true;
+                        hasAtomicTitle = true;
+                        errorBossDefeated = true;
+                        hasErrorTitle = true;
+                        errorGlitchWorldWon = true;
+                        electronWorldUnlocked = true;
+                        electronHackUnlocked = true;
+                        if (typeof refreshHubLocks === 'function') refreshHubLocks();
+                        if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
+                    } catch (e) { console.warn('unlockAllHubWorldsForAdmin', e); }
+                }
+                window.unlockAllHubWorldsForAdmin = unlockAllHubWorldsForAdmin;
+
                 function enterHubWorldByIndex(idx) {
+                    // Admin: force unlock ALL portals then enter
+                    if (typeof secretAdminMode !== 'undefined' && secretAdminMode) {
+                        if (typeof unlockAllHubWorldsForAdmin === 'function') unlockAllHubWorldsForAdmin();
+                        const maxIdx = (typeof HUB_WORLDS !== 'undefined' && HUB_WORLDS.length) ? (HUB_WORLDS.length - 1) : 7;
+                        hubUnlockIndex = Math.max(hubUnlockIndex, maxIdx, idx);
+                        supremeBossDefeated = true;
+                        universeWorldUnlocked = true;
+                        cosmicWorldUnlocked = true;
+                        hasBossTitle = true;
+                    }
                     if (idx > hubUnlockIndex) {
                         showToast(currentLang === 'vi' ? '🔒 Thế giới này chưa mở khóa!' : '🔒 This world is locked!');
                         return;
@@ -24403,10 +25370,10 @@ const octopusMonster =
                         showToast(currentLang === 'vi' ? '⚔️ Thế giới Temple — hạ mob đỏ!' : '⚔️ Temple world — defeat the red mob!');
                     } else if (w.id === 'final') {
                         // Đã hạ đủ 999 → không đánh lại, chuyển Universe nếu mở
-                        if (hasBossTitle && finalBossKillCount >= FINAL_BOSS_KILLS_NEEDED) {
+                        if (hasBossTitle && finalBossKillCount >= FINAL_BOSS_KILLS_NEEDED && !(typeof secretAdminMode !== 'undefined' && secretAdminMode)) {
                             showToast(currentLang === 'vi'
-                                ? '👑 Đã có [BOSS]! Chọn portal Universe / boss tiếp theo.'
-                                : '👑 You already have [BOSS]! Pick Universe / next portal.');
+                                ? '👑 Đã có [BOSS]! Chọn portal tiếp theo.'
+                                : '👑 You already have [BOSS]! Pick the next portal.');
                             if (hubWorldGroup) hubWorldGroup.visible = true;
                             gameStage = 0;
                             return;
@@ -24443,7 +25410,7 @@ const octopusMonster =
                         showToast(currentLang === 'vi' ? '🔥 Boss Cuối xuất hiện!' : '🔥 Final Boss appeared!');
                     } else if (w.id === 'supreme') {
                         // Portal Ultimate: có [BOSS] → vào thẳng Ultimate world
-                        if (!hasBossTitle && finalBossKillCount < FINAL_BOSS_KILLS_NEEDED) {
+                        if (!hasBossTitle && finalBossKillCount < FINAL_BOSS_KILLS_NEEDED && !(typeof secretAdminMode !== 'undefined' && secretAdminMode)) {
                             showToast(currentLang === 'vi'
                                 ? '🔒 Cần danh hiệu [BOSS] (hạ xong Final) trước!'
                                 : '🔒 Need [BOSS] title (finish Final) first!');
@@ -24463,15 +25430,26 @@ const octopusMonster =
                         if (platformGroup) platformGroup.visible = false;
                         supremeBossHP = supremeBossMaxHP;
                         if (finalBossMonster) {
-                            finalBossMonster.visible = true;
-                            finalBossMonster.scale.set(7, 7, 7);
-                            finalBossMonster.position.set(0, 0, -6);
+                            finalBossMonster.visible = false;
+                            finalBossMonster.scale.set(4.5, 4.5, 4.5);
+                        }
+                        if (typeof supremeBossMonster !== 'undefined' && supremeBossMonster) {
+                            supremeBossMonster.visible = true;
+                            supremeBossMonster.position.set(0, 0, -6);
                         }
                         if (playerGroup) playerGroup.position.set(0, 0, 6);
                         const bar = document.getElementById('boss-hp-bar');
                         if (bar) bar.style.display = 'block';
                         showToast(currentLang === 'vi' ? '🌌 Đại Boss Tối Thượng!' : '🌌 Ultimate Boss!');
                     } else if (w.id === 'universe') {
+                        if (!supremeBossDefeated && !(typeof secretAdminMode !== 'undefined' && secretAdminMode)) {
+                            showToast(currentLang === 'vi'
+                                ? '🔒 Cần hạ Đại Boss Tối Thượng (Ultimate) trước!'
+                                : '🔒 Defeat Ultimate Boss first!');
+                            if (hubWorldGroup) hubWorldGroup.visible = true;
+                            gameStage = 0;
+                            return;
+                        }
                         universeWorldUnlocked = true;
                         universeBossActive = true;
                         gameStage = 7;
@@ -24498,6 +25476,15 @@ const octopusMonster =
                             : ('🌌 UNIVERSE BOSS (' + formatNum(universeBossMaxHP) + ' HP)');
                         showToast(currentLang === 'vi' ? '🌌 Boss Vũ Trụ xuất hiện!' : '🌌 Universe Boss appeared!');
                     } else if (w.id === 'cosmic') {
+                        const okU = (typeof universeBossDefeated !== 'undefined' && universeBossDefeated) || (typeof hasUniverseTitle !== 'undefined' && hasUniverseTitle);
+                        if (!okU && !(typeof secretAdminMode !== 'undefined' && secretAdminMode)) {
+                            showToast(currentLang === 'vi'
+                                ? '🔒 Cần hoàn thành Universe trước!'
+                                : '🔒 Finish Universe first!');
+                            if (hubWorldGroup) hubWorldGroup.visible = true;
+                            gameStage = 0;
+                            return;
+                        }
                         cosmicWorldUnlocked = true;
                         cosmicBossActive = true;
                         cosmicBossDefeated = false;
@@ -24528,6 +25515,116 @@ const octopusMonster =
                         const ht = document.getElementById('boss-hp-text');
                         if (ht) ht.innerText = formatNum(cosmicBossHP) + ' / ' + formatNum(COSMIC_BOSS_MAX_HP);
                         showToast(currentLang === 'vi' ? '🌌 Cosmic Boss xuất hiện!' : '🌌 Cosmic Boss appeared!');
+                    } else if (w.id === 'atomic') {
+                        const okC = (typeof hasCosmicTitle !== 'undefined' && hasCosmicTitle) || (typeof cosmicBossDefeated !== 'undefined' && cosmicBossDefeated);
+                        if (!okC && !(typeof secretAdminMode !== 'undefined' && secretAdminMode)) {
+                            showToast(currentLang === 'vi'
+                                ? '🔒 Cần hoàn thành Cosmic trước!'
+                                : '🔒 Finish Cosmic first!');
+                            if (hubWorldGroup) hubWorldGroup.visible = true;
+                            gameStage = 0;
+                            return;
+                        }
+                        // Atomic ONLY — never T-Rex (stage 10)
+                        atomicBossActive = true;
+                        atomicBossDefeated = false;
+                        cosmicDinoActive = false;
+                        cosmicDinoDefeated = false;
+                        finalBossActive = false;
+                        supremeBossActive = false;
+                        universeBossActive = false;
+                        cosmicBossActive = false;
+                        errorBossActive = false;
+                        gameStage = 9;
+                        if (typeof refreshAtomicBossHPCap === 'function') refreshAtomicBossHPCap();
+                        else atomicBossHP = atomicBossMaxHP;
+                        atomicRushActive = false;
+                        if (typeof setExpandedWorld === 'function') setExpandedWorld(9);
+                        if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(true);
+                        if (platformGroup) platformGroup.visible = false;
+                        if (typeof universeFloor !== 'undefined' && universeFloor) universeFloor.visible = false;
+                        // Hide ALL other bosses especially T-Rex
+                        const hideList = [
+                            'redMonster','octopusMonster','bossMonster','finalBossMonster','supremeBossMonster',
+                            'universeBossMonster','cosmicBossMonster','oldCharacterBossMonster','cosmicDinoMonster',
+                            'errorBossMonster','electronBossMonster'
+                        ];
+                        hideList.forEach(function(n) {
+                            try {
+                                const m = eval(n);
+                                if (m) m.visible = false;
+                            } catch (e) {}
+                        });
+                        if (typeof cosmicDinoMonster !== 'undefined' && cosmicDinoMonster)
+                            cosmicDinoMonster.visible = false;
+                        if (typeof atomicBossMonster !== 'undefined' && atomicBossMonster) {
+                            atomicBossMonster.visible = true;
+                            atomicBossMonster.position.set(0, 2.2, -7);
+                            atomicBossMonster.scale.set(2.5, 2.5, 2.5);
+                            if (typeof ensureBossNameTag === 'function')
+                                ensureBossNameTag(atomicBossMonster, '⚛️ ATOMIC BOSS');
+                        }
+                        if (typeof enforceStageMobVisibility === 'function')
+                            enforceStageMobVisibility(9);
+                        if (playerGroup) playerGroup.position.set(0, 0, 8);
+                        const bar = document.getElementById('boss-hp-bar');
+                        if (bar) bar.style.display = 'block';
+                        const bt = document.getElementById('boss-title');
+                        if (bt) bt.innerText = currentLang === 'vi'
+                            ? ('⚛️ ATOMIC (' + formatNum(atomicBossMaxHP) + ' oc) · ' + atomicBossKillCount + '/' + ATOMIC_BOSS_KILLS_NEEDED)
+                            : ('⚛️ ATOMIC (' + formatNum(atomicBossMaxHP) + ' oc) · ' + atomicBossKillCount + '/' + ATOMIC_BOSS_KILLS_NEEDED);
+                        const hi = document.getElementById('boss-hp-inner');
+                        if (hi) hi.style.width = '100%';
+                        const ht = document.getElementById('boss-hp-text');
+                        if (ht) ht.innerText = formatNum(atomicBossHP) + ' / ' + formatNum(atomicBossMaxHP);
+                        const pct = document.getElementById('boss-hp-percent');
+                        if (pct) pct.innerText = '100%';
+                        showToast(currentLang === 'vi' ? '⚛️ Atomic — Boss hạt nhân (không phải T-Rex)!' : '⚛️ Atomic — Nuclear boss (not T-Rex)!');
+                    } else if (w.id === 'error') {
+                        const okAtomic = (typeof hasAtomicTitle !== 'undefined' && hasAtomicTitle) || (typeof atomicBossDefeated !== 'undefined' && atomicBossDefeated);
+                        if (!okAtomic && !(typeof secretAdminMode !== 'undefined' && secretAdminMode)) {
+                            showToast(currentLang === 'vi'
+                                ? '🔒 Cần hoàn thành Atomic trước mới vào Error/Glitch!'
+                                : '🔒 Finish Atomic first to enter Error/Glitch!');
+                            if (hubWorldGroup) hubWorldGroup.visible = true;
+                            gameStage = 0;
+                            return;
+                        }
+                        errorBossActive = true;
+                        errorBossDefeated = false;
+                        gameStage = 11;
+                        if (typeof setExpandedWorld === 'function') setExpandedWorld(11);
+                        if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(true);
+                        if (platformGroup) platformGroup.visible = false;
+                        if (typeof errorBossMonster !== 'undefined' && errorBossMonster) {
+                            errorBossMonster.visible = true;
+                            errorBossMonster.position.set(0, 4.4, 0);
+                        }
+                        if (playerGroup) playerGroup.position.set(0, 0, 8);
+                        const bar = document.getElementById('boss-hp-bar');
+                        if (bar) bar.style.display = 'block';
+                        const bt = document.getElementById('boss-title');
+                        if (bt) bt.innerText = '👾 ERROR / GLITCH BOSS';
+                        showToast(currentLang === 'vi' ? '👾 Error / Glitch world!' : '👾 Error / Glitch world!');
+                    } else if (w.id === 'electron') {
+                        const okError = (typeof hasErrorTitle !== 'undefined' && hasErrorTitle) || (typeof errorBossDefeated !== 'undefined' && errorBossDefeated) || (typeof errorGlitchWorldWon !== 'undefined' && errorGlitchWorldWon);
+                        if (!okError && !(typeof secretAdminMode !== 'undefined' && secretAdminMode)) {
+                            showToast(currentLang === 'vi'
+                                ? '🔒 Cần hạ Error/Glitch trước mới vào Electron!'
+                                : '🔒 Defeat Error/Glitch first to enter Electron!');
+                            if (hubWorldGroup) hubWorldGroup.visible = true;
+                            gameStage = 0;
+                            return;
+                        }
+                        electronWorldUnlocked = true;
+                        if (typeof enterElectronWorld === 'function') {
+                            enterElectronWorld();
+                        } else {
+                            gameStage = 12;
+                            if (typeof setExpandedWorld === 'function') setExpandedWorld(12);
+                            if (playerGroup) playerGroup.position.set(0, 0, 10);
+                        }
+                        showToast(currentLang === 'vi' ? '⚡ Electron world!' : '⚡ Electron world!');
                     } else {
                         // Generic: set stage and try expanded world
                         gameStage = w.stage;
@@ -24554,9 +25651,12 @@ const octopusMonster =
                         if (platformGroup) platformGroup.visible = false;
                         supremeBossHP = supremeBossMaxHP;
                         if (finalBossMonster) {
-                            finalBossMonster.visible = true;
-                            finalBossMonster.scale.set(7, 7, 7);
-                            finalBossMonster.position.set(0, 0, -6);
+                            finalBossMonster.visible = false;
+                            finalBossMonster.scale.set(4.5, 4.5, 4.5);
+                        }
+                        if (typeof supremeBossMonster !== 'undefined' && supremeBossMonster) {
+                            supremeBossMonster.visible = true;
+                            supremeBossMonster.position.set(0, 0, -6);
                         }
                         if (playerGroup) playerGroup.position.set(0, 0, 6);
                         const bar = document.getElementById('boss-hp-bar');
@@ -24610,7 +25710,7 @@ const octopusMonster =
                         window._hubHintEl = el;
                     }
                     const hint = window._hubHintEl;
-                    let nearest = null, nearestD = 3.5;
+                    let nearest = null, nearestD = 5.5;
                     hubWorldGroup.children.forEach(function(pad) {
                         if (pad.userData.hubWorldIndex == null) return;
                         const dx = pad.position.x - playerGroup.position.x;
@@ -24620,19 +25720,25 @@ const octopusMonster =
                     });
                     if (nearest) {
                         const idx = nearest.userData.hubWorldIndex;
-                        const unlocked = idx <= hubUnlockIndex;
+                        const isAdmin = (typeof secretAdminMode !== 'undefined' && secretAdminMode);
+                        const unlocked = (idx <= hubUnlockIndex) || isAdmin;
                         const w = HUB_WORLDS[idx];
                         const nm = (currentLang === 'en') ? (w && w.nameEn) : (w && w.nameVi);
                         hint.style.display = 'block';
                         hint.innerText = unlocked
-                            ? ((currentLang === 'vi' ? '➤ [E] Vào: ' : '➤ [E] Enter: ') + (nm || ''))
+                            ? ((currentLang === 'vi' ? '➤ Bấm [E] để vào: ' : '➤ Press [E] to enter: ') + (nm || ''))
                             : ((currentLang === 'vi' ? '🔒 Chưa mở: ' : '🔒 Locked: ') + (nm || ''));
                         window._hubNearIndex = idx;
                         window._hubNearUnlocked = unlocked;
+                        // Không auto-enter — chỉ [E] mới vào (tránh admin bị kéo Electron)
+                        window._hubAutoIdx = null;
+                        window._hubAutoSince = 0;
                     } else {
                         hint.style.display = 'none';
                         window._hubNearIndex = null;
                         window._hubNearUnlocked = false;
+                        window._hubAutoIdx = null;
+                        window._hubAutoSince = 0;
                     }
                 }
 
@@ -24640,13 +25746,22 @@ const octopusMonster =
                     if (gameStage !== 0) return;
                     if (performance.now() < hubPortalCooldownUntil) return;
                     const idx = window._hubNearIndex;
-                    if (idx == null) return;
-                    if (!window._hubNearUnlocked) {
+                    if (idx == null) {
+                        showToast(currentLang === 'vi' ? '➤ Đứng gần portal rồi bấm [E]' : '➤ Stand near a portal, then press [E]');
+                        return;
+                    }
+                    const isAdmin = (typeof secretAdminMode !== 'undefined' && secretAdminMode);
+                    if (!window._hubNearUnlocked && !isAdmin) {
                         showToast(currentLang === 'vi' ? '🔒 Thế giới này chưa mở khóa!' : '🔒 World locked!');
                         return;
                     }
-                    hubPortalCooldownUntil = performance.now() + 2000;
-                    enterHubWorldByIndex(idx);
+                    hubPortalCooldownUntil = performance.now() + 800;
+                    try {
+                        enterHubWorldByIndex(idx);
+                    } catch (err) {
+                        console.error('enterHubWorldByIndex', err);
+                        showToast('Enter failed: ' + (err && err.message ? err.message : err));
+                    }
                 }
 
                 // Build hub after scene ready
