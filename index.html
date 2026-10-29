@@ -1877,9 +1877,26 @@
                     #c07010 100%);
             background-size: 200% 100%;
             box-shadow: 0 0 12px rgba(255, 200, 60, 0.7), inset 0 1px 0 rgba(255,255,255,0.4);
-            transition: width 0.25s ease;
-            animation: ldEnergyFlow 1.6s linear infinite;
+            transition: none;
             position: relative;
+        }
+        /* BẮT BUỘC chạy % — không phụ thuộc init game */
+        #ld-bar-fill.ld-force-run {
+            animation:
+                ldForceProgress 1.4s cubic-bezier(0.25, 0.8, 0.35, 1) forwards,
+                ldEnergyFlow 1.2s linear infinite;
+        }
+        #ld-bar-fill.ld-force-done {
+            width: 100% !important;
+            animation: ldEnergyFlow 1.2s linear infinite;
+        }
+        @keyframes ldForceProgress {
+            0%   { width: 0%; }
+            15%  { width: 18%; }
+            40%  { width: 48%; }
+            70%  { width: 72%; }
+            90%  { width: 88%; }
+            100% { width: 94%; }
         }
         #ld-bar-fill::after {
             content: '';
@@ -2291,7 +2308,76 @@
             50% { transform: translateY(-14px); opacity: 1; }
         }
         /* Mobs */
+        /* Split dual-boss / dual-theme loading scenes */
+        #world-loading .wl-split {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            display: none;
+        }
+        #world-loading.wl-dual .wl-split { display: block; }
+        #world-loading .wl-split .wl-half {
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 50%;
+            overflow: hidden;
+        }
+        #world-loading .wl-split .wl-half.left { left: 0; }
+        #world-loading .wl-split .wl-half.right { right: 0; }
+        #world-loading .wl-split .wl-half::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--half-bg);
+        }
+        #world-loading .wl-split .wl-half::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 160%;
+            height: 40%;
+            background: var(--half-ground);
+            border-radius: 50% 50% 0 0 / 22% 22% 0 0;
+        }
+        #world-loading .wl-split-divider {
+            position: absolute;
+            left: 50%;
+            top: 8%;
+            bottom: 8%;
+            width: 2px;
+            transform: translateX(-50%);
+            background: linear-gradient(180deg, transparent, rgba(255,255,255,0.35), transparent);
+            box-shadow: 0 0 18px rgba(255,220,120,0.35);
+            z-index: 3;
+            display: none;
+        }
+        #world-loading.wl-dual .wl-split-divider { display: block; }
+        #world-loading.wl-dual .wl-scene::before { opacity: 0.35; }
+        #world-loading .wl-half-label {
+            position: absolute;
+            bottom: 28%;
+            width: 50%;
+            text-align: center;
+            font-family: 'Segoe UI', sans-serif;
+            font-weight: 800;
+            font-size: clamp(12px, 2.2vw, 16px);
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 12px rgba(0,0,0,0.8), 0 2px 4px #000;
+            z-index: 5;
+            pointer-events: none;
+            display: none;
+        }
+        #world-loading.wl-dual .wl-half-label { display: block; }
+        #world-loading .wl-half-label.l { left: 0; color: #ff8a95; }
+        #world-loading .wl-half-label.r { right: 0; color: #e8f0ff; }
+        #world-loading.wl-error-dual .wl-half-label.l { color: #00ff88; }
+        #world-loading.wl-error-dual .wl-half-label.r { color: #ff4466; }
+
         #world-loading .wl-mobs {
+
             position: absolute;
             left: 50%;
             bottom: 10%;
@@ -2448,7 +2534,7 @@
             <div id="ld-bar-wrap">
                 <div id="ld-bar-frame">
                     <div id="ld-bar-track">
-                        <div id="ld-bar-fill"></div>
+                        <div id="ld-bar-fill" class="ld-force-run"></div>
                     </div>
                 </div>
                 <div id="ld-pct-row">
@@ -2459,10 +2545,34 @@
             <div id="ld-tip"><span class="tip-label">Tip:</span> <span id="ld-tip-text">Loading…</span></div>
         </div>
     </div>
+    <script>
+    /* Early force-progress: chạy TRƯỚC script game nặng — % không kẹt 0 */
+    (function(){
+        var fill = document.getElementById('ld-bar-fill');
+        var pct = document.getElementById('ld-pct-num');
+        var st = document.getElementById('ld-status');
+        if (fill) fill.classList.add('ld-force-run');
+        var n = 0;
+        var t0 = Date.now();
+        window._ldEarlyTimer = setInterval(function(){
+            if (window._gameReady) { clearInterval(window._ldEarlyTimer); return; }
+            n = Math.min(96, (Date.now() - t0) / 14);
+            if (pct) pct.textContent = String(Math.round(n));
+            if (st) st.textContent = n < 30 ? 'Đang tải…' : (n < 60 ? 'Khởi tạo…' : 'Sắp xong…');
+        }, 50);
+    })();
+    </script>
 
     <!-- WORLD TRANSITION LOADING -->
     <div id="world-loading">
         <div class="wl-scene" id="wl-scene">
+            <div class="wl-split" id="wl-split" aria-hidden="true">
+                <div class="wl-half left" id="wl-half-l"></div>
+                <div class="wl-half right" id="wl-half-r"></div>
+            </div>
+            <div class="wl-split-divider"></div>
+            <div class="wl-half-label l" id="wl-lab-l"></div>
+            <div class="wl-half-label r" id="wl-lab-r"></div>
             <div class="wl-particles" id="wl-particles"></div>
             <div class="wl-ground-glow"></div>
             <div class="wl-decor" id="wl-decor" aria-hidden="true">
@@ -3192,54 +3302,97 @@
             if (tipText) {
                 tipText.textContent = currentTips()[0];
             }
-            window._ldTipTimer = setInterval(showNextTip, 5000);
+            window._ldTipTimer = setInterval(showNextTip, 2800);
 
             window.setLoadProgress = function(p, msg) {
                 progress = Math.max(progress, Math.min(100, p));
-                if (fill) fill.style.width = progress + '%';
+                if (fill) {
+                    // JS width wins over CSS until force-done
+                    if (progress >= 99) {
+                        fill.classList.remove('ld-force-run');
+                        fill.classList.add('ld-force-done');
+                        fill.style.width = '100%';
+                    } else if (!fill.classList.contains('ld-force-run')) {
+                        fill.style.width = progress + '%';
+                    }
+                }
                 if (pctNum) pctNum.textContent = Math.round(progress);
                 if (msg && status) status.textContent = msg;
             };
 
             window.hideGameLoading = function() {
+                window._gameReady = true;
                 window.setLoadProgress(100, 'Xong!');
                 try { if (window._ldTipTimer) clearInterval(window._ldTipTimer); } catch (e) {}
                 try { if (window._ldBattleTimer) clearInterval(window._ldBattleTimer); } catch (e) {}
+                try { if (window._ldFakeTimer) clearInterval(window._ldFakeTimer); } catch (e) {}
+                try { if (window._ldForceTimer) clearInterval(window._ldForceTimer); } catch (e) {}
+                try { if (window._ldEarlyTimer) clearInterval(window._ldEarlyTimer); } catch (e) {}
+                try { if (window._ldWatchdog) clearTimeout(window._ldWatchdog); } catch (e) {}
                 if (!overlay) return;
                 setTimeout(function() {
                     overlay.classList.add('hide');
+                    document.body.classList.remove('is-loading');
                     setTimeout(function() {
                         if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-                    }, 600);
-                }, 280);
+                    }, 200);
+                }, 40);
             };
 
-            let fake = 3;
+            // === BẮT BUỘC thanh chạy: CSS + số % cập nhật liên tục ===
+            if (fill) {
+                fill.classList.add('ld-force-run');
+                fill.style.width = ''; // để CSS animation điều khiển
+            }
+            let forcePct = 0;
+            const forceMsgs = ['Đang tải…', 'Tải thư viện…', 'Khởi tạo 3D…', 'Xây map…', 'Sắp xong…'];
+            window._ldForceTimer = setInterval(function() {
+                if (window._gameReady) {
+                    try { clearInterval(window._ldForceTimer); } catch (e) {}
+                    return;
+                }
+                // Luôn tăng — không bao giờ đứng yên
+                forcePct = Math.min(96, forcePct + 3 + Math.random() * 4);
+                progress = Math.max(progress, forcePct);
+                if (pctNum) pctNum.textContent = Math.round(progress);
+                if (status) status.textContent = forceMsgs[Math.min(forceMsgs.length - 1, Math.floor(progress / 22))];
+                if (fill && progress >= 94) {
+                    fill.classList.remove('ld-force-run');
+                    fill.style.width = Math.round(progress) + '%';
+                }
+            }, 60);
+
+            // Giữ fake timer cũ (cộng thêm)
             window._ldFakeTimer = setInterval(function() {
                 if (window._gameReady) {
                     try { clearInterval(window._ldFakeTimer); } catch (e) {}
                     return;
                 }
-                fake = Math.min(92, fake + (fake < 40 ? 2.2 : (fake < 70 ? 1.4 : 0.6)));
-                window.setLoadProgress(fake, fake < 40 ? 'Đang tải thư viện…' : (fake < 70 ? 'Khởi tạo 3D…' : 'Sắp xong…'));
-            }, 220);
+                forcePct = Math.min(96, forcePct + 2);
+                window.setLoadProgress(Math.max(progress, forcePct));
+            }, 100);
 
+            // Timeout: sau 6s vẫn chưa ready → vẫn ẩn loading (không kẹt màn hình)
             window._ldWatchdog = setTimeout(function() {
                 if (window._gameReady) return;
+                console.warn('[MysticTemple] Force-finish loading after timeout');
+                window._gameReady = true;
                 try { if (window._ldFakeTimer) clearInterval(window._ldFakeTimer); } catch(e) {}
-                console.error('[MysticTemple] Loading timeout — WebGL/init failed or too slow');
-                if (typeof triggerNO === 'function') triggerNO();
+                try { if (window._ldForceTimer) clearInterval(window._ldForceTimer); } catch(e) {}
+                if (typeof hideGameLoading === 'function') hideGameLoading();
                 else {
                     document.body.classList.remove('is-loading');
-                    const ld = document.getElementById('game-loading');
-                    if (ld) ld.style.display = 'none';
-                    const err = document.getElementById('error-no');
-                    if (err) err.style.display = 'flex';
+                    if (overlay) overlay.style.display = 'none';
                 }
-            }, 18000);
+            }, 4000);
 
             document.body.classList.add('is-loading');
-            window.setLoadProgress(3, 'Loading…');
+            window.setLoadProgress(1, 'Loading…');
+            // Cập nhật % ngay frame đầu (trước khi init nặng chặn thread)
+            try {
+                if (pctNum) pctNum.textContent = '1';
+                if (status) status.textContent = 'Đang tải…';
+            } catch (e) {}
 
 
             // Cute loading battle: hero RUNS to red mobs, attacks, red stage
@@ -3336,7 +3489,7 @@
                 }
                 // first run after short delay, then repeat
                 setTimeout(attackCycle, 500);
-                window._ldBattleTimer = setInterval(attackCycle, 1400);
+                window._ldBattleTimer = setInterval(attackCycle, 900);
                 const stopCheck = setInterval(function() {
                     if (window._gameReady) {
                         try { clearInterval(window._ldBattleTimer); } catch (e) {}
@@ -3470,6 +3623,38 @@
                 var tipsW = (lang === 'en') ? TIPS_EN : TIPS_VI;
                 if (tip) tip.innerHTML = '<span style="color:#ffe566">Tip:</span> ' + tipsW[Math.floor(Math.random() * tipsW.length)];
                 var mobBox = document.getElementById('wl-mobs');
+                // Dual-scene for worlds with 2 bosses (Temple / Error)
+                el.classList.remove('wl-dual', 'wl-error-dual');
+                var halfL = document.getElementById('wl-half-l');
+                var halfR = document.getElementById('wl-half-r');
+                var labL = document.getElementById('wl-lab-l');
+                var labR = document.getElementById('wl-lab-r');
+                if (worldId === 'temple') {
+                    el.classList.add('wl-dual');
+                    if (halfL) {
+                        halfL.style.setProperty('--half-bg', 'radial-gradient(ellipse at 40% 30%, #a02840 0%, #4a1018 45%, #120408 100%)');
+                        halfL.style.setProperty('--half-ground', 'radial-gradient(ellipse at 50% 100%, rgba(255,80,90,0.45), transparent 70%)');
+                    }
+                    if (halfR) {
+                        halfR.style.setProperty('--half-bg', 'radial-gradient(ellipse at 60% 28%, #3a4060 0%, #1a1e30 40%, #080a12 100%)');
+                        halfR.style.setProperty('--half-ground', 'radial-gradient(ellipse at 50% 100%, rgba(200,210,255,0.35), transparent 70%)');
+                    }
+                    if (labL) labL.textContent = (lang === 'vi') ? '🔴 Mob Đỏ' : '🔴 Red Mob';
+                    if (labR) labR.textContent = (lang === 'vi') ? '👑 Ma Vương' : '👑 Demon Boss';
+                } else if (worldId === 'error') {
+                    el.classList.add('wl-dual', 'wl-error-dual');
+                    if (halfL) {
+                        halfL.style.setProperty('--half-bg', 'radial-gradient(ellipse at 40% 30%, #003820 0%, #001408 50%, #000804 100%)');
+                        halfL.style.setProperty('--half-ground', 'radial-gradient(ellipse at 50% 100%, rgba(0,255,100,0.35), transparent 70%)');
+                    }
+                    if (halfR) {
+                        halfR.style.setProperty('--half-bg', 'radial-gradient(ellipse at 60% 30%, #400010 0%, #180008 50%, #080204 100%)');
+                        halfR.style.setProperty('--half-ground', 'radial-gradient(ellipse at 50% 100%, rgba(255,40,60,0.4), transparent 70%)');
+                    }
+                    if (labL) labL.textContent = (lang === 'vi') ? '👾 Glitch' : '👾 Glitch';
+                    if (labR) labR.textContent = (lang === 'vi') ? '⚠️ Error' : '⚠️ Error';
+                }
+
                 if (mobBox) {
                     mobBox.innerHTML = '';
                     var keys = WORLD_MOBS[worldId] || [worldId];
@@ -3488,9 +3673,9 @@
                 el.style.display = 'flex';
                 var p = 0;
                 try { if (window._wlTimer) clearInterval(window._wlTimer); } catch (e) {}
-                // ~1.2s loading so player sees bar + mobs
+                // ~0.45s — vẫn thấy mobs nhưng vào nhanh
                 window._wlTimer = setInterval(function() {
-                    p = Math.min(100, p + 4);
+                    p = Math.min(100, p + 12);
                     if (wfill) wfill.style.width = p + '%';
                     if (p >= 100) {
                         clearInterval(window._wlTimer);
@@ -3500,10 +3685,10 @@
                                 el.classList.remove('show');
                                 el.classList.remove('hide');
                                 el.style.display = 'none';
-                            }, 350);
-                        }, 220);
+                            }, 180);
+                        }, 60);
                     }
-                }, 45);
+                }, 28);
             };
 
         })();
@@ -4964,7 +5149,7 @@
 
                 try {
                     renderer.shadowMap.enabled = true;
-                    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                    renderer.shadowMap.type = THREE.PCFShadowMap; // softer = slower; PCF is enough
                     renderer.outputEncoding = THREE.sRGBEncoding;
                     renderer.toneMapping = THREE.ACESFilmicToneMapping;
                     renderer.toneMappingExposure = 1.18;
@@ -4982,7 +5167,7 @@
                 renderer.setPixelRatio(
                     Math.min(
                         window.devicePixelRatio || 1,
-                        1.5
+                        1.25
                     )
                 );
 
@@ -5024,8 +5209,8 @@
                 );
 
                 dirLight.castShadow = true;
-                dirLight.shadow.mapSize.width = 2048;
-                dirLight.shadow.mapSize.height = 2048;
+                dirLight.shadow.mapSize.width = 1024;
+                dirLight.shadow.mapSize.height = 1024;
                 dirLight.shadow.camera.near = 0.5;
                 dirLight.shadow.camera.far = 180;
                 dirLight.shadow.camera.left = -70;
@@ -5051,7 +5236,7 @@
                         55,
                         2
                     );
-                moonLight.castShadow = false;
+                moonLight.castShadow = false; // PointLight shadow = very expensive, keep off
 
                 moonLight.position.set(
                     -8,
@@ -5059,13 +5244,12 @@
                     8
                 );
 
-                moonLight.castShadow = true;
                 scene.add(moonLight);
 
                 const starsGeo =
                     new THREE.BufferGeometry();
 
-                const starsCnt = 220; // giảm số sao chống lag
+                const starsCnt = 90; // light load
 
                 const posArr =
                     new Float32Array(
@@ -5288,11 +5472,11 @@
                     const ctx = canvas.getContext('2d');
                     // Base grass green
                     ctx.fillStyle = '#3d7a32';
-                    ctx.fillRect(0, 0, 512, 512);
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
                     // Varied grass patches
-                    for (let i = 0; i < 1200; i++) {
-                        const x = Math.random() * 512;
-                        const y = Math.random() * 512;
+                    for (let i = 0; i < 600; i++) {
+                        const x = Math.random() * canvas.width;
+                        const y = Math.random() * canvas.width;
                         const s = 8 + Math.random() * 28;
                         const g = 90 + Math.floor(Math.random() * 70);
                         const r = 30 + Math.floor(Math.random() * 40);
@@ -5303,9 +5487,9 @@
                         ctx.fill();
                     }
                     // Dry / dirt patches on surface
-                    for (let i = 0; i < 80; i++) {
-                        const x = Math.random() * 512;
-                        const y = Math.random() * 512;
+                    for (let i = 0; i < 50; i++) {
+                        const x = Math.random() * canvas.width;
+                        const y = Math.random() * canvas.width;
                         const s = 12 + Math.random() * 40;
                         ctx.fillStyle = `rgba(${140 + Math.random()*40},${100 + Math.random()*30},${50 + Math.random()*20},${0.25 + Math.random()*0.35})`;
                         ctx.beginPath();
@@ -5313,8 +5497,8 @@
                         ctx.fill();
                     }
                     // Fine noise
-                    for (let i = 0; i < 8000; i++) {
-                        const x = Math.random() * 512, y = Math.random() * 512;
+                    for (let i = 0; i < 2500; i++) {
+                        const x = Math.random() * canvas.width, y = Math.random() * canvas.width;
                         ctx.fillStyle = Math.random() < 0.5
                             ? `rgba(255,255,200,${0.02 + Math.random()*0.06})`
                             : `rgba(0,40,0,${0.03 + Math.random()*0.08})`;
@@ -5322,9 +5506,9 @@
                     }
                     const tex = new THREE.CanvasTexture(canvas);
                     tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-                    tex.repeat.set(80, 80);
+                    tex.repeat.set(60, 60);
                     tex.encoding = THREE.sRGBEncoding;
-                    tex.anisotropy = 8;
+                    tex.anisotropy = 4;
                     return tex;
                 }
 
@@ -5344,12 +5528,12 @@
                     ];
                     layers.forEach(L => {
                         ctx.fillStyle = L.c;
-                        ctx.fillRect(0, L.y0, 512, L.y1 - L.y0);
+                        ctx.fillRect(0, L.y0, canvas.width, L.y1 - L.y0);
                     });
                     // Soil noise / pebbles
-                    for (let i = 0; i < 6000; i++) {
-                        const x = Math.random() * 512;
-                        const y = Math.random() * 512;
+                    for (let i = 0; i < 2000; i++) {
+                        const x = Math.random() * canvas.width;
+                        const y = Math.random() * canvas.width;
                         const shade = 40 + Math.floor(Math.random() * 90);
                         const a = 0.08 + Math.random() * 0.25;
                         ctx.fillStyle = `rgba(${shade+40},${shade*0.7},${shade*0.35},${a})`;
@@ -5360,7 +5544,7 @@
                         ctx.strokeStyle = `rgba(20,10,5,${0.15 + Math.random()*0.25})`;
                         ctx.lineWidth = 1 + Math.random() * 2.5;
                         ctx.beginPath();
-                        let x = Math.random() * 512, y = 30 + Math.random() * 450;
+                        let x = Math.random() * canvas.width, y = 30 + Math.random() * 450;
                         ctx.moveTo(x, y);
                         for (let k = 0; k < 6; k++) {
                             x += (Math.random() - 0.5) * 40;
@@ -5436,40 +5620,77 @@
                     floorMesh
                 );
 
-                // Thảm cỏ 3D TẮT — bỏ cỏ trong game
+                // ===== GRASS (InstancedMesh + LOD distance) — chống lag =====
                 window._swayGrassData = null;
-                (function addSwayingGrass() {
-                    return; // bỏ cỏ
+                window._grassLayers = [];
+                window._grassThemeId = 'temple';
 
-                    const HALF = 70;
-                    // Cụm cỏ nhỏ 3D — mật độ vừa, xa giảm chi tiết
+                // ===== CỎ 3D FULL QUALITY — không tối ưu bớt, màu theo thế giới =====
+                const GRASS_THEMES = {
+                    temple: {
+                        // darker + brighter mix so 3D blades pop on green floor texture
+                        colors: [0x145a12, 0x1e7018, 0x0e480e, 0x2a8820, 0x3aa828, 0x0a3810, 0x48c030, 0x186818],
+                        hMin: 1.0, hMax: 2.2
+                    },
+                    final: {
+                        colors: [0x8a7020, 0xa88828, 0x6b5818, 0xc0a030, 0x5a4810, 0xd4b840],
+                        hMin: 0.55, hMax: 1.25
+                    },
+                    supreme: {
+                        colors: [0x4a2888, 0x5a38a8, 0x3a1868, 0x6a48c0, 0x281050, 0x7a58d0],
+                        hMin: 0.5, hMax: 1.15
+                    },
+                    universe: {
+                        colors: [0x0c0c14, 0x14141e, 0x08080e, 0x1a1a28, 0x101018, 0x222230],
+                        hMin: 0.45, hMax: 1.05
+                    },
+                    cosmic: {
+                        colors: [0x186888, 0x2080a0, 0x104858, 0x2898b8, 0x0c3848, 0x38a8c8],
+                        hMin: 0.5, hMax: 1.2
+                    },
+                    atomic: {
+                        colors: [0x188838, 0x20a848, 0x106828, 0x28c858, 0x0c5020, 0x38d868],
+                        hMin: 0.55, hMax: 1.25
+                    },
+                    error: {
+                        colors: [0x0c3820, 0x144828, 0x082818, 0x1c5830, 0x103020, 0x246838],
+                        hMin: 0.45, hMax: 1.1
+                    },
+                    electron: {
+                        colors: [0x145070, 0x1c6888, 0x0c3850, 0x2478a0, 0x102838, 0x2c88b0],
+                        hMin: 0.45, hMax: 1.1
+                    },
+                    hub: {
+                        colors: [0x2d9030, 0x3cb040, 0x1e6824, 0x4cc850, 0x247a28, 0x58d860],
+                        hMin: 0.55, hMax: 1.25
+                    }
+                };
+
+                function getGrassThemeForStage(stage) {
+                    if (stage === 0) return 'hub';
+                    if (stage === 1 || stage === 2 || stage === 4) return 'temple';
+                    if (stage === 5) return 'final';
+                    if (stage === 6) return 'supreme';
+                    if (stage === 7) return 'universe';
+                    if (stage === 8) return 'cosmic';
+                    if (stage === 9) return 'atomic';
+                    if (stage === 11) return 'error';
+                    if (stage === 12) return 'electron';
+                    return 'temple';
+                }
+
+                function buildGrassSystem() {
+                    if (window._grassBuilt) return;
+                    window._grassBuilt = true;
+                    const HALF = 55;
                     const LODs = [
-                        { step: 1.1,  minDist: 0,  maxDist: 18, bladesPerCell: 3, sway: true  },
-                        { step: 2.0,  minDist: 16, maxDist: 38, bladesPerCell: 2, sway: false },
-                        { step: 3.4,  minDist: 34, maxDist: 72, bladesPerCell: 1, sway: false }
+                        { step: 0.75, minDist: 0,  maxDist: 28, bladesPerCell: 4, sway: true  },
+                        { step: 1.4,  minDist: 22, maxDist: 48, bladesPerCell: 2, sway: false },
+                        { step: 2.4,  minDist: 42, maxDist: 72, bladesPerCell: 1, sway: false }
                     ];
 
-                    // Cụm nhỏ dạng cone 3D (nhìn mọi góc đều thấy)
-                    const bladeGeo = new THREE.ConeGeometry(0.06, 0.28, 4);
-                    bladeGeo.translate(0, 0.14, 0);
-
-                    const grassMat = new THREE.MeshStandardMaterial({
-                        color: 0x3d8a32,
-                        roughness: 0.92,
-                        metalness: 0.0,
-                        side: THREE.DoubleSide,
-                        depthWrite: true
-                    });
-
-                    const colorList = [
-                        new THREE.Color(0x2a6b20),
-                        new THREE.Color(0x348028),
-                        new THREE.Color(0x3d8a32),
-                        new THREE.Color(0x4a9a3a),
-                        new THREE.Color(0x56a844),
-                        new THREE.Color(0x2f7526),
-                        new THREE.Color(0x458c36)
-                    ];
+                    const bladeGeo = new THREE.ConeGeometry(0.16, 0.95, 8);
+                    bladeGeo.translate(0, 0.48, 0);
 
                     const dummy = new THREE.Object3D();
                     const layers = [];
@@ -5477,10 +5698,16 @@
                     LODs.forEach(function(lod) {
                         const cols = Math.floor((HALF * 2) / lod.step) + 1;
                         const maxCount = cols * cols * lod.bladesPerCell;
+                        const grassMat = new THREE.MeshLambertMaterial({
+                            color: 0xffffff,
+                            flatShading: true,
+                            side: THREE.DoubleSide
+                        });
                         const mesh = new THREE.InstancedMesh(bladeGeo, grassMat, maxCount);
                         mesh.castShadow = false;
-                        mesh.receiveShadow = false;
+                        mesh.receiveShadow = true;
                         mesh.frustumCulled = true;
+                        mesh.visible = true;
 
                         const posX = new Float32Array(maxCount);
                         const posZ = new Float32Array(maxCount);
@@ -5492,100 +5719,160 @@
                         const phases = new Float32Array(maxCount);
                         const speeds = new Float32Array(maxCount);
                         const amts = new Float32Array(maxCount);
+                        const colorIdx = new Uint8Array(maxCount);
 
                         let idx = 0;
-                        for (let ix = 0; ix < cols; ix++) {
-                            for (let iz = 0; iz < cols; iz++) {
-                                // Lưới sát nhau, jitter rất nhỏ → không còn lỗ trống
-                                const cx = -HALF + ix * lod.step + (Math.random() - 0.5) * lod.step * 0.2;
-                                const cz = -HALF + iz * lod.step + (Math.random() - 0.5) * lod.step * 0.2;
-
-                                for (let b = 0; b < lod.bladesPerCell; b++) {
-                                    // 2–3 lá chồng tại mỗi ô, xoay khác nhau → thành búi kín
-                                    const x = cx + (Math.random() - 0.5) * lod.step * 0.45;
-                                    const z = cz + (Math.random() - 0.5) * lod.step * 0.45;
-                                    const hScale = 0.7 + Math.random() * 0.9;
-                                    const wScale = 0.9 + Math.random() * 0.7;
-                                    const ry = (b / lod.bladesPerCell) * Math.PI + (Math.random() - 0.5) * 0.4;
-                                    const rz = (Math.random() - 0.5) * 0.35;
+                        for (let ix = 0; ix < cols && idx < maxCount; ix++) {
+                            for (let iz = 0; iz < cols && idx < maxCount; iz++) {
+                                const cx = -HALF + ix * lod.step + (Math.random() - 0.5) * lod.step * 0.35;
+                                const cz = -HALF + iz * lod.step + (Math.random() - 0.5) * lod.step * 0.35;
+                                if (Math.hypot(cx, cz) < 4.5) continue;
+                                for (let b = 0; b < lod.bladesPerCell && idx < maxCount; b++) {
+                                    const x = cx + (Math.random() - 0.5) * lod.step * 0.55;
+                                    const z = cz + (Math.random() - 0.5) * lod.step * 0.55;
+                                    const hScale = 0.9 + Math.random() * 1.1;
+                                    const wScale = 0.85 + Math.random() * 0.65;
+                                    const ry = Math.random() * Math.PI * 2;
+                                    const rz = (Math.random() - 0.5) * 0.3;
                                     const rx = (Math.random() - 0.5) * 0.25;
 
-                                    dummy.position.set(x, 0.01, z);
+                                    dummy.position.set(x, 0.08, z);
                                     dummy.rotation.set(rx, ry, rz);
                                     dummy.scale.set(wScale, hScale, wScale);
                                     dummy.updateMatrix();
                                     mesh.setMatrixAt(idx, dummy.matrix);
-                                    if (mesh.setColorAt) {
-                                        mesh.setColorAt(idx, colorList[Math.floor(Math.random() * colorList.length)]);
-                                    }
 
-                                    posX[idx] = x;
-                                    posZ[idx] = z;
-                                    baseRotY[idx] = ry;
-                                    baseRotZ[idx] = rz;
-                                    baseRotX[idx] = rx;
-                                    scales[idx] = hScale;
-                                    scaleW[idx] = wScale;
+                                    posX[idx] = x; posZ[idx] = z;
+                                    baseRotY[idx] = ry; baseRotZ[idx] = rz; baseRotX[idx] = rx;
+                                    scales[idx] = hScale; scaleW[idx] = wScale;
                                     phases[idx] = Math.random() * Math.PI * 2;
-                                    speeds[idx] = 0.8 + Math.random() * 1.2;
-                                    amts[idx] = 0.14 + Math.random() * 0.18;
+                                    speeds[idx] = 1.1 + Math.random() * 1.5;
+                                    amts[idx] = 0.07 + Math.random() * 0.1;
+                                    colorIdx[idx] = (Math.random() * 8) | 0;
                                     idx++;
                                 }
                             }
                         }
                         mesh.count = idx;
                         mesh.instanceMatrix.needsUpdate = true;
-                        if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-                        platformGroup.add(mesh);
+
+                        if (mesh.setColorAt) {
+                            const c0 = new THREE.Color(0x3cb038);
+                            for (let i = 0; i < idx; i++) mesh.setColorAt(i, c0);
+                            if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+                        }
 
                         layers.push({
-                            mesh: mesh,
-                            minDist: lod.minDist,
-                            maxDist: lod.maxDist,
-                            sway: lod.sway,
-                            count: idx,
-                            posX: posX,
-                            posZ: posZ,
-                            baseRotY: baseRotY,
-                            baseRotZ: baseRotZ,
-                            baseRotX: baseRotX,
-                            scales: scales,
-                            scaleW: scaleW,
-                            phases: phases,
-                            speeds: speeds,
-                            amts: amts,
-                            active: new Uint8Array(idx),
-                            lastPx: 9999,
-                            lastPz: 9999
+                            mesh: mesh, lod: lod, count: idx,
+                            posX: posX, posZ: posZ,
+                            baseRotY: baseRotY, baseRotZ: baseRotZ, baseRotX: baseRotX,
+                            scales: scales, scaleW: scaleW,
+                            phases: phases, speeds: speeds, amts: amts,
+                            colorIdx: colorIdx, mat: grassMat
                         });
+                        if (typeof scene !== 'undefined' && scene) scene.add(mesh);
                     });
 
-                    // Ẩn layer không thuộc band quanh origin lúc load
-                    layers.forEach(function(layer) {
-                        const minD2 = layer.minDist * layer.minDist;
-                        const maxD2 = layer.maxDist * layer.maxDist;
-                        for (let i = 0; i < layer.count; i++) {
-                            const d2 = layer.posX[i] * layer.posX[i] + layer.posZ[i] * layer.posZ[i];
-                            const on = d2 >= minD2 && d2 <= maxD2;
-                            layer.active[i] = on ? 1 : 0;
-                            if (!on) {
-                                dummy.position.set(layer.posX[i], -80, layer.posZ[i]);
-                                dummy.scale.set(0, 0, 0);
-                                dummy.updateMatrix();
-                                layer.mesh.setMatrixAt(i, dummy.matrix);
+                    window._grassLayers = layers;
+                    window._swayGrassData = { layers: layers, dummy: dummy };
+
+                    window.applyGrassTheme = function(themeId) {
+                        const th = GRASS_THEMES[themeId] || GRASS_THEMES.temple;
+                        window._grassThemeId = themeId;
+                        const cols = th.colors.map(function(c) { return new THREE.Color(c); });
+                        const hMul = (th.hMin + th.hMax) * 0.55;
+                        layers.forEach(function(L) {
+                            if (L.mesh.setColorAt) {
+                                L.mat.color.setHex(0xffffff);
+                                for (let i = 0; i < L.count; i++) {
+                                    L.mesh.setColorAt(i, cols[L.colorIdx[i] % cols.length]);
+                                }
+                                if (L.mesh.instanceColor) L.mesh.instanceColor.needsUpdate = true;
+                            } else {
+                                L.mat.color.setHex(th.colors[0]);
                             }
-                        }
-                        layer.mesh.instanceMatrix.needsUpdate = true;
-                    });
-
-                    window._swayGrassData = {
-                        layers: layers,
-                        dummy: dummy,
-                        _frame: 0
+                            for (let i = 0; i < L.count; i++) {
+                                dummy.position.set(L.posX[i], 0.08, L.posZ[i]);
+                                dummy.rotation.set(L.baseRotX[i], L.baseRotY[i], L.baseRotZ[i]);
+                                dummy.scale.set(L.scaleW[i], L.scales[i] * hMul, L.scaleW[i]);
+                                dummy.updateMatrix();
+                                L.mesh.setMatrixAt(i, dummy.matrix);
+                            }
+                            L.mesh.instanceMatrix.needsUpdate = true;
+                            L.mesh.visible = true;
+                        });
                     };
-                })();
 
-                // Visible soil island slab around playable arena (like reference cross-section)
+                    if (typeof window.applyGrassTheme === 'function')
+                        window.applyGrassTheme(window._grassThemeId || 'temple');
+                }
+
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        try { buildGrassSystem(); } catch (e) { console.warn('grass build', e); }
+                    });
+                });
+
+                function updateGrassLODAndSway() {
+                    const layers = window._grassLayers;
+                    if (!layers || !layers.length) return;
+                    let px = 0, pz = 0;
+                    try {
+                        if (playerGroup) { px = playerGroup.position.x; pz = playerGroup.position.z; }
+                    } catch (e) {}
+                    const t = performance.now() * 0.001;
+                    const dummy = (window._swayGrassData && window._swayGrassData.dummy) || new THREE.Object3D();
+                    const st = (typeof gameStage === 'number') ? gameStage : 1;
+                    const showGrass = (st === 0 || st === 1 || st === 2 || st === 4
+                        || st === 5 || st === 6 || st === 7 || st === 8 || st === 9
+                        || st === 11 || st === 12);
+
+                    layers.forEach(function(L) {
+                        if (!showGrass) {
+                            L.mesh.visible = false;
+                            return;
+                        }
+                        L.mesh.visible = true;
+                        if (!L.lod.sway) return;
+                        if ((Math.floor(t * 30) & 1) === 0) return;
+                        const maxD2 = L.lod.maxDist * L.lod.maxDist;
+                        let any = false;
+                        for (let i = 0; i < L.count; i++) {
+                            const dx = L.posX[i] - px;
+                            const dz = L.posZ[i] - pz;
+                            if (dx * dx + dz * dz > maxD2) continue;
+                            any = true;
+                            const sway = Math.sin(t * L.speeds[i] + L.phases[i]) * L.amts[i];
+                            dummy.position.set(L.posX[i], 0.08, L.posZ[i]);
+                            dummy.rotation.set(L.baseRotX[i] + sway * 0.35, L.baseRotY[i], L.baseRotZ[i] + sway);
+                            dummy.scale.set(L.scaleW[i], L.scales[i], L.scaleW[i]);
+                            dummy.updateMatrix();
+                            L.mesh.setMatrixAt(i, dummy.matrix);
+                        }
+                        if (any) L.mesh.instanceMatrix.needsUpdate = true;
+                    });
+                }
+
+                window._lastGrassStage = -999;
+                function syncGrassThemeToStage() {
+                    const st = (typeof gameStage === 'number') ? gameStage : 1;
+                    if (st === window._lastGrassStage) return;
+                    window._lastGrassStage = st;
+                    // Ensure grass exists (if deferred build lagged)
+                    if (!window._grassLayers || !window._grassLayers.length) {
+                        try { if (typeof buildGrassSystem === 'function') buildGrassSystem(); } catch (e) {}
+                    }
+                    const tid = getGrassThemeForStage(st);
+                    if (typeof window.applyGrassTheme === 'function')
+                        window.applyGrassTheme(tid);
+                    if (window._grassLayers) {
+                        window._grassLayers.forEach(function(L) {
+                            if (L.mesh) L.mesh.visible = true;
+                        });
+                    }
+                }
+
+                                // Visible soil island slab around playable arena (like reference cross-section)
                 (function addVisibleSoilIsland() {
                     const islandSize = 160;
                     const islandThick = 18;
@@ -6499,7 +6786,7 @@
                     floorSpiral(250, 700, 0.8, 2.2);
 
                     // Dense stars
-                    for (let i = 0; i < 1400; i++) {
+                    for (let i = 0; i < 200; i++) {
                         const x = Math.random() * 1024, y = Math.random() * 1024;
                         const r = Math.random() * 1.8 + 0.2;
                         const b = 0.3 + Math.random() * 0.7;
@@ -7085,171 +7372,225 @@
                 expandedWorlds.add(planetWorld);
 
                 /* ===== MYSTIC / COSMIC TREES ===== */
-                function createMysticTree(x, z, scale) {
-                    // v1.25 realistic tree — bark + layered green canopy (no neon magic)
-                    const group = new THREE.Group();
-                    const s = scale || (0.85 + Math.random() * 0.7);
+                // ===== TREE PERF: shared materials + distance culling =====
+                const _treeBarkMats = [
+                    new THREE.MeshLambertMaterial({ color: 0x5c3d26, flatShading: true }),
+                    new THREE.MeshLambertMaterial({ color: 0x4a3220, flatShading: true }),
+                    new THREE.MeshLambertMaterial({ color: 0x6b4428, flatShading: true }),
+                    new THREE.MeshLambertMaterial({ color: 0x3d2b1a, flatShading: true }),
+                    new THREE.MeshLambertMaterial({ color: 0x7a5530, flatShading: true })
+                ];
+                const _treeLeafMats = [
+                    new THREE.MeshLambertMaterial({ color: 0x2d8a3e, flatShading: true }),
+                    new THREE.MeshLambertMaterial({ color: 0x3cb050, flatShading: true }),
+                    new THREE.MeshLambertMaterial({ color: 0x1e6b2c, flatShading: true }),
+                    new THREE.MeshLambertMaterial({ color: 0x4ac95e, flatShading: true }),
+                    new THREE.MeshLambertMaterial({ color: 0x247a35, flatShading: true }),
+                    new THREE.MeshLambertMaterial({ color: 0x35a84a, flatShading: true }),
+                    new THREE.MeshLambertMaterial({ color: 0x56d06a, flatShading: true }),
+                    new THREE.MeshLambertMaterial({ color: 0x1a5c28, flatShading: true })
+                ];
+                window._allTrees = window._allTrees || [];
+                const TREE_CULL_NEAR = 58;
+                const TREE_CULL_FAR  = 100;
+                let _treeCullFrame = 0;
 
-                    const barkColors = [0x4a3220, 0x3d2b1a, 0x5c4030, 0x2f2116];
-                    const bark = barkColors[Math.floor(Math.random() * barkColors.length)];
-                    const trunkMat = new THREE.MeshStandardMaterial({
-                        color: bark,
-                        roughness: 0.95,
-                        metalness: 0.0
-                    });
-                    // Main trunk
-                    const trunkH = (2.4 + Math.random() * 1.2) * s;
-                    const trunk = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.12 * s, 0.26 * s, trunkH, 10),
-                        trunkMat
-                    );
-                    trunk.position.y = trunkH * 0.5;
-                    trunk.castShadow = true;
-                    trunk.receiveShadow = true;
-                    group.add(trunk);
+                function updateTreeDistanceCulling() {
+                    const list = window._allTrees;
+                    if (!list || !list.length) return;
+                    _treeCullFrame = (_treeCullFrame + 1) & 3;
+                    if (_treeCullFrame !== 0) return;
+                    let px = 0, pz = 0;
+                    try {
+                        if (typeof playerGroup !== 'undefined' && playerGroup) {
+                            px = playerGroup.position.x;
+                            pz = playerGroup.position.z;
+                        } else if (typeof camera !== 'undefined' && camera) {
+                            px = camera.position.x;
+                            pz = camera.position.z;
+                        }
+                    } catch (e) {}
+                    const near2 = TREE_CULL_NEAR * TREE_CULL_NEAR;
+                    const far2  = TREE_CULL_FAR * TREE_CULL_FAR;
+                    for (let i = 0; i < list.length; i++) {
+                        const t = list[i];
+                        if (!t || !t.parent) continue;
+                        if (t.parent.visible === false) {
+                            if (t.visible) t.visible = false;
+                            continue;
+                        }
+                        const dx = t.position.x - px;
+                        const dz = t.position.z - pz;
+                        const d2 = dx * dx + dz * dz;
+                        const want = d2 < far2;
+                        if (t.visible !== want) t.visible = want;
+                        if (t.userData) {
+                            const near = d2 < near2;
+                            if (t.userData._shadowOn !== near) {
+                                t.userData._shadowOn = near;
+                                if (t.userData._trunkMeshes) {
+                                    for (let k = 0; k < t.userData._trunkMeshes.length; k++) {
+                                        t.userData._trunkMeshes[k].castShadow = near;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                
+                function updateTreeLeafSway() {
+                    const list = window._allTrees;
+                    if (!list || !list.length) return;
+                    // every 2 frames
+                    if ((Math.floor(performance.now() * 0.03) & 1) === 0) return;
+                    let px = 0, pz = 0;
+                    try {
+                        if (playerGroup) { px = playerGroup.position.x; pz = playerGroup.position.z; }
+                    } catch (e) {}
+                    const t = performance.now() * 0.001;
+                    const near2 = 42 * 42;
+                    for (let i = 0; i < list.length; i++) {
+                        const tree = list[i];
+                        if (!tree || !tree.visible || !tree.userData || !tree.userData._leafMeshes) continue;
+                        const dx = tree.position.x - px;
+                        const dz = tree.position.z - pz;
+                        if (dx * dx + dz * dz > near2) continue;
+                        const leaves = tree.userData._leafMeshes;
+                        const ph = tree.userData.ph || 0;
+                        for (let k = 0; k < leaves.length; k++) {
+                            const leaf = leaves[k];
+                            if (!leaf) continue;
+                            const w = Math.sin(t * 1.6 + ph + k * 0.7) * 0.045;
+                            leaf.rotation.z = (leaf.userData._baseRotZ || 0) + w;
+                            leaf.rotation.x = (leaf.userData._baseRotX || 0) + w * 0.6;
+                        }
+                    }
+                }
+
+                // Shared materials already above; shared geo for speed
+                const _treeTrunkGeo = new THREE.BoxGeometry(1, 1, 1);
+                const _treeLeafGeo = new THREE.BoxGeometry(1, 1, 1);
+
+                function createMysticTree(x, z, scale) {
+                    const group = new THREE.Group();
+                    const s = scale || (0.85 + Math.random() * 0.65);
+                    const trunkMat = _treeBarkMats[Math.floor(Math.random() * _treeBarkMats.length)];
+                    const trunkMeshes = [];
+                    const leafMeshes = [];
+
+                    // Trunk: 3 stacked boxes (blocky, solid from all angles)
+                    const segments = 3;
+                    const trunkTotalH = (3.0 + Math.random() * 1.3) * s;
+                    const segH = trunkTotalH / segments;
+                    for (let i = 0; i < segments; i++) {
+                        const t = i / Math.max(1, segments - 1);
+                        const w = (0.48 - t * 0.1) * s;
+                        const block = new THREE.Mesh(_treeTrunkGeo, trunkMat);
+                        block.scale.set(w, segH * 1.02, w);
+                        block.position.y = (i + 0.5) * segH;
+                        block.castShadow = true;
+                        block.receiveShadow = true;
+                        block.frustumCulled = true;
+                        group.add(block);
+                        trunkMeshes.push(block);
+                    }
                     // Roots
                     for (let r = 0; r < 3; r++) {
-                        const root = new THREE.Mesh(
-                            new THREE.CylinderGeometry(0.04 * s, 0.1 * s, 0.55 * s, 5),
-                            trunkMat
-                        );
-                        const a = (r / 3) * Math.PI * 2 + Math.random() * 0.3;
-                        root.position.set(Math.cos(a) * 0.22 * s, 0.12 * s, Math.sin(a) * 0.22 * s);
-                        root.rotation.z = Math.cos(a) * 0.9;
-                        root.rotation.x = Math.sin(a) * 0.9;
+                        const a = (r / 3) * Math.PI * 2;
+                        const root = new THREE.Mesh(_treeTrunkGeo, trunkMat);
+                        root.scale.set(0.28 * s, 0.22 * s, 0.38 * s);
+                        root.position.set(Math.cos(a) * 0.28 * s, 0.1 * s, Math.sin(a) * 0.28 * s);
+                        root.rotation.y = a;
+                        root.castShadow = false;
+                        root.frustumCulled = true;
                         group.add(root);
                     }
-                    // Branches
-                    for (let b = 0; b < 5; b++) {
-                        const br = new THREE.Mesh(
-                            new THREE.CylinderGeometry(0.03 * s, 0.07 * s, 0.9 * s, 5),
-                            trunkMat
-                        );
-                        const ang = (b / 5) * Math.PI * 2 + Math.random() * 0.5;
-                        const by = trunkH * (0.55 + Math.random() * 0.3);
-                        br.position.set(Math.cos(ang) * 0.2 * s, by, Math.sin(ang) * 0.2 * s);
-                        br.rotation.z = Math.cos(ang) * (0.5 + Math.random() * 0.35);
-                        br.rotation.x = Math.sin(ang) * (0.45 + Math.random() * 0.3);
-                        group.add(br);
-                    }
 
-                    // Natural leaf greens only
-                    const leafGreens = [
-                        [0x2d6a3e, 0x3d8b4f, 0x1e4d2b],
-                        [0x3a7d44, 0x4c9a58, 0x2a5c32],
-                        [0x4a6b2f, 0x5d8238, 0x354f20],
-                        [0x2f5c3a, 0x3f7a4c, 0x1f3f28],
-                        [0x557a32, 0x6b943e, 0x3f5a22]
+                    // Dense blocky canopy — full from every angle
+                    const canopyBase = trunkTotalH * 0.75;
+                    const layers = [
+                        [0.0,  1.1, 8, 0.70],
+                        [0.45, 1.35, 10, 0.78],
+                        [0.90, 1.40, 11, 0.80],
+                        [1.30, 1.20, 9, 0.74],
+                        [1.65, 0.90, 7, 0.68],
+                        [1.95, 0.55, 5, 0.58]
                     ];
-                    const pal = leafGreens[Math.floor(Math.random() * leafGreens.length)];
-                    const leafMat = new THREE.MeshStandardMaterial({
-                        color: pal[0],
-                        roughness: 0.88,
-                        metalness: 0.0,
-                        flatShading: true
-                    });
-                    const leafMat2 = new THREE.MeshStandardMaterial({
-                        color: pal[1],
-                        roughness: 0.9,
-                        metalness: 0.0,
-                        flatShading: true
-                    });
-                    const leafMat3 = new THREE.MeshStandardMaterial({
-                        color: pal[2],
-                        roughness: 0.92,
-                        metalness: 0.0,
-                        flatShading: true
-                    });
-
-                    const canopyY = trunkH + 0.35 * s;
-                    // Dense multi-sphere canopy (looks like real tree mass)
-                    const clusters = [
-                        [0, canopyY, 0, 1.15],
-                        [0.55, canopyY + 0.15, 0.2, 0.75],
-                        [-0.5, canopyY + 0.1, -0.25, 0.7],
-                        [0.15, canopyY + 0.55, -0.4, 0.65],
-                        [-0.2, canopyY + 0.5, 0.45, 0.62],
-                        [0.4, canopyY - 0.15, -0.5, 0.55],
-                        [-0.45, canopyY - 0.1, 0.35, 0.5]
-                    ];
-                    clusters.forEach((c, i) => {
-                        const mats = [leafMat, leafMat2, leafMat3];
-                        const blob = new THREE.Mesh(
-                            new THREE.SphereGeometry(c[3] * s * (0.85 + Math.random() * 0.25), 7, 6),
-                            mats[i % 3]
-                        );
-                        blob.position.set(c[0] * s, c[1], c[2] * s);
-                        blob.scale.y = 0.75 + Math.random() * 0.2;
-                        blob.castShadow = true;
-                        blob.receiveShadow = true;
-                        group.add(blob);
-                    });
-
-                    // Small grass tuft at base
-                    const grassMat = new THREE.MeshStandardMaterial({ color: 0x3d7a3a, roughness: 0.9 });
-                    for (let g = 0; g < 4; g++) {
-                        const blade = new THREE.Mesh(
-                            new THREE.ConeGeometry(0.06 * s, 0.35 * s, 4),
-                            grassMat
-                        );
-                        const a = Math.random() * Math.PI * 2;
-                        blade.position.set(Math.cos(a) * 0.35 * s, 0.15 * s, Math.sin(a) * 0.35 * s);
-                        blade.rotation.z = (Math.random() - 0.5) * 0.4;
-                        group.add(blade);
-                    }
-
-                    // Halloween: bí ngô treo trên cành
-                    (function addHalloweenPumpkins() {
-                        const pumpMat = new THREE.MeshStandardMaterial({
-                            color: 0xff7a18, roughness: 0.55, metalness: 0.05,
-                            emissive: 0x4a1a00, emissiveIntensity: 0.25
-                        });
-                        const stemMat = new THREE.MeshStandardMaterial({
-                            color: 0x2d5a1e, roughness: 0.9, metalness: 0
-                        });
-                        const eyeMat = new THREE.MeshBasicMaterial({ color: 0x1a0800 });
-                        const nPump = 1 + (Math.random() < 0.45 ? 1 : 0);
-                        for (let pi = 0; pi < nPump; pi++) {
-                            const pg = new THREE.Group();
-                            const body = new THREE.Mesh(new THREE.SphereGeometry(0.22 * s, 10, 8), pumpMat);
-                            body.scale.set(1.15, 0.95, 1.05);
-                            pg.add(body);
-                            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03 * s, 0.04 * s, 0.14 * s, 5), stemMat);
-                            stem.position.y = 0.22 * s;
-                            pg.add(stem);
-                            // Jack-o-lantern face
-                            const eyeL = new THREE.Mesh(new THREE.ConeGeometry(0.04 * s, 0.07 * s, 3), eyeMat);
-                            eyeL.position.set(-0.07 * s, 0.04 * s, 0.2 * s);
-                            eyeL.rotation.x = Math.PI;
-                            const eyeR = eyeL.clone();
-                            eyeR.position.x = 0.07 * s;
-                            pg.add(eyeL, eyeR);
-                            const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.12 * s, 0.035 * s, 0.04 * s), eyeMat);
-                            mouth.position.set(0, -0.06 * s, 0.2 * s);
-                            pg.add(mouth);
-                            // Hang from canopy height
-                            const ang = Math.random() * Math.PI * 2;
-                            const rad = (0.35 + Math.random() * 0.55) * s;
-                            const hy = trunkH * (0.65 + Math.random() * 0.35);
-                            pg.position.set(Math.cos(ang) * rad, hy, Math.sin(ang) * rad);
-                            // String
-                            const string = new THREE.Mesh(
-                                new THREE.CylinderGeometry(0.012 * s, 0.012 * s, 0.35 * s, 4),
-                                new THREE.MeshBasicMaterial({ color: 0x3a2a1a })
+                    layers.forEach(function(L, li) {
+                        const yOff = L[0] * s;
+                        const rad = L[1] * s;
+                        const count = L[2];
+                        const szBase = L[3] * s;
+                        for (let i = 0; i < count; i++) {
+                            const ang = (i / count) * Math.PI * 2 + li * 0.25 + Math.random() * 0.3;
+                            const rr = rad * (0.4 + Math.random() * 0.65);
+                            const sz = szBase * (0.8 + Math.random() * 0.4);
+                            const leaf = new THREE.Mesh(
+                                _treeLeafGeo,
+                                _treeLeafMats[Math.floor(Math.random() * _treeLeafMats.length)]
                             );
-                            string.position.set(0, 0.28 * s, 0);
-                            pg.add(string);
-                            pg.userData.isPumpkin = true;
-                            group.add(pg);
+                            leaf.scale.set(sz, sz * 0.72, sz);
+                            leaf.position.set(
+                                Math.cos(ang) * rr,
+                                canopyBase + yOff + (Math.random() - 0.5) * 0.15 * s,
+                                Math.sin(ang) * rr
+                            );
+                            leaf.rotation.y = Math.random() * Math.PI;
+                            leaf.rotation.x = (Math.random() - 0.5) * 0.15;
+                            leaf.userData._baseRotX = leaf.rotation.x;
+                            leaf.userData._baseRotZ = leaf.rotation.z;
+                            leaf.castShadow = false;
+                            leaf.receiveShadow = false;
+                            leaf.frustumCulled = true;
+                            group.add(leaf);
+                            leafMeshes.push(leaf);
                         }
-                    })();
+                    });
+                    // Fill center so no hollow canopy
+                    for (let f = 0; f < 6; f++) {
+                        const ang = Math.random() * Math.PI * 2;
+                        const sz = (0.5 + Math.random() * 0.35) * s;
+                        const fill = new THREE.Mesh(_treeLeafGeo, _treeLeafMats[f % _treeLeafMats.length]);
+                        fill.scale.set(sz, sz * 0.7, sz);
+                        fill.position.set(
+                            Math.cos(ang) * 0.35 * s,
+                            canopyBase + (0.3 + Math.random() * 1.4) * s,
+                            Math.sin(ang) * 0.35 * s
+                        );
+                        fill.castShadow = false;
+                        fill.frustumCulled = true;
+                        fill.userData._baseRotX = 0;
+                        fill.userData._baseRotZ = 0;
+                        group.add(fill);
+                        leafMeshes.push(fill);
+                    }
+                    // Top crown
+                    for (let t = 0; t < 3; t++) {
+                        const top = new THREE.Mesh(_treeLeafGeo, _treeLeafMats[t % _treeLeafMats.length]);
+                        const sz = 0.55 * s;
+                        top.scale.set(sz, sz * 0.65, sz);
+                        top.position.set((Math.random()-0.5)*0.4*s, canopyBase + 2.15*s + t*0.28*s, (Math.random()-0.5)*0.4*s);
+                        top.castShadow = false;
+                        top.frustumCulled = true;
+                        top.userData._baseRotX = 0;
+                        top.userData._baseRotZ = 0;
+                        group.add(top);
+                        leafMeshes.push(top);
+                    }
 
                     group.position.set(x, 0, z);
                     group.userData.isTree = true;
                     group.userData.baseY = 0;
                     group.userData.ph = Math.random() * 6.28;
+                    group.userData._trunkMeshes = trunkMeshes;
+                    group.userData._leafMeshes = leafMeshes;
+                    group.userData._shadowOn = true;
+                    group.frustumCulled = true;
+
                     if (typeof registerCollision === 'function')
                         registerCollision(x, z, 0.85 * (scale || 1));
+                    window._allTrees.push(group);
                     return group;
                 }
 
@@ -7271,7 +7612,7 @@
                 forestWorld.add(forestGround);
 
                 // Dense outer forest rings
-                for (let i = 0; i < 55; i++) {
+                for (let i = 0; i < 28; i++) {
                     const angle = Math.random() * Math.PI * 2;
                     const r = 10 + Math.random() * 95;
                     const tx = Math.cos(angle) * r;
@@ -7279,21 +7620,21 @@
                     forestWorld.add(createMysticTree(tx, tz, 0.9 + Math.random() * 0.8));
                 }
                 // Center ceremonial ring of tall trees
-                for (let i = 0; i < 12; i++) {
-                    const a = (i / 12) * Math.PI * 2;
+                for (let i = 0; i < 10; i++) {
+                    const a = (i / 10) * Math.PI * 2;
                     forestWorld.add(createMysticTree(Math.cos(a) * 14, Math.sin(a) * 14, 1.45));
                 }
                 // Inner smaller ring
-                for (let i = 0; i < 8; i++) {
-                    const a = (i / 8) * Math.PI * 2 + 0.2;
+                for (let i = 0; i < 6; i++) {
+                    const a = (i / 6) * Math.PI * 2 + 0.2;
                     forestWorld.add(createMysticTree(Math.cos(a) * 7, Math.sin(a) * 7, 1.1));
                 }
                 forestWorld.visible = false;
                 expandedWorlds.add(forestWorld);
 
                 // Dense mystic trees filling ALL empty space around main temple platform
-                for (let i = 0; i < 40; i++) {
-                    const angle = (i / 40) * Math.PI * 2;
+                for (let i = 0; i < 20; i++) {
+                    const angle = (i / 20) * Math.PI * 2;
                     const r = 28 + (i % 5) * 3 + Math.random() * 5;
                     const tree = createMysticTree(
                         Math.cos(angle) * r,
@@ -7303,7 +7644,7 @@
                     platformGroup.add(tree);
                 }
                 // Compact outer belt (v1.25 — no endless void)
-                for (let i = 0; i < 36; i++) {
+                for (let i = 0; i < 18; i++) {
                     const angle = Math.random() * Math.PI * 2;
                     const r = 38 + Math.random() * 28;
                     platformGroup.add(createMysticTree(
@@ -7316,17 +7657,15 @@
                 window._farWilderness = null;
                 // Corner groves + path clusters
                 [[-32, -32], [32, -32], [-32, 32], [32, 32],
-                 [-22, 38], [22, 38], [-38, 18], [38, -18],
-                 [0, 48], [0, -48], [48, 0], [-48, 0]].forEach(([tx, tz]) => {
-                    platformGroup.add(createMysticTree(tx, tz, 1.15 + Math.random() * 0.4));
-                    platformGroup.add(createMysticTree(tx + 3.5, tz - 2, 0.9));
-                    platformGroup.add(createMysticTree(tx - 2.5, tz + 3, 1.05));
+                 [-22, 38], [22, 38], [0, 48], [0, -48], [48, 0], [-48, 0]].forEach(([tx, tz]) => {
+                    platformGroup.add(createMysticTree(tx, tz, 1.15 + Math.random() * 0.35));
+                    platformGroup.add(createMysticTree(tx + 3.2, tz - 2, 0.95));
                 });
                 // Compact rock & grass patches (v1.25 — no empty cosmic ground)
                 (function addArenaRocks() {
                     const rockMat = new THREE.MeshStandardMaterial({ color: 0x6b6570, roughness: 0.92, metalness: 0.05 });
                     const mossMat = new THREE.MeshStandardMaterial({ color: 0x4a6b3a, roughness: 0.95 });
-                    for (let i = 0; i < 45; i++) {
+                    for (let i = 0; i < 14; i++) {
                         const a = Math.random() * Math.PI * 2;
                         const r = 12 + Math.random() * 55;
                         const rock = new THREE.Mesh(
@@ -22958,6 +23297,18 @@ if (kind === 'common') {
                         animate
                     );
 
+                    // Distance-cull trees (only render ones near the player)
+                    if (typeof updateTreeDistanceCulling === 'function')
+                        updateTreeDistanceCulling();
+                    // Grass LOD + sway + theme by stage
+                    if (typeof syncGrassThemeToStage === 'function')
+                        syncGrassThemeToStage();
+                    if (typeof updateGrassLODAndSway === 'function')
+                        updateGrassLODAndSway();
+                    // Leaf rustle on nearby trees
+                    if (typeof updateTreeLeafSway === 'function')
+                        updateTreeLeafSway();
+
                     if (rainbowHaloGroup && rainbowHaloGroup.visible) {
                         rainbowHaloGroup.position.set(playerGroup.position.x, playerGroup.position.y + 3.2, playerGroup.position.z);
                         rainbowHaloGroup.rotation.y += 0.015;
@@ -25368,6 +25719,12 @@ if (kind === 'common') {
                         if (typeof octopusMonster !== 'undefined' && octopusMonster) octopusMonster.visible = false;
                         if (playerGroup) playerGroup.position.set(0, 0, 6);
                         showToast(currentLang === 'vi' ? '⚔️ Thế giới Temple — hạ mob đỏ!' : '⚔️ Temple world — defeat the red mob!');
+                        try {
+                            window._lastGrassStage = -1;
+                            if (typeof syncGrassThemeToStage === 'function') syncGrassThemeToStage();
+                            if (typeof window.applyGrassTheme === 'function') window.applyGrassTheme('temple');
+                            if (window._grassLayers) window._grassLayers.forEach(function(L){ if(L.mesh) L.mesh.visible = true; });
+                        } catch (eG) {}
                     } else if (w.id === 'final') {
                         // Đã hạ đủ 999 → không đánh lại, chuyển Universe nếu mở
                         if (hasBossTitle && finalBossKillCount >= FINAL_BOSS_KILLS_NEEDED && !(typeof secretAdminMode !== 'undefined' && secretAdminMode)) {
@@ -25775,7 +26132,7 @@ if (kind === 'common') {
                     try {
                         if (typeof returnToHubWorld === 'function') returnToHubWorld();
                     } catch (e) { console.error('hub start', e); }
-                }, 400);
+                }, 50);
 
                 // Màn chờ xong → ẩn loading (đánh dấu ready để watchdog không bắn lỗi)
                 window._gameReady = true;
