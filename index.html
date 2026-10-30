@@ -3010,11 +3010,24 @@
         <p style="font-size:11px;color:#9ab;text-align:center;margin:6px 0 8px;line-height:1.4;">
             🌌 Default skin: <b style="color:#cde;">Alien X cosmic black</b> — planet patterns on skin (UV)
         </p>
+        <div id="money-shop-section" style="margin-top:12px;padding-top:10px;border-top:1px solid rgba(0,255,200,0.25);">
+            <div style="font-size:13px;font-weight:900;color:#00ffcc;text-align:center;margin-bottom:6px;">💰 BUY MONEY ×N · [O]</div>
+            <div style="font-size:11px;color:#9ab;text-align:center;margin-bottom:8px;">
+                Gold mult hiện tại: <b id="gold-mult-label" style="color:#ffe566;">×1</b>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;">
+                <button type="button" onclick="buyGoldMultiplier(2,50)" style="padding:6px 10px;border-radius:8px;border:1px solid #00ffcc;background:#123;color:#fff;cursor:pointer;font-size:11px;font-weight:700;">×2 · 50g</button>
+                <button type="button" onclick="buyGoldMultiplier(5,200)" style="padding:6px 10px;border-radius:8px;border:1px solid #00ffcc;background:#123;color:#fff;cursor:pointer;font-size:11px;font-weight:700;">×5 · 200g</button>
+                <button type="button" onclick="buyGoldMultiplier(10,800)" style="padding:6px 10px;border-radius:8px;border:1px solid #00ffcc;background:#123;color:#fff;cursor:pointer;font-size:11px;font-weight:700;">×10 · 800g</button>
+                <button type="button" onclick="buyGoldMultiplier(25,3000)" style="padding:6px 10px;border-radius:8px;border:1px solid #ffd700;background:#321;color:#fff;cursor:pointer;font-size:11px;font-weight:700;">×25 · 3kg</button>
+                <button type="button" onclick="buyGoldMultiplier(50,10000)" style="padding:6px 10px;border-radius:8px;border:1px solid #ff6688;background:#401020;color:#fff;cursor:pointer;font-size:11px;font-weight:700;">×50 · 10kg</button>
+            </div>
+        </div>
         <div id="skin-shop-section" style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,215,0,0.25);max-height:280px;overflow-y:auto;">
-            <div style="font-size:14px;font-weight:900;color:#ffd700;text-align:center;margin-bottom:8px;">🛒 SKIN SHOP · GOLD</div>
+            <div style="font-size:14px;font-weight:900;color:#ffd700;text-align:center;margin-bottom:8px;">🛒 SKIN SHOP · TỐC ĐỘ + GOLD ×TỐC ĐỘ</div>
             <div style="font-size:11px;color:#ccc;text-align:center;margin-bottom:10px;">
-                Formula: <b style="color:#ffe566;">gold ≈ log₁₀(power) / 67</b> per hit (very slow)<br>
-                Buy skins for speed boost &amp; appearance
+                Formula: <b style="color:#ffe566;">gold ≈ log₁₀(power) / 67</b> × money mult<br>
+                Mua skin tốc độ → nhận luôn <b>*money = tốc độ</b>
             </div>
             <div id="skin-shop-list"></div>
         </div>
@@ -3167,7 +3180,7 @@
             <input
                 id="boss-command-input"
                 type="text"
-                placeholder="//boss · //hack · //planets"
+                placeholder="//boss · //09 · //hack · //planets"
                 autocomplete="off"
                 spellcheck="false"
             >
@@ -4220,17 +4233,18 @@
                 let equippedSkinId = 'default';
                 let ownedSkins = { default: true };
                 let skinSpeedBonus = 1;
+                let goldMultiplier = 1; // *n money từ shop [O] / tốc độ skin
                 // gold = (power / click) / 670  → per hit gain
                 function goldFromHit() {
-                    // Khó hơn: gold ≈ log10(power) / 67  (power 10→~0.015, 1k→0.045, 1m→0.09, 1b→0.13)
                     let p = power;
                     if (!Number.isFinite(p) || p <= 0) p = 1;
                     if (p >= 1e18) p = 1e18;
                     let g = Math.log10(Math.max(10, p)) / 67;
-                    // Electron Sword: +10% gold mỗi đòn
                     if (typeof hasElectronSword !== 'undefined' && hasElectronSword)
                         g *= 1.10;
-                    return Math.max(0.002, Math.min(0.55, g));
+                    const gm = (typeof goldMultiplier === 'number' && goldMultiplier > 0) ? goldMultiplier : 1;
+                    g *= gm;
+                    return Math.max(0.002, Math.min(5.5 * gm, g));
                 }
                 function addGoldFromHit() {
                     playerGold += goldFromHit();
@@ -4353,7 +4367,7 @@
                     }
                 }
 
-                let isCosmicSkinOn = true;
+                let isCosmicSkinOn = false;
 
                 const inventory = {
 
@@ -5149,7 +5163,7 @@
 
                 try {
                     renderer.shadowMap.enabled = true;
-                    renderer.shadowMap.type = THREE.PCFShadowMap; // softer = slower; PCF is enough
+                    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // bóng mềm rõ hơn PCF is enough
                     renderer.outputEncoding = THREE.sRGBEncoding;
                     renderer.toneMapping = THREE.ACESFilmicToneMapping;
                     renderer.toneMappingExposure = 1.18;
@@ -5461,6 +5475,54 @@
                 skySunGlow.position.copy(skySun.position);
                 scene.add(skySunGlow);
 
+                // Mây 3D thật trên bầu trời (Hub + Temple) — thấy rõ khi ngẩng lên
+                const skyCloudGroup = new THREE.Group();
+                skyCloudGroup.name = 'skyClouds';
+                (function buildSkyClouds() {
+                    const cloudMat = new THREE.MeshLambertMaterial({
+                        color: 0xffffff,
+                        transparent: true,
+                        opacity: 0.92,
+                        flatShading: true
+                    });
+                    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+                    function makeCloud(x, y, z, s) {
+                        const cg = new THREE.Group();
+                        cg.position.set(x, y, z);
+                        const parts = [
+                            [0, 0, 0, 2.2, 1.0, 1.4],
+                            [1.1, 0.15, 0.2, 1.5, 0.9, 1.2],
+                            [-1.0, 0.1, -0.15, 1.4, 0.85, 1.1],
+                            [0.3, 0.45, 0.1, 1.3, 0.8, 1.0],
+                            [-0.4, 0.35, 0.25, 1.1, 0.7, 0.95]
+                        ];
+                        for (let i = 0; i < parts.length; i++) {
+                            const p = parts[i];
+                            const m = new THREE.Mesh(boxGeo, cloudMat);
+                            m.position.set(p[0] * s, p[1] * s, p[2] * s);
+                            m.scale.set(p[3] * s, p[4] * s, p[5] * s);
+                            m.castShadow = false;
+                            m.receiveShadow = false;
+                            cg.add(m);
+                        }
+                        return cg;
+                    }
+                    // Vài đám mây quanh sân chơi
+                    const spots = [
+                        [-40, 28, -50, 2.2], [50, 32, -35, 2.8], [20, 26, -70, 3.0],
+                        [-55, 30, 20, 2.4], [60, 34, 40, 2.6], [-25, 29, 55, 2.1],
+                        [35, 31, 60, 2.5], [-70, 33, -20, 2.9], [10, 27, -90, 3.2],
+                        [80, 35, -10, 2.3], [-15, 28, -40, 1.8], [45, 30, 15, 2.0]
+                    ];
+                    for (let i = 0; i < spots.length; i++) {
+                        const sp = spots[i];
+                        skyCloudGroup.add(makeCloud(sp[0], sp[1], sp[2], sp[3]));
+                    }
+                })();
+                skyCloudGroup.visible = false;
+                scene.add(skyCloudGroup);
+                window._skyCloudGroup = skyCloudGroup;
+
                                 const platformGroup =
                     new THREE.Group();
 
@@ -5625,44 +5687,45 @@
                 window._grassLayers = [];
                 window._grassThemeId = 'temple';
 
-                // ===== CỎ 3D FULL QUALITY — không tối ưu bớt, màu theo thế giới =====
+                // ===== CỎ 3D — kích thước bình thường, thấy 360° mọi góc =====
+                // LỖI CŨ: InstancedMesh.frustumCulled = true chỉ tính bbox hình cone gốc
+                // → cả cánh đồng cỏ bị GPU cắt mất khi nhìn lệch góc / đứng xa gốc (0,0).
                 const GRASS_THEMES = {
                     temple: {
-                        // darker + brighter mix so 3D blades pop on green floor texture
-                        colors: [0x145a12, 0x1e7018, 0x0e480e, 0x2a8820, 0x3aa828, 0x0a3810, 0x48c030, 0x186818],
-                        hMin: 1.0, hMax: 2.2
+                        colors: [0x1a6a18, 0x2a8824, 0x0e4810, 0x38a030, 0x145a14, 0x48b838, 0x1e701c, 0x0a3810],
+                        hMin: 0.55, hMax: 1.15
                     },
                     final: {
                         colors: [0x8a7020, 0xa88828, 0x6b5818, 0xc0a030, 0x5a4810, 0xd4b840],
-                        hMin: 0.55, hMax: 1.25
+                        hMin: 0.5, hMax: 1.05
                     },
                     supreme: {
                         colors: [0x4a2888, 0x5a38a8, 0x3a1868, 0x6a48c0, 0x281050, 0x7a58d0],
-                        hMin: 0.5, hMax: 1.15
+                        hMin: 0.45, hMax: 1.0
                     },
                     universe: {
                         colors: [0x0c0c14, 0x14141e, 0x08080e, 0x1a1a28, 0x101018, 0x222230],
-                        hMin: 0.45, hMax: 1.05
+                        hMin: 0.4, hMax: 0.95
                     },
                     cosmic: {
                         colors: [0x186888, 0x2080a0, 0x104858, 0x2898b8, 0x0c3848, 0x38a8c8],
-                        hMin: 0.5, hMax: 1.2
+                        hMin: 0.45, hMax: 1.05
                     },
                     atomic: {
                         colors: [0x188838, 0x20a848, 0x106828, 0x28c858, 0x0c5020, 0x38d868],
-                        hMin: 0.55, hMax: 1.25
+                        hMin: 0.5, hMax: 1.1
                     },
                     error: {
                         colors: [0x0c3820, 0x144828, 0x082818, 0x1c5830, 0x103020, 0x246838],
-                        hMin: 0.45, hMax: 1.1
+                        hMin: 0.4, hMax: 0.95
                     },
                     electron: {
                         colors: [0x145070, 0x1c6888, 0x0c3850, 0x2478a0, 0x102838, 0x2c88b0],
-                        hMin: 0.45, hMax: 1.1
+                        hMin: 0.4, hMax: 0.95
                     },
                     hub: {
-                        colors: [0x2d9030, 0x3cb040, 0x1e6824, 0x4cc850, 0x247a28, 0x58d860],
-                        hMin: 0.55, hMax: 1.25
+                        colors: [0x6644ff, 0x22ddff, 0xff44cc, 0x8866ff, 0x44ffaa, 0xaa66ff, 0xff88ee],
+                        hMin: 0.5, hMax: 1.1
                     }
                 };
 
@@ -5682,15 +5745,19 @@
                 function buildGrassSystem() {
                     if (window._grassBuilt) return;
                     window._grassBuilt = true;
-                    const HALF = 55;
+
+                    const HALF = 52;
+                    // density gần như ảnh mẫu, size nhỏ bình thường
                     const LODs = [
-                        { step: 0.75, minDist: 0,  maxDist: 28, bladesPerCell: 4, sway: true  },
-                        { step: 1.4,  minDist: 22, maxDist: 48, bladesPerCell: 2, sway: false },
-                        { step: 2.4,  minDist: 42, maxDist: 72, bladesPerCell: 1, sway: false }
+                        { step: 1.05, minDist: 0,  maxDist: 26, bladesPerCell: 3, sway: true  },
+                        { step: 1.9,  minDist: 22, maxDist: 48, bladesPerCell: 2, sway: false },
+                        { step: 3.2,  minDist: 44, maxDist: 68, bladesPerCell: 1, sway: false }
                     ];
 
-                    const bladeGeo = new THREE.ConeGeometry(0.16, 0.95, 8);
-                    bladeGeo.translate(0, 0.48, 0);
+                    // Cone 3D đứng thẳng — nhìn ngang / nghiêng / trên đều thấy (không phải plane 2D)
+                    const bladeGeo = new THREE.ConeGeometry(0.09, 0.38, 6);
+                    bladeGeo.translate(0, 0.19, 0); // đáy sát đất
+                    bladeGeo.computeBoundingSphere();
 
                     const dummy = new THREE.Object3D();
                     const layers = [];
@@ -5701,13 +5768,24 @@
                         const grassMat = new THREE.MeshLambertMaterial({
                             color: 0xffffff,
                             flatShading: true,
-                            side: THREE.DoubleSide
+                            side: THREE.DoubleSide, // quan trọng: thấy cả mặt sau
+                            depthWrite: true,
+                            depthTest: true
                         });
                         const mesh = new THREE.InstancedMesh(bladeGeo, grassMat, maxCount);
                         mesh.castShadow = false;
-                        mesh.receiveShadow = true;
-                        mesh.frustumCulled = true;
+                        mesh.receiveShadow = false;
+                        // *** FIX góc nhìn mất cỏ ***
+                        // InstancedMesh mặc định chỉ cull theo geometry gốc ở (0,0,0)
+                        // → khi camera không nhìn về gốc, cả field biến mất.
+                        mesh.frustumCulled = false;
                         mesh.visible = true;
+
+                        // Bounding sphere bao cả cánh đồng (phòng khi bật cull lại)
+                        mesh.boundingSphere = new THREE.Sphere(
+                            new THREE.Vector3(0, 0.2, 0),
+                            HALF * 1.5
+                        );
 
                         const posX = new Float32Array(maxCount);
                         const posZ = new Float32Array(maxCount);
@@ -5724,19 +5802,23 @@
                         let idx = 0;
                         for (let ix = 0; ix < cols && idx < maxCount; ix++) {
                             for (let iz = 0; iz < cols && idx < maxCount; iz++) {
-                                const cx = -HALF + ix * lod.step + (Math.random() - 0.5) * lod.step * 0.35;
-                                const cz = -HALF + iz * lod.step + (Math.random() - 0.5) * lod.step * 0.35;
-                                if (Math.hypot(cx, cz) < 4.5) continue;
+                                const cx = -HALF + ix * lod.step + (Math.random() - 0.5) * lod.step * 0.3;
+                                const cz = -HALF + iz * lod.step + (Math.random() - 0.5) * lod.step * 0.3;
+                                if (Math.hypot(cx, cz) < 4.2) continue;
                                 for (let b = 0; b < lod.bladesPerCell && idx < maxCount; b++) {
-                                    const x = cx + (Math.random() - 0.5) * lod.step * 0.55;
-                                    const z = cz + (Math.random() - 0.5) * lod.step * 0.55;
-                                    const hScale = 0.9 + Math.random() * 1.1;
-                                    const wScale = 0.85 + Math.random() * 0.65;
+                                    const x = cx + (Math.random() - 0.5) * lod.step * 0.5;
+                                    const z = cz + (Math.random() - 0.5) * lod.step * 0.5;
+                                    // size nhỏ bình thường
+                                    const hScale = 0.75 + Math.random() * 0.7;
+                                    const wScale = 0.8 + Math.random() * 0.55;
+                                    // xoay Y random — 3D, không phải billboard 2D
                                     const ry = Math.random() * Math.PI * 2;
-                                    const rz = (Math.random() - 0.5) * 0.3;
-                                    const rx = (Math.random() - 0.5) * 0.25;
+                                    // nghiêng nhẹ cho tự nhiên (vẫn đứng, không nằm)
+                                    const rz = (Math.random() - 0.5) * 0.22;
+                                    const rx = (Math.random() - 0.5) * 0.18;
 
-                                    dummy.position.set(x, 0.08, z);
+                                    // y = 0.05: trên mặt sàn, tránh z-fighting
+                                    dummy.position.set(x, 0.05, z);
                                     dummy.rotation.set(rx, ry, rz);
                                     dummy.scale.set(wScale, hScale, wScale);
                                     dummy.updateMatrix();
@@ -5746,8 +5828,8 @@
                                     baseRotY[idx] = ry; baseRotZ[idx] = rz; baseRotX[idx] = rx;
                                     scales[idx] = hScale; scaleW[idx] = wScale;
                                     phases[idx] = Math.random() * Math.PI * 2;
-                                    speeds[idx] = 1.1 + Math.random() * 1.5;
-                                    amts[idx] = 0.07 + Math.random() * 0.1;
+                                    speeds[idx] = 1.1 + Math.random() * 1.4;
+                                    amts[idx] = 0.06 + Math.random() * 0.08;
                                     colorIdx[idx] = (Math.random() * 8) | 0;
                                     idx++;
                                 }
@@ -5757,7 +5839,7 @@
                         mesh.instanceMatrix.needsUpdate = true;
 
                         if (mesh.setColorAt) {
-                            const c0 = new THREE.Color(0x3cb038);
+                            const c0 = new THREE.Color(0x2a8824);
                             for (let i = 0; i < idx; i++) mesh.setColorAt(i, c0);
                             if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
                         }
@@ -5781,18 +5863,33 @@
                         window._grassThemeId = themeId;
                         const cols = th.colors.map(function(c) { return new THREE.Color(c); });
                         const hMul = (th.hMin + th.hMax) * 0.55;
+                        // Biên giới: ngoài vòng = không có cỏ
+                        const isHub = (themeId === 'hub');
+                        const hubR = (typeof window._hubBoundaryR === 'number') ? window._hubBoundaryR : 36.5;
+                        // Temple/boss: chỉ trong sân chơi (~58), tránh cỏ tràn void (hình 2)
+                        const worldR = isHub ? hubR : 58;
                         layers.forEach(function(L) {
+                            L.mesh.frustumCulled = false;
                             if (L.mesh.setColorAt) {
                                 L.mat.color.setHex(0xffffff);
                                 for (let i = 0; i < L.count; i++) {
-                                    L.mesh.setColorAt(i, cols[L.colorIdx[i] % cols.length]);
+                                    const ci = isHub ? (i % cols.length) : (L.colorIdx[i] % cols.length);
+                                    L.mesh.setColorAt(i, cols[ci]);
                                 }
                                 if (L.mesh.instanceColor) L.mesh.instanceColor.needsUpdate = true;
                             } else {
                                 L.mat.color.setHex(th.colors[0]);
                             }
                             for (let i = 0; i < L.count; i++) {
-                                dummy.position.set(L.posX[i], 0.08, L.posZ[i]);
+                                const dist = Math.hypot(L.posX[i], L.posZ[i]);
+                                if (dist > worldR) {
+                                    dummy.position.set(L.posX[i], 0.05, L.posZ[i]);
+                                    dummy.scale.set(0, 0, 0);
+                                    dummy.updateMatrix();
+                                    L.mesh.setMatrixAt(i, dummy.matrix);
+                                    continue;
+                                }
+                                dummy.position.set(L.posX[i], 0.05, L.posZ[i]);
                                 dummy.rotation.set(L.baseRotX[i], L.baseRotY[i], L.baseRotZ[i]);
                                 dummy.scale.set(L.scaleW[i], L.scales[i] * hMul, L.scaleW[i]);
                                 dummy.updateMatrix();
@@ -5833,6 +5930,7 @@
                             return;
                         }
                         L.mesh.visible = true;
+                        L.mesh.frustumCulled = false;
                         if (!L.lod.sway) return;
                         if ((Math.floor(t * 30) & 1) === 0) return;
                         const maxD2 = L.lod.maxDist * L.lod.maxDist;
@@ -5843,8 +5941,8 @@
                             if (dx * dx + dz * dz > maxD2) continue;
                             any = true;
                             const sway = Math.sin(t * L.speeds[i] + L.phases[i]) * L.amts[i];
-                            dummy.position.set(L.posX[i], 0.08, L.posZ[i]);
-                            dummy.rotation.set(L.baseRotX[i] + sway * 0.35, L.baseRotY[i], L.baseRotZ[i] + sway);
+                            dummy.position.set(L.posX[i], 0.05, L.posZ[i]);
+                            dummy.rotation.set(L.baseRotX[i] + sway * 0.3, L.baseRotY[i], L.baseRotZ[i] + sway);
                             dummy.scale.set(L.scaleW[i], L.scales[i], L.scaleW[i]);
                             dummy.updateMatrix();
                             L.mesh.setMatrixAt(i, dummy.matrix);
@@ -5858,7 +5956,6 @@
                     const st = (typeof gameStage === 'number') ? gameStage : 1;
                     if (st === window._lastGrassStage) return;
                     window._lastGrassStage = st;
-                    // Ensure grass exists (if deferred build lagged)
                     if (!window._grassLayers || !window._grassLayers.length) {
                         try { if (typeof buildGrassSystem === 'function') buildGrassSystem(); } catch (e) {}
                     }
@@ -5867,12 +5964,15 @@
                         window.applyGrassTheme(tid);
                     if (window._grassLayers) {
                         window._grassLayers.forEach(function(L) {
-                            if (L.mesh) L.mesh.visible = true;
+                            if (L.mesh) {
+                                L.mesh.visible = true;
+                                L.mesh.frustumCulled = false;
+                            }
                         });
                     }
                 }
 
-                                // Visible soil island slab around playable arena (like reference cross-section)
+                                                // Visible soil island slab around playable arena (like reference cross-section)
                 (function addVisibleSoilIsland() {
                     const islandSize = 160;
                     const islandThick = 18;
@@ -7479,32 +7579,63 @@
                     const trunkMeshes = [];
                     const leafMeshes = [];
 
-                    // Trunk: 3 stacked boxes (blocky, solid from all angles)
-                    const segments = 3;
+                    // Thân chi tiết: nhiều đoạn + gân + rễ + nhánh phụ (giống hub)
                     const trunkTotalH = (3.0 + Math.random() * 1.3) * s;
+                    const segments = 5;
                     const segH = trunkTotalH / segments;
                     for (let i = 0; i < segments; i++) {
                         const t = i / Math.max(1, segments - 1);
-                        const w = (0.48 - t * 0.1) * s;
+                        const w = (0.50 - t * 0.14) * s;
                         const block = new THREE.Mesh(_treeTrunkGeo, trunkMat);
-                        block.scale.set(w, segH * 1.02, w);
+                        block.scale.set(w, segH * 1.05, w);
                         block.position.y = (i + 0.5) * segH;
+                        block.rotation.y = (Math.random() - 0.5) * 0.12;
                         block.castShadow = true;
                         block.receiveShadow = true;
                         block.frustumCulled = true;
                         group.add(block);
                         trunkMeshes.push(block);
+                        // Gân / u trên thân
+                        if (i > 0 && i < segments - 1 && Math.random() < 0.7) {
+                            const knot = new THREE.Mesh(_treeTrunkGeo, trunkMat);
+                            const ka = Math.random() * Math.PI * 2;
+                            knot.scale.set(0.12 * s, 0.14 * s, 0.18 * s);
+                            knot.position.set(
+                                Math.cos(ka) * w * 0.55,
+                                (i + 0.5) * segH,
+                                Math.sin(ka) * w * 0.55
+                            );
+                            knot.castShadow = false;
+                            group.add(knot);
+                        }
                     }
-                    // Roots
-                    for (let r = 0; r < 3; r++) {
-                        const a = (r / 3) * Math.PI * 2;
+                    // Rễ tỏa (4-5 cái)
+                    const nRoots = 4 + ((Math.random() * 2) | 0);
+                    for (let r = 0; r < nRoots; r++) {
+                        const a = (r / nRoots) * Math.PI * 2 + Math.random() * 0.3;
                         const root = new THREE.Mesh(_treeTrunkGeo, trunkMat);
-                        root.scale.set(0.28 * s, 0.22 * s, 0.38 * s);
-                        root.position.set(Math.cos(a) * 0.28 * s, 0.1 * s, Math.sin(a) * 0.28 * s);
+                        root.scale.set(0.22 * s, 0.18 * s, 0.48 * s);
+                        root.position.set(Math.cos(a) * 0.32 * s, 0.09 * s, Math.sin(a) * 0.32 * s);
                         root.rotation.y = a;
+                        root.rotation.z = 0.25 + Math.random() * 0.2;
                         root.castShadow = false;
                         root.frustumCulled = true;
                         group.add(root);
+                    }
+                    // Nhánh phụ
+                    for (let b = 0; b < 3; b++) {
+                        const a = b * 2.1 + Math.random() * 0.5;
+                        const br = new THREE.Mesh(_treeTrunkGeo, trunkMat);
+                        br.scale.set(0.55 * s, 0.14 * s, 0.14 * s);
+                        br.position.set(
+                            Math.cos(a) * 0.22 * s,
+                            trunkTotalH * (0.4 + b * 0.15),
+                            Math.sin(a) * 0.22 * s
+                        );
+                        br.rotation.y = a;
+                        br.rotation.z = (b % 2 ? 0.4 : -0.35);
+                        br.castShadow = false;
+                        group.add(br);
                     }
 
                     // Dense blocky canopy — full from every angle
@@ -8220,16 +8351,8 @@
                 }
                 window.enforceStageMobVisibility = enforceStageMobVisibility;
 
+                // Đã xóa vòng cầu vồng cồng kềnh quanh chân — chỉ giữ halo trên đầu
                 rainbowHaloGroup = new THREE.Group();
-                const haloColors = [0xff0000,0xff8800,0xffff00,0x00ff66,0x00aaff,0x3355ff,0xcc33ff];
-                haloColors.forEach((c, i) => {
-                    const halo = new THREE.Mesh(
-                        new THREE.TorusGeometry(2.8 + i * 0.32, 0.08, 10, 64),
-                        new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.9 })
-                    );
-                    halo.rotation.x = Math.PI / 2;
-                    rainbowHaloGroup.add(halo);
-                });
                 rainbowHaloGroup.visible = false;
                 scene.add(rainbowHaloGroup);
 
@@ -8580,16 +8703,36 @@
                 // Canvas gradient trời xanh (đẹp hơn solid color)
                 function createBlueSkyTexture() {
                     const canvas = document.createElement('canvas');
-                    canvas.width = 8;
+                    canvas.width = 512;
                     canvas.height = 256;
                     const ctx = canvas.getContext('2d');
                     const g = ctx.createLinearGradient(0, 0, 0, 256);
-                    g.addColorStop(0, '#1a6ec8');   // zenith đậm
-                    g.addColorStop(0.35, '#4aa3f0');
-                    g.addColorStop(0.7, '#87ceeb');  // horizon
-                    g.addColorStop(1, '#c8e8ff');
+                    g.addColorStop(0, '#1a8ad8');
+                    g.addColorStop(0.28, '#3aa8ef');
+                    g.addColorStop(0.55, '#5ec4f5');
+                    g.addColorStop(0.78, '#8ad4f8');
+                    g.addColorStop(1, '#c8ecff');
                     ctx.fillStyle = g;
-                    ctx.fillRect(0, 0, 8, 256);
+                    ctx.fillRect(0, 0, 512, 256);
+                    function puff(cx, cy, r, a) {
+                        var grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+                        grd.addColorStop(0, 'rgba(255,255,255,' + a + ')');
+                        grd.addColorStop(0.5, 'rgba(255,255,255,' + (a * 0.5) + ')');
+                        grd.addColorStop(1, 'rgba(255,255,255,0)');
+                        ctx.fillStyle = grd;
+                        ctx.beginPath();
+                        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    for (var i = 0; i < 36; i++) {
+                        var cx = Math.random() * 512;
+                        var cy = 30 + Math.random() * 130;
+                        var r = 30 + Math.random() * 80;
+                        var a = 0.4 + Math.random() * 0.45;
+                        puff(cx, cy, r, a);
+                        puff(cx + r * 0.55, cy + 6, r * 0.75, a * 0.75);
+                        puff(cx - r * 0.4, cy + 10, r * 0.6, a * 0.65);
+                    }
                     const tex = new THREE.CanvasTexture(canvas);
                     tex.mapping = THREE.EquirectangularReflectionMapping;
                     return tex;
@@ -8611,8 +8754,9 @@
 
                     // Ultimate(6) + Universe(7) + Final arena(5) + BH(10) = deep black space
                     const isDeepSpace = (s === 5 || s === 6 || s === 7 || s === 10);
-                    const isBlue = (s === 8 || s === 9); // cosmic/atomic can keep cooler sky
-                    const isDirt = (s === 1 || s === 2 || s === 4 || s === 0);
+                    // Hub(0) + Temple(1) + cosmic/atomic: trời xanh mây nắng
+                    const isBlue = (s === 0 || s === 1 || s === 8 || s === 9);
+                    const isDirt = (s === 2 || s === 4);
                     const isHell = (s === 3);
                     const isError = (s === 11);
                     const isElectron = (s === 12);
@@ -8630,6 +8774,10 @@
                         if (typeof skySunGlow !== 'undefined' && skySunGlow)
                             skySunGlow.visible = skySun.visible;
                     }
+                    // Mây 3D chỉ hiện ở hub / temple (trời xanh)
+                    if (typeof window._skyCloudGroup !== 'undefined' && window._skyCloudGroup) {
+                        window._skyCloudGroup.visible = !!isBlue;
+                    }
                     if (typeof starField !== 'undefined' && starField) {
                         // Sao: đất + vũ trụ; trời xanh ban ngày thì ẩn
                         starField.visible = !isBlue;
@@ -8646,10 +8794,12 @@
                         if (typeof starField !== 'undefined' && starField)
                             starField.visible = true;
                     } else if (isBlue) {
-                        scene.background = blueSkyColor;
+                        // Trời xanh mây nắng (Temple + cosmic/atomic)
+                        scene.background = (blueSkyTexture || blueSkyColor);
+                        try { if (blueSkyTexture) scene.environment = blueSkyTexture; } catch (e) {}
                         if (scene.fog) {
-                            scene.fog.color.setHex(0x7ec8f0);
-                            scene.fog.density = 0.0012;
+                            scene.fog.color.setHex(0x87ceeb);
+                            scene.fog.density = 0.0009;
                         }
                     } else if (isHell) {
                         scene.background = new THREE.Color(0x1a0508);
@@ -8825,6 +8975,7 @@
                     0.26
                 );
 
+                // Halo đen trên đầu — vật thể duy nhất trên đầu
                 const haloMat =
                     new THREE.MeshBasicMaterial({
                         color: 0x000000
@@ -8833,10 +8984,10 @@
                 const haloRing =
                     new THREE.Mesh(
                         new THREE.TorusGeometry(
-                            0.45,
-                            0.08,
-                            16,
-                            32
+                            0.42,
+                            0.055,
+                            10,
+                            24
                         ),
                         haloMat
                     );
@@ -8846,6 +8997,7 @@
 
                 haloRing.position.y =
                     2.55;
+                haloRing.visible = true;
 
                 const armMat =
                     new THREE.MeshStandardMaterial({
@@ -8949,8 +9101,9 @@
                 const swordBladeMat =
                     new THREE.MeshStandardMaterial({
                         color: swordColors[0],
-                        metalness: 0.8,
-                        roughness: 0.18
+                        metalness: 0.95,
+                        roughness: 0.08,
+                        envMapIntensity: 1.4
                     });
 
                 const swordBlade =
@@ -9559,12 +9712,13 @@
 
                 window.updatePlayerSwordVisual =
                     function() {
-                        // Electron Sword ưu tiên hiển thị cao nhất
                         const showE = !!hasElectronSword;
                         const showG = hasGlitchSword && !showE;
                         const showH = hasHackSword && !showG && !showE;
                         const showGoD = hasGoDSword && !showH && !showG && !showE;
                         const showNorm = !showGoD && !showH && !showG && !showE;
+                        const hasAny = !!(equippedItemType || showE || showG || showH || showGoD);
+                        if (swordGroup) swordGroup.visible = hasAny;
                         commonSwordGroup.visible = equippedItemType === 'common' && showNorm;
                         rareSwordGroup.visible = equippedItemType === 'rare' && showNorm;
                         epicSwordGroup.visible = equippedItemType === 'epic' && showNorm;
@@ -9573,7 +9727,6 @@
                         hackSwordGroup.visible = showH;
                         errorSwordGroup.visible = showG;
                         electronSwordGroup.visible = showE;
-                        // Đồng bộ màu kiếm góc nhìn từ mắt
                         try { if (typeof refreshFpSwordColors === 'function') refreshFpSwordColors(); } catch (e) {}
                     };
 
@@ -11168,32 +11321,9 @@
                     P.legL = makeLeg(-1);
                     P.legR = makeLeg(1);
 
-                    // ===== Orbital rings around head (cosmic style) =====
+                    // Đã bỏ vòng orbit quanh đầu — chỉ còn haloRing trên player
                     const orbitGroup = new THREE.Group();
-                    orbitGroup.position.y = 0.55;
-                    P.head.add(orbitGroup);
-                    const orbitColors = [0xaa66ff, 0x66ccff, 0xff66ee];
-                    for (let i = 0; i < 3; i++) {
-                        const ring = new THREE.Mesh(
-                            new THREE.TorusGeometry(0.55 + i * 0.18, 0.018, 8, 48),
-                            new THREE.MeshBasicMaterial({
-                                color: orbitColors[i],
-                                transparent: true,
-                                opacity: 0.85,
-                                depthWrite: false
-                            })
-                        );
-                        ring.rotation.x = Math.PI / 2 + (i - 1) * 0.35;
-                        ring.rotation.z = i * 0.4;
-                        ring.userData.spin = 0.008 + i * 0.004;
-                        orbitGroup.add(ring);
-                        const planet = new THREE.Mesh(
-                            new THREE.SphereGeometry(0.06 + i * 0.015, 10, 10),
-                            new THREE.MeshBasicMaterial({ color: orbitColors[i] })
-                        );
-                        planet.position.set(0.55 + i * 0.18, 0, 0);
-                        ring.add(planet);
-                    }
+                    orbitGroup.visible = false;
                     P.orbitGroup = orbitGroup;
 
                     const glowShell = new THREE.Mesh(
@@ -11201,7 +11331,7 @@
                         new THREE.MeshBasicMaterial({
                             color: 0x8844ff,
                             transparent: true,
-                            opacity: 0.12,
+                            opacity: 0.0,
                             side: THREE.BackSide,
                             depthWrite: false
                         })
@@ -11798,216 +11928,43 @@
                 window.setPlayerGender = setPlayerGender;
                 setPlayerGender(playerGender);
 
-                /* ===== COSMIC ORBIT RINGS + PLANETS (like reference image) ===== */
+                /* ===== KHÔNG còn vòng / hành tinh quanh đầu — chỉ halo đen ===== */
                 const cosmicOrbitGroup = new THREE.Group();
-                playerGroup.add(cosmicOrbitGroup);
-
-                // Energy rings
-                const orbitRingMat = new THREE.MeshBasicMaterial({
-                    color: 0x88ccff,
-                    transparent: true,
-                    opacity: 0.55,
-                    side: THREE.DoubleSide,
-                    depthWrite: false,
-                    blending: THREE.AdditiveBlending
-                });
-                const orbitRingMat2 = new THREE.MeshBasicMaterial({
-                    color: 0xcc66ff,
-                    transparent: true,
-                    opacity: 0.4,
-                    side: THREE.DoubleSide,
-                    depthWrite: false,
-                    blending: THREE.AdditiveBlending
-                });
-
-                function makeOrbitRing(radius, tube, mat, tiltX, tiltZ) {
-                    const ring = new THREE.Mesh(
-                        new THREE.TorusGeometry(radius, tube, 6, 32), // giảm segments chống lag
-                        mat
-                    );
-                    ring.rotation.x = tiltX;
-                    ring.rotation.z = tiltZ;
-                    ring.userData.spin = 0.01 + Math.random() * 0.01;
-                    cosmicOrbitGroup.add(ring);
-                    return ring;
-                }
-
-                makeOrbitRing(1.4, 0.016, orbitRingMat, Math.PI / 2.4, 0.3);
-                makeOrbitRing(1.85, 0.012, orbitRingMat2, Math.PI / 2.1, -0.4);
-                // Mặc định FP → ẩn vòng
-                try {
-                    if (typeof isFirstPerson !== 'undefined' && isFirstPerson)
-                        cosmicOrbitGroup.visible = false;
-                } catch (e) {}
-
-                // Orbiting planets (giảm số lượng + low poly chống lag)
-                const planetColors = [0x66aaff, 0xff88cc, 0xaaddff];
+                cosmicOrbitGroup.visible = false;
+                // Không add ring/planet/aura vào group
                 const cosmicPlanets = [];
-                for (let i = 0; i < 3; i++) {
-                    const size = 0.07 + i * 0.015;
-                    const planet = new THREE.Mesh(
-                        new THREE.SphereGeometry(size, 8, 8),
-                        new THREE.MeshBasicMaterial({
-                            color: planetColors[i]
-                        })
-                    );
-                    planet.userData = {
-                        radius: 1.3 + i * 0.35,
-                        speed: 0.45 + i * 0.12,
-                        angle: i * 2.1,
-                        yOff: (i - 1) * 0.35,
-                        yAmp: 0.18
-                    };
-                    cosmicOrbitGroup.add(planet);
-                    cosmicPlanets.push(planet);
-                }
-
-                // Soft outer glow aura
-                const auraMat = new THREE.MeshBasicMaterial({
-                    color: 0x8844ff,
-                    transparent: true,
-                    opacity: 0.12,
-                    depthWrite: false,
-                    blending: THREE.AdditiveBlending,
-                    side: THREE.BackSide
-                });
-                const aura = new THREE.Mesh(
-                    new THREE.SphereGeometry(1.6, 24, 24),
-                    auraMat
-                );
-                aura.position.y = 1.3;
-                cosmicOrbitGroup.add(aura);
-
-                // Eye glow (chỉ mesh, không PointLight để chống lag)
-                // Nữ: mắt hồng; Nam: mắt xanh cosmic
-                let _girlBlinkUntil = 0;
-                let _girlBlinkNext = 0;
-                function attachCosmicEyeGlow() {
-                    if (!blockyP || !blockyP.head) return;
-                    const olds = blockyP.head.children.filter(c => c.userData && (c.userData.isEyeGlow || c.userData.isBlinkFace));
-                    olds.forEach(o => blockyP.head.remove(o));
-
-                    const isGirl = (typeof playerGender !== 'undefined' && playerGender === 'girl');
-
-                    if (isGirl) {
-                        // Glow hồng mềm (NormalBlending — không bị trắng)
-                        [-0.14, 0.14].forEach(ex => {
-                            const glow = new THREE.Mesh(
-                                new THREE.CircleGeometry(0.1, 12),
-                                new THREE.MeshBasicMaterial({
-                                    color: 0xf060b0,
-                                    transparent: true,
-                                    opacity: 0.4,
-                                    depthWrite: false,
-                                    blending: THREE.NormalBlending
-                                })
-                            );
-                            glow.position.set(ex, 0.44, 0.335);
-                            glow.scale.set(1.4, 0.75, 1);
-                            glow.userData.isEyeGlow = true;
-                            blockyP.head.add(glow);
-                        });
-                    } else {
-                        [-0.14, 0.14].forEach(ex => {
-                            const glow = new THREE.Mesh(
-                                new THREE.CircleGeometry(0.09, 8),
-                                new THREE.MeshBasicMaterial({
-                                    color: 0xaaddff,
-                                    transparent: true,
-                                    opacity: 0.85,
-                                    depthWrite: false,
-                                    blending: THREE.AdditiveBlending
-                                })
-                            );
-                            glow.position.set(ex, 0.44, 0.34);
-                            glow.userData.isEyeGlow = true;
-                            blockyP.head.add(glow);
-                        });
-                    }
-
-                    // Lưu ref mặt để chớp mắt
-                    if (blockyP.face && blockyP.face.material) {
-                        blockyP.face.userData.openMap = isGirl ? girlFaceTexture : playerFaceTexture;
-                        blockyP.face.userData.blinkMap = isGirl ? girlFaceBlinkTexture : null;
-                        if (isGirl) {
-                            blockyP.face.material.map = girlFaceTexture;
-                            blockyP.face.material.needsUpdate = true;
-                        }
-                    }
-                    _girlBlinkNext = performance.now() + 1800 + Math.random() * 800;
-                    _girlBlinkUntil = 0;
-                }
-                attachCosmicEyeGlow();
-
-                // Re-attach on gender change
-                const _origOnGender = window.__onGender;
-                window.__onGender = function(p) {
-                    if (_origOnGender) _origOnGender(p);
-                    attachCosmicEyeGlow();
-                };
-
-                // Chớp mắt ~ mỗi 2 giây (chỉ nhân vật nữ)
-                window.__updateGirlBlink = function(now) {
-                    if (typeof playerGender === 'undefined' || playerGender !== 'girl') return;
-                    if (!blockyP || !blockyP.face || !blockyP.face.material) return;
-                    const face = blockyP.face;
-                    const mat = face.material;
-                    if (!face.userData.blinkMap) return;
-                    now = now || performance.now();
-                    if (now < _girlBlinkUntil) {
-                        // đang nhắm
-                        if (mat.map !== face.userData.blinkMap) {
-                            mat.map = face.userData.blinkMap;
-                            mat.needsUpdate = true;
-                        }
-                        // ẩn glow khi nhắm
-                        blockyP.head.children.forEach(function(c) {
-                            if (c.userData && c.userData.isEyeGlow) c.visible = false;
-                        });
-                        return;
-                    }
-                    // mắt mở
-                    if (mat.map !== face.userData.openMap) {
-                        mat.map = face.userData.openMap;
-                        mat.needsUpdate = true;
-                    }
-                    blockyP.head.children.forEach(function(c) {
-                        if (c.userData && c.userData.isEyeGlow) c.visible = true;
-                    });
-                    if (now >= _girlBlinkNext) {
-                        _girlBlinkUntil = now + 120; // nhắm ~120ms
-                        _girlBlinkNext = now + 1800 + Math.random() * 900; // lần sau ~2s
-                    }
-                };
-
-                // Animate orbits inside updateRealism or animate loop later
-                window.__updateCosmicOrbit = function(t) {
-                    if (!isCosmicSkinOn) {
+                window._cosmicOrbitGroup = cosmicOrbitGroup;
+                // Hàm giả để code cũ không lỗi
+                function makeOrbitRing() { return null; }
+                function updateCosmicOrbit() {
+                    if (cosmicOrbitGroup) {
                         cosmicOrbitGroup.visible = false;
-                        return;
-                    }
-                    cosmicOrbitGroup.visible = true;
-                    cosmicOrbitGroup.children.forEach(c => {
-                        if (c.userData && c.userData.spin) {
-                            c.rotation.y += c.userData.spin;
+                        // dọn nếu vô tình bị add
+                        while (cosmicOrbitGroup.children.length) {
+                            cosmicOrbitGroup.remove(cosmicOrbitGroup.children[0]);
                         }
-                    });
-                    cosmicPlanets.forEach(p => {
-                        const d = p.userData;
-                        d.angle += d.speed * 0.016;
-                        p.position.x = Math.cos(d.angle) * d.radius;
-                        p.position.z = Math.sin(d.angle) * d.radius;
-                        p.position.y = 1.2 + d.yOff + Math.sin(t * 1.5 + d.angle) * d.yAmp;
-                        p.rotation.y += 0.02;
-                    });
-                    aura.material.opacity = 0.08 + Math.sin(t * 2) * 0.04;
-                };
+                    }
+                }
 
                 playerGroup.remove(swordGroup);
                 blockySwordHolder.add(swordGroup);
                 swordGroup.position.set(0, -0.1, 0);
                 swordGroup.rotation.set(0, 0, 0);
                 swordGroup.userData.inHand = true;
+                // Ban đầu chưa cầm kiếm — phải hạ boss mới có
+                swordGroup.visible = false;
+                try {
+                    swordGroup.traverse(function(o) {
+                        if (o.isMesh) {
+                            o.castShadow = true;
+                            o.receiveShadow = true;
+                            if (o.material && o.material.metalness != null) {
+                                o.material.metalness = Math.max(o.material.metalness || 0, 0.85);
+                                o.material.roughness = Math.min(o.material.roughness == null ? 0.2 : o.material.roughness, 0.18);
+                            }
+                        }
+                    });
+                } catch (e) {}
 
                 // Vung kiếm khi click đánh
                 window.addEventListener('click', e => {
@@ -12069,6 +12026,44 @@
                 function updateRealism() {
                     const dt = Math.min(realisticClock.getDelta(), 0.1);
                     const t = performance.now() / 1000;
+
+                    // Dọn mọi vòng trên player — chỉ giữ haloRing đen
+                    try {
+                        if (playerGroup && playerGroup.userData && playerGroup.userData.skinOverlays) {
+                            const keep = [];
+                            playerGroup.userData.skinOverlays.forEach(function(p) {
+                                if (!p) return;
+                                if (p.userData && (p.userData.spinAura || p.userData.animateOrbs)) {
+                                    p.visible = false;
+                                    try { playerGroup.remove(p); } catch (e) {}
+                                    return;
+                                }
+                                // torus orbit-like large rings
+                                if (p.isMesh && p.geometry && p.geometry.type === 'TorusGeometry' && p !== haloRing) {
+                                    p.visible = false;
+                                    try { playerGroup.remove(p); } catch (e) {}
+                                    return;
+                                }
+                                if (p.isGroup) {
+                                    var hasOrbit = false;
+                                    p.traverse(function(ch) {
+                                        if (ch.geometry && ch.geometry.type === 'TorusGeometry') hasOrbit = true;
+                                    });
+                                    if (hasOrbit) {
+                                        p.visible = false;
+                                        try { playerGroup.remove(p); } catch (e) {}
+                                        return;
+                                    }
+                                }
+                                keep.push(p);
+                            });
+                            playerGroup.userData.skinOverlays = keep;
+                        }
+                        if (typeof cosmicOrbitGroup !== 'undefined' && cosmicOrbitGroup) {
+                            cosmicOrbitGroup.visible = false;
+                            while (cosmicOrbitGroup.children.length) cosmicOrbitGroup.remove(cosmicOrbitGroup.children[0]);
+                        }
+                    } catch (eClean) {}
 
                     // Cosmic orbit rings + planets animation
                     if (typeof window.__updateCosmicOrbit === 'function') {
@@ -12608,39 +12603,75 @@
                    RED MONSTER (cute blocky)
                 ========================= */
 
+
+                // Áp phản quang bóng (như mob đỏ ảnh) cho mọi loài
+                function applyGlossyLook(root, opts) {
+                    opts = opts || {};
+                    const metal = opts.metalness != null ? opts.metalness : 0.55;
+                    const rough = opts.roughness != null ? opts.roughness : 0.22;
+                    const envI = opts.envMapIntensity != null ? opts.envMapIntensity : 1.15;
+                    if (!root) return;
+                    root.traverse(function(o) {
+                        if (!o.isMesh || !o.material) return;
+                        const mats = Array.isArray(o.material) ? o.material : [o.material];
+                        mats.forEach(function(m) {
+                            if (!m || m.isMeshBasicMaterial) return;
+                            if (m.metalness != null) m.metalness = Math.max(m.metalness || 0, metal);
+                            if (m.roughness != null) m.roughness = Math.min(m.roughness == null ? 0.5 : m.roughness, rough);
+                            if (m.envMapIntensity != null) m.envMapIntensity = Math.max(m.envMapIntensity || 1, envI);
+                            m.needsUpdate = true;
+                        });
+                    });
+                }
+                window.applyGlossyLook = applyGlossyLook;
+
                 function createRedMonster() {
                     /* Voxel / blocky red mob matching reference image:
                        square body, head spikes, big square eyes, smile,
                        peach segmented belly, claw hands, short legs */
                     const group = new THREE.Group();
 
+                    // Phản quang bóng loáng như ảnh (không lấp lánh quá)
                     const redMat = new THREE.MeshStandardMaterial({
-                        color: 0xe8453c, roughness: 0.62, metalness: 0.04
+                        color: 0xe02028, roughness: 0.18, metalness: 0.72,
+                        emissive: 0x3a0008, emissiveIntensity: 0.12,
+                        envMapIntensity: 1.35
                     });
                     const redDarkMat = new THREE.MeshStandardMaterial({
-                        color: 0xc2332b, roughness: 0.65, metalness: 0.05
+                        color: 0x9a1018, roughness: 0.22, metalness: 0.65,
+                        emissive: 0x220004, emissiveIntensity: 0.1,
+                        envMapIntensity: 1.2
                     });
                     const bellyMat = new THREE.MeshStandardMaterial({
-                        color: 0xf0a070, roughness: 0.55, metalness: 0.02
+                        color: 0xd87850, roughness: 0.28, metalness: 0.35,
+                        envMapIntensity: 1.0
                     });
                     const bellyLightMat = new THREE.MeshStandardMaterial({
-                        color: 0xf8b888, roughness: 0.5, metalness: 0.02
+                        color: 0xe89868, roughness: 0.25, metalness: 0.3,
+                        envMapIntensity: 1.0
                     });
                     const cheekMat = new THREE.MeshStandardMaterial({
-                        color: 0xff8a9a, roughness: 0.55, metalness: 0
+                        color: 0xe85868, roughness: 0.28, metalness: 0.25,
+                        envMapIntensity: 0.9
                     });
                     const eyeWhiteMat = new THREE.MeshStandardMaterial({
-                        color: 0xffffff, roughness: 0.25, metalness: 0
+                        color: 0xf0f4f8, roughness: 0.12, metalness: 0.55,
+                        envMapIntensity: 1.2
                     });
-                    const pupilMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+                    const pupilMat = new THREE.MeshStandardMaterial({
+                        color: 0x111118, roughness: 0.35, metalness: 0.4
+                    });
                     const spikeMat = new THREE.MeshStandardMaterial({
-                        color: 0x8a6a6a, roughness: 0.45, metalness: 0.15
+                        color: 0xa0a8b0, roughness: 0.2, metalness: 0.75,
+                        envMapIntensity: 1.3
                     });
                     const clawMat = new THREE.MeshStandardMaterial({
-                        color: 0xb8b0a8, roughness: 0.4, metalness: 0.25
+                        color: 0xc8c0b8, roughness: 0.22, metalness: 0.7,
+                        envMapIntensity: 1.2
                     });
                     const footMat = new THREE.MeshStandardMaterial({
-                        color: 0x9a9088, roughness: 0.55, metalness: 0.1
+                        color: 0xb0a8a0, roughness: 0.3, metalness: 0.45,
+                        envMapIntensity: 1.0
                     });
                     const mouthMat = new THREE.MeshBasicMaterial({ color: 0x2a1810 });
 
@@ -13072,6 +13103,8 @@
 
 const redMonster =
                     createRedMonster();
+                try { if (typeof applyGlossyLook === 'function' && redMonster) applyGlossyLook(redMonster, { metalness: 0.7, roughness: 0.18, envMapIntensity: 1.35 }); } catch (e) {}
+
 
                 if (typeof setLoadProgress === 'function')
                     setLoadProgress(72, 'Xây dựng map…');
@@ -16000,7 +16033,7 @@ if (kind === 'common') {
                         }
                         skinMat.needsUpdate = true;
                         if (typeof cosmicOrbitGroup !== 'undefined' && cosmicOrbitGroup)
-                            cosmicOrbitGroup.visible = !!isCosmicSkinOn;
+                            cosmicOrbitGroup.visible = false;
 
                         const btn =
                             document.getElementById(
@@ -16335,11 +16368,11 @@ if (kind === 'common') {
                         blockyPlayer.visible = !isFirstPerson;
                     // Ẩn vòng orbit / aura khi góc nhìn thứ nhất
                     if (typeof cosmicOrbitGroup !== 'undefined' && cosmicOrbitGroup)
-                        cosmicOrbitGroup.visible = !isFirstPerson;
+                        cosmicOrbitGroup.visible = false;
                     if (typeof haloRing !== 'undefined' && haloRing)
                         haloRing.visible = !isFirstPerson;
                     if (typeof rainbowHaloGroup !== 'undefined' && rainbowHaloGroup)
-                        rainbowHaloGroup.visible = !isFirstPerson;
+                        rainbowHaloGroup.visible = false;
                     // FP viewmodel: tay + kiếm
                     try {
                         if (typeof ensureFpView === 'function') ensureFpView();
@@ -16689,7 +16722,7 @@ if (kind === 'common') {
                 }
 
                 function getAdminCmdHintText() {
-                    return '//boss · //erorr · //hack · //end · //kill · //fly · //off · //speed n · //player';
+                    return '//boss · //09 · //erorr · //hack · //end · //kill · //fly · //off · //speed n · //player';
                 }
 
                 function showBossCommandBar(visible) {
@@ -17217,59 +17250,7 @@ if (kind === 'common') {
                             playerGroup.add(panel);
                             playerGroup.userData.skinOverlays.push(panel);
                         });
-                        // Orbit rings + white orbs
-                        const gOrbit = new THREE.Group();
-                        gOrbit.userData.spinAura = true;
-                        for (let ri = 0; ri < 3; ri++) {
-                            const ring = new THREE.Mesh(
-                                new THREE.TorusGeometry(1.15 + ri * 0.35, 0.012, 6, 48),
-                                new THREE.MeshBasicMaterial({
-                                    color: 0xffffff, transparent: true, opacity: 0.55 - ri * 0.1,
-                                    blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide
-                                })
-                            );
-                            ring.rotation.x = Math.PI / 2.3 + ri * 0.25;
-                            ring.rotation.z = ri * 0.4;
-                            gOrbit.add(ring);
-                        }
-                        for (let oi = 0; oi < 8; oi++) {
-                            const orb = new THREE.Mesh(
-                                new THREE.SphereGeometry(0.08, 10, 10),
-                                new THREE.MeshBasicMaterial({
-                                    color: 0xffffff, transparent: true, opacity: 0.9,
-                                    blending: THREE.AdditiveBlending, depthWrite: false
-                                })
-                            );
-                            orb.userData.angle = (oi / 8) * Math.PI * 2;
-                            orb.userData.speed = 0.02 + (oi % 3) * 0.008;
-                            orb.userData.radius = 1.2 + (oi % 3) * 0.35;
-                            orb.userData.yBase = 1.3;
-                            gOrbit.add(orb);
-                            // animate via spinAura parent rotation + manual in updateRealism if needed
-                        }
-                        gOrbit.position.y = 0.2;
-                        playerGroup.add(gOrbit);
-                        playerGroup.userData.skinOverlays.push(gOrbit);
-                        // animate orbs
-                        gOrbit.userData.animateOrbs = true;
-                        if (!window._glitchArmorAnim) {
-                            window._glitchArmorAnim = function() {
-                                const ov = playerGroup && playerGroup.userData && playerGroup.userData.skinOverlays;
-                                if (!ov) return;
-                                ov.forEach(g => {
-                                    if (!g.userData || !g.userData.animateOrbs) return;
-                                    g.rotation.y += 0.012;
-                                    g.children.forEach(ch => {
-                                        if (ch.userData && typeof ch.userData.angle === 'number') {
-                                            ch.userData.angle += ch.userData.speed;
-                                            ch.position.x = Math.cos(ch.userData.angle) * ch.userData.radius;
-                                            ch.position.z = Math.sin(ch.userData.angle) * ch.userData.radius * 0.7;
-                                            ch.position.y = ch.userData.yBase + Math.sin(ch.userData.angle * 1.5) * 0.25;
-                                        }
-                                    });
-                                });
-                            };
-                        }
+                        // ĐÃ XÓA orbit rings + orbs trên đầu/người — chỉ halo đen
                         return;
                     }
 
@@ -17395,21 +17376,8 @@ if (kind === 'common') {
                             }
                         }
                     }
-                    // Aura ring under feet for legendary
-                    if ((skin.speed || 1) >= 1.3) {
-                        const ring = new THREE.Mesh(
-                            new THREE.TorusGeometry(0.7, 0.04, 8, 24),
-                            new THREE.MeshBasicMaterial({
-                                color: accent,
-                                transparent: true,
-                                opacity: 0.65
-                            })
-                        );
-                        ring.rotation.x = Math.PI / 2;
-                        ring.position.y = 0.08;
-                        ring.userData.spinAura = true;
-                        parts.push(ring);
-                    }
+                    // (đã xóa aura ring dưới chân)
+
 
                     parts.forEach(p => {
                         p.castShadow = true;
@@ -17425,6 +17393,27 @@ if (kind === 'common') {
                         }
                     } catch(e) {}
                 }
+
+                
+                window.buyGoldMultiplier = function(mult, price) {
+                    mult = Number(mult) || 1;
+                    price = Number(price) || 0;
+                    if (playerGold < price) {
+                        showToast(currentLang === 'vi'
+                            ? ('❌ Không đủ GOLD! Cần ' + price)
+                            : ('❌ Need ' + price + ' gold'));
+                        return;
+                    }
+                    playerGold -= price;
+                    goldMultiplier = Math.max(goldMultiplier || 1, mult);
+                    updateGoldUI();
+                    const lab = document.getElementById('gold-mult-label');
+                    if (lab) lab.textContent = '×' + goldMultiplier;
+                    showToast(currentLang === 'vi'
+                        ? ('💰 Gold multiplier ×' + goldMultiplier + '!')
+                        : ('💰 Gold multiplier ×' + goldMultiplier + '!'));
+                    if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
+                };
 
                 window.buyOrEquipSkin = function(id) {
                     const skin = SKIN_CATALOG.find(s => s.id === id);
@@ -17449,11 +17438,13 @@ if (kind === 'common') {
                     }
                     equippedSkinId = id;
                     skinSpeedBonus = skin.speed || 1;
+                    // Mua/equip tốc độ → *money = tốc độ
+                    goldMultiplier = Math.max(goldMultiplier || 1, skin.speed || 1);
                     applySkinToBody(skin);
                     showToast(
                         currentLang === 'vi'
-                        ? ('✨ Mặc: ' + skin.emoji + ' ' + skin.name + ' (tốc độ ×' + skin.speed + ')')
-                        : ('✨ Equipped: ' + skin.emoji + ' ' + skin.name + ' (speed ×' + skin.speed + ')')
+                        ? ('✨ Mặc: ' + skin.emoji + ' ' + skin.name + ' (tốc độ ×' + skin.speed + ' · gold ×' + goldMultiplier + ')')
+                        : ('✨ Equipped: ' + skin.emoji + ' ' + skin.name + ' (speed ×' + skin.speed + ' · gold ×' + goldMultiplier + ')')
                     );
                     renderSkinShop();
                     if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
@@ -17471,6 +17462,10 @@ if (kind === 'common') {
                         if (typeof isColorOpen !== 'undefined') isColorOpen = true;
                         renderSkinShop();
                         updateGoldUI();
+                        try {
+                            const lab = document.getElementById('gold-mult-label');
+                            if (lab) lab.textContent = '×' + (goldMultiplier || 1);
+                        } catch (e) {}
                     }
                 };
 
@@ -17677,8 +17672,20 @@ if (kind === 'common') {
                             rawCmd.toLowerCase().trim();
 
                         if (plain === 'addmin1o/addmin' || plain === 'addmin1o' || plain === 'addmin') {
-                            // Đã xóa điều kiện login admin qua command → hiện "no"
-                            showToast('no');
+                            secretAdminMode = true;
+                            try { window.secretAdminMode = true; } catch (e) {}
+                            if (typeof setAdminCommandUI === 'function') setAdminCommandUI(true);
+                            showToast(currentLang === 'vi' ? '✅ ADMIN ON — gõ //09 để WIPE' : '✅ ADMIN ON — use //09 to WIPE');
+                            try { if (typeof saveCurrentAccount === 'function') saveCurrentAccount(); } catch (e) {}
+                        } else if (cmd === '//09' || plain === '//09' || cmd === '//wipe' || plain === '//wipe' || plain === '/09') {
+                            if (!secretAdminMode) {
+                                showToast(currentLang === 'vi' ? '❌ Chỉ ADMIN: //09' : '❌ ADMIN only: //09');
+                            } else if (typeof forceAdvanceToNextWorld === 'function') {
+                                showToast(currentLang === 'vi' ? '💀 //09 → WIPE!' : '💀 //09 → WIPE!');
+                                forceAdvanceToNextWorld();
+                            } else {
+                                showToast('❌ Wipe FX missing');
+                            }
                         } else if (cmd === '//boss' || plain === '//boss') {
 
                             openCosmicDinoBossByCommand();
@@ -17809,8 +17816,8 @@ if (kind === 'common') {
 
                             showToast(
                                 currentLang === 'vi'
-                                ? '❌ LỆNH KHÔNG HỢP LỆ! Gõ //end //kill //fly //off //speed n //player'
-                                : '❌ INVALID COMMAND! Try //end //kill //fly //off //speed n'
+                                ? '❌ LỆNH KHÔNG HỢP LỆ! Gõ //09 //end //kill //fly //off //speed n //player'
+                                : '❌ INVALID COMMAND! Try //09 //end //kill //fly //off //speed n'
                             );
 
                         } else {
@@ -18472,6 +18479,379 @@ if (kind === 'common') {
                     return '';
                 }
 
+
+                /* ===== SWORD SKILLS (5% proc, +50% dmg) ===== */
+                const SWORD_SKILLS = {
+                    common: {
+                        id: 'absorb',
+                        nameVi: 'Hút quái',
+                        nameEn: 'Absorb Dash',
+                        color: 0xaaaaaa,
+                        desc: 'Chạy tới và hút quái vật'
+                    },
+                    rare: {
+                        id: 'tide',
+                        nameVi: 'Triều hải',
+                        nameEn: 'Ocean Tide',
+                        color: 0x0088ff,
+                        desc: 'Triệu hồi nước biển'
+                    },
+                    epic: {
+                        id: 'voidpulse',
+                        nameVi: 'Xung hư không',
+                        nameEn: 'Void Pulse',
+                        color: 0xa335ee,
+                        desc: 'Sóng năng lượng tím'
+                    },
+                    legendary: {
+                        id: 'solar',
+                        nameVi: 'Thiên quang',
+                        nameEn: 'Solar Slash',
+                        color: 0xffd700,
+                        desc: 'Chém ánh sáng vàng'
+                    },
+                    god: {
+                        id: 'judgment',
+                        nameVi: 'Phán quyết',
+                        nameEn: 'Judgment',
+                        color: 0xffd700,
+                        desc: 'Án trời'
+                    },
+                    hack: {
+                        id: 'glitchburst',
+                        nameVi: 'Xung glitch',
+                        nameEn: 'Glitch Burst',
+                        color: 0x00ffff,
+                        desc: 'Bùng nổ dữ liệu'
+                    },
+                    glitch: {
+                        id: 'errorstorm',
+                        nameVi: 'Bão lỗi',
+                        nameEn: 'Error Storm',
+                        color: 0xff3355,
+                        desc: 'Bão ERROR'
+                    },
+                    error: {
+                        id: 'errorstorm',
+                        nameVi: 'Bão lỗi',
+                        nameEn: 'Error Storm',
+                        color: 0xff3355,
+                        desc: 'Bão ERROR'
+                    }
+                };
+                const SWORD_SKILL_CHANCE = 0.02;      // 2% skill thường
+                const SWORD_SKILL_RARE_CHANCE = 0.005; // 0.5% skill mạnh tỏa lan
+                const SWORD_SKILL_WIPE_CHANCE = 0.00009; // 0.009% xóa sổ / auto next world
+                const SWORD_SKILL_DMG_MULT = 1.5;       // +50% dmg (5%)
+                const SWORD_SKILL_RARE_DMG_MULT = 3.0;  // x3 dmg (1%)
+                const SWORD_SKILL_WIPE_DMG_MULT = 999;  // gần như one-shot
+
+                function getActiveSwordSkillKey() {
+                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword) return null;
+                    if (typeof hasGlitchSword !== 'undefined' && hasGlitchSword) return 'glitch';
+                    if (typeof hasHackSword !== 'undefined' && hasHackSword) return 'hack';
+                    if (typeof hasGoDSword !== 'undefined' && hasGoDSword) return 'god';
+                    if (equippedItemType && SWORD_SKILLS[equippedItemType]) return equippedItemType;
+                    return null;
+                }
+
+                function showSkillBanner(text, color, big) {
+                    try {
+                        let el = document.getElementById('skill-banner');
+                        if (!el) {
+                            el = document.createElement('div');
+                            el.id = 'skill-banner';
+                            el.style.cssText = 'position:fixed;top:22%;left:50%;transform:translateX(-50%);z-index:99990;pointer-events:none;padding:12px 28px;border-radius:14px;font-weight:900;font-size:18px;letter-spacing:0.5px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.45);border:2px solid rgba(255,255,255,0.35);backdrop-filter:blur(8px);opacity:0;transition:opacity 0.15s;';
+                            document.body.appendChild(el);
+                        }
+                        el.textContent = text;
+                        el.style.background = color || 'rgba(20,10,40,0.88)';
+                        el.style.color = '#fff';
+                        el.style.fontSize = big ? '26px' : '18px';
+                        el.style.opacity = '1';
+                        clearTimeout(el._t);
+                        el._t = setTimeout(function() { el.style.opacity = '0'; }, big ? 2800 : 1600);
+                    } catch (e) {}
+                    try { if (typeof showToast === 'function') showToast(text); } catch (e2) {}
+                }
+
+                function playSwordSkillFX(skillKey, targetPos, tier) {
+                    const sk = SWORD_SKILLS[skillKey];
+                    if (!sk || typeof scene === 'undefined') return;
+                    const col = sk.color || 0xffffff;
+                    tier = tier || 1; // 1=5%, 2=1%, 3=wipe
+                    const g = new THREE.Group();
+                    const count = tier >= 2 ? 6 : 3;
+                    const scale0 = tier >= 3 ? 2.5 : (tier >= 2 ? 1.6 : 1.0);
+
+                    if (sk.id === 'absorb' || tier >= 2) {
+                        for (let i = 0; i < count; i++) {
+                            const ring = new THREE.Mesh(
+                                new THREE.TorusGeometry((0.7 + i * 0.45) * scale0, 0.06 + tier * 0.02, 8, 32),
+                                new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.75 - i * 0.08, depth: THREE.DoubleSide })
+                            );
+                            ring.rotation.x = Math.PI / 2;
+                            ring.position.y = 1 + i * 0.25;
+                            g.add(ring);
+                        }
+                    }
+                    if (sk.id === 'tide' || tier >= 2) {
+                        const wave = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.3 * scale0, 3.2 * scale0, 0.5, 20, 1, true),
+                            new THREE.MeshBasicMaterial({ color: tier >= 2 ? 0x33aaff : 0x2288ff, transparent: true, opacity: 0.55, side: THREE.DoubleSide })
+                        );
+                        wave.position.y = 0.35;
+                        g.add(wave);
+                    }
+                    if (tier >= 2) {
+                        // Tỏa lan mạnh — nhiều quả cầu
+                        for (let i = 0; i < 8; i++) {
+                            const ang = (i / 8) * Math.PI * 2;
+                            const orb = new THREE.Mesh(
+                                new THREE.SphereGeometry(0.35 * scale0, 10, 8),
+                                new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.65 })
+                            );
+                            orb.position.set(Math.cos(ang) * 1.5 * scale0, 1.2, Math.sin(ang) * 1.5 * scale0);
+                            g.add(orb);
+                        }
+                    }
+                    if (tier >= 3) {
+                        // Wipe: flash trắng + vòng lớn
+                        const flash = new THREE.Mesh(
+                            new THREE.SphereGeometry(4, 16, 12),
+                            new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.85 })
+                        );
+                        flash.position.y = 2;
+                        g.add(flash);
+                    }
+                    if (g.children.length === 0) {
+                        const burst = new THREE.Mesh(
+                            new THREE.SphereGeometry(1.0 * scale0, 12, 10),
+                            new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.55 })
+                        );
+                        burst.position.y = 1.4;
+                        g.add(burst);
+                    }
+                    if (targetPos) g.position.copy(targetPos);
+                    else if (typeof playerGroup !== 'undefined' && playerGroup) g.position.copy(playerGroup.position);
+                    scene.add(g);
+                    const t0 = performance.now();
+                    const dur = tier >= 3 ? 900 : (tier >= 2 ? 700 : 500);
+                    function animSkill() {
+                        const u = (performance.now() - t0) / dur;
+                        if (u >= 1) {
+                            scene.remove(g);
+                            g.traverse(function(o) {
+                                if (o.geometry) o.geometry.dispose();
+                                if (o.material) o.material.dispose();
+                            });
+                            return;
+                        }
+                        g.scale.setScalar(1 + u * (tier >= 3 ? 4 : 2.2));
+                        g.children.forEach(function(ch) {
+                            if (ch.material) ch.material.opacity = Math.max(0, 0.7 * (1 - u));
+                        });
+                        requestAnimationFrame(animSkill);
+                    }
+                    requestAnimationFrame(animSkill);
+                }
+
+                function forceAdvanceToNextWorld() {
+                    // 0.009% WIPE: góc 3 → boom hủy diệt → về HUB
+                    if (window._wipeCinematicPlaying) return;
+                    window._wipeCinematicPlaying = true;
+                    try {
+                        showSkillBanner(
+                            (typeof currentLang !== 'undefined' && currentLang === 'en')
+                                ? '💀 WIPE SKILL! DESTRUCTION…'
+                                : '💀 SKILL XÓA SỔ! HỦY DIỆT…',
+                            'rgba(120,0,20,0.95)',
+                            true
+                        );
+
+                        // 1) Ép góc nhìn thứ 3
+                        try {
+                            if (typeof isFirstPerson !== 'undefined' && isFirstPerson) {
+                                isFirstPerson = false;
+                                if (playerGroup) playerGroup.visible = true;
+                                if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
+                                    blockyPlayer.visible = true;
+                                if (typeof haloRing !== 'undefined' && haloRing)
+                                    haloRing.visible = true;
+                                try {
+                                    if (typeof fpViewGroup !== 'undefined' && fpViewGroup)
+                                        fpViewGroup.visible = false;
+                                } catch (eFp) {}
+                            }
+                        } catch (eCam) {}
+
+                        // 2) Boom hủy diệt — flash + sóng nổ lớn
+                        const origin = (playerGroup && playerGroup.position)
+                            ? playerGroup.position.clone()
+                            : new THREE.Vector3(0, 0, 0);
+                        const boom = new THREE.Group();
+                        boom.position.copy(origin);
+                        // Flash cầu
+                        const flash = new THREE.Mesh(
+                            new THREE.SphereGeometry(1.2, 20, 16),
+                            new THREE.MeshBasicMaterial({
+                                color: 0xffffff, transparent: true, opacity: 0.95
+                            })
+                        );
+                        flash.position.y = 1.5;
+                        boom.add(flash);
+                        // Vòng sóng
+                        for (let i = 0; i < 5; i++) {
+                            const ring = new THREE.Mesh(
+                                new THREE.TorusGeometry(1.5 + i * 0.8, 0.12, 8, 40),
+                                new THREE.MeshBasicMaterial({
+                                    color: i % 2 ? 0xff2244 : 0xffee88,
+                                    transparent: true,
+                                    opacity: 0.85 - i * 0.1,
+                                    side: THREE.DoubleSide
+                                })
+                            );
+                            ring.rotation.x = Math.PI / 2;
+                            ring.position.y = 0.8 + i * 0.15;
+                            boom.add(ring);
+                        }
+                        // Cột sáng
+                        const beam = new THREE.Mesh(
+                            new THREE.CylinderGeometry(0.4, 2.5, 18, 12, 1, true),
+                            new THREE.MeshBasicMaterial({
+                                color: 0xff6688, transparent: true, opacity: 0.55, side: THREE.DoubleSide
+                            })
+                        );
+                        beam.position.y = 9;
+                        boom.add(beam);
+                        scene.add(boom);
+
+                        // Ẩn mob/boss trong scene (hiệu ứng hủy diệt)
+                        try {
+                            [typeof redMonster !== 'undefined' && redMonster,
+                             typeof octopusMonster !== 'undefined' && octopusMonster,
+                             typeof bossMonster !== 'undefined' && bossMonster,
+                             typeof finalBossMonster !== 'undefined' && finalBossMonster,
+                             typeof supremeBossMonster !== 'undefined' && supremeBossMonster
+                            ].forEach(function(m) {
+                                if (m) m.visible = false;
+                            });
+                        } catch (eHide) {}
+
+                        const t0 = performance.now();
+                        const BOOM_MS = 1600;
+                        function animBoom() {
+                            const u = (performance.now() - t0) / BOOM_MS;
+                            if (u >= 1) {
+                                try { scene.remove(boom); } catch (e) {}
+                                boom.traverse(function(o) {
+                                    if (o.geometry) o.geometry.dispose();
+                                    if (o.material) o.material.dispose();
+                                });
+                                // 3) Về HUB
+                                showSkillBanner(
+                                    (typeof currentLang !== 'undefined' && currentLang === 'en')
+                                        ? '🏠 RETURNING TO HUB…'
+                                        : '🏠 ĐANG VỀ HUB…',
+                                    'rgba(30,20,60,0.92)',
+                                    true
+                                );
+                                setTimeout(function() {
+                                    try {
+                                        if (typeof returnToHubWorld === 'function') returnToHubWorld();
+                                        else {
+                                            gameStage = 0;
+                                            if (typeof setExpandedWorld === 'function') setExpandedWorld(0);
+                                        }
+                                    } catch (eHub) {
+                                        console.warn('wipe hub', eHub);
+                                    }
+                                    window._wipeCinematicPlaying = false;
+                                }, 400);
+                                return;
+                            }
+                            // Scale nổ + fade
+                            const s = 1 + u * 12;
+                            boom.scale.setScalar(s);
+                            boom.children.forEach(function(ch, idx) {
+                                if (ch.material) {
+                                    ch.material.opacity = Math.max(0, (idx === 0 ? 0.95 : 0.7) * (1 - u * 0.85));
+                                }
+                            });
+                            // Camera rung nhẹ góc 3
+                            try {
+                                if (typeof camera !== 'undefined' && camera && playerGroup) {
+                                    const shake = (1 - u) * 0.35;
+                                    camera.position.x += (Math.random() - 0.5) * shake;
+                                    camera.position.y += (Math.random() - 0.5) * shake * 0.5;
+                                }
+                            } catch (eSh) {}
+                            requestAnimationFrame(animBoom);
+                        }
+                        requestAnimationFrame(animBoom);
+                    } catch (e) {
+                        console.warn('forceAdvance wipe', e);
+                        window._wipeCinematicPlaying = false;
+                        try {
+                            if (typeof returnToHubWorld === 'function') returnToHubWorld();
+                        } catch (e2) {}
+                    }
+                }
+
+                function rollSwordSkill(totalDmg, targetObj) {
+                    const key = getActiveSwordSkillKey();
+                    if (!key) return { dmg: totalDmg, proc: false, key: null, tier: 0 };
+                    const r = Math.random();
+                    let tier = 0;
+                    let mult = 1;
+                    // Roll từ hiếm → thường
+                    if (r < SWORD_SKILL_WIPE_CHANCE) {
+                        tier = 3;
+                        mult = SWORD_SKILL_WIPE_DMG_MULT;
+                    } else if (r < SWORD_SKILL_WIPE_CHANCE + SWORD_SKILL_RARE_CHANCE) {
+                        tier = 2;
+                        mult = SWORD_SKILL_RARE_DMG_MULT;
+                    } else if (r < SWORD_SKILL_WIPE_CHANCE + SWORD_SKILL_RARE_CHANCE + SWORD_SKILL_CHANCE) {
+                        tier = 1;
+                        mult = SWORD_SKILL_DMG_MULT;
+                    } else {
+                        return { dmg: totalDmg, proc: false, key: null, tier: 0 };
+                    }
+
+                    const boosted = Math.max(1, Math.floor(totalDmg * mult));
+                    let pos = null;
+                    try {
+                        if (targetObj && targetObj.position) pos = targetObj.position.clone();
+                        else if (playerGroup) pos = playerGroup.position.clone();
+                    } catch (e) {}
+
+                    playSwordSkillFX(key, pos, tier);
+
+                    const sk = SWORD_SKILLS[key];
+                    const nm = sk ? ((typeof currentLang !== 'undefined' && currentLang === 'en') ? sk.nameEn : sk.nameVi) : key;
+                    if (tier === 3) {
+                        showSkillBanner('💀 ' + nm + ' — WIPE 0.009%!', 'rgba(140,0,30,0.95)', true);
+                        forceAdvanceToNextWorld();
+                    } else if (tier === 2) {
+                        showSkillBanner('⚡⚡ ' + nm + ' (0.5% MEGA)!', 'rgba(80,20,120,0.92)', true);
+                    } else {
+                        showSkillBanner('⚡ ' + nm + ' (2%)!', 'rgba(20,40,90,0.88)', false);
+                    }
+
+                    if (key === 'common' && targetObj && playerGroup && targetObj.position) {
+                        try {
+                            const dir = targetObj.position.clone().sub(playerGroup.position);
+                            dir.y = 0;
+                            if (dir.length() > 0.5) {
+                                dir.setLength(Math.min(tier >= 2 ? 4 : 2.5, dir.length() * 0.5));
+                                playerGroup.position.add(dir);
+                            }
+                        } catch (e) {}
+                    }
+                    return { dmg: boosted, proc: true, key: key, tier: tier };
+                }
+                window.rollSwordSkill = rollSwordSkill;
+
                 function performAttack(isAfk) {
                     if (typeof isPlayerActionLocked === 'function' && isPlayerActionLocked()) return;
 
@@ -18532,6 +18912,16 @@ if (kind === 'common') {
                             totalDmg = Number.MAX_VALUE;
 
                         totalDmg = Math.max(1, Math.floor(totalDmg));
+
+                        // Skill kiếm 5% — +50% dmg
+                        try {
+                            let skillTarget = null;
+                            if (gameStage === 1 && typeof redMonster !== 'undefined') skillTarget = redMonster;
+                            else if (gameStage === 2 && typeof octopusMonster !== 'undefined') skillTarget = octopusMonster;
+                            else if (typeof bossMonster !== 'undefined' && bossMonster && bossMonster.visible) skillTarget = bossMonster;
+                            const skillRes = (typeof rollSwordSkill === 'function') ? rollSwordSkill(totalDmg, skillTarget) : null;
+                            if (skillRes && skillRes.proc) totalDmg = skillRes.dmg;
+                        } catch (eSk) {}
 
                         // [KING] x2 power damage
                         if ((hasKingStatus || secretAdminMode) && typeof KING_POWER_MULT === 'number') {
@@ -20561,6 +20951,7 @@ if (kind === 'common') {
                         ownedSkins: ownedSkins,
                         equippedSkinId: equippedSkinId,
                         skinSpeedBonus: skinSpeedBonus,
+                        goldMultiplier: goldMultiplier,
 
                         errorBossDamagePercent: errorBossDamagePercent,
                         errorGlitchPhase: errorGlitchPhase,
@@ -20667,6 +21058,8 @@ if (kind === 'common') {
                         electronBossActive: electronBossActive,
                         electronBossDefeated: electronBossDefeated,
                         electronBossHits: electronBossHits,
+                        electronBossKillCount: electronBossKillCount,
+                        electronSwordFirstClearDone: electronSwordFirstClearDone,
                         electronHackUnlocked: electronHackUnlocked,
 
                         playerHP: playerHP,
@@ -20779,6 +21172,7 @@ if (kind === 'common') {
                     if (data.ownedSkins && typeof data.ownedSkins === 'object') ownedSkins = data.ownedSkins;
                     if (data.equippedSkinId) equippedSkinId = data.equippedSkinId;
                     if (typeof data.skinSpeedBonus === 'number') skinSpeedBonus = data.skinSpeedBonus;
+                    if (typeof data.goldMultiplier === 'number') goldMultiplier = data.goldMultiplier;
                     if (typeof refreshKingUI === 'function') refreshKingUI();
                     if (typeof updateGoldUI === 'function') updateGoldUI();
                     setTimeout(() => {
@@ -20803,6 +21197,8 @@ if (kind === 'common') {
                     electronBossActive = !!data.electronBossActive;
                     electronBossDefeated = !!data.electronBossDefeated;
                     electronBossHits = Math.max(0, Math.min(ELECTRON_BOSS_EHP, Number(data.electronBossHits) || 0));
+                    if (typeof data.electronBossKillCount === 'number') electronBossKillCount = data.electronBossKillCount;
+                    if (data.electronSwordFirstClearDone) electronSwordFirstClearDone = true;
                     electronHackUnlocked = !!data.electronHackUnlocked;
 
                     if (hasHackSword)
@@ -21074,7 +21470,7 @@ if (kind === 'common') {
                     }
                     skinMat.needsUpdate = true;
                     if (typeof cosmicOrbitGroup !== 'undefined' && cosmicOrbitGroup)
-                        cosmicOrbitGroup.visible = !!isCosmicSkinOn;
+                        cosmicOrbitGroup.visible = false;
 
                     if (hasGlitchSword) {
 
@@ -22617,17 +23013,69 @@ if (kind === 'common') {
                         const eMsg = document.getElementById('electron-world-msg');
                         if (eMsg) eMsg.style.display = 'none';
 
+                        electronBossKillCount = (electronBossKillCount || 0) + 1;
+                        const need = (typeof ELECTRON_BOSS_KILLS_NEEDED === 'number') ? ELECTRON_BOSS_KILLS_NEEDED : 20;
+
                         if (typeof showToast === 'function') {
                             showToast(
                                 currentLang === 'vi'
-                                ? '⚡ ELECTRON ĐÃ BỊ TIÊU DIỆT! (Sẽ hồi lại...)'
-                                : '⚡ ELECTRON DEFEATED! (Will respawn...)'
+                                ? ('⚡ ELECTRON KILL ' + electronBossKillCount + '/' + need + '!')
+                                : ('⚡ ELECTRON KILL ' + electronBossKillCount + '/' + need + '!')
                             );
                         }
+
+                        // Đủ 20 kill → nhận Electron Sword
+                        if (electronBossKillCount >= need && !hasElectronSword) {
+                            hasElectronSword = true;
+                            if (typeof window.updatePlayerSwordVisual === 'function') window.updatePlayerSwordVisual();
+                            if (typeof autoEquipBestSword === 'function') autoEquipBestSword({ force: true });
+                            showToast(
+                                currentLang === 'vi'
+                                ? '⚡ NHẬN ELECTRON SWORD! NHIỆM VỤ HOÀN THÀNH!'
+                                : '⚡ ELECTRON SWORD UNLOCKED! QUEST COMPLETE!'
+                            );
+                            // Lần đầu phá đảo → về hub
+                            if (!electronSwordFirstClearDone) {
+                                electronSwordFirstClearDone = true;
+                                try {
+                                    const vs = document.getElementById('victory-screen');
+                                    if (vs) {
+                                        vs.style.display = 'flex';
+                                        const t = vs.querySelector('h1, .victory-title, #victory-title');
+                                        if (t) t.textContent = currentLang === 'vi'
+                                            ? '🏆 PHÁ ĐẢO! ELECTRON SWORD'
+                                            : '🏆 GAME CLEARED! ELECTRON SWORD';
+                                    }
+                                } catch (eV) {}
+                                showSkillBanner && showSkillBanner(
+                                    currentLang === 'vi' ? '🏆 PHÁ ĐẢO — VỀ HUB!' : '🏆 CLEARED — TO HUB!',
+                                    'rgba(20,60,100,0.95)', true
+                                );
+                                setTimeout(function() {
+                                    try {
+                                        const vs = document.getElementById('victory-screen');
+                                        if (vs) vs.style.display = 'none';
+                                    } catch (e) {}
+                                    if (typeof returnToHubWorld === 'function') returnToHubWorld();
+                                    showToast(currentLang === 'vi'
+                                        ? '🏠 Đã về Hub — vẫn chơi tiếp được!'
+                                        : '🏠 Back at Hub — keep playing!');
+                                }, 3500);
+                            }
+                        }
+
                         if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
-                        setTimeout(function() {
-                            if (typeof respawnElectronBoss === 'function') respawnElectronBoss();
-                        }, 4000);
+                        // Chưa đủ 20 kill → hồi boss tiếp
+                        if (electronBossKillCount < need) {
+                            setTimeout(function() {
+                                if (typeof respawnElectronBoss === 'function') respawnElectronBoss();
+                            }, 2500);
+                        } else {
+                            // Đã đủ — vẫn có thể farm, hồi boss
+                            setTimeout(function() {
+                                if (typeof respawnElectronBoss === 'function') respawnElectronBoss();
+                            }, 5000);
+                        }
                     }
                 }
 
@@ -22644,9 +23092,11 @@ if (kind === 'common') {
                     if (bar) bar.style.display = 'block';
                     const title = document.getElementById('boss-title');
                     if (title) {
+                        const kc = (typeof electronBossKillCount === 'number') ? electronBossKillCount : 0;
+                        const need = (typeof ELECTRON_BOSS_KILLS_NEEDED === 'number') ? ELECTRON_BOSS_KILLS_NEEDED : 20;
                         title.innerText = currentLang === 'vi'
-                            ? '⚡ BOSS ELECTRON (10.5e HP) — HỒI LẠI'
-                            : '⚡ ELECTRON BOSS (10.5e HP) — RESPAWNED';
+                            ? ('⚡ ELECTRON (' + kc + '/' + need + ' kill) — HỒI LẠI')
+                            : ('⚡ ELECTRON (' + kc + '/' + need + ' kills) — RESPAWNED');
                     }
                     document.getElementById('boss-hp-inner').style.width = '100%';
                     document.getElementById('boss-hp-text').innerText = '10.5e / 10.5e';
@@ -22697,7 +23147,7 @@ if (kind === 'common') {
                     errorBossMonster.visible = false;
                     errorFloor.visible = false;
                     if (glitchCodeFloor) glitchCodeFloor.visible = true;
-                    if (rainbowHaloGroup) rainbowHaloGroup.visible = true;
+                    if (rainbowHaloGroup) rainbowHaloGroup.visible = false;
                     if (rainbowHaloGroup) {
                         rainbowHaloGroup.position.set(playerGroup.position.x, 3.2, playerGroup.position.z);
                     }
@@ -23955,6 +24405,12 @@ if (kind === 'common') {
                     // Skin aura spin
                     if (playerGroup && playerGroup.userData.skinOverlays) {
                         playerGroup.userData.skinOverlays.forEach(p => {
+                            // Xóa vĩnh viễn mọi vòng orbit còn sót
+                            if (p && p.userData && (p.userData.spinAura || p.userData.animateOrbs)) {
+                                p.visible = false;
+                                try { playerGroup.remove(p); } catch (e) {}
+                                return;
+                            }
                             if (p.userData && p.userData.spinAura) p.rotation.z += 0.03;
                         });
                     }
@@ -24650,7 +25106,7 @@ if (kind === 'common') {
                         if (typeof blockyPlayer !== 'undefined' && blockyPlayer)
                             blockyPlayer.visible = true;
                         if (typeof cosmicOrbitGroup !== 'undefined' && cosmicOrbitGroup)
-                            cosmicOrbitGroup.visible = true;
+                            cosmicOrbitGroup.visible = false;
                         if (typeof haloRing !== 'undefined' && haloRing)
                             haloRing.visible = true;
                         if (typeof fpViewGroup !== 'undefined' && fpViewGroup)
@@ -25125,53 +25581,7 @@ if (kind === 'common') {
                     ground.receiveShadow = true;
                     plaza.add(ground);
 
-                    // Pastel 7 sắc — độ đậm dịu như lá cây
-                    const pastelRainbow = [
-                        0xff8a9a, // hồng đỏ
-                        0xffb070, // cam sữa
-                        0xffe88a, // vàng kem
-                        0x8aefb0, // lục mint
-                        0x7ec8ff, // xanh trời
-                        0x9a8cff, // chàm nhạt
-                        0xe090ff  // tím hoa
-                    ];
-                    // Vòng đồng tâm màu xen kẽ
-                    for (let ring = 0; ring < 5; ring++) {
-                        const rInner = 1.8 + ring * 1.55;
-                        const rOuter = rInner + 1.45;
-                        for (let s = 0; s < 7; s++) {
-                            const shape = new THREE.Shape();
-                            const a0 = (s / 7) * Math.PI * 2 + ring * 0.15;
-                            const a1 = ((s + 1) / 7) * Math.PI * 2 + ring * 0.15;
-                            shape.moveTo(Math.cos(a0) * rInner, Math.sin(a0) * rInner);
-                            const steps = 6;
-                            for (let k = 0; k <= steps; k++) {
-                                const a = a0 + (a1 - a0) * (k / steps);
-                                shape.lineTo(Math.cos(a) * rOuter, Math.sin(a) * rOuter);
-                            }
-                            for (let k = steps; k >= 0; k--) {
-                                const a = a0 + (a1 - a0) * (k / steps);
-                                shape.lineTo(Math.cos(a) * rInner, Math.sin(a) * rInner);
-                            }
-                            shape.closePath();
-                            const geo = new THREE.ShapeGeometry(shape, 4);
-                            const col = pastelRainbow[(s + ring) % 7];
-                            const mat = new THREE.MeshStandardMaterial({
-                                color: col,
-                                emissive: col,
-                                emissiveIntensity: 0.22,
-                                roughness: 0.7,
-                                metalness: 0.08,
-                                side: THREE.DoubleSide,
-                                transparent: true,
-                                opacity: 0.92
-                            });
-                            const piece = new THREE.Mesh(geo, mat);
-                            piece.rotation.x = -Math.PI / 2;
-                            piece.position.y = 0.38 + ring * 0.01;
-                            plaza.add(piece);
-                        }
-                    }
+                    // (đã xóa vòng cầu vồng cồng kềnh trên sàn hub)
 
                     // Tâm đứng — ngọc trai ánh hồng
                     const centerPad = new THREE.Mesh(
@@ -25188,52 +25598,129 @@ if (kind === 'common') {
 
                     // Cây với lá màu vũ trụ (galaxy)
                     function addCosmicTree(x, z, scale) {
+                        // Cây blocky như ảnh: thân hộp nâu + tán khối lập phương
+                        // Lá giữ màu hub (galaxy). Cao ~1.5 nhân vật (~3 đơn vị)
                         scale = scale || 1;
                         const g = new THREE.Group();
-                        g.position.set(x, 0.4, z);
-                        g.scale.setScalar(scale);
-                        const trunk = new THREE.Mesh(
-                            new THREE.CylinderGeometry(0.18, 0.28, 2.2, 8),
-                            new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: 0.85 })
-                        );
-                        trunk.position.y = 1.1;
-                        g.add(trunk);
-                        // Lá / tán = màu vũ trụ (tím, xanh neon, hồng galaxy)
-                        const leafColors = [0x6644ff, 0x22ddff, 0xff44cc, 0x8866ff, 0x44ffaa, 0xaa66ff];
-                        for (let k = 0; k < 5; k++) {
-                            const col = leafColors[k % leafColors.length];
-                            const canopy = new THREE.Mesh(
-                                new THREE.SphereGeometry(0.55 + Math.random() * 0.25, 10, 8),
-                                new THREE.MeshStandardMaterial({
-                                    color: col,
-                                    emissive: col,
-                                    emissiveIntensity: 0.35,
-                                    roughness: 0.6,
-                                    metalness: 0.15
-                                })
-                            );
-                            canopy.position.set(
-                                (Math.random() - 0.5) * 0.9,
-                                2.2 + Math.random() * 0.6,
-                                (Math.random() - 0.5) * 0.9
-                            );
-                            g.add(canopy);
+                        g.position.set(x, 0.35, z);
+                        // scale gốc ~1 → tổng cao ~3 (≈ 1.5× player)
+                        g.scale.setScalar(scale * 1.05);
+
+                        const barkMat = new THREE.MeshStandardMaterial({
+                            color: 0x6b4428, roughness: 0.88, metalness: 0.05
+                        });
+                        const barkDark = new THREE.MeshStandardMaterial({
+                            color: 0x4a2e18, roughness: 0.9, metalness: 0.04
+                        });
+                        const barkMid = new THREE.MeshStandardMaterial({
+                            color: 0x5a3820, roughness: 0.86, metalness: 0.05
+                        });
+                        const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+
+                        // Thân chi tiết max (giống ảnh 100%): nhiều khối + gân + rễ + nhánh
+                        const segs = [
+                            [0.52, 0.38, 0.18],
+                            [0.46, 0.40, 0.55],
+                            [0.42, 0.40, 0.95],
+                            [0.38, 0.40, 1.35],
+                            [0.34, 0.38, 1.72],
+                            [0.30, 0.34, 2.05]
+                        ];
+                        for (let i = 0; i < segs.length; i++) {
+                            const tw = segs[i][0], th = segs[i][1], ty = segs[i][2];
+                            const trunk = new THREE.Mesh(boxGeo, i === 0 ? barkDark : (i % 2 ? barkMat : barkMid));
+                            trunk.scale.set(tw, th, tw);
+                            trunk.position.y = ty;
+                            trunk.rotation.y = (Math.random() - 0.5) * 0.1;
+                            trunk.castShadow = true;
+                            trunk.receiveShadow = true;
+                            g.add(trunk);
+                            // Gân / u gỗ
+                            if (i >= 1 && i <= 3) {
+                                const ka = Math.random() * Math.PI * 2;
+                                const knot = new THREE.Mesh(boxGeo, barkDark);
+                                knot.scale.set(0.1, 0.12, 0.16);
+                                knot.position.set(Math.cos(ka) * tw * 0.55, ty, Math.sin(ka) * tw * 0.55);
+                                g.add(knot);
+                            }
                         }
-                        // Đốm sao trên tán
-                        for (let s = 0; s < 4; s++) {
-                            const star = new THREE.Mesh(
-                                new THREE.SphereGeometry(0.06, 6, 6),
-                                new THREE.MeshBasicMaterial({ color: 0xffffff })
-                            );
-                            star.position.set(
-                                (Math.random() - 0.5) * 1.2,
-                                2.3 + Math.random() * 0.8,
-                                (Math.random() - 0.5) * 1.2
-                            );
-                            g.add(star);
+                        // Gốc phình
+                        const base = new THREE.Mesh(boxGeo, barkDark);
+                        base.scale.set(0.62, 0.26, 0.62);
+                        base.position.y = 0.1;
+                        g.add(base);
+                        // Rễ tỏa ra
+                        for (let r = 0; r < 5; r++) {
+                            const a = (r / 5) * Math.PI * 2 + 0.2;
+                            const root = new THREE.Mesh(boxGeo, barkDark);
+                            root.scale.set(0.2, 0.16, 0.42);
+                            root.position.set(Math.cos(a) * 0.35, 0.08, Math.sin(a) * 0.35);
+                            root.rotation.y = a;
+                            root.rotation.z = 0.28;
+                            g.add(root);
                         }
+                        // Nhánh phụ
+                        for (let b = 0; b < 3; b++) {
+                            const a = b * 2.15 + 0.4;
+                            const br = new THREE.Mesh(boxGeo, barkMid);
+                            br.scale.set(0.5, 0.12, 0.12);
+                            br.position.set(Math.cos(a) * 0.2, 0.9 + b * 0.35, Math.sin(a) * 0.2);
+                            br.rotation.y = a;
+                            br.rotation.z = (b % 2 ? 0.38 : -0.32);
+                            g.add(br);
+                        }
+
+                        // Lá hub (màu cosmic hub)
+                        const leafColors = [0x6644ff, 0x22ddff, 0xff44cc, 0x8866ff, 0x44ffaa, 0xaa66ff, 0xff88ee];
+                        const leafMats = leafColors.map(function(c) {
+                            return new THREE.MeshStandardMaterial({
+                                color: c, emissive: c, emissiveIntensity: 0.28,
+                                roughness: 0.55, metalness: 0.12, flatShading: true
+                            });
+                        });
+
+                        // Tán blocky đầy (giống ảnh) — nhiều lớp hộp
+                        const layers = [
+                            [1.75, 0.85, 8, 0.55],
+                            [2.15, 1.05, 10, 0.62],
+                            [2.55, 1.10, 11, 0.65],
+                            [2.95, 0.95, 9, 0.58],
+                            [3.25, 0.70, 6, 0.50],
+                            [3.50, 0.40, 4, 0.42]
+                        ];
+                        for (let li = 0; li < layers.length; li++) {
+                            const y0 = layers[li][0], rad = layers[li][1];
+                            const n = layers[li][2], sz0 = layers[li][3];
+                            for (let k = 0; k < n; k++) {
+                                const ang = (k / n) * Math.PI * 2 + li * 0.3;
+                                const rr = rad * (0.35 + Math.random() * 0.7);
+                                const sz = sz0 * (0.75 + Math.random() * 0.45);
+                                const leaf = new THREE.Mesh(boxGeo, leafMats[(k + li) % leafMats.length]);
+                                leaf.scale.set(sz, sz * 0.85, sz);
+                                leaf.position.set(
+                                    Math.cos(ang) * rr,
+                                    y0 + (Math.random() - 0.5) * 0.2,
+                                    Math.sin(ang) * rr
+                                );
+                                leaf.rotation.y = Math.random() * Math.PI;
+                                leaf.castShadow = false;
+                                g.add(leaf);
+                            }
+                        }
+                        // Lõi tán
+                        for (let f = 0; f < 5; f++) {
+                            const leaf = new THREE.Mesh(boxGeo, leafMats[f % leafMats.length]);
+                            const sz = 0.5 + Math.random() * 0.25;
+                            leaf.scale.set(sz, sz * 0.8, sz);
+                            leaf.position.set(
+                                (Math.random() - 0.5) * 0.5,
+                                2.2 + Math.random() * 1.1,
+                                (Math.random() - 0.5) * 0.5
+                            );
+                            g.add(leaf);
+                        }
+
                         plaza.add(g);
-                        // collider gốc cây
                         if (typeof collisionObstacles !== 'undefined') {
                             collisionObstacles.push({ x: x, z: z, r: 0.55 * scale, hub: true });
                         }
@@ -25249,17 +25736,8 @@ if (kind === 'common') {
                         addCosmicTree(t[0], t[1], t[2]);
                     });
 
-                    // Viền galaxy quanh khu đất
-                    const rim = new THREE.Mesh(
-                        new THREE.TorusGeometry(14.8, 0.16, 8, 48),
-                        new THREE.MeshStandardMaterial({
-                            color: 0xaa88ff, metalness: 0.7, roughness: 0.3,
-                            emissive: 0x5533aa, emissiveIntensity: 0.4
-                        })
-                    );
-                    rim.rotation.x = Math.PI / 2;
-                    rim.position.y = 0.4;
-                    plaza.add(rim);
+                    // (đã xóa viền torus galaxy)
+
 
                     // Tên game nhỏ trên vòng (không che view)
                     (function titleSprite() {
@@ -25315,14 +25793,6 @@ if (kind === 'common') {
                         );
                         pad.add(disc);
 
-                        const ring = new THREE.Mesh(
-                            new THREE.TorusGeometry(2.7, 0.12, 8, 32),
-                            new THREE.MeshBasicMaterial({ color: w.color, transparent: true, opacity: 0.7 })
-                        );
-                        ring.rotation.x = Math.PI / 2;
-                        ring.position.y = 0.4;
-                        pad.add(ring);
-
                         // Mũi tên chỉ portal cần đánh (refreshHubLocks bật/tắt)
                         const arrow = new THREE.Mesh(
                             new THREE.ConeGeometry(0.65, 1.6, 6),
@@ -25332,24 +25802,8 @@ if (kind === 'common') {
                         arrow.position.y = 3.6;
                         arrow.userData.hubArrow = true;
                         pad.add(arrow);
-                        // Vòng sáng dẫn đường dưới mũi tên
-                        const guideRing = new THREE.Mesh(
-                            new THREE.TorusGeometry(1.1, 0.08, 8, 24),
-                            new THREE.MeshBasicMaterial({ color: 0xffee66, transparent: true, opacity: 0.85 })
-                        );
-                        guideRing.rotation.x = Math.PI / 2;
-                        guideRing.position.y = 2.4;
-                        guideRing.userData.hubGuide = true;
-                        guideRing.userData.hubArrow = false;
-                        pad.add(guideRing);
-                        // Beam nhẹ từ trên chỉ xuống
-                        const guideBeam = new THREE.Mesh(
-                            new THREE.CylinderGeometry(0.06, 0.18, 2.2, 8),
-                            new THREE.MeshBasicMaterial({ color: 0xffe566, transparent: true, opacity: 0.55 })
-                        );
-                        guideBeam.position.y = 5.0;
-                        guideBeam.userData.hubGuide = true;
-                        pad.add(guideBeam);
+                        // (đã xóa vòng + beam dẫn đường)
+
 
                         // Khóa = dấu "?" (không dùng cục đen)
                         const lock = new THREE.Group();
@@ -25589,6 +26043,7 @@ if (kind === 'common') {
                     if (typeof styleWorldNPC === 'function') styleWorldNPC(0);
 
                     gameStage = 0;
+                    if (typeof applyWorldSky === "function") applyWorldSky(0);
                     if (typeof setExpandedWorld === 'function') setExpandedWorld(0);
                     if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(false);
                     if (typeof platformGroup !== 'undefined' && platformGroup) platformGroup.visible = false;
@@ -26122,6 +26577,24 @@ if (kind === 'common') {
                 }
 
                 // Build hub after scene ready
+                
+                // Bóng phản quang cho mọi boss/mob đã spawn
+                try {
+                    [typeof redMonster !== 'undefined' && redMonster,
+                     typeof octopusMonster !== 'undefined' && octopusMonster,
+                     typeof bossMonster !== 'undefined' && bossMonster,
+                     typeof finalBossMonster !== 'undefined' && finalBossMonster,
+                     typeof supremeBossMonster !== 'undefined' && supremeBossMonster,
+                     typeof universeBossMonster !== 'undefined' && universeBossMonster,
+                     typeof cosmicBossMonster !== 'undefined' && cosmicBossMonster,
+                     typeof atomicBossMonster !== 'undefined' && atomicBossMonster,
+                     typeof errorBossMonster !== 'undefined' && errorBossMonster,
+                     typeof electronBossMonster !== 'undefined' && electronBossMonster
+                    ].forEach(function(m) {
+                        if (m && typeof applyGlossyLook === 'function') applyGlossyLook(m, { metalness: 0.55, roughness: 0.22, envMapIntensity: 1.2 });
+                    });
+                } catch (eG) {}
+
                 try { buildHubWorld(); } catch (e) { console.error('hub build', e); }
 
 
@@ -26180,7 +26653,14 @@ if (kind === 'common') {
 
                 applyLanguageToUI();
 
-                if (typeof autoEquipBestSword === 'function') autoEquipBestSword({ force: true });
+                if (typeof autoEquipBestSword === 'function') {
+                    const _owned = (typeof getBestOwnedSwordType === 'function') ? getBestOwnedSwordType() : null;
+                    if (_owned) autoEquipBestSword({ force: true });
+                    else {
+                        equippedItemType = null;
+                        if (typeof window.updatePlayerSwordVisual === 'function') window.updatePlayerSwordVisual();
+                    }
+                }
                 if (typeof updateKillTally === 'function') updateKillTally();
                 if (typeof tryLoadKingFromStorage === 'function') tryLoadKingFromStorage();
                 if (typeof refreshKingUI === 'function') refreshKingUI();
