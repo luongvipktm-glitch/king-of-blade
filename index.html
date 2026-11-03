@@ -16,7 +16,7 @@
         body {
             margin: 0;
             overflow: hidden;
-            background: #05020a;
+            background: #06010f;
             font-family: 'Segoe UI', sans-serif;
             user-select: none;
         }
@@ -75,8 +75,8 @@
         }
 
         #power-box {
-            border-color: rgba(255, 175, 50, 0.7);
-            color: #ffc266;
+            border-color: rgba(120, 220, 140, 0.55);
+            color: #a8e6b0;
             box-shadow:
                 0 0 0 1px rgba(0,0,0,0.45),
                 0 0 24px rgba(255, 145, 25, 0.3),
@@ -94,10 +94,10 @@
             width: 100%;
         }
         #power-box #val-power {
-            color: #ffe9a8;
+            color: #c8f5d0;
             font-weight: 900;
             font-size: 14px;
-            text-shadow: 0 0 12px rgba(255, 180, 40, 0.7);
+            text-shadow: 0 0 10px rgba(100, 200, 120, 0.45);
             margin-left: 4px;
             flex-shrink: 0;
         }
@@ -142,7 +142,7 @@
             height: 100%;
             width: 40%;
             border-radius: 99px;
-            background: linear-gradient(90deg, #ff3d00, #ff8c00 35%, #ffd040 75%, #fff0b0);
+            background: linear-gradient(90deg, #3aaa5a, #6edc8a 40%, #b8f5c8 80%, #e8ffe8);
             box-shadow: 0 0 16px rgba(255, 150, 30, 0.9), 0 0 5px #ffcc44;
             transition: width 0.25s ease;
             position: relative;
@@ -308,9 +308,9 @@
         }
 
         #gold-box {
-            border-color: rgba(255, 205, 70, 0.58) !important;
-            color: #ffe566 !important;
-            box-shadow: 0 0 16px rgba(255, 200, 45, 0.24) !important;
+            border-color: rgba(255, 220, 120, 0.42) !important;
+            color: #ffe9a8 !important;
+            box-shadow: 0 0 12px rgba(255, 210, 100, 0.15) !important;
         }
         #gold-box .gold-sub {
             width: 100%;
@@ -325,19 +325,21 @@
 
         /* Thanh kill mob đỏ — trên giữa, kiểu boss bar nhưng chỉ n/999 */
         #red-kill-bar {
+            display: none !important; /* gộp vào thanh giữa 999 kill */
             position: absolute;
-            top: 16px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: min(420px, 86vw);
-            background: linear-gradient(180deg, rgba(24, 6, 12, 0.94), rgba(10, 4, 10, 0.92));
-            border: 2px solid #ff3a4a;
-            border-radius: 16px;
-            padding: 10px 16px 12px;
+            top: 110px;
+            left: 10px;
+            transform: none;
+            width: min(280px, 48vw);
+            background: linear-gradient(180deg, rgba(50, 10, 14, 0.97), rgba(24, 4, 8, 0.95));
+            border: 3px solid #ff2244;
+            border-radius: 14px;
+            padding: 10px 14px 12px;
             display: none;
-            text-align: center;
+            text-align: left;
             color: #fff;
-            z-index: 11;
+            z-index: 40;
+            box-shadow: 0 0 20px rgba(255,40,60,0.45);
             box-shadow:
                 0 0 24px rgba(255, 40, 60, 0.4),
                 inset 0 1px 0 rgba(255,180,180,0.1);
@@ -376,20 +378,66 @@
             letter-spacing: 0.5px;
         }
 
-        #boss-hp-bar {
+        
+        #red-mob-hp-bar {
             position: absolute;
-            top: 16px;
+            top: 14px;
             left: 50%;
             transform: translateX(-50%);
-            width: min(460px, 88vw);
-            background: linear-gradient(180deg, rgba(24, 6, 12, 0.94), rgba(10, 4, 10, 0.92));
-            border: 2px solid #ff3a4a;
-            border-radius: 16px;
+            width: min(440px, 86vw);
+            background: linear-gradient(180deg, rgba(55, 6, 14, 0.98), rgba(18, 2, 6, 0.96));
+            border: 3px solid #ff3355;
+            border-radius: 18px;
+            padding: 12px 16px 14px;
+            display: none;
+            text-align: center;
+            color: #fff;
+            z-index: 45;
+            box-shadow:
+                0 0 28px rgba(255, 40, 70, 0.55),
+                0 8px 24px rgba(0,0,0,0.4),
+                inset 0 1px 0 rgba(255,180,180,0.2);
+            pointer-events: none;
+            backdrop-filter: blur(12px);
+        }
+        #red-mob-hp-bar .rmh-title {
+            font-size: 15px; font-weight: 900; color: #ff8a9a;
+            margin-bottom: 8px; letter-spacing: 1px;
+            text-shadow: 0 0 12px rgba(255,60,80,0.6);
+        }
+        #red-mob-hp-bar .rmh-track {
+            height: 18px; border-radius: 99px;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,100,120,0.45);
+            overflow: hidden;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.5);
+        }
+        #red-mob-hp-bar .rmh-fill {
+            height: 100%; width: 100%;
+            background: linear-gradient(90deg, #6a0000 0%, #ff1a33 40%, #ff6677 75%, #ffccdd 100%);
+            border-radius: 99px;
+            transition: width 0.18s ease;
+            box-shadow: 0 0 14px rgba(255,40,60,0.55);
+        }
+        #red-mob-hp-bar .rmh-text {
+            margin-top: 8px; font-size: 13px; font-weight: 900; color: #ffe8ec;
+            letter-spacing: 0.3px;
+        }
+
+        #boss-hp-bar {
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(420px, 70vw);
+            background: linear-gradient(180deg, rgba(28, 8, 40, 0.96), rgba(12, 4, 24, 0.94));
+            border: 2px solid #cc66ff;
+            border-radius: 14px;
             padding: 10px 14px 12px;
             display: none;
             text-align: center;
             color: #fff;
-            z-index: 10;
+            z-index: 11;
             box-shadow:
                 0 0 24px rgba(255, 40, 60, 0.45),
                 inset 0 1px 0 rgba(255,180,180,0.12);
@@ -416,7 +464,7 @@
 
         #boss-hp-inner {
             height: 100%;
-            background: linear-gradient(90deg, #8b0000 0%, #ff2233 40%, #ff6b7a 78%, #ffb3ba 100%);
+            background: linear-gradient(90deg, #4a0080 0%, #aa44ff 35%, #ff66cc 70%, #ffe566 100%);
             width: 100%;
             border-radius: 99px;
             transition: width 0.12s ease;
@@ -450,18 +498,19 @@
             box-shadow: 0 0 15px rgba(255,215,0,0.5);
         }
 
-        #dmg-popup {
+                #dmg-popup {
             position: absolute;
             top: 42%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 26px;
+            font-size: 32px;
             font-weight: 900;
-            color: #ffcc00;
-            text-shadow: 0 0 8px rgba(255,204,0,0.9), 2px 2px 0 rgba(0,0,0,0.6);
-            display: none;
-            z-index: 150;
+            color: #ffe566;
+            text-shadow: 0 0 8px #000, 0 2px 0 #000, 0 0 20px rgba(255,180,0,0.7);
             pointer-events: none;
+            z-index: 80;
+            display: none;
+            letter-spacing: 0.5px;
         }
 
         @keyframes dmgPopupFloat {
@@ -1446,40 +1495,33 @@
             display: none;
             position: fixed;
             left: 50%;
-            bottom: 18%;
+            bottom: 16%;
             transform: translateX(-50%);
             z-index: 80;
-            width: min(280px, 86vw);
-            background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,250,255,0.96));
-            border-radius: 18px;
-            border: 3px solid #ffe566;
-            box-shadow: 0 8px 28px rgba(0,0,0,0.35), 0 0 20px rgba(255,200,40,0.35);
-            padding: 14px 16px 16px;
-            text-align: center;
-            font-family: 'Segoe UI', sans-serif;
-            pointer-events: auto;
+            width: min(300px, 88vw);
+            background: linear-gradient(165deg, #1a1230 0%, #2a1848 40%, #120c22 100%);
+            border-radius: 20px;
+            border: 3px solid #c9a0ff;
+            box-shadow: 0 0 30px rgba(160,80,255,0.35), 0 16px 48px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12);
+            padding: 16px 16px 18px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #f0e8ff;
         }
         #pet-shop-panel.show { display: block; }
-        #pet-shop-panel .ps-title {
+        #pet-shop-panel .ps-title { color: #ffe566 !important;
             font-size: 22px;
             font-weight: 900;
             color: #2a2a40;
             margin: 0 0 4px;
         }
         #pet-shop-panel .ps-preview {
-            width: 88px;
-            height: 88px;
+            width: 96px; height: 96px;
             margin: 8px auto;
             border-radius: 16px;
-            background: radial-gradient(circle at 50% 40%, #ffe8a0, #ffb84a 60%, #e09030);
-            border: 3px solid #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 48px;
-            position: relative;
-            overflow: hidden;
+            background: radial-gradient(circle at 40% 30%, #3a2860, #12081c);
+            border: 2px solid rgba(200,160,255,0.5);
+            box-shadow: inset 0 0 20px rgba(120,60,255,0.25), 0 0 12px rgba(160,80,255,0.2);
+            display: flex; align-items: center; justify-content: center;
         }
         #pet-shop-panel .ps-preview canvas {
             width: 80px;
@@ -1496,20 +1538,22 @@
             border-radius: 10px;
             padding: 8px 10px;
         }
-        #pet-shop-panel .ps-rates b { color: #333; }
+        #pet-shop-panel .ps-rates b { color: #ffe8a0; }
+        #pet-shop-panel .ps-rates { color: #d0c4e8; }
         #pet-shop-panel .ps-buy {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: linear-gradient(180deg, #7ee08a, #3cb85a);
-            border: none;
-            border-radius: 12px;
-            padding: 10px 16px;
-            color: #fff;
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 13px;
+            border: 2px solid #ffe566;
+            border-radius: 14px;
+            background: linear-gradient(180deg, #ffd700, #e8a020 60%, #c07810);
+            color: #1a1020;
             font-weight: 900;
-            font-size: 14px;
+            font-size: 15px;
             cursor: pointer;
-            box-shadow: 0 4px 0 #2a8a40, 0 6px 14px rgba(0,0,0,0.2);
+            box-shadow: 0 0 16px rgba(255,200,40,0.35), 0 4px 0 #8a6010;
+            letter-spacing: 0.3px;
         }
         #pet-shop-panel .ps-buy:active {
             transform: translateY(2px);
@@ -1537,7 +1581,7 @@
             margin-top: 8px;
             font-size: 12px;
             font-weight: 800;
-            color: #5a4;
+            color: #8f8;
         }
         #pet-shop-panel .ps-close {
             position: absolute;
@@ -2013,6 +2057,102 @@
         @keyframes ptSpin {
             from { transform: rotate(0deg) scale(0.85); }
             to { transform: rotate(360deg) scale(1.05); }
+        }
+
+        
+        #reactor-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 96;
+            background: rgba(0,0,0,0.65);
+            align-items: center;
+            justify-content: center;
+        }
+        #reactor-overlay.show { display: flex; }
+        #reactor-panel {
+            width: min(420px, 94vw);
+            background: linear-gradient(165deg, #0e1a28, #1a1030 50%, #0a1220);
+            border: 3px solid #44ddff;
+            border-radius: 18px;
+            padding: 18px 18px 20px;
+            box-shadow: 0 0 40px rgba(0,200,255,0.25), 0 16px 48px rgba(0,0,0,0.55);
+            color: #d8f0ff;
+            position: relative;
+        }
+        #reactor-panel .rx-close {
+            position: absolute; top: 10px; right: 12px;
+            width: 28px; height: 28px; border-radius: 50%;
+            border: none; background: #244; color: #cff;
+            font-weight: 900; cursor: pointer;
+        }
+        .rx-machine { font-size: 48px; text-align: center; filter: drop-shadow(0 0 12px #4cf); }
+        .rx-title { text-align: center; font-weight: 900; font-size: 18px; color: #7ef; margin: 4px 0 8px; }
+        .rx-sub { font-size: 12px; opacity: 0.85; text-align: center; margin-bottom: 10px; line-height: 1.4; }
+        .rx-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            background: rgba(0,40,60,0.45);
+            border: 1px solid rgba(80,200,255,0.25);
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .rx-row.ready { border-color: #4f8; box-shadow: 0 0 12px rgba(80,255,160,0.2); }
+        .rx-row button {
+            border: none; border-radius: 10px;
+            padding: 8px 10px;
+            background: linear-gradient(180deg, #4cf, #28a);
+            color: #021018;
+            font-weight: 900;
+            font-size: 11px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .rx-row button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.5); }
+        .rx-mult { text-align: center; margin-top: 10px; font-weight: 900; color: #ffe566; font-size: 13px; }
+
+        
+        #pet-bag-btn {
+            position: fixed;
+            right: 14px;
+            bottom: 160px;
+            z-index: 36;
+            width: 48px; height: 48px;
+            border-radius: 14px;
+            border: 2px solid #c9a0ff;
+            background: linear-gradient(180deg, #3a2060, #1a1030);
+            color: #ffe566;
+            font-size: 22px;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+        }
+        #pet-bag-overlay {
+            display: none; position: fixed; inset: 0; z-index: 97;
+            background: rgba(0,0,0,0.55); align-items: center; justify-content: center;
+        }
+        #pet-bag-overlay.show { display: flex; }
+        #pet-bag-panel {
+            width: min(400px, 94vw); max-height: 70vh; overflow: auto;
+            background: linear-gradient(165deg, #1a1230, #120c22);
+            border: 3px solid #c9a0ff; border-radius: 16px;
+            padding: 16px; color: #f0e8ff; position: relative;
+        }
+        #pet-bag-panel h3 { margin: 0 0 12px; text-align: center; color: #ffe566; }
+        #pet-bag-panel .pb-close {
+            position: absolute; top: 8px; right: 10px; width: 28px; height: 28px;
+            border: none; border-radius: 8px; background: #422; color: #fff; font-weight: 900; cursor: pointer;
+        }
+        .pb-item {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(60,40,90,0.5); border-radius: 10px;
+            padding: 10px; margin-bottom: 8px; border: 1px solid rgba(200,160,255,0.25);
+        }
+        .pb-item button {
+            margin-left: auto; border: none; border-radius: 8px;
+            padding: 8px 10px; background: linear-gradient(180deg,#ffe566,#e0a020);
+            color: #1a1020; font-weight: 900; cursor: pointer; font-size: 12px;
         }
 
         #hack-screen {
@@ -3346,24 +3486,39 @@
 
     
     <div id="qol-fab">
-        <button type="button" onclick="window.openQolPanel&&window.openQolPanel('quest')">📜 Quest</button>
-        <button type="button" onclick="window.openQolPanel&&window.openQolPanel('book')">📒 Book</button>
-        <button type="button" onclick="window.openFuseUI&&window.openFuseUI()">🔀 Fuse</button>
+        <button type="button" id="menu-main-btn" onclick="window.openQolPanel&&window.openQolPanel('quest')" title="Menu [H]">☰ Menu</button>
     </div>
     <div id="qol-panel">
         <button type="button" class="qol-close" onclick="window.closeQolPanel&&window.closeQolPanel()">×</button>
-        <h3 id="qol-title">Quest</h3>
+        <h3 id="qol-title">☰ Menu</h3>
         <div class="qol-tabs">
             <div class="qol-tab active" data-tab="quest" onclick="window.openQolPanel&&window.openQolPanel('quest')">Daily</div>
             <div class="qol-tab" data-tab="book" onclick="window.openQolPanel&&window.openQolPanel('book')">Collection</div>
             <div class="qol-tab" data-tab="pity" onclick="window.openQolPanel&&window.openQolPanel('pity')">Pity</div>
             <div class="qol-tab" data-tab="fuse" onclick="window.openQolPanel&&window.openQolPanel('fuse')">Fuse</div>
+            <div class="qol-tab" data-tab="reactor" onclick="window.openReactorFuse&&window.openReactorFuse()">⚗️ Reactor</div>
         </div>
         <div class="qol-body" id="qol-body"></div>
     </div>
     <div id="hub-minimap"><canvas id="hub-minimap-canvas" width="120" height="120"></canvas></div>
     <div id="boss-phase-banner"></div>
     <div id="dodge-flash"></div>
+    <button type="button" id="pet-bag-btn" title="Pet bag [B]" onclick="window.openPetBag&&window.openPetBag()">🎒</button>
+    <div id="pet-bag-overlay">
+        <div id="pet-bag-panel">
+            <button type="button" class="pb-close" onclick="window.closePetBag&&window.closePetBag()">×</button>
+            <h3>🎒 Pet Bag</h3>
+            <div id="pet-bag-list"></div>
+        </div>
+    </div>
+
+    <div id="reactor-overlay">
+        <div id="reactor-panel">
+            <button type="button" class="rx-close" onclick="window.closeReactorFuse&&window.closeReactorFuse()">×</button>
+            <div id="reactor-body"></div>
+        </div>
+    </div>
+
     <div id="portal-tunnel"><div class="pt-ring" id="pt-ring"></div><div class="pt-label" id="pt-label">Entering…</div></div>
 
     <div id="fuse-overlay">
@@ -3602,6 +3757,13 @@
 
     </div>
 
+
+    
+    <div id="red-mob-hp-bar">
+        <div class="rmh-title">🔴 MOB ĐỎ — 999 KILL</div>
+        <div class="rmh-track"><div class="rmh-fill" id="red-mob-hp-fill"></div></div>
+        <div class="rmh-text" id="red-mob-hp-text">0 / 999</div>
+    </div>
 
     <div id="red-kill-bar">
         <div class="rk-title">💀 RED MOB</div>
@@ -4972,23 +5134,25 @@
 
                 // 999 kill chỉ áp dụng mob đỏ (stage 1) — thanh trên giữa
                 function refreshRedKillBar() {
-                    const bar = document.getElementById('red-kill-bar');
-                    if (!bar) return;
+                    // Thanh giữa = 999 kill (không dùng HP 100, không thanh bên cạnh)
                     const k = typeof killCount === 'number' ? killCount : 0;
-                    const num = document.getElementById('red-kill-num');
-                    const fill = document.getElementById('red-kill-fill');
-                    if (num) num.textContent = String(Math.min(k, 999));
-                    if (fill) fill.style.width = (Math.min(k, 999) / 999 * 100) + '%';
-                    // Chỉ hiện ở thế giới mob đỏ
+                    const kk = k > 999 ? 999 : k;
+                    const bar = document.getElementById('red-mob-hp-bar');
+                    const fill = document.getElementById('red-mob-hp-fill');
+                    const txt = document.getElementById('red-mob-hp-text');
                     const show = (typeof gameStage === 'number' && gameStage === 1);
-                    bar.style.display = show ? 'block' : 'none';
-                    // Title theo ngôn ngữ
-                    const tit = bar.querySelector('.rk-title');
+                    if (bar) bar.style.display = show ? 'block' : 'none';
+                    if (fill) fill.style.width = (kk / 999 * 100) + '%';
+                    if (txt) txt.textContent = kk + ' / 999';
+                    const tit = bar && bar.querySelector('.rmh-title');
                     if (tit) {
                         tit.textContent = (typeof currentLang !== 'undefined' && currentLang === 'vi')
-                            ? '💀 MOB ĐỎ'
-                            : '💀 RED MOB';
+                            ? '🔴 MOB ĐỎ — 999 KILL'
+                            : '🔴 RED MOB — 999 KILL';
                     }
+                    // Ẩn thanh kill cũ bên cạnh
+                    const oldBar = document.getElementById('red-kill-bar');
+                    if (oldBar) oldBar.style.display = 'none';
                 }
 
                 let swordLevel = 0;
@@ -5037,26 +5201,28 @@
                 let goldMultiplier = 1; // *n money từ shop [O] / tốc độ skin
                 // gold = (power / click) / 670  → per hit gain
                 function goldFromHit() {
+                    // Nhanh: log10(power)/67 * mul — không gọi applyPet mỗi hit
                     let p = power;
                     if (!Number.isFinite(p) || p <= 0) p = 1;
-                    if (p >= 1e18) p = 1e18;
-                    let g = Math.log10(Math.max(10, p)) / 67;
-                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword)
-                        g *= 1.10;
+                    if (p > 1e18) p = 1e18;
+                    let g = Math.log10(p < 10 ? 10 : p) / 67;
+                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword) g *= 1.1;
                     const gm = (typeof goldMultiplier === 'number' && goldMultiplier > 0) ? goldMultiplier : 1;
-                    g *= gm;
-                    // Pet bonus
-                    try {
-                        if (typeof applyPetToGains === 'function') {
-                            const r = applyPetToGains(g, 0);
-                            g = r.gold;
-                        }
-                    } catch (e) {}
-                    return Math.max(0.002, Math.min(50 * gm, g));
+                    const petG = (typeof _cachedPetGoldMul === 'number' && _cachedPetGoldMul > 0) ? _cachedPetGoldMul : 1;
+                    g *= gm * petG;
+                    if (g < 0.002) g = 0.002;
+                    if (g > 50 * gm) g = 50 * gm;
+                    return g;
                 }
+                let _goldUiDirty = false;
                 function addGoldFromHit() {
                     playerGold += goldFromHit();
-                    updateGoldUI();
+                    _goldUiDirty = true; // throttle UI
+                }
+                function flushGoldUI() {
+                    if (!_goldUiDirty) return;
+                    _goldUiDirty = false;
+                    try { updateGoldUI(); } catch (e) {}
                 }
                 function applyPetPowerGain(basePowerGain) {
                     try {
@@ -5479,12 +5645,34 @@
                     }
                     return { gold: g, power: p };
                 }
+                // Cache hệ số pet — không tính lại mỗi hit (tránh lag)
+                let _cachedPetPowMul = 1;
+                let _cachedPetGoldMul = 1;
+                function refreshPetMulCache() {
+                    _cachedPetPowMul = 1;
+                    _cachedPetGoldMul = 1;
+                    try {
+                        if (!equippedPet) return;
+                        const b = getPetBonuses(equippedPet.tier, equippedPet.world);
+                        if (b.mode === 'mul') {
+                            _cachedPetPowMul = b.powerMul || 1;
+                            _cachedPetGoldMul = b.goldMul || 1;
+                        } else {
+                            _cachedPetPowMul = 1 + (b.powerAdd || 0);
+                            _cachedPetGoldMul = 1 + (b.goldAdd || 0);
+                        }
+                        // Ultra global mult
+                        if (equippedPet.tier === 'ultra' && typeof ultraAllMult === 'number' && ultraAllMult > 1)
+                            _cachedPetPowMul *= ultraAllMult;
+                    } catch (e) {}
+                }
+                try { refreshPetMulCache(); } catch (e) {}
 
                 function buildPetMesh(tier, colorHex) {
                     const g = new THREE.Group();
                     const col = colorHex || 0xff2233;
-                    const mat = new THREE.MeshLambertMaterial({ color: col, flatShading: true });
-                    const white = new THREE.MeshLambertMaterial({ color: 0xf0f4f8, flatShading: true });
+                    const mat = new THREE.MeshStandardMaterial({ color: col, flatShading: true, roughness: 0.4, metalness: 0.25, emissive: col, emissiveIntensity: 0.22 });
+                    const white = new THREE.MeshStandardMaterial({ color: 0xf0f4f8, flatShading: true, roughness: 0.35, metalness: 0.2 });
                     const dark = new THREE.MeshBasicMaterial({ color: 0x1a1020 });
                     const box = function(w,h,d,m,x,y,z) {
                         const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), m);
@@ -5746,8 +5934,9 @@
                         if (!equippedPet || !playerGroup) return;
                         petFollower = buildPetMesh(equippedPet.tier, equippedPet.color);
                         // Phía SAU lưng nhân vật (local -Z nếu face +Z; dùng +Z vì player hay quay về -Z portal)
-                        petFollower.position.set(0, 0.05, 1.35);
-                        petFollower.scale.setScalar(0.75);
+                        petFollower.position.set(0, 0.02, 1.2);
+                        // ~20% chiều cao người chơi
+                        petFollower.scale.setScalar(0.42);
                         playerGroup.add(petFollower);
                     } catch (e) { console.warn('pet follower', e); }
                 }
@@ -5857,7 +6046,7 @@
                             if (exists) continue;
                             // Cùng công thức portal: ang, r=20 — vendor trước cổng (r=14)
                             const ang = (i / n) * Math.PI * 2 - Math.PI / 2;
-                            const r = 14; // trước cổng (portal ở r=20)
+                            const r = 16; // trước cầu / cổng (portal ~r=24)
                             const px = Math.cos(ang) * r;
                             const pz = Math.sin(ang) * r;
                             const w = (typeof HUB_WORLDS !== 'undefined' && HUB_WORLDS[i]) ? HUB_WORLDS[i] : null;
@@ -6038,7 +6227,7 @@
                     ensureDailyQuests();
                     let changed = false;
                     (qolState.quests || []).forEach(function(q) {
-                        if (q.id !== id || q.done) return;
+                        if (q.id !== id || q.claimed || q.readyClaim) return;
                         // portal: đếm world khác nhau
                         if (q.unique && meta != null) {
                             q.seen = q.seen || {};
@@ -6049,20 +6238,41 @@
                         } else {
                             q.progress = Math.min(q.target, (q.progress || 0) + (amount || 1));
                         }
-                        if (q.progress >= q.target) {
-                            q.done = true;
+                        if (q.progress >= q.target && !q.claimed) {
                             q.progress = q.target;
-                            playerGold = (playerGold || 0) + (q.reward || 0);
-                            if (typeof updateGoldUI === 'function') updateGoldUI();
+                            q.readyClaim = true;
+                            // Không auto nhận — phải bấm Claim
                             const nm = (typeof currentLang !== 'undefined' && currentLang === 'en') ? q.nameEn : q.nameVi;
                             if (typeof showToast === 'function')
-                                showToast('✅ Quest: ' + nm + ' (+' + (q.reward||0) + ' gold)');
+                                showToast('📜 Quest xong! Mở Menu → nhận thưởng: ' + nm);
                             try { showQuestNotify(false); } catch (e) {}
                         }
                         changed = true;
                     });
                     if (changed) saveQol();
                 }
+
+                
+                window.claimQuest = function(id) {
+                    ensureDailyQuests();
+                    let found = false;
+                    (qolState.quests || []).forEach(function(q) {
+                        if (q.id !== id || q.claimed || !q.readyClaim) return;
+                        q.claimed = true;
+                        q.done = true;
+                        q.readyClaim = false;
+                        playerGold = (playerGold || 0) + (q.reward || 0);
+                        if (typeof updateGoldUI === 'function') updateGoldUI();
+                        const nm = (typeof currentLang !== 'undefined' && currentLang === 'en') ? q.nameEn : q.nameVi;
+                        if (typeof showToast === 'function')
+                            showToast('🎁 +' + (q.reward||0) + ' gold · ' + nm);
+                        found = true;
+                    });
+                    if (found) {
+                        saveQol();
+                        if (typeof openQolPanel === 'function') openQolPanel('quest');
+                    }
+                };
 
                 function collectPet(tier, world, name) {
                     const key = (world || 1) + '_' + (tier || 'common');
@@ -6145,10 +6355,18 @@
                         body.innerHTML = (qolState.quests || []).map(function(q) {
                             const nm = (typeof currentLang !== 'undefined' && currentLang === 'en') ? q.nameEn : q.nameVi;
                             const pct = Math.min(100, Math.floor(100 * (q.progress || 0) / (q.target || 1)));
-                            return '<div class="qol-item' + (q.done ? ' done' : '') + '">' +
-                                '<div><b>' + nm + '</b>' + (q.done ? ' ✅' : '') + '</div>' +
+                            const claimed = !!q.claimed;
+                            const ready = !!q.readyClaim && !claimed;
+                            let btn = '';
+                            if (ready) {
+                                btn = '<button type="button" class="qol-claim-btn" onclick="window.claimQuest&&window.claimQuest(\'' + q.id + '\')">🎁 Nhận thưởng</button>';
+                            } else if (claimed) {
+                                btn = '<div style="color:#8f8;font-size:12px;margin-top:6px">✅ Đã nhận</div>';
+                            }
+                            return '<div class="qol-item' + (claimed ? ' done' : (ready ? ' ready-claim' : '')) + '">' +
+                                '<div><b>' + nm + '</b>' + (ready ? ' 🎁' : (claimed ? ' ✅' : '')) + '</div>' +
                                 '<div style="opacity:.75;font-size:12px">' + (q.progress||0) + ' / ' + q.target + ' · 💰 ' + (q.reward||0) + '</div>' +
-                                '<div class="qol-prog"><i style="width:' + pct + '%"></i></div></div>';
+                                '<div class="qol-prog"><i style="width:' + pct + '%"></i></div>' + btn + '</div>';
                         }).join('') + '<div style="opacity:.6;font-size:11px;margin-top:8px;text-align:center">Reset mỗi ngày · ' + (qolState.questDay||'') + '</div>';
                     } else if (tab === 'book') {
                         if (title) title.textContent = '📖 Codex';
@@ -6424,7 +6642,11 @@
                         } else if (typeof bossMonster !== 'undefined' && bossMonster && bossMonster.visible) {
                             bx = bossMonster.position.x; bz = bossMonster.position.z; active = true;
                         }
-                        if (active) showBossTelegraph(bx, bz, 650);
+                        if (active) {
+                            showBossTelegraph(bx, bz, 650);
+                            if (Math.random() < 0.35 && typeof playBossRoar === 'function')
+                                playBossRoar(gameStage);
+                        }
                     } catch (e) {}
                 }
 
@@ -6503,7 +6725,7 @@
                                 Object.keys(byW).forEach(function(w) {
                                     html += '<div class="qol-item">World ' + w + ' common: ' + byW[w] + (byW[w] >= 3 ? ' ✅' : '') + '</div>';
                                 });
-                                html += '<button type="button" onclick="window.fusePets&&window.fusePets()" style="margin-top:10px;width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(180deg,#c9a0ff,#8844cc);color:#fff;font-weight:900;cursor:pointer">🔀 Fuse now</button>';
+                                html += '<button type="button" onclick="window.closeQolPanel&&window.closeQolPanel();window.openFuseUI&&window.openFuseUI()" style="margin-top:10px;width:100%;padding:12px;border:none;border-radius:12px;background:linear-gradient(180deg,#c9a0ff,#8844cc);color:#fff;font-weight:900;cursor:pointer">🔀 Mở bàn Fuse (3→1)</button>';
                                 html += '<div class="qol-item" style="margin-top:10px;opacity:.75">Rebirth: #' + rebirthCount + ' · Mult ×' + (rebirthMult||1).toFixed(2) + '</div>';
                                 body.innerHTML = html;
                             }
@@ -6516,18 +6738,19 @@
 
                 // --- World palette (clearer colors per stage) ---
                 const WORLD_PALETTE = {
-                    0:  { bg: 0x1a0a32, fog: null, amb: 0x6a40a0 },
-                    1:  { bg: 0x1a0808, fog: 0x3a1010, amb: 0xaa4422 },
-                    2:  { bg: 0x061828, fog: 0x0a3048, amb: 0x2288cc },
-                    3:  { bg: 0x140820, fog: 0x2a1040, amb: 0x8844cc },
-                    5:  { bg: 0x1a1408, fog: 0x3a3010, amb: 0xccaa22 },
-                    6:  { bg: 0x041018, fog: 0x083040, amb: 0x22ccdd },
-                    7:  { bg: 0x060a20, fog: 0x101848, amb: 0x4466ff },
-                    8:  { bg: 0x180818, fog: 0x301030, amb: 0xff44aa },
-                    9:  { bg: 0x081808, fog: 0x103010, amb: 0x44ff88 },
-                    10: { bg: 0x101808, fog: 0x203010, amb: 0x88aa44 },
-                    11: { bg: 0x100010, fog: 0x300020, amb: 0xff2266 },
-                    12: { bg: 0x0a1020, fog: 0x102040, amb: 0x66ccff }
+                    // Màu đậm, bão hòa — không nhạt
+                    0:  { bg: 0x3a0a5a, fog: null, amb: 0xcc55ff },
+                    1:  { bg: 0x3a0508, fog: 0x6a1018, amb: 0xff4422 },
+                    2:  { bg: 0x042040, fog: 0x0a5080, amb: 0x22aaff },
+                    3:  { bg: 0x280850, fog: 0x4a1880, amb: 0xaa44ff },
+                    5:  { bg: 0x3a2000, fog: 0x6a4810, amb: 0xffcc22 },
+                    6:  { bg: 0x002830, fog: 0x085868, amb: 0x22eeff },
+                    7:  { bg: 0x080c40, fog: 0x142070, amb: 0x4466ff },
+                    8:  { bg: 0x380820, fog: 0x601040, amb: 0xff44cc },
+                    9:  { bg: 0x082820, fog: 0x104828, amb: 0x22ff66 },
+                    10:{ bg: 0x203008, fog: 0x385010, amb: 0xaacc22 },
+                    11:{ bg: 0x280010, fog: 0x600028, amb: 0xff2255 },
+                    12:{ bg: 0x081c38, fog: 0x103870, amb: 0x33aaff }
                 };
                 function applyWorldPalette(stage) {
                     const pal = WORLD_PALETTE[stage] || WORLD_PALETTE[1];
@@ -6536,15 +6759,20 @@
                             if (pal.bg != null) scene.background = new THREE.Color(pal.bg);
                             if (scene.fog && pal.fog != null) {
                                 scene.fog.color.setHex(pal.fog);
-                                scene.fog.density = 0.0022;
+                                scene.fog.density = 0.0009; // mỏng — contrast rõ
                             }
                             scene.traverse(function(o) {
                                 if (o.isAmbientLight) {
-                                    o.color.setHex(pal.amb || 0x444466);
-                                    o.intensity = 0.55;
+                                    o.color.setHex(pal.amb || 0xaa88cc);
+                                    o.intensity = 0.7;
                                 }
                                 if (o.isHemisphereLight) {
-                                    o.intensity = 1.15;
+                                    o.color.setHex(pal.amb || 0xaa88cc);
+                                    o.intensity = 1.1;
+                                }
+                                if (o.isDirectionalLight) {
+                                    o.intensity = Math.max(o.intensity || 1, 2.1);
+                                    o.color.setHex(0xfff0dd);
                                 }
                             });
                         }
@@ -6805,40 +7033,26 @@
                     // --- Soft ambient props only (no random box clutter) ---
                     // Color harmony per world (muted, matches sky palette)
                     const theme = {
-                        1:  { ground: 0x3d6b3a, rock: 0x6a5a4a, accent: 0xb08a50, emit: 0x000000 },
-                        2:  { ground: 0xc2a86a, rock: 0xd8c8a0, accent: 0x88ccee, emit: 0x225566 },
-                        3:  { ground: 0x3a2a48, rock: 0x4a3a5a, accent: 0x8844aa, emit: 0x442266 },
-                        5:  { ground: 0x4a4030, rock: 0x5a5040, accent: 0xc9a030, emit: 0x554400 },
-                        6:  { ground: 0x1a3038, rock: 0x2a4048, accent: 0x44c8d8, emit: 0x226688 },
-                        7:  { ground: 0x1a1a32, rock: 0x2a2a48, accent: 0x5566cc, emit: 0x2233aa },
-                        8:  { ground: 0x2a1a2a, rock: 0x3a2a3a, accent: 0xcc66aa, emit: 0x662244 },
-                        9:  { ground: 0x1a3228, rock: 0x2a4335, accent: 0x44cc77, emit: 0x228844 },
-                        10: { ground: 0x3a4a2a, rock: 0x5a6040, accent: 0xa0b070, emit: 0x000000 },
-                        11: { ground: 0x281018, rock: 0x3a1820, accent: 0xff3366, emit: 0x881122 },
-                        12: { ground: 0x101828, rock: 0x182838, accent: 0x66aadd, emit: 0x335588 }
+                        // ground = màu nền chính, dirt = tầng đất cao, grass = phủ đồi
+                        1:  { ground: 0x3d9a28, dirt: 0x7a5a28, grass: 0x44cc33, rock: 0x8a6a40, accent: 0xffaa33, emit: 0x224400, water: 0x2299ee },
+                        2:  { ground: 0xe8c050, dirt: 0xd0a040, grass: 0x88cc40, rock: 0xe0c080, accent: 0x44bbff, emit: 0x226688, water: 0x22aaff },
+                        3:  { ground: 0x6a3a88, dirt: 0x4a2870, grass: 0x8855aa, rock: 0x5a3a70, accent: 0xcc44ff, emit: 0x6622aa, water: 0x8833cc },
+                        5:  { ground: 0x6a5020, dirt: 0x7a6028, grass: 0x6a8040, rock: 0x7a6840, accent: 0xffcc22, emit: 0x886600, water: 0x3388bb },
+                        6:  { ground: 0x1a4858, dirt: 0x2a6070, grass: 0x2a7080, rock: 0x2a5868, accent: 0x22e8ff, emit: 0x1188aa, water: 0x22c0e0 },
+                        7:  { ground: 0x1a1a55, dirt: 0x2a2a70, grass: 0x2a3080, rock: 0x2a2a60, accent: 0x5577ff, emit: 0x2233cc, water: 0x3355dd },
+                        8:  { ground: 0x4a1a40, dirt: 0x5a2a50, grass: 0x5a2a58, rock: 0x5a2a48, accent: 0xff44cc, emit: 0xaa2288, water: 0xaa33cc },
+                        9:  { ground: 0x1a5038, dirt: 0x2a6848, grass: 0x2a8850, rock: 0x2a6040, accent: 0x22ff66, emit: 0x11aa44, water: 0x22cc88 },
+                        10: { ground: 0x4a6a20, dirt: 0x5a7a28, grass: 0x55aa30, rock: 0x6a8040, accent: 0xbbdd33, emit: 0x446600, water: 0x3399bb },
+                        11: { ground: 0x480818, dirt: 0x601020, grass: 0x601828, rock: 0x501018, accent: 0xff3355, emit: 0xaa1122, water: 0xaa2244 },
+                        12: { ground: 0x102848, dirt: 0x183860, grass: 0x1a4070, rock: 0x183858, accent: 0x44bbff, emit: 0x2266aa, water: 0x22a0ee }
                     };
                     const T = theme[stage] || theme[1];
 
-                    // Heightmap floor (center flat, edges gently waved)
-                    try { g.add(createHeightmapFloor(stage, T.ground)); } catch (eH) {}
+                                        const dirtC = T.dirt || T.ground;
+                    const grassC = T.grass || T.ground;
+                    const waterC = T.water || 0x4a90c0;
 
-                    // Soft hills — few, large, low (blend with floor, not noisy)
-                    for (let i = 0; i < 5; i++) {
-                        const ang = (i / 5) * Math.PI * 2 + 0.4;
-                        const dist = 16 + (i % 2) * 4;
-                        const hx = Math.cos(ang) * dist;
-                        const hz = Math.sin(ang) * dist;
-                        const hill = new THREE.Mesh(
-                            new THREE.SphereGeometry(3.2 + (i % 2), 12, 8, 0, Math.PI * 2, 0, Math.PI / 2),
-                            new THREE.MeshStandardMaterial({
-                                color: T.ground, roughness: 0.9, metalness: 0.05, flatShading: true
-                            })
-                        );
-                        hill.position.set(hx, -0.15, hz);
-                        hill.scale.set(1.1, 0.35 + (i % 3) * 0.08, 1.1);
-                        hill.receiveShadow = true;
-                        g.add(hill);
-                    }
+                    // ĐÃ BỎ đồi/núi cầu xấu — chỉ giữ landmark + chi tiết sống
 
                     // One clear landmark per world (silhouette, not spam)
                     function pillar(x, z, h, col, em) {
@@ -6948,6 +7162,9 @@
                     } else {
                         rock(10, -9, 1.0); rock(-11, 8, 0.85);
                     }
+
+                                        // Ao cá CHỈ ở Hub — combat world không spawn hồ
+                    try { /* no combat pond */ } catch (eLife) {}
                 }
 
                 function isInSafeZone() {
@@ -7903,7 +8120,7 @@
                     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
                     renderer.outputEncoding = THREE.sRGBEncoding;
                     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-                    renderer.toneMappingExposure = 1.35;
+                    renderer.toneMappingExposure = 1.45;
                     // Sắc nét hơn
                     try {
                         if (renderer.domElement) {
@@ -11554,7 +11771,7 @@
                             scene.fog.density = 0.0009;
                         }
                     } else if (isHell) {
-                        scene.background = new THREE.Color(0x1a0508);
+                        scene.background = new THREE.Color(0x3a0810);
                         if (scene.fog) {
                             scene.fog.color.setHex(0x1a0508);
                             scene.fog.density = 0.0035;
@@ -11567,7 +11784,7 @@
                         }
                     } else if (isElectron) {
                         // Electron có sky mesh riêng — nền tối
-                        scene.background = new THREE.Color(0x0a1030);
+                        scene.background = new THREE.Color(0x101850);
                         if (scene.fog) {
                             scene.fog.color.setHex(0x0a1030);
                             scene.fog.density = 0.0015;
@@ -15606,9 +15823,10 @@
                 function applyGlossyLook(root, opts) {
                     opts = opts || {};
                     // Phản quang / phản tối rõ hơn (mirror-ish + dark cavities)
-                    const metal = opts.metalness != null ? opts.metalness : 0.82;
-                    const rough = opts.roughness != null ? opts.roughness : 0.08;
-                    const envI = opts.envMapIntensity != null ? opts.envMapIntensity : 2.2;
+                    // Default: blocky matte-ish (art direction thống nhất)
+                    const metal = opts.metalness != null ? opts.metalness : 0.32;
+                    const rough = opts.roughness != null ? opts.roughness : 0.48;
+                    const envI = opts.envMapIntensity != null ? opts.envMapIntensity : 0.85;
                     if (!root) return;
                     root.traverse(function(o) {
                         if (!o.isMesh || !o.material) return;
@@ -16295,14 +16513,14 @@ const redMonster =
                 }
 
                 function updateRedMobHPSprite() {
-                    if (!redMonster || !redMonster.userData.hpSprite) return;
-                    const old = redMonster.userData.hpSprite;
-                    redMonster.remove(old);
-                    if (old.material && old.material.map) old.material.map.dispose();
-                    if (old.material) old.material.dispose();
-                    const spr = makeRedMobHPSprite(redMonsterCurrentHP, RED_MOB_MAX_HP);
-                    redMonster.userData.hpSprite = spr;
-                    redMonster.add(spr);
+                    // Mob đỏ dùng 999 kill — refresh thanh giữa
+                    try {
+                        if (typeof refreshRedKillBar === 'function') refreshRedKillBar();
+                    } catch (e2) {}
+                }
+                function hideRedMobHpBar() {
+                    const bar = document.getElementById('red-mob-hp-bar');
+                    if (bar) bar.style.display = 'none';
                 }
 
                 (function initRedMobHP() {
@@ -21027,17 +21245,29 @@ if (kind === 'common') {
                         }
 
                         if (k === 'e') {
-                            if (typeof tryEnterHubPortalFromKey === 'function')
+                            if (typeof nearReactor !== 'undefined' && nearReactor && typeof openReactorFuse === 'function') {
+                                openReactorFuse();
+                            } else if (typeof tryEnterHubPortalFromKey === 'function') {
                                 tryEnterHubPortalFromKey();
+                            }
+                        }
+                        if (k === 'h') {
+                            if (typeof openQolPanel === 'function') openQolPanel('quest');
+                        }
+                        if (k === 'b') {
+                            if (typeof openPetBag === 'function') openPetBag();
                         }
                         if (k === 'c' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
                             if (typeof window.tryDodge === 'function') window.tryDodge();
                         }
                         if (e.key === 'Escape' || k === 'escape') {
+                            try { if (typeof noteEscForVersion === 'function' && noteEscForVersion()) { /* v1.50 */ } } catch (eV) {}
                             if (typeof petShopOpen !== 'undefined' && petShopOpen && typeof closePetShop === 'function')
                                 closePetShop();
                             if (typeof closeQolPanel === 'function') closeQolPanel();
                             if (typeof closeFuseUI === 'function') closeFuseUI();
+                            if (typeof closeReactorFuse === 'function') closeReactorFuse();
+                            if (typeof closePetBag === 'function') closePetBag();
                         }
 
                         if (k === 'p') {
@@ -21635,52 +21865,41 @@ if (kind === 'common') {
                 ========================= */
 
                 function applyWorldClickPowerGain() {
-                    // Electron Sword: cộng thêm 10 điểm % vào rate power/click của thế giới
-                    // Ví dụ world +3% → (3+10)%/click khi có Electron Sword
+                    // TỐI ƯU: cộng power bằng phép tính nhanh (hit * base * mul), không gọi hàm nặng
                     const eBonus = (typeof hasElectronSword !== 'undefined' && hasElectronSword) ? 0.10 : 0;
+                    const petM = (typeof _cachedPetPowMul === 'number' && _cachedPetPowMul > 0) ? _cachedPetPowMul : 1;
 
                     if (gameStage === 1) {
-                        const base = 10;
-                        power += Math.floor((typeof applyPetPowerGain === "function" ? applyPetPowerGain(base * (1 + eBonus)) : base * (1 + eBonus)));
+                        // +10 (hoặc +11 có electron) * pet mỗi hit
+                        const cB = (typeof getClickDmgBonus === 'function') ? getClickDmgBonus() : 1;
+                        power += (10 * (1 + eBonus) * petM * cB) | 0;
                         return eBonus ? '+11 POWER' : '+10 POWER';
                     }
-
-                    if (gameStage === 3) {
-                        const base = 10000;
-                        power += Math.floor((typeof applyPetPowerGain === "function" ? applyPetPowerGain(base * (1 + eBonus)) : base * (1 + eBonus)));
+                    if (gameStage === 2 || gameStage === 3) {
+                        power += (10000 * (1 + eBonus) * petM) | 0;
                         return eBonus ? '+11K POWER' : '+10K POWER';
                     }
-
-                    if (gameStage === 2) {
-                        const base = 10000;
-                        power += Math.floor((typeof applyPetPowerGain === "function" ? applyPetPowerGain(base * (1 + eBonus)) : base * (1 + eBonus)));
-                        return eBonus ? '+11K POWER' : '+10K POWER';
-                    }
-
                     if (gameStage === 5 || gameStage === 6) {
-                        const rate = 0.012 + eBonus;
-                        power = Math.max(1, power * (1 + rate));
-                        return '+' + (rate * 100).toFixed(1) + '% POWER';
+                        power *= (1 + 0.012 + eBonus);
+                        if (petM !== 1) power *= (1 + (petM - 1) * 0.05); // pet nhẹ trên % stage
+                        if (power < 1) power = 1;
+                        return '+' + ((0.012 + eBonus) * 100).toFixed(1) + '% POWER';
                     }
-
                     if (gameStage === 7 || gameStage === 8) {
-                        const rate = 0.013 + eBonus;
-                        power = Math.max(1, power * (1 + rate));
-                        return '+' + (rate * 100).toFixed(1) + '% POWER';
+                        power *= (1 + 0.013 + eBonus);
+                        if (power < 1) power = 1;
+                        return '+' + ((0.013 + eBonus) * 100).toFixed(1) + '% POWER';
                     }
-
                     if (gameStage === 10) {
-                        const rate = 0.023 + eBonus;
-                        power = Math.max(1, power * (1 + rate));
-                        return '+' + (rate * 100).toFixed(1) + '% POWER';
+                        power *= (1 + 0.023 + eBonus);
+                        if (power < 1) power = 1;
+                        return '+' + ((0.023 + eBonus) * 100).toFixed(1) + '% POWER';
                     }
-
-                    // Stage 12 Electron: chỉ khi có Electron Sword mới +10% power/click
                     if (gameStage === 12 && eBonus > 0) {
-                        power = Math.max(1, power * (1 + eBonus));
+                        power *= (1 + eBonus);
+                        if (power < 1) power = 1;
                         return '+10% POWER';
                     }
-
                     return '';
                 }
 
@@ -24165,46 +24384,30 @@ if (kind === 'common') {
                 let dmgPopupTimer = null;
 
                 function showDmgPopup(dmg) {
-
-                    const el =
-                        document.getElementById(
-                            'dmg-popup'
-                        );
-
+                    const el = document.getElementById('dmg-popup');
                     if (!el) return;
-
-                    el.innerText =
-                        typeof dmg === 'string'
-                        ? '-' + dmg
-                        : '-' + formatNum(dmg);
-
-                    el.style.display =
-                        'block';
-
-                    el.style.animation =
-                        'none';
-
+                    const text = typeof dmg === 'string' ? String(dmg) : ('-' + (typeof formatNum === 'function' ? formatNum(dmg) : dmg));
+                    el.innerText = text.charAt(0) === '-' || text.charAt(0) === '+' ? text : ('-' + text);
+                    el.style.display = 'block';
+                    el.style.left = (48 + Math.random() * 12) + '%';
+                    el.style.top = (38 + Math.random() * 10) + '%';
+                    el.style.animation = 'none';
                     void el.offsetWidth;
-
-                    el.style.animation =
-                        'dmgPopupFloat 0.7s ease-out forwards';
-
-                    clearTimeout(
-                        dmgPopupTimer
-                    );
-
-                    dmgPopupTimer =
-                        setTimeout(
-                            () => {
-
-                                el.style.display =
-                                    'none';
-
-                            },
-                            700
-                        );
-
+                    el.style.animation = 'dmgPopupFloat 0.75s ease-out forwards';
+                    clearTimeout(dmgPopupTimer);
+                    dmgPopupTimer = setTimeout(function() { el.style.display = 'none'; }, 750);
+                    // Hit-stop nhẹ
+                    try { if (typeof triggerHitStop === 'function') triggerHitStop(40); } catch (e) {}
                 }
+
+                let _hitStopUntil = 0;
+                function triggerHitStop(ms) {
+                    _hitStopUntil = performance.now() + (ms || 40);
+                }
+                window.triggerHitStop = triggerHitStop;
+                window.isHitStopActive = function() {
+                    return performance.now() < _hitStopUntil;
+                };
 
                 /* =========================
                    ACCOUNT SAVE / LOGIN
@@ -27604,7 +27807,8 @@ if (kind === 'common') {
                         });
                     } catch (e) {}
                     list.forEach(function(root) {
-                        try { applyGlossyLook(root, { metalness: 0.85, roughness: 0.07, envMapIntensity: 2.4 }); } catch (e) {}
+                        // Art direction: blocky matte + mild shine (không mirror)
+                        try { applyGlossyLook(root, { metalness: 0.35, roughness: 0.45, envMapIntensity: 0.9 }); } catch (e) {}
                     });
                     // Stronger key light for specular highlights
                     try {
@@ -27648,8 +27852,825 @@ if (kind === 'common') {
                 })();
 
                 try { setTimeout(polishAllMobBossReflections, 200); } catch (e) {}
+                // Melee combo on click
+                document.addEventListener('mousedown', function() {
+                    try { if (typeof tryMeleeComboAttack === 'function') tryMeleeComboAttack(); } catch (e) {}
+                });
+                /* meleeCombo listener */
+
+
+
+                /* ===== STABILITY: safe save debounce ===== */
+                let _saveTimer = null;
+                let _lastSaveOk = true;
+                function safeSaveProgress(reason) {
+                    try {
+                        if (_saveTimer) clearTimeout(_saveTimer);
+                        _saveTimer = setTimeout(function() {
+                            try {
+                                if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
+                                if (typeof saveQol === 'function') saveQol();
+                                if (typeof saveMegaQol === 'function') saveMegaQol();
+                                _lastSaveOk = true;
+                            } catch (e) {
+                                _lastSaveOk = false;
+                                console.warn('save fail', reason, e);
+                            }
+                        }, 400);
+                    } catch (e) {}
+                }
+                window.safeSaveProgress = safeSaveProgress;
+                // Autosave mỗi 20s khi đang chơi
+                try {
+                    setInterval(function() {
+                        try {
+                            if (typeof gameStage === 'number' && document.visibilityState !== 'hidden')
+                                safeSaveProgress('interval');
+                        } catch (e) {}
+                    }, 20000);
+                } catch (e) {}
+
+
+                /* ===== REACTOR FUSE: 30 common → Ultra 10% | 3 Ultra → God *999999 @ 0.9% ===== */
+                let ultraAllMult = 1; // *999999 when god fuse success
+                try {
+                    const _um = localStorage.getItem('mystic_ultra_all_mult');
+                    if (_um) ultraAllMult = Number(_um) || 1;
+                } catch (e) {}
+
+                function openReactorFuse() {
+                    closeQolPanel && closeQolPanel();
+                    const o = document.getElementById('reactor-overlay');
+                    if (o) { o.classList.add('show'); renderReactorUI(); }
+                }
+                window.openReactorFuse = openReactorFuse;
+
+                function closeReactorFuse() {
+                    const o = document.getElementById('reactor-overlay');
+                    if (o) o.classList.remove('show');
+                }
+                window.closeReactorFuse = closeReactorFuse;
+
+                function renderReactorUI() {
+                    const body = document.getElementById('reactor-body');
+                    if (!body) return;
+                    const commons = (petInventory || []).filter(function(p) { return p && p.tier === 'common'; });
+                    const ultras = (petInventory || []).filter(function(p) { return p && p.tier === 'ultra'; });
+                    // group common by world
+                    const byW = {};
+                    commons.forEach(function(p) {
+                        const w = p.world || 1;
+                        byW[w] = (byW[w] || 0) + 1;
+                    });
+                    let worldsHtml = '';
+                    Object.keys(byW).sort().forEach(function(w) {
+                        const n = byW[w];
+                        const ready = n >= 30;
+                        worldsHtml += '<div class="rx-row' + (ready ? ' ready' : '') + '">' +
+                            '<span>World ' + w + ' common: <b>' + n + '/30</b></span>' +
+                            '<button type="button" ' + (ready ? '' : 'disabled ') +
+                            'onclick="window.reactorFuse30&&window.reactorFuse30(' + w + ')">⚡ Fuse 30→Ultra (10%)</button></div>';
+                    });
+                    if (!worldsHtml) worldsHtml = '<div class="rx-row">Chưa có pet common trong kho</div>';
+                    body.innerHTML =
+                        '<div class="rx-machine">⚗️</div>' +
+                        '<div class="rx-title">Cellular Reactor</div>' +
+                        '<div class="rx-sub">30 pet thường cùng world → 10% ra <b>Ultra</b> world đó</div>' +
+                        worldsHtml +
+                        '<div class="rx-sub" style="margin-top:14px">3 Ultra (bất kỳ) → <b>0.9%</b> kích hoạt ×999999 toàn bộ Ultra</div>' +
+                        '<div class="rx-row' + (ultras.length >= 3 ? ' ready' : '') + '">' +
+                        '<span>Ultra trong kho: <b>' + ultras.length + '/3</b></span>' +
+                        '<button type="button" ' + (ultras.length >= 3 ? '' : 'disabled ') +
+                        'onclick="window.reactorFuseUltra&&window.reactorFuseUltra()">👑 3 Ultra → God (0.9%)</button></div>' +
+                        '<div class="rx-mult">Ultra mult hiện tại: ×' + (ultraAllMult >= 999999 ? '999999' : ultraAllMult) + '</div>';
+                }
+
+                window.reactorFuse30 = function(world) {
+                    world = parseInt(world, 10) || 1;
+                    const idxs = [];
+                    (petInventory || []).forEach(function(p, i) {
+                        if (p && p.tier === 'common' && (p.world || 1) === world) idxs.push(i);
+                    });
+                    if (idxs.length < 30) {
+                        showToast('Cần 30 common World ' + world);
+                        return;
+                    }
+                    // consume 30
+                    idxs.slice(-30).sort(function(a,b){return b-a;}).forEach(function(i) {
+                        petInventory.splice(i, 1);
+                    });
+                    const win = Math.random() < 0.10;
+                    if (win) {
+                        const defs = (typeof getPetDefs === 'function') ? getPetDefs(world) : null;
+                        const ultra = {
+                            tier: 'ultra',
+                            world: world,
+                            name: (defs && defs.ultra && defs.ultra.name) || ('Reactor Ultra W' + world),
+                            color: (defs && defs.ultra && defs.ultra.color) || 0xaa66ff,
+                            shape: 'draft'
+                        };
+                        petInventory.push(ultra);
+                        equippedPet = ultra;
+                        if (typeof spawnPetFollower === 'function') spawnPetFollower();
+                        if (typeof collectPet === 'function') collectPet('ultra', world, ultra.name);
+                        if (typeof refreshPetHud === 'function') refreshPetHud();
+                        showToast('💎 REACTOR SUCCESS! Ultra W' + world);
+                        if (typeof showSkillBanner === 'function')
+                            showSkillBanner('💎 ULTRA W' + world, 'rgba(180,80,255,0.95)', true);
+                    } else {
+                        showToast('Reactor… thất bại (10%). Mất 30 common.');
+                    }
+                    if (typeof saveMegaQol === 'function') saveMegaQol();
+                    renderReactorUI();
+                };
+
+                window.reactorFuseUltra = function() {
+                    const idxs = [];
+                    (petInventory || []).forEach(function(p, i) {
+                        if (p && p.tier === 'ultra') idxs.push(i);
+                    });
+                    if (idxs.length < 3) {
+                        showToast('Cần 3 Ultra pet');
+                        return;
+                    }
+                    idxs.slice(-3).sort(function(a,b){return b-a;}).forEach(function(i) {
+                        petInventory.splice(i, 1);
+                    });
+                    const win = Math.random() < 0.009; // 0.9%
+                    if (win) {
+                        ultraAllMult = 999999;
+                        try { localStorage.setItem('mystic_ultra_all_mult', '999999'); } catch (e) {}
+                        showToast('👑 GOD FUSE! Mọi Ultra ×999999');
+                        if (typeof showSkillBanner === 'function')
+                            showSkillBanner('👑 ×999999 ALL ULTRA', 'rgba(255,215,0,0.95)', true);
+                    } else {
+                        showToast('God fuse thất bại (0.9%). Mất 3 Ultra.');
+                    }
+                    if (typeof saveMegaQol === 'function') saveMegaQol();
+                    renderReactorUI();
+                };
+
+                // Apply ultraAllMult on pet gains
+                if (typeof applyPetToGains === 'function') {
+                    const _apg = applyPetToGains;
+                    applyPetToGains = function(goldBase, powerBase) {
+                        let r = _apg(goldBase, powerBase);
+                        if (equippedPet && equippedPet.tier === 'ultra' && ultraAllMult > 1) {
+                            r = { gold: r.gold * ultraAllMult, power: r.power * ultraAllMult };
+                        }
+                        return r;
+                    };
+                }
+
+
+                /* ===== 3D Reactor machine in Hub (not menu-only) ===== */
+                let reactorMachine = null;
+                let nearReactor = false;
+
+                function createReactorMachineMesh() {
+                    const g = new THREE.Group();
+                    const metal = new THREE.MeshStandardMaterial({ color: 0x2a3540, metalness: 0.75, roughness: 0.35, flatShading: true });
+                    const metal2 = new THREE.MeshStandardMaterial({ color: 0x1a222c, metalness: 0.7, roughness: 0.4, flatShading: true });
+                    const cyan = new THREE.MeshStandardMaterial({ color: 0x44ddff, emissive: 0x2288aa, emissiveIntensity: 0.65, metalness: 0.4, roughness: 0.3 });
+                    const green = new THREE.MeshStandardMaterial({ color: 0x33cc66, emissive: 0x118833, emissiveIntensity: 0.5, transparent: true, opacity: 0.85 });
+                    const magenta = new THREE.MeshStandardMaterial({ color: 0xcc44aa, emissive: 0x881166, emissiveIntensity: 0.55, transparent: true, opacity: 0.85 });
+                    const glass = new THREE.MeshStandardMaterial({ color: 0x88eeff, emissive: 0x44aacc, emissiveIntensity: 0.7, transparent: true, opacity: 0.55, metalness: 0.2, roughness: 0.2 });
+
+                    function box(w,h,d,mat,x,y,z) {
+                        const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+                        m.position.set(x,y,z);
+                        m.castShadow = true;
+                        g.add(m);
+                        return m;
+                    }
+                    // base
+                    box(2.4, 0.35, 2.0, metal2, 0, 0.18, 0);
+                    box(2.0, 0.5, 1.6, metal, 0, 0.55, 0);
+                    // center tank
+                    const tank = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 1.4, 16), glass);
+                    tank.position.set(0, 1.5, 0);
+                    g.add(tank);
+                    const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.28, 0), cyan);
+                    core.position.set(0, 1.5, 0);
+                    core.name = 'reactorCore';
+                    g.add(core);
+                    // side tubes
+                    const tubeL = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 1.1, 12), green);
+                    tubeL.position.set(-0.85, 1.35, 0.1);
+                    g.add(tubeL);
+                    const tubeR = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.9, 12), magenta);
+                    tubeR.position.set(0.85, 1.45, 0.15);
+                    g.add(tubeR);
+                    // pipes
+                    box(0.12, 0.12, 0.9, cyan, -0.4, 2.15, -0.1);
+                    box(0.12, 0.12, 0.7, cyan, 0.4, 2.2, -0.05);
+                    // screen
+                    box(0.7, 0.55, 0.08, cyan, 0.15, 0.95, 0.85);
+                    // lights
+                    for (let i = 0; i < 4; i++) {
+                        const a = i / 4 * Math.PI * 2;
+                        const led = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), cyan);
+                        led.position.set(Math.cos(a) * 0.7, 0.9, Math.sin(a) * 0.55);
+                        g.add(led);
+                    }
+                    // label sprite
+                    try {
+                        const c = document.createElement('canvas');
+                        c.width = 256; c.height = 64;
+                        const ctx = c.getContext('2d');
+                        ctx.fillStyle = 'rgba(10,20,30,0.85)';
+                        ctx.fillRect(0,0,256,64);
+                        ctx.strokeStyle = '#44ddff';
+                        ctx.lineWidth = 4;
+                        ctx.strokeRect(4,4,248,56);
+                        ctx.fillStyle = '#7ef';
+                        ctx.font = 'bold 28px Segoe UI,sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('⚗️ REACTOR  [E]', 128, 40);
+                        const tex = new THREE.CanvasTexture(c);
+                        const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+                        spr.scale.set(3.2, 0.8, 1);
+                        spr.position.set(0, 2.6, 0);
+                        g.add(spr);
+                    } catch (e) {}
+                    // Pastel ring base (khớp cây hồng hub)
+                    const ring = new THREE.Mesh(
+                        new THREE.RingGeometry(1.15, 1.45, 32),
+                        new THREE.MeshBasicMaterial({ color: 0xff99cc, transparent: true, opacity: 0.45, side: THREE.DoubleSide })
+                    );
+                    ring.rotation.x = -Math.PI / 2;
+                    ring.position.y = 0.06;
+                    g.add(ring);
+                    const ring2 = new THREE.Mesh(
+                        new THREE.RingGeometry(1.5, 1.65, 32),
+                        new THREE.MeshBasicMaterial({ color: 0x99eeff, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
+                    );
+                    ring2.rotation.x = -Math.PI / 2;
+                    ring2.position.y = 0.07;
+                    g.add(ring2);
+
+                    g.userData.isReactor = true;
+                    g.userData.core = core;
+                    return g;
+                }
+
+                function ensureReactorMachine() {
+                    if (typeof gameStage !== 'number' || gameStage !== 0) {
+                        if (reactorMachine) reactorMachine.visible = false;
+                        return;
+                    }
+                    if (!hubWorldGroup) return;
+                    if (!reactorMachine || !reactorMachine.parent) {
+                        reactorMachine = createReactorMachineMesh();
+                        // Đặt trước cổng Mob đỏ & Ma Vương (portal index 0) — khu pastel như ảnh
+                        const n = (typeof HUB_WORLDS !== 'undefined' && HUB_WORLDS.length) ? HUB_WORLDS.length : 8;
+                        const ang = (0 / n) * Math.PI * 2 - Math.PI / 2;
+                        const r = 11;
+                        const side = 3.5; // gần plaza — dễ thấy máy fuse
+                        reactorMachine.position.set(Math.cos(ang) * r + Math.cos(ang + Math.PI/2) * side, 0.35, Math.sin(ang) * r + Math.sin(ang + Math.PI/2) * side);
+                        reactorMachine.rotation.y = ang + Math.PI; // mặt hướng vào plaza
+                        reactorMachine.scale.setScalar(1.25);
+                        hubWorldGroup.add(reactorMachine);
+                    } else {
+                        // Re-sync position if hub rebuilt
+                        const n = (typeof HUB_WORLDS !== 'undefined' && HUB_WORLDS.length) ? HUB_WORLDS.length : 8;
+                        const ang = (0 / n) * Math.PI * 2 - Math.PI / 2;
+                        const r = 11;
+                        const side = 3.5;
+                        reactorMachine.position.set(Math.cos(ang) * r + Math.cos(ang + Math.PI/2) * side, 0.35, Math.sin(ang) * r + Math.sin(ang + Math.PI/2) * side);
+                        reactorMachine.rotation.y = ang + Math.PI;
+                    }
+                    reactorMachine.visible = true;
+                }
+
+                function updateReactorProximity() {
+                    nearReactor = false;
+                    if (!playerGroup || !reactorMachine || !reactorMachine.visible) return;
+                    const dx = playerGroup.position.x - reactorMachine.position.x;
+                    const dz = playerGroup.position.z - reactorMachine.position.z;
+                    nearReactor = Math.hypot(dx, dz) < 5.0;
+                    if (nearReactor) {
+                        const h = document.getElementById('hub-enter-hint');
+                        // soft hint via toast throttle
+                        if (!window._reactorHintT || performance.now() > window._reactorHintT) {
+                            window._reactorHintT = performance.now() + 4000;
+                            if (typeof showToast === 'function')
+                                showToast(currentLang === 'vi' ? '⚗️ Lại gần Reactor — bấm [E] để gộp pet' : '⚗️ Near Reactor — press [E]');
+                        }
+                    }
+                    // animate core
+                    if (reactorMachine.userData.core) {
+                        reactorMachine.userData.core.rotation.y += 0.02;
+                        reactorMachine.userData.core.rotation.x += 0.01;
+                    }
+                }
+
+                // Hook ensure after pet vendors / hub
+
+
+                /* ===== Melee combo (Temple / Demon / Final / Ultimate / Universe) ===== */
+                let meleeCombo = 0;
+                let meleeComboUntil = 0;
+                let meleeSwingCd = 0;
+                const MELEE_STAGES = { 1:1, 3:1, 5:1, 6:1, 7:1 };
+
+                function playSfxTone(freq, dur, type, vol, slide) {
+                    try {
+                        if (typeof audioCtx === 'undefined' || !audioCtx) return;
+                        const t0 = audioCtx.currentTime;
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = type || 'square';
+                        o.frequency.setValueAtTime(freq, t0);
+                        if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(40, slide), t0 + dur);
+                        g.gain.setValueAtTime(vol || 0.08, t0);
+                        g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+                        o.connect(g); g.connect(audioCtx.destination);
+                        o.start(t0); o.stop(t0 + dur + 0.02);
+                    } catch (e) {}
+                }
+                function playBossRoar(stage) {
+                    const table = {
+                        1: [120, 0.35, 'sawtooth'],
+                        3: [90, 0.45, 'sawtooth'],
+                        5: [150, 0.4, 'square'],
+                        6: [200, 0.5, 'triangle'],
+                        7: [80, 0.55, 'sawtooth']
+                    };
+                    const p = table[stage] || [100, 0.3, 'sawtooth'];
+                    playSfxTone(p[0], p[1], p[2], 0.12, p[0] * 0.5);
+                    setTimeout(function(){ playSfxTone(p[0]*1.3, p[1]*0.6, p[2], 0.08, p[0]); }, 80);
+                }
+                function playFootstep() {
+                    playSfxTone(80 + Math.random()*40, 0.06, 'triangle', 0.03, 50);
+                }
+                function playSlashSfx(combo) {
+                    const f = 280 + combo * 60;
+                    playSfxTone(f, 0.09, 'square', 0.07, f * 2.2);
+                    playSfxTone(f * 0.5, 0.07, 'sawtooth', 0.04, f);
+                }
+                window.playBossRoar = playBossRoar;
+                window.playFootstep = playFootstep;
+
+                
+                /* Dash-slash + 10 click/s → +5% dmg */
+                let _clickTimes = [];
+                let _clickDmgBonus = 1;
+                function noteAttackClick() {
+                    const now = performance.now();
+                    _clickTimes.push(now);
+                    while (_clickTimes.length && now - _clickTimes[0] > 1000) _clickTimes.shift();
+                    _clickDmgBonus = (_clickTimes.length >= 10) ? 1.05 : 1;
+                }
+                function doAttackLunge() {
+                    if (!playerGroup || gameStage === 0) return;
+                    // hướng nhìn
+                    const ang = playerGroup.rotation.y;
+                    const dist = 1.15;
+                    playerGroup.position.x -= Math.sin(ang) * dist * 0.35;
+                    playerGroup.position.z -= Math.cos(ang) * dist * 0.35;
+                }
+                function getClickDmgBonus() { return _clickDmgBonus; }
+
+                function tryMeleeComboAttack() {
+                    if (!MELEE_STAGES[gameStage]) return false;
+                    const now = performance.now();
+                    if (now < meleeSwingCd) return false;
+                    meleeSwingCd = now + 220;
+                    try { noteAttackClick(); doAttackLunge(); } catch (e) {}
+                    if (now > meleeComboUntil) meleeCombo = 0;
+                    meleeCombo = Math.min(5, meleeCombo + 1);
+                    meleeComboUntil = now + 900;
+                    playSlashSfx(meleeCombo);
+                    // Visual slash already exists via impact sparks — boost toast on combo
+                    if (meleeCombo >= 3 && typeof showToast === 'function') {
+                        showToast('⚔️ COMBO x' + meleeCombo + (meleeCombo >= 5 ? ' 💥' : ''));
+                    }
+                    // Skill finisher at combo 5
+                    if (meleeCombo >= 5) {
+                        meleeCombo = 0;
+                        playSfxTone(120, 0.2, 'sawtooth', 0.1, 400);
+                        if (typeof showSkillBanner === 'function')
+                            showSkillBanner('⚔️ FINISHER SLASH', 'rgba(255,80,80,0.9)', true);
+                        if (typeof triggerHitStop === 'function') triggerHitStop(70);
+                    }
+                    return true;
+                }
+
+                // Footsteps while moving
+                let _lastFoot = 0;
+                function updateFootsteps() {
+                    if (!playerGroup || gameStage === 0) return;
+                    if (typeof keys === 'undefined') return;
+                    const moving = keys['w']||keys['a']||keys['s']||keys['d']||keys['arrowup']||keys['arrowdown']||keys['arrowleft']||keys['arrowright'];
+                    if (!moving) return;
+                    const now = performance.now();
+                    if (now - _lastFoot > 320) {
+                        _lastFoot = now;
+                        playFootstep();
+                    }
+                }
+
+
+                /* Infinite-ish chunks: keep 3x3 around player, recycle far chunks */
+                let worldChunks = {};
+                const CHUNK = 24;
+                function chunkKey(cx, cz) { return cx + ':' + cz; }
+                function buildChunkDecor(cx, cz, stage) {
+                    const g = new THREE.Group();
+                    g.userData.chunk = true;
+                    const ox = cx * CHUNK, oz = cz * CHUNK;
+                    // skip center chunk heavy (0,0 already has biome)
+                    if (cx === 0 && cz === 0) return g;
+                    const grassC = (stage === 1 || stage === 3) ? 0x4aaa38 : 0x5a8a40;
+                    const dirtC = (stage === 1 || stage === 3) ? 0x6b4a28 : 0x5a4a30;
+/* chunk hills removed */
+
+                    // grass cones
+                    for (let i = 0; i < 20; i++) {
+                        const cone = new THREE.Mesh(
+                            new THREE.ConeGeometry(0.12, 0.35, 5),
+                            new THREE.MeshStandardMaterial({ color: grassC, flatShading: true })
+                        );
+                        cone.position.set(ox + (Math.random()-0.5)*CHUNK, 0.2, oz + (Math.random()-0.5)*CHUNK);
+                        g.add(cone);
+                    }
+                    return g;
+                }
+                function updateWorldChunks() {
+                    if (!playerGroup || typeof gameStage !== 'number' || gameStage <= 0) return;
+                    if (gameStage >= 11) return; // special worlds skip
+                    const px = playerGroup.position.x, pz = playerGroup.position.z;
+                    const ccx = Math.floor(px / CHUNK);
+                    const ccz = Math.floor(pz / CHUNK);
+                    const need = {};
+                    for (let dx = -1; dx <= 1; dx++) {
+                        for (let dz = -1; dz <= 1; dz++) {
+                            const k = chunkKey(ccx+dx, ccz+dz);
+                            need[k] = [ccx+dx, ccz+dz];
+                        }
+                    }
+                    // remove far
+                    Object.keys(worldChunks).forEach(function(k) {
+                        if (!need[k]) {
+                            const ch = worldChunks[k];
+                            if (ch && ch.parent) ch.parent.remove(ch);
+                            delete worldChunks[k];
+                        }
+                    });
+                    // add missing
+                    const parent = (typeof biomeDecorGroup !== 'undefined' && biomeDecorGroup) ? biomeDecorGroup : scene;
+                    Object.keys(need).forEach(function(k) {
+                        if (worldChunks[k]) return;
+                        const c = need[k];
+                        const g = buildChunkDecor(c[0], c[1], gameStage);
+                        parent.add(g);
+                        worldChunks[k] = g;
+                    });
+                }
+
+
+                /* ===== Graphic polish: silhouette accents on bosses ===== */
+                function addBossSilhouette(root, kind) {
+                    if (!root || root.userData._silDone) return;
+                    root.userData._silDone = true;
+                    const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffee88 });
+                    const hornMat = new THREE.MeshStandardMaterial({
+                        color: kind === 'gold' ? 0xffd700 : (kind === 'purple' ? 0xaa44ff : 0xff2244),
+                        emissive: kind === 'gold' ? 0xaa8800 : 0x661122,
+                        emissiveIntensity: 0.35, flatShading: true, roughness: 0.4, metalness: 0.3
+                    });
+                    function box(w,h,d,mat,x,y,z) {
+                        const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), mat);
+                        m.position.set(x,y,z);
+                        root.add(m);
+                        return m;
+                    }
+                    // Eyes
+                    box(0.22, 0.18, 0.1, eyeMat, -0.35, 2.1, 0.55);
+                    box(0.22, 0.18, 0.1, eyeMat, 0.35, 2.1, 0.55);
+                    // Horns / crown tip
+                    if (kind === 'demon' || kind === 'red') {
+                        box(0.2, 0.7, 0.2, hornMat, -0.55, 2.7, 0);
+                        box(0.2, 0.7, 0.2, hornMat, 0.55, 2.7, 0);
+                    } else if (kind === 'gold') {
+                        box(0.5, 0.25, 0.3, hornMat, 0, 2.85, 0);
+                        box(0.18, 0.45, 0.18, hornMat, 0, 3.15, 0);
+                    } else if (kind === 'purple') {
+                        box(0.25, 0.6, 0.25, hornMat, -0.4, 2.75, -0.1);
+                        box(0.25, 0.6, 0.25, hornMat, 0.4, 2.75, -0.1);
+                    }
+                }
+                function polishBossSilhouettes() {
+                    try {
+                        if (typeof redMonster !== 'undefined' && redMonster) addBossSilhouette(redMonster, 'red');
+                        if (typeof bossMonster !== 'undefined' && bossMonster) addBossSilhouette(bossMonster, 'demon');
+                        if (typeof finalBossMonster !== 'undefined' && finalBossMonster) addBossSilhouette(finalBossMonster, 'gold');
+                        if (typeof supremeBossMonster !== 'undefined' && supremeBossMonster) addBossSilhouette(supremeBossMonster, 'purple');
+                    } catch (e) {}
+                }
+                try { setTimeout(polishBossSilhouettes, 400); } catch (e) {}
+
+
+                /* Glitch boss: bay lên + hút player */
+                
+                function updateTallBossFlyCombat() {
+                    if (!playerGroup || typeof gameStage !== 'number') return;
+                    // Ultimate / Universe / Atomic — bay lên đánh boss cao
+                    const tall = (gameStage === 6 || gameStage === 7 || gameStage === 8 || gameStage === 10);
+                    if (!tall) return;
+                    let boss = null;
+                    if (gameStage === 6 && typeof supremeBossMonster !== 'undefined') boss = supremeBossMonster;
+                    else if (gameStage === 7 && typeof universeBossMonster !== 'undefined') boss = universeBossMonster;
+                    else if (gameStage === 8 && typeof cosmicBossMonster !== 'undefined') boss = cosmicBossMonster;
+                    else if (gameStage === 10 && typeof atomicBossMonster !== 'undefined') boss = atomicBossMonster;
+                    if (!boss || !boss.visible) return;
+                    const by = boss.position.y + 2.5;
+                    // SPACE giữ để bay lên gần boss
+                    if (typeof keys !== 'undefined' && (keys[' '] || keys['space'])) {
+                        playerGroup.position.y += 0.12;
+                        if (typeof jumpVelocity !== 'undefined') jumpVelocity = 0.08;
+                    }
+                    // Tự nâng nhẹ khi đánh (gần boss)
+                    const dx = boss.position.x - playerGroup.position.x;
+                    const dz = boss.position.z - playerGroup.position.z;
+                    if (Math.hypot(dx, dz) < 8) {
+                        const targetY = Math.min(by, Math.max(playerGroup.position.y, by * 0.35));
+                        if (playerGroup.position.y < targetY - 0.5) {
+                            playerGroup.position.y += 0.04;
+                        }
+                    }
+                    if (playerGroup.position.y > 20) playerGroup.position.y = 20;
+                }
+
+                
+                let _glitchBulletPool = [];
+                let _glitchNextBullet = 0;
+                function getSwordBulletScale() {
+                    // kiếm càng tốt đạn càng to
+                    if (typeof hasElectronSword !== 'undefined' && hasElectronSword) return 2.2;
+                    if (typeof hasGlitchSword !== 'undefined' && hasGlitchSword) return 2.0;
+                    if (typeof hasHackSword !== 'undefined' && hasHackSword) return 1.8;
+                    if (typeof hasGoDSword !== 'undefined' && hasGoDSword) return 1.7;
+                    if (typeof equippedItemType === 'string') {
+                        if (equippedItemType === 'legendary') return 1.55;
+                        if (equippedItemType === 'epic') return 1.4;
+                        if (equippedItemType === 'rare') return 1.25;
+                        if (equippedItemType === 'common') return 1.1;
+                    }
+                    return 1.0;
+                }
+                function spawnGlitchInfiniteBullet() {
+                    if (!errorBossMonster || !playerGroup) return;
+                    if (typeof gameStage !== 'number' || gameStage !== 11) return;
+                    if (!errorGlitchPhase) return;
+                    const sc = getSwordBulletScale();
+                    const g = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.25 * sc, 0.25 * sc, 0.55 * sc),
+                        new THREE.MeshStandardMaterial({
+                            color: Math.random() > 0.5 ? 0xff2244 : 0x00ffff,
+                            emissive: 0xff0022, emissiveIntensity: 0.6, flatShading: true
+                        })
+                    );
+                    g.position.copy(errorBossMonster.position);
+                    g.position.y += 1.5 + Math.random() * 2;
+                    const dx = playerGroup.position.x - g.position.x;
+                    const dy = playerGroup.position.y - g.position.y;
+                    const dz = playerGroup.position.z - g.position.z;
+                    const len = Math.hypot(dx, dy, dz) || 1;
+                    g.userData.vx = (dx / len) * (0.18 + Math.random() * 0.08);
+                    g.userData.vy = (dy / len) * (0.18 + Math.random() * 0.08);
+                    g.userData.vz = (dz / len) * (0.18 + Math.random() * 0.08);
+                    g.userData.life = 180;
+                    scene.add(g);
+                    _glitchBulletPool.push(g);
+                }
+                function updateGlitchInfiniteBullets() {
+                    if (typeof gameStage !== 'number' || gameStage !== 11 || !errorGlitchPhase) {
+                        // cleanup if left
+                        if (_glitchBulletPool.length) {
+                            _glitchBulletPool.forEach(function(b) { if (b.parent) b.parent.remove(b); });
+                            _glitchBulletPool = [];
+                        }
+                        return;
+                    }
+                    const now = performance.now();
+                    if (now > _glitchNextBullet) {
+                        _glitchNextBullet = now + 90; // vô cực - bắn dày
+                        spawnGlitchInfiniteBullet();
+                        if (Math.random() < 0.5) spawnGlitchInfiniteBullet();
+                    }
+                    const scHit = getSwordBulletScale();
+                    for (let i = _glitchBulletPool.length - 1; i >= 0; i--) {
+                        const b = _glitchBulletPool[i];
+                        b.position.x += b.userData.vx;
+                        b.position.y += b.userData.vy;
+                        b.position.z += b.userData.vz;
+                        b.userData.life--;
+                        if (playerGroup && Math.hypot(
+                            b.position.x - playerGroup.position.x,
+                            b.position.y - (playerGroup.position.y + 1),
+                            b.position.z - playerGroup.position.z
+                        ) < 0.7 * scHit) {
+                            // hit player
+                            try {
+                                if (typeof playerHP === 'number') {
+                                    playerHP = Math.max(0, playerHP - 3 * scHit);
+                                    if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+                                }
+                            } catch (e) {}
+                            b.userData.life = 0;
+                        }
+                        if (b.userData.life <= 0) {
+                            if (b.parent) b.parent.remove(b);
+                            _glitchBulletPool.splice(i, 1);
+                        }
+                    }
+                }
+
+                function updateGlitchBossPull() {
+                    if (typeof gameStage !== 'number' || gameStage !== 11) return;
+                    if (!errorGlitchPhase || !errorBossMonster || !errorBossMonster.visible) return;
+                    if (!playerGroup) return;
+                    const now = performance.now();
+                    // Boss bay lên dần
+                    const targetY = 8 + Math.sin(now * 0.001) * 1.2;
+                    errorBossMonster.position.y += (targetY - errorBossMonster.position.y) * 0.04;
+                    // Hút player lên / về phía boss
+                    const dx = errorBossMonster.position.x - playerGroup.position.x;
+                    const dy = errorBossMonster.position.y - playerGroup.position.y;
+                    const dz = errorBossMonster.position.z - playerGroup.position.z;
+                    const d = Math.hypot(dx, dy, dz) || 1;
+                    if (d < 28) {
+                        playerGroup.position.x += (dx / d) * 0.06;
+                        playerGroup.position.z += (dz / d) * 0.06;
+                        playerGroup.position.y += Math.max(0.02, (dy / d) * 0.08);
+                        if (playerGroup.position.y > 14) playerGroup.position.y = 14;
+                        // soft lock jump while being pulled high
+                        if (playerGroup.position.y > 3) {
+                            jumpVelocity = Math.max(jumpVelocity, 0.02);
+                        }
+                    }
+                }
+
+
+                let _hubSkyOffset = 0;
+                
+                function setupHubScrollingSky() {
+                    try {
+                        const c = document.createElement('canvas');
+                        c.width = 512; c.height = 1024;
+                        const ctx = c.getContext('2d');
+                        const g = ctx.createLinearGradient(0, 0, 0, 1024);
+                        g.addColorStop(0, '#1a0a40');
+                        g.addColorStop(0.25, '#4a2080');
+                        g.addColorStop(0.5, '#88aaff');
+                        g.addColorStop(0.75, '#ffb0d8');
+                        g.addColorStop(1, '#1a0a40');
+                        ctx.fillStyle = g;
+                        ctx.fillRect(0, 0, 512, 1024);
+                        // stars
+                        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                        for (let i = 0; i < 120; i++) {
+                            const sx = Math.random() * 512, sy = Math.random() * 1024;
+                            const sz = Math.random() > 0.9 ? 3 : 1;
+                            ctx.fillRect(sx, sy, sz, sz);
+                        }
+                        // Trái Đất rất xa (điểm đặc biệt)
+                        const ex = 400, ey = 180;
+                        const eg = ctx.createRadialGradient(ex, ey, 2, ex, ey, 28);
+                        eg.addColorStop(0, 'rgba(100,180,255,0.95)');
+                        eg.addColorStop(0.35, 'rgba(40,120,80,0.75)');
+                        eg.addColorStop(0.7, 'rgba(20,60,120,0.4)');
+                        eg.addColorStop(1, 'rgba(0,0,0,0)');
+                        ctx.fillStyle = eg;
+                        ctx.beginPath();
+                        ctx.arc(ex, ey, 28, 0, Math.PI * 2);
+                        ctx.fill();
+                        // atmosphere rim
+                        ctx.strokeStyle = 'rgba(150,200,255,0.5)';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(ex, ey, 18, 0, Math.PI * 2);
+                        ctx.stroke();
+                        const tex = new THREE.CanvasTexture(c);
+                        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                        tex.repeat.set(1, 1);
+                        scene.background = tex;
+                        window._hubSkyTex = tex;
+                    } catch (e) {}
+                }
+
+                
+                function ensurePlayerNameTag() {
+                    if (!playerGroup) return;
+                    if (playerGroup.userData.nameTag) {
+                        // update text
+                        try {
+                            const nm = (typeof getDisplayName === 'function') ? getDisplayName() : (displayPlayerName || 'Player');
+                            if (playerGroup.userData.nameTagUser === nm) return;
+                        } catch (e) {}
+                    }
+                    try {
+                        if (playerGroup.userData.nameTag) {
+                            playerGroup.remove(playerGroup.userData.nameTag);
+                            playerGroup.userData.nameTag = null;
+                        }
+                        const nm = (typeof getDisplayName === 'function') ? getDisplayName() : (displayPlayerName || 'Player');
+                        const c = document.createElement('canvas');
+                        c.width = 256; c.height = 64;
+                        const ctx = c.getContext('2d');
+                        ctx.clearRect(0, 0, 256, 64);
+                        ctx.fillStyle = 'rgba(10,5,30,0.7)';
+                        ctx.fillRect(20, 12, 216, 40);
+                        ctx.strokeStyle = '#ffe566';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(20, 12, 216, 40);
+                        ctx.font = 'bold 22px Segoe UI,sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = '#fff';
+                        ctx.fillText(String(nm).slice(0, 16), 128, 40);
+                        const tex = new THREE.CanvasTexture(c);
+                        const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false }));
+                        spr.scale.set(2.2, 0.55, 1);
+                        spr.position.set(0, 2.55, 0);
+                        playerGroup.add(spr);
+                        playerGroup.userData.nameTag = spr;
+                        playerGroup.userData.nameTagUser = nm;
+                    } catch (e) {}
+                }
+
+                function updateHubSkyParallax() {
+                    if (typeof gameStage !== 'number' || gameStage !== 0) return;
+                    // Chỉ bầu trời "bay" — player/objects đứng yên
+                    _hubSkyOffset += 0.0008;
+                    try {
+                        const tex = window._hubSkyTex || (scene && scene.background);
+                        if (tex && tex.isTexture && tex.offset) {
+                            tex.offset.y = (_hubSkyOffset % 1);
+                        }
+                        // drift cloud stair soft materials not needed
+                        // move hub fog discs / sky feel via ambient pulse
+                        if (typeof ambientLight !== 'undefined' && ambientLight) {
+                            ambientLight.intensity = 0.65 + Math.sin(_hubSkyOffset * 8) * 0.05;
+                        }
+                    } catch (e) {}
+                }
+
+
+                let _escTapTimes = [];
+                function showVersion150PatchNotes() {
+                    let ov = document.getElementById('ver150-overlay');
+                    if (!ov) {
+                        ov = document.createElement('div');
+                        ov.id = 'ver150-overlay';
+                        ov.style.cssText = 'display:none;position:fixed;inset:0;z-index:12000;background:rgba(0,0,0,0.72);align-items:center;justify-content:center;';
+                        ov.innerHTML = '<div style="width:min(480px,92vw);max-height:80vh;overflow:auto;background:linear-gradient(165deg,#1a1230,#0e0a1c);border:3px solid #ffe566;border-radius:16px;padding:18px 20px;color:#f0e8ff;font-family:Segoe UI,sans-serif;">'+
+                            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">'+
+                            '<b style="color:#ffe566;font-size:18px;">✨ Version 1.50</b>'+
+                            '<button type="button" onclick="document.getElementById(\'ver150-overlay\').style.display=\'none\'" style="border:none;background:#422;color:#fff;width:32px;height:32px;border-radius:8px;font-weight:900;cursor:pointer;">×</button></div>'+
+                            '<div style="font-size:13px;line-height:1.55;opacity:0.95;">'+
+                            '<p style="margin:0 0 8px;color:#a8e6b0;"><b>Update 1.50</b></p>'+
+                            '<ul style="margin:0;padding-left:18px;">'+
+                            '<li>Hub: cầu mây màu theo từng world (đỏ / tím / cyan…)</li>'+
+                            '<li>Boss Ultimate / Universe / Atomic: bay lên đánh boss cao</li>'+
+                            '<li>Boss Glitch: đạn vô cực — kiếm càng tốt đạn càng to</li>'+
+                            '<li>Combat: lao tới chém, 10 click/s = +5% dmg</li>'+
+                            '<li>Pet ~20% chiều cao player + Reactor / NPC bán pet</li>'+
+                            '<li>Tên trên đầu, multiplayer trang phục</li>'+
+                            '<li>Bầu trời sao + Trái Đất xa</li>'+
+                            '<li>UI Power xanh nhạt / Gold vàng nhạt</li>'+
+                            '</ul>'+
+                            '<p style="margin:12px 0 0;opacity:0.7;font-size:12px;">Bấm ESC 2 lần để mở bảng này</p>'+
+                            '</div></div>';
+                        ov.addEventListener('click', function(e) {
+                            if (e.target === ov) ov.style.display = 'none';
+                        });
+                        document.body.appendChild(ov);
+                    }
+                    ov.style.display = 'flex';
+                    try { if (typeof showToast === 'function') showToast('✨ Version 1.50 — Patch notes'); } catch (e) {}
+                }
+                function noteEscForVersion() {
+                    const now = performance.now();
+                    _escTapTimes.push(now);
+                    while (_escTapTimes.length && now - _escTapTimes[0] > 600) _escTapTimes.shift();
+                    if (_escTapTimes.length >= 2) {
+                        _escTapTimes = [];
+                        showVersion150PatchNotes();
+                        return true;
+                    }
+                    return false;
+                }
 
 function animate() {
+                    // Hit-stop: pause sim briefly for impact feel
+                    if (typeof window.isHitStopActive === 'function' && window.isHitStopActive()) {
+                        requestAnimationFrame(animate);
+                        try { if (typeof renderer !== 'undefined' && renderer && typeof scene !== 'undefined' && typeof camera !== 'undefined') renderer.render(scene, camera); } catch (e) {}
+                        return;
+                    }
+
 
                     updateErrorTitleReward();
                     if (typeof updatePowerBarUI === 'function') updatePowerBarUI();
@@ -28052,7 +29073,23 @@ function animate() {
                         playerGroup.position.y += jumpVelocity;
                     }
 
-                    if (!adminFlyMode && !errorGlitchLaunchActive && playerGroup.position.y <= 0) {
+                    // Hub: đứng trên cầu mây (có vật lý)
+                    if (!adminFlyMode && !errorGlitchLaunchActive && typeof gameStage === 'number' && gameStage === 0) {
+                        const sy = (typeof getHubStairGroundY === 'function')
+                            ? getHubStairGroundY(playerGroup.position.x, playerGroup.position.z, playerGroup.position.y)
+                            : null;
+                        if (sy != null) {
+                            if (playerGroup.position.y <= sy + 0.05 || jumpVelocity <= 0) {
+                                playerGroup.position.y = sy;
+                                jumpVelocity = 0;
+                                wasJumping = false;
+                            }
+                        } else if (playerGroup.position.y <= 0) {
+                            playerGroup.position.y = 0;
+                            jumpVelocity = 0;
+                            wasJumping = false;
+                        }
+                    } else if (!adminFlyMode && !errorGlitchLaunchActive && playerGroup.position.y <= 0) {
                         playerGroup.position.y = 0;
                         jumpVelocity = 0;
                         wasJumping = false;
@@ -28220,6 +29257,74 @@ function animate() {
                     try {
                         if (typeof ensurePetVendors === 'function') ensurePetVendors();
                         if (typeof updatePetVendorProximity === 'function') updatePetVendorProximity();
+                        try { if (typeof updateReactorProximity === 'function') updateReactorProximity(); } catch (eR) {}
+                        try { if (typeof updateHubPastelLife === 'function') updateHubPastelLife(); } catch (eP) {}
+                        
+                function updatePlayerPondPhysics() {
+                    if (!playerGroup || typeof gameStage !== 'number') return;
+                    if (gameStage !== 1 && gameStage !== 3) return;
+                    if (typeof biomeDecorGroup === 'undefined' || !biomeDecorGroup || !biomeDecorGroup.userData.pondCenter) return;
+                    const pc = biomeDecorGroup.userData.pondCenter;
+                    const dx = playerGroup.position.x - pc.x;
+                    const dz = playerGroup.position.z - pc.z;
+                    if (Math.hypot(dx, dz) < pc.r) {
+                        // Trong ao: hạ thấp + chậm (cảm giác nước)
+                        if (playerGroup.position.y < 0.35)
+                            playerGroup.position.y = 0.25;
+                        playerGroup.userData.inPond = true;
+                    } else {
+                        playerGroup.userData.inPond = false;
+                    }
+                }
+
+                        try { if (typeof updateFootsteps === 'function') updateFootsteps(); } catch (eF) {}
+                        try { if (typeof updateGlitchBossPull === 'function') updateGlitchBossPull(); } catch (eG) {}
+                        try { if (typeof updateTallBossFlyCombat === 'function') updateTallBossFlyCombat(); } catch (eT) {}
+                        try { if (typeof updateGlitchInfiniteBullets === 'function') updateGlitchInfiniteBullets(); } catch (eB) {}
+                        try { if (typeof updateHubSkyParallax === 'function') updateHubSkyParallax(); } catch (eS) {}
+                        try { if (typeof ensurePlayerNameTag === 'function') ensurePlayerNameTag(); } catch (eN) {}
+                        try { if (typeof flushGoldUI === 'function') flushGoldUI(); } catch (eG) {}
+                        /* pond physics hub-only */
+                        try { if (typeof updateWorldChunks === 'function') updateWorldChunks(); } catch (eC) {}
+                        try {
+                            if (gameStage === 1 && typeof updateRedMobHPSprite === 'function' && Math.random() < 0.05)
+                                updateRedMobHPSprite();
+                            if (gameStage !== 1) {
+                                const rb = document.getElementById('red-mob-hp-bar');
+                                if (rb) rb.style.display = 'none';
+                            }
+                        } catch (eRH) {}
+                        try {
+                            if (typeof biomeDecorGroup !== 'undefined' && biomeDecorGroup && biomeDecorGroup.visible) {
+                                if (biomeDecorGroup.userData.worldWaterTex) {
+                                    const t = biomeDecorGroup.userData.worldWaterTex;
+                                    t.offset.x = (t.offset.x + 0.006) % 1;
+                                    t.offset.y = (t.offset.y + 0.004) % 1;
+                                }
+                                const now = performance.now() * 0.001;
+                                // Cá bơi trong ao
+                                if (biomeDecorGroup.userData.pondFish && biomeDecorGroup.userData.pondCenter) {
+                                    const pc = biomeDecorGroup.userData.pondCenter;
+                                    biomeDecorGroup.userData.pondFish.forEach(function(f) {
+                                        f.userData.fishA += f.userData.fishSp;
+                                        const a = f.userData.fishA, r = f.userData.fishR;
+                                        f.position.x = pc.x + Math.cos(a) * r;
+                                        f.position.z = pc.z + Math.sin(a) * r;
+                                        f.position.y = 0.32 + Math.sin(a * 3) * 0.06;
+                                        f.rotation.y = -a + Math.PI / 2;
+                                    });
+                                }
+                                biomeDecorGroup.children.forEach(function(ch) {
+                                    if (ch.userData && ch.userData.worldFish) {
+                                        const a = ch.userData.baseA + now;
+                                        ch.position.x = 14 + Math.cos(a) * 2.5;
+                                        ch.position.z = 14 + Math.sin(a) * 2.5;
+                                        ch.rotation.y = -a + Math.PI/2;
+                                    }
+                                });
+                            }
+                        } catch (eWL) {}
+                        try { if (typeof ensureReactorMachine === 'function' && gameStage === 0) ensureReactorMachine(); } catch (eR2) {}
                     } catch (ePet) {}
 
 
@@ -29788,6 +30893,549 @@ function animate() {
                     });
                 }
 
+
+                /* =========================
+                   HUB PASTEL EXPANSION
+                   Candy island · water ring · tiers · bridges · life
+                ========================= */
+                let hubWaterMeshes = [];
+                let hubFish = [];
+                let hubGlowFlowers = [];
+
+                function buildHubPastelExpansion(root) {
+                    if (!root || typeof THREE === 'undefined') return;
+                    hubWaterMeshes = [];
+                    hubFish = [];
+                    hubGlowFlowers = [];
+
+                    // --- Palette hài hòa pastel ---
+                    const C = {
+                        snow: 0xfff0f5,
+                        pink: 0xffb6d9,
+                        mint: 0xa8f0e0,
+                        lilac: 0xd4b8ff,
+                        cream: 0xffe8c8,
+                        sand: 0xf5e6c8,
+                        grass: 0xc8f0b0,
+                        rockP: 0xc9a0e8,
+                        rockY: 0xf0d878,
+                        rockM: 0x88e0c8,
+                        water: 0x7ec8ff,
+                        waterDeep: 0x4aa0e0
+                    };
+
+                    function mat(col, opts) {
+                        opts = opts || {};
+                        return new THREE.MeshStandardMaterial({
+                            color: col,
+                            roughness: opts.rough != null ? opts.rough : 0.55,
+                            metalness: opts.metal != null ? opts.metal : 0.08,
+                            flatShading: true,
+                            emissive: opts.emit || 0x000000,
+                            emissiveIntensity: opts.eInt || 0,
+                            transparent: !!opts.trans,
+                            opacity: opts.op != null ? opts.op : 1
+                        });
+                    }
+                    function box(parent, w,h,d, m, x,y,z) {
+                        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w,h,d), m);
+                        mesh.position.set(x,y,z);
+                        mesh.castShadow = true;
+                        mesh.receiveShadow = true;
+                        parent.add(mesh);
+                        return mesh;
+                    }
+
+                    // ========== 1. Pastel candy ground overlay (soft white-pink) ==========
+                    const candyGround = new THREE.Mesh(
+                        new THREE.CylinderGeometry(42, 42, 0.35, 48),
+                        mat(C.snow, { rough: 0.7 })
+                    );
+                    candyGround.position.y = 0.18;
+                    candyGround.receiveShadow = true;
+                    root.add(candyGround);
+                    // pink soft ring band
+                    const pinkBand = new THREE.Mesh(
+                        new THREE.RingGeometry(28, 36, 48),
+                        new THREE.MeshBasicMaterial({ color: C.pink, transparent: true, opacity: 0.22, side: THREE.DoubleSide })
+                    );
+                    pinkBand.rotation.x = -Math.PI / 2;
+                    pinkBand.position.y = 0.4;
+                    root.add(pinkBand);
+
+                    // Pastel block trees (như ảnh)
+                    function pastelTree(x, z, scale) {
+                        scale = scale || 1;
+                        const g = new THREE.Group();
+                        g.position.set(x, 0.35, z);
+                        g.scale.setScalar(scale);
+                        box(g, 0.55, 1.4, 0.55, mat(0xa07050), 0, 0.7, 0);
+                        const cols = [0xff99cc, 0xd4b8ff, 0xa8f0e0, 0xffc0e0, 0xc8b0ff];
+                        for (let i = 0; i < 7; i++) {
+                            const cm = mat(cols[i % cols.length], { emit: cols[i % cols.length], eInt: 0.15 });
+                            const s = 0.7 + Math.random() * 0.5;
+                            box(g, s, s * 0.7, s, cm,
+                                (Math.random()-0.5)*1.2,
+                                1.6 + Math.random()*1.1,
+                                (Math.random()-0.5)*1.2);
+                        }
+                        root.add(g);
+                        if (typeof collisionObstacles !== 'undefined')
+                            collisionObstacles.push({ x: x, z: z, r: 0.7 * scale, hub: true });
+                    }
+                    // Trees near outer ring (không chặn center)
+                    for (let i = 0; i < 14; i++) {
+                        const a = (i / 14) * Math.PI * 2 + 0.15;
+                        const r = 22 + (i % 3) * 2.5;
+                        pastelTree(Math.cos(a)*r, Math.sin(a)*r, 0.85 + (i%3)*0.15);
+                    }
+
+                    // Cone grass (như ảnh)
+                    const coneMat = mat(C.mint, { rough: 0.65 });
+                    const conePink = mat(C.pink, { rough: 0.65 });
+                    for (let i = 0; i < 80; i++) {
+                        const a = Math.random() * Math.PI * 2;
+                        const r = 8 + Math.random() * 26;
+                        if (r < 6) continue;
+                        const cone = new THREE.Mesh(
+                            new THREE.ConeGeometry(0.12 + Math.random()*0.1, 0.35 + Math.random()*0.35, 5),
+                            Math.random() > 0.5 ? coneMat : conePink
+                        );
+                        cone.position.set(Math.cos(a)*r, 0.45, Math.sin(a)*r);
+                        root.add(cone);
+                    }
+
+                    // ========== 2. Water ring + flow texture ==========
+                    const waterCanvas = document.createElement('canvas');
+                    waterCanvas.width = 256; waterCanvas.height = 256;
+                    const wctx = waterCanvas.getContext('2d');
+                    for (let y = 0; y < 256; y++) {
+                        for (let x = 0; x < 256; x++) {
+                            const n = Math.sin(x*0.08)+Math.cos(y*0.1)+Math.sin((x+y)*0.05);
+                            const v = 140 + n * 40;
+                            wctx.fillStyle = 'rgb(' + (v*0.4|0) + ',' + (v*0.75|0) + ',' + (v|0) + ')';
+                            wctx.fillRect(x, y, 1, 1);
+                        }
+                    }
+                    const waterTex = new THREE.CanvasTexture(waterCanvas);
+                    waterTex.wrapS = waterTex.wrapT = THREE.RepeatWrapping;
+                    waterTex.repeat.set(4, 4);
+                    const waterMat = new THREE.MeshStandardMaterial({
+                        map: waterTex,
+                        color: 0xa0d8ff,
+                        transparent: true,
+                        opacity: 0.72,
+                        roughness: 0.25,
+                        metalness: 0.15,
+                        flatShading: true
+                    });
+                    // Outer water moat
+                    const waterRing = new THREE.Mesh(
+                        new THREE.RingGeometry(40, 52, 64),
+                        waterMat
+                    );
+                    waterRing.rotation.x = -Math.PI / 2;
+                    waterRing.position.y = -0.35;
+                    root.add(waterRing);
+                    hubWaterMeshes.push({ mesh: waterRing, tex: waterTex, speed: 0.008 });
+
+                    // Inner channel (shallow)
+                    const innerWater = new THREE.Mesh(
+                        new THREE.RingGeometry(16, 19, 48),
+                        waterMat.clone()
+                    );
+                    innerWater.material.map = waterTex.clone();
+                    innerWater.material.map.wrapS = innerWater.material.map.wrapT = THREE.RepeatWrapping;
+                    innerWater.material.map.repeat.set(3, 3);
+                    innerWater.rotation.x = -Math.PI / 2;
+                    innerWater.position.y = 0.12;
+                    root.add(innerWater);
+                    hubWaterMeshes.push({ mesh: innerWater, tex: innerWater.material.map, speed: 0.012 });
+
+                    // Small waterfall from tier to water
+                    function waterfall(x, z, h) {
+                        const g = new THREE.Group();
+                        g.position.set(x, 0, z);
+                        const sheet = new THREE.Mesh(
+                            new THREE.PlaneGeometry(1.2, h),
+                            new THREE.MeshBasicMaterial({ color: 0xb0e8ff, transparent: true, opacity: 0.45, side: THREE.DoubleSide })
+                        );
+                        sheet.position.y = h * 0.5;
+                        g.add(sheet);
+                        const pool = new THREE.Mesh(
+                            new THREE.CircleGeometry(1.4, 16),
+                            waterMat.clone()
+                        );
+                        pool.rotation.x = -Math.PI / 2;
+                        pool.position.y = 0.15;
+                        g.add(pool);
+                        root.add(g);
+                    }
+                    waterfall(14, -18, 2.2);
+                    waterfall(-16, 12, 1.8);
+
+                    // ========== 3. Terrain tiers ==========
+                    // Low sand ring patches
+                    for (let i = 0; i < 6; i++) {
+                        const a = i / 6 * Math.PI * 2;
+                        const sand = new THREE.Mesh(
+                            new THREE.CylinderGeometry(3.5, 4, 0.4, 12),
+                            mat(C.sand, { rough: 0.8 })
+                        );
+                        sand.position.set(Math.cos(a)*24, 0.35, Math.sin(a)*24);
+                        root.add(sand);
+                    }
+                    // Mid grass platforms
+                    for (let i = 0; i < 4; i++) {
+                        const a = i / 4 * Math.PI * 2 + 0.4;
+                        const plat = new THREE.Mesh(
+                            new THREE.BoxGeometry(5, 0.6, 5),
+                            mat(C.grass, { rough: 0.7 })
+                        );
+                        plat.position.set(Math.cos(a)*20, 0.7, Math.sin(a)*20);
+                        root.add(plat);
+                    }
+                    // High colorful rock lookouts (jumpable)
+                    const rockCols = [C.rockP, C.rockY, C.rockM];
+                    for (let i = 0; i < 3; i++) {
+                        const a = i / 3 * Math.PI * 2 + 0.2;
+                        const hx = Math.cos(a)*28, hz = Math.sin(a)*28;
+                        const tier = new THREE.Group();
+                        tier.position.set(hx, 0, hz);
+                        box(tier, 4.5, 1.2, 4.5, mat(rockCols[i]), 0, 0.95, 0);
+                        box(tier, 3.2, 1.0, 3.2, mat(rockCols[(i+1)%3]), 0, 1.9, 0);
+                        box(tier, 2.0, 0.8, 2.0, mat(rockCols[(i+2)%3]), 0, 2.7, 0);
+                        // check-in flag
+                        box(tier, 0.12, 1.6, 0.12, mat(0xffffff), 0, 3.6, 0);
+                        box(tier, 0.7, 0.45, 0.08, mat(0xff6688, { emit: 0xff4466, eInt: 0.3 }), 0.35, 4.1, 0);
+                        root.add(tier);
+                        if (typeof collisionObstacles !== 'undefined')
+                            collisionObstacles.push({ x: hx, z: hz, r: 2.2, hub: true });
+                    }
+
+                    // ========== 4. Side islands + bridges ==========
+                    const islandThemes = [
+                        { ang: 0.4, col: 0xff6644, name: 'Fire' },
+                        { ang: 2.5, col: 0x44aaff, name: 'Water' },
+                        { ang: 4.6, col: 0xff3366, name: 'Glitch' }
+                    ];
+                    islandThemes.forEach(function(th, idx) {
+                        const ir = 58;
+                        const ix = Math.cos(th.ang) * ir;
+                        const iz = Math.sin(th.ang) * ir;
+                        // island body
+                        const isl = new THREE.Mesh(
+                            new THREE.CylinderGeometry(7, 8.5, 3, 16),
+                            mat(idx === 2 ? 0x3a2040 : (idx === 0 ? 0x5a3020 : 0x204060), { rough: 0.6 })
+                        );
+                        isl.position.set(ix, -1.2, iz);
+                        root.add(isl);
+                        const top = new THREE.Mesh(
+                            new THREE.CylinderGeometry(6.5, 6.5, 0.4, 16),
+                            mat(idx === 0 ? C.cream : (idx === 1 ? C.mint : C.lilac))
+                        );
+                        top.position.set(ix, 0.4, iz);
+                        root.add(top);
+                        // decorative portal arch
+                        const archCol = mat(th.col, { emit: th.col, eInt: 0.4 });
+                        box(root, 0.4, 3.2, 0.4, archCol, ix - 1.4, 2.0, iz);
+                        box(root, 0.4, 3.2, 0.4, archCol, ix + 1.4, 2.0, iz);
+                        box(root, 3.2, 0.4, 0.4, archCol, ix, 3.6, iz);
+                        // bridge from main island r~38 toward side
+                        const midR = (40 + ir) / 2;
+                        const bx = Math.cos(th.ang) * midR;
+                        const bz = Math.sin(th.ang) * midR;
+                        const bridge = new THREE.Mesh(
+                            new THREE.BoxGeometry(3.2, 0.35, 18),
+                            mat(0xe8d0b0, { rough: 0.5 })
+                        );
+                        bridge.position.set(bx, 0.55, bz);
+                        bridge.rotation.y = -th.ang;
+                        root.add(bridge);
+                        // rail
+                        const railM = mat(0xffffff, { rough: 0.4 });
+                        for (const side of [-1.4, 1.4]) {
+                            const rail = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.4, 18), railM);
+                            rail.position.set(bx + Math.cos(th.ang+Math.PI/2)*side, 0.9, bz + Math.sin(th.ang+Math.PI/2)*side);
+                            rail.rotation.y = -th.ang;
+                            root.add(rail);
+                        }
+                    });
+                    // Expand walk boundary for bridges
+                    window._hubBoundaryR = 66;
+
+                    // ========== 5. Living details ==========
+                    // Pink low fog discs
+                    for (let i = 0; i < 5; i++) {
+                        const fog = new THREE.Mesh(
+                            new THREE.CircleGeometry(6 + i, 24),
+                            new THREE.MeshBasicMaterial({ color: 0xffb0d0, transparent: true, opacity: 0.03 + i*0.008, side: THREE.DoubleSide, depthWrite: false })
+                        );
+                        fog.rotation.x = -Math.PI / 2;
+                        fog.position.set((i-2)*5, 0.5 + i*0.05, (i%2)*4);
+                        root.add(fog);
+                    }
+                    // Glow flowers
+                    for (let i = 0; i < 24; i++) {
+                        const a = Math.random() * Math.PI * 2;
+                        const r = 10 + Math.random() * 22;
+                        const fg = new THREE.Group();
+                        fg.position.set(Math.cos(a)*r, 0.4, Math.sin(a)*r);
+                        const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.5, 5), mat(0x66aa55));
+                        stem.position.y = 0.25;
+                        fg.add(stem);
+                        const petal = new THREE.Mesh(
+                            new THREE.SphereGeometry(0.18, 6, 6),
+                            mat([0xff66aa, 0xffaacc, 0xcc88ff][i%3], { emit: 0xff4488, eInt: 0.55 })
+                        );
+                        petal.position.y = 0.55;
+                        fg.add(petal);
+                        root.add(fg);
+                        hubGlowFlowers.push(petal);
+                    }
+                    // Voxel fish in water ring
+                    for (let i = 0; i < 10; i++) {
+                        const fish = new THREE.Group();
+                        const fc = mat([0xff8899, 0x88ddff, 0xffdd66][i%3], { emit: 0x442222, eInt: 0.2 });
+                        box(fish, 0.45, 0.22, 0.18, fc, 0, 0, 0);
+                        box(fish, 0.15, 0.2, 0.08, fc, -0.28, 0.05, 0);
+                        const a0 = Math.random() * Math.PI * 2;
+                        const fr = 44 + Math.random() * 5;
+                        fish.position.set(Math.cos(a0)*fr, -0.15, Math.sin(a0)*fr);
+                        fish.userData.angle = a0;
+                        fish.userData.radius = fr;
+                        fish.userData.speed = 0.004 + Math.random() * 0.006;
+                        root.add(fish);
+                        hubFish.push(fish);
+                    }
+
+                    // Soft ambient tint for hub
+                    try {
+                        if (scene && scene.fog) {
+                            scene.fog.color.setHex(0xffd0e8);
+                            scene.fog.density = 0.0018;
+                        }
+                    } catch (e) {}
+                }
+
+                function updateHubPastelLife(dt) {
+                    if (typeof gameStage !== 'number' || gameStage !== 0) return;
+                    // Water flow
+                    hubWaterMeshes.forEach(function(w) {
+                        if (w.tex) {
+                            w.tex.offset.x = (w.tex.offset.x + w.speed) % 1;
+                            w.tex.offset.y = (w.tex.offset.y + w.speed * 0.6) % 1;
+                        }
+                    });
+                    // Ao cá hub
+                    try {
+                        if (hubWorldGroup && hubWorldGroup.userData.hubWaterTex) {
+                            const t = hubWorldGroup.userData.hubWaterTex;
+                            t.offset.x = (t.offset.x + 0.008) % 1;
+                            t.offset.y = (t.offset.y + 0.005) % 1;
+                        }
+                        if (hubWorldGroup && hubWorldGroup.userData.hubFish && hubWorldGroup.userData.hubPond) {
+                            const pc = hubWorldGroup.userData.hubPond;
+                            hubWorldGroup.userData.hubFish.forEach(function(f) {
+                                f.userData.a += f.userData.sp;
+                                const a = f.userData.a, r = f.userData.r;
+                                f.position.x = pc.x + Math.cos(a) * r;
+                                f.position.z = pc.z + Math.sin(a) * r;
+                                f.position.y = 0.36 + Math.sin(a * 3) * 0.05;
+                                f.rotation.y = -a + Math.PI / 2;
+                            });
+                        }
+                    } catch (e) {}
+                    // Fish swim
+                    hubFish.forEach(function(f) {
+                        f.userData.angle += f.userData.speed;
+                        const a = f.userData.angle, r = f.userData.radius;
+                        f.position.x = Math.cos(a) * r;
+                        f.position.z = Math.sin(a) * r;
+                        f.position.y = -0.15 + Math.sin(a * 4) * 0.08;
+                        f.rotation.y = -a + Math.PI / 2;
+                    });
+                    // Flower pulse
+                    const t = performance.now() * 0.003;
+                    hubGlowFlowers.forEach(function(p, i) {
+                        if (p.material) p.material.emissiveIntensity = 0.35 + Math.sin(t + i) * 0.25;
+                    });
+                }
+
+                
+                function rebuildHubCloudStairs() {
+                    if (!hubWorldGroup || gameStage !== 0) return;
+                    // Xóa mesh cầu cũ (đánh dấu userData.hubStair)
+                    const toRemove = [];
+                    hubWorldGroup.children.forEach(function(ch) {
+                        if (ch.userData && ch.userData.hubStairMesh) toRemove.push(ch);
+                    });
+                    toRemove.forEach(function(ch) { hubWorldGroup.remove(ch); });
+                    window._hubStairPlatforms = [];
+                    try { addHubCloudStairs(hubWorldGroup); } catch (e) {}
+                }
+                function addHubCloudStairs(root) {
+                    if (!root || typeof HUB_WORLDS === 'undefined') return;
+                    window._hubStairPlatforms = [];
+                    // Mây theo theme world (đỏ temple, tím final, ...)
+                    const worldCloudCols = {
+                        0: [0xff2244, 0xff5566, 0xff3344, 0xcc1122, 0xff6688, 0xff2233, 0xaa0018], // temple red
+                        1: [0xaa44ff, 0x8844cc, 0xcc66ff, 0x6622aa, 0x9955ee, 0xbb77ff, 0x551188], // final purple
+                        2: [0x22ccee, 0x00aacc, 0x44ddff, 0x1188aa, 0x66eef8, 0x22b8d8, 0x0a6080], // ultimate cyan
+                        3: [0xff66ff, 0xaa22cc, 0xee44ee, 0x8800aa, 0xff99ff, 0xcc44ff, 0x660088], // universe
+                        4: [0x44aaff, 0x2288ee, 0x66ccff, 0x1166cc, 0x88ddff, 0x3399ee, 0x0a4488], // cosmic
+                        5: [0x22ff88, 0x00cc66, 0x44ffaa, 0x00aa44, 0x88ffcc, 0x22ee77, 0x088840], // atomic
+                        6: [0xff2244, 0x00ffff, 0xff0033, 0x111111, 0xff6688, 0x00e5ff, 0xaa0022], // error
+                        7: [0x2288ff, 0x44ccff, 0x0066dd, 0xffff66, 0x33aaff, 0x88eeff, 0x0044aa]  // electron
+                    };
+                    function cloudMatForStep(s, worldIdx) {
+                        const cols = worldCloudCols[worldIdx] || worldCloudCols[0];
+                        const c = cols[s % cols.length];
+                        return new THREE.MeshStandardMaterial({
+                            color: c, roughness: 0.55, metalness: 0.15,
+                            flatShading: true, transparent: true, opacity: 0.92,
+                            emissive: c, emissiveIntensity: 0.22
+                        });
+                    }
+                    const cloudMat = cloudMatForStep(0, 0);
+                    const goldMat = new THREE.MeshStandardMaterial({
+                        color: 0xffe5a0, roughness: 0.35, metalness: 0.55, flatShading: true,
+                        emissive: 0xaa8800, emissiveIntensity: 0.25
+                    });
+                    const n = HUB_WORLDS.length || 8;
+                    const PORTAL_H = 5.2;
+                    const portalR = 24; // hub rộng hơn một chút
+                    const startR = 9;
+                    const steps = 12;
+                    // Chỉ cầu mây cho cổng đang mở + cổng kế (đỡ lặp / lag / che view)
+                    const unlock = (typeof hubUnlockIndex === 'number') ? hubUnlockIndex : 0;
+                    const buildIdx = {};
+                    buildIdx[Math.max(0, unlock)] = true;
+                    if (unlock + 1 < n) buildIdx[unlock + 1] = true;
+                    if (unlock === 0) buildIdx[0] = true;
+                    for (let i = 0; i < n; i++) {
+                        if (!buildIdx[i]) continue;
+                        const ang = (i / n) * Math.PI * 2 - Math.PI / 2;
+                        for (let s = 0; s < steps; s++) {
+                            const t = s / (steps - 1);
+                            // Từ r=8 lên r=20, y từ 0.4 lên PORTAL_H
+                            const r = startR + t * (portalR - startR - 0.5);
+                            const y = 0.35 + t * PORTAL_H;
+                            const a = ang + Math.sin(t * Math.PI) * 0.08;
+                            const x = Math.cos(a) * r;
+                            const z = Math.sin(a) * r;
+                            const step = new THREE.Mesh(
+                                new THREE.BoxGeometry(2.8, 0.4, 1.7),
+                                cloudMatForStep(s, i)
+                            );
+                            step.position.set(x, y, z);
+                            step.rotation.y = -a;
+                            step.userData.hubStairMesh = true;
+                            root.add(step);
+                            // Physics platform (đi được)
+                            window._hubStairPlatforms.push({
+                                x: x, z: z, y: y + 0.22,
+                                halfW: 1.5, halfD: 1.0,
+                                ang: a
+                            });
+                            // Lan can
+                            if (s % 2 === 0) {
+                                for (const side of [-1.35, 1.35]) {
+                                    const rail = new THREE.Mesh(
+                                        new THREE.SphereGeometry(0.32, 6, 5),
+                                        cloudMat
+                                    );
+                                    rail.position.set(
+                                        x + Math.cos(a + Math.PI/2) * side,
+                                        y + 0.6,
+                                        z + Math.sin(a + Math.PI/2) * side
+                                    );
+                                    rail.scale.set(1.1, 0.65, 1);
+                                    rail.userData.hubStairMesh = true;
+                                    root.add(rail);
+                                }
+                            }
+                        }
+                        // Platform đỉnh dưới cổng (đứng để vào)
+                        const topX = Math.cos(ang) * portalR;
+                        const topZ = Math.sin(ang) * portalR;
+                        const top = new THREE.Mesh(
+                            new THREE.CylinderGeometry(3.2, 3.4, 0.45, 16),
+                            cloudMat
+                        );
+                        top.position.set(topX, PORTAL_H - 0.15, topZ);
+                        top.userData.hubStairMesh = true;
+                        root.add(top);
+                        window._hubStairPlatforms.push({
+                            x: topX, z: topZ, y: PORTAL_H + 0.1,
+                            halfW: 2.8, halfD: 2.8, ang: ang
+                        });
+                        // Cổng vòm trên cao
+                        for (const side of [-1.7, 1.7]) {
+                            const col = new THREE.Mesh(
+                                new THREE.CylinderGeometry(0.28, 0.32, 4.5, 8),
+                                goldMat
+                            );
+                            col.position.set(
+                                topX + Math.cos(ang + Math.PI/2) * side,
+                                PORTAL_H + 2.2,
+                                topZ + Math.sin(ang + Math.PI/2) * side
+                            );
+                            col.userData.hubStairMesh = true;
+                            root.add(col);
+                        }
+                        const arch = new THREE.Mesh(
+                            new THREE.TorusGeometry(1.8, 0.24, 8, 16, Math.PI),
+                            goldMat
+                        );
+                        arch.position.set(topX, PORTAL_H + 4.4, topZ);
+                        arch.rotation.y = -ang;
+                        arch.rotation.z = Math.PI / 2;
+                        arch.userData.hubStairMesh = true;
+                        root.add(arch);
+                        // Mây bồng quanh
+                        for (let c = 0; c < 5; c++) {
+                            const cl = new THREE.Mesh(
+                                new THREE.SphereGeometry(1.3 + Math.random() * 0.5, 8, 6),
+                                cloudMat
+                            );
+                            const ca = ang + (c - 2) * 0.18;
+                            cl.position.set(
+                                Math.cos(ca) * (portalR + 0.5),
+                                PORTAL_H - 0.5 + c * 0.7,
+                                Math.sin(ca) * (portalR + 0.5)
+                            );
+                            cl.scale.set(1.6, 0.5, 1.3);
+                            cl.userData.hubStairMesh = true;
+                            root.add(cl);
+                        }
+                    }
+                }
+
+                function getHubStairGroundY(px, pz, curY) {
+                    // Trả về y mặt đứng nếu đứng trên bậc mây
+                    const list = window._hubStairPlatforms;
+                    if (!list || !list.length) return null;
+                    let best = null;
+                    let bestDy = 999;
+                    for (let i = 0; i < list.length; i++) {
+                        const p = list[i];
+                        const dx = px - p.x, dz = pz - p.z;
+                        // Xoay local theo ang để check box
+                        const c = Math.cos(p.ang), s = Math.sin(p.ang);
+                        const lx = dx * c + dz * s;
+                        const lz = -dx * s + dz * c;
+                        if (Math.abs(lx) <= p.halfW && Math.abs(lz) <= p.halfD) {
+                            const dy = Math.abs((curY || 0) - p.y);
+                            // Chỉ snap nếu đang gần mặt (rơi xuống / đứng)
+                            if ((curY || 0) >= p.y - 0.85 && (curY || 0) <= p.y + 1.2) {
+                                if (dy < bestDy) { bestDy = dy; best = p.y; }
+                            }
+                        }
+                    }
+                    return best;
+                }
+
                 function buildHubWorld() {
                     if (hubWorldGroup) {
                         scene.remove(hubWorldGroup);
@@ -29798,7 +31446,7 @@ function animate() {
 
                     // Đảo trung tâm
                     const islandMat = new THREE.MeshStandardMaterial({
-                        color: 0x3a2a6a, roughness: 0.5, metalness: 0.12, emissive: 0x6622aa, emissiveIntensity: 0.22
+                        color: 0xff9acc, roughness: 0.48, metalness: 0.1, emissive: 0xff2288, emissiveIntensity: 0.28, flatShading: true
                     });
                     const rockMat = new THREE.MeshStandardMaterial({
                         color: 0x6a6a78, roughness: 0.7, metalness: 0.15
@@ -29807,7 +31455,7 @@ function animate() {
                         color: 0xffd700, roughness: 0.3, metalness: 0.85, emissive: 0xaa8800, emissiveIntensity: 0.35
                     });
 
-                    const island = new THREE.Mesh(new THREE.CylinderGeometry(40, 46, 4.5, 40), islandMat);
+                    const island = new THREE.Mesh(new THREE.CylinderGeometry(44, 50, 4.5, 44), islandMat);
                     island.position.y = -2;
                     island.receiveShadow = true;
                     hubWorldGroup.add(island);
@@ -30176,11 +31824,14 @@ function animate() {
                     const n = HUB_WORLDS.length;
                     HUB_WORLDS.forEach(function(w, i) {
                         const ang = (i / n) * Math.PI * 2 - Math.PI / 2;
-                        const r = 20; // hub rộng hơn — portal vẫn thấy từ tâm
+                        const r = 24; // 1 vòng cổng, hub rộng hơn
                         const px = Math.cos(ang) * r;
                         const pz = Math.sin(ang) * r;
                         const pad = new THREE.Group();
-                        pad.position.set(px, 0.15, pz);
+                        // Cổng trên cao — phải leo cầu mây mới tới
+                        const PORTAL_H = 5.2;
+                        pad.position.set(px, PORTAL_H, pz);
+                        pad.userData.portalHeight = PORTAL_H;
                         pad.userData.hubWorldIndex = i;
                         pad.userData.hubWorldId = w.id;
 
@@ -30188,8 +31839,8 @@ function animate() {
                         const disc = new THREE.Mesh(
                             new THREE.CylinderGeometry(2.4, 2.6, 0.35, 20),
                             new THREE.MeshStandardMaterial({
-                                color: w.color, emissive: w.color, emissiveIntensity: 0.65,
-                                metalness: 0.35, roughness: 0.28
+                                color: w.color, emissive: w.color, emissiveIntensity: 0.85,
+                                metalness: 0.4, roughness: 0.22, flatShading: true
                             })
                         );
                         pad.add(disc);
@@ -30255,81 +31906,182 @@ function animate() {
                         (function addHubWorldModels() {
                             const models = new THREE.Group();
                             models.position.y = 0.55;
+                            models.scale.setScalar(1.15);
                             models.userData.hubModels = true;
 
-                            function boxMesh(w, h, d, color, x, y, z) {
+                            function boxMesh(w, h, d, color, x, y, z, emit, eInt) {
                                 const m = new THREE.Mesh(
                                     new THREE.BoxGeometry(w, h, d),
-                                    new THREE.MeshLambertMaterial({ color: color })
+                                    new THREE.MeshStandardMaterial({
+                                        color: color, flatShading: true, roughness: 0.42, metalness: 0.2,
+                                        emissive: emit != null ? emit : 0x000000,
+                                        emissiveIntensity: eInt || 0
+                                    })
                                 );
                                 m.position.set(x, y, z);
+                                m.castShadow = true;
                                 models.add(m);
                                 return m;
                             }
 
                             if (w.id === 'temple') {
-                                // Mob đỏ (trái)
-                                boxMesh(0.72, 0.8, 0.58, 0xe8453c, -1.05, 0.95, 0);
-                                boxMesh(0.68, 0.58, 0.62, 0xff5555, -1.05, 1.65, 0);
-                                boxMesh(0.5, 0.28, 0.15, 0xffcc88, -1.05, 0.9, 0.32);
-                                boxMesh(0.14, 0.14, 0.08, 0xffffff, -1.22, 1.7, 0.32);
-                                boxMesh(0.14, 0.14, 0.08, 0xffffff, -0.88, 1.7, 0.32);
-                                boxMesh(0.08, 0.08, 0.06, 0x111111, -1.22, 1.7, 0.36);
-                                boxMesh(0.08, 0.08, 0.06, 0x111111, -0.88, 1.7, 0.36);
-                                boxMesh(0.22, 0.45, 0.22, 0xcc3333, -1.35, 0.55, 0);
-                                boxMesh(0.22, 0.45, 0.22, 0xcc3333, -0.75, 0.55, 0);
-                                // Boss Ma Vương trắng (phải)
-                                boxMesh(0.7, 0.85, 0.55, 0xf0f4ff, 1.05, 0.95, 0);
-                                boxMesh(0.72, 0.62, 0.65, 0xffffff, 1.05, 1.7, 0);
-                                boxMesh(0.55, 0.12, 0.58, 0xffe566, 1.05, 2.05, 0);
-                                boxMesh(0.14, 0.14, 0.08, 0x222244, 0.88, 1.75, 0.34);
-                                boxMesh(0.14, 0.14, 0.08, 0x222244, 1.22, 1.75, 0.34);
-                                boxMesh(0.28, 0.08, 0.08, 0x444466, 1.05, 1.55, 0.34);
-                                boxMesh(0.2, 0.5, 0.2, 0xe8eef8, 0.75, 0.55, 0);
-                                boxMesh(0.2, 0.5, 0.2, 0xe8eef8, 1.35, 0.55, 0);
+                                // === MOB ĐỎ (trái) — devil blocky rõ nét ===
+                                const ox = -1.15;
+                                boxMesh(0.78, 0.85, 0.55, 0xe01820, ox, 0.95, 0, 0x660008, 0.15); // thân
+                                boxMesh(0.72, 0.62, 0.6, 0xff2a32, ox, 1.72, 0, 0x880010, 0.12); // đầu
+                                boxMesh(0.55, 0.32, 0.12, 0xffa060, ox, 0.88, 0.32); // bụng
+                                // sừng
+                                boxMesh(0.16, 0.42, 0.16, 0xffcc44, ox - 0.28, 2.2, -0.05, 0xaa7700, 0.25);
+                                boxMesh(0.16, 0.42, 0.16, 0xffcc44, ox + 0.28, 2.2, -0.05, 0xaa7700, 0.25);
+                                // mắt phát sáng
+                                boxMesh(0.18, 0.16, 0.08, 0xffffff, ox - 0.18, 1.78, 0.32, 0xffeecc, 0.4);
+                                boxMesh(0.18, 0.16, 0.08, 0xffffff, ox + 0.18, 1.78, 0.32, 0xffeecc, 0.4);
+                                boxMesh(0.1, 0.1, 0.06, 0xff2200, ox - 0.18, 1.78, 0.36, 0xff0000, 0.7);
+                                boxMesh(0.1, 0.1, 0.06, 0xff2200, ox + 0.18, 1.78, 0.36, 0xff0000, 0.7);
+                                // miệng
+                                boxMesh(0.28, 0.08, 0.06, 0x220008, ox, 1.55, 0.34);
+                                // tay / chân
+                                boxMesh(0.2, 0.55, 0.2, 0xc0141c, ox - 0.52, 0.95, 0.05);
+                                boxMesh(0.2, 0.55, 0.2, 0xc0141c, ox + 0.52, 0.95, 0.05);
+                                boxMesh(0.22, 0.42, 0.22, 0xa01018, ox - 0.2, 0.35, 0);
+                                boxMesh(0.22, 0.42, 0.22, 0xa01018, ox + 0.2, 0.35, 0);
+                                // kiếm gỗ mini
+                                boxMesh(0.1, 0.7, 0.08, 0xc4a574, ox + 0.72, 1.15, 0.15);
+
+                                // === MA VƯƠNG (phải) — demon king tím-vàng ===
+                                const bx = 1.2;
+                                boxMesh(0.85, 1.0, 0.6, 0x3a1a58, bx, 1.05, 0, 0x2a0840, 0.2); // thân giáp
+                                boxMesh(0.8, 0.7, 0.68, 0x5a2a88, bx, 1.85, 0, 0x3a1060, 0.18); // đầu
+                                // vương miện
+                                boxMesh(0.7, 0.18, 0.55, 0xffd700, bx, 2.3, 0, 0xaa8800, 0.45);
+                                boxMesh(0.14, 0.28, 0.14, 0xffe566, bx - 0.25, 2.5, 0, 0xaa8800, 0.4);
+                                boxMesh(0.14, 0.35, 0.14, 0xffe566, bx, 2.55, 0, 0xaa8800, 0.5);
+                                boxMesh(0.14, 0.28, 0.14, 0xffe566, bx + 0.25, 2.5, 0, 0xaa8800, 0.4);
+                                // mắt tím glow
+                                boxMesh(0.16, 0.14, 0.08, 0xaa66ff, bx - 0.2, 1.9, 0.36, 0x8844ff, 0.85);
+                                boxMesh(0.16, 0.14, 0.08, 0xaa66ff, bx + 0.2, 1.9, 0.36, 0x8844ff, 0.85);
+                                // áo choàng
+                                boxMesh(0.95, 0.9, 0.2, 0x2a1040, bx, 1.0, -0.35, 0x1a0830, 0.1);
+                                // tay chân
+                                boxMesh(0.22, 0.6, 0.22, 0x4a2070, bx - 0.58, 1.0, 0.05);
+                                boxMesh(0.22, 0.6, 0.22, 0x4a2070, bx + 0.58, 1.0, 0.05);
+                                boxMesh(0.24, 0.48, 0.24, 0x301848, bx - 0.22, 0.35, 0);
+                                boxMesh(0.24, 0.48, 0.24, 0x301848, bx + 0.22, 0.35, 0);
                             } else if (w.id === 'final') {
-                                boxMesh(0.9, 1.1, 0.7, 0x2a1040, 0, 1.1, 0);
-                                boxMesh(0.85, 0.7, 0.75, 0x3a1858, 0, 1.9, 0);
-                                boxMesh(0.35, 0.25, 0.2, 0xffd700, 0, 2.35, 0);
-                                boxMesh(0.16, 0.16, 0.1, 0xff2233, -0.2, 1.95, 0.4);
-                                boxMesh(0.16, 0.16, 0.1, 0xff2233, 0.2, 1.95, 0.4);
+                                // FINAL BOSS — dark gold tyrant
+                                boxMesh(0.95, 1.15, 0.7, 0x2a1048, 0, 1.15, 0, 0x1a0830, 0.2);
+                                boxMesh(0.88, 0.72, 0.75, 0x4a2068, 0, 2.0, 0, 0x2a1050, 0.18);
+                                boxMesh(0.55, 0.22, 0.4, 0xffd700, 0, 2.45, 0, 0xaa8800, 0.5);
+                                boxMesh(0.14, 0.32, 0.14, 0xffe566, -0.22, 2.65, 0, 0xaa8800, 0.4);
+                                boxMesh(0.16, 0.4, 0.16, 0xffe566, 0, 2.7, 0, 0xaa8800, 0.55);
+                                boxMesh(0.14, 0.32, 0.14, 0xffe566, 0.22, 2.65, 0, 0xaa8800, 0.4);
+                                boxMesh(0.18, 0.14, 0.08, 0xff2233, -0.22, 2.05, 0.4, 0xff0000, 0.6);
+                                boxMesh(0.18, 0.14, 0.08, 0xff2233, 0.22, 2.05, 0.4, 0xff0000, 0.6);
+                                boxMesh(0.25, 0.65, 0.25, 0x3a1858, -0.65, 1.15, 0);
+                                boxMesh(0.25, 0.65, 0.25, 0x3a1858, 0.65, 1.15, 0);
+                                boxMesh(0.28, 0.5, 0.28, 0x201030, -0.25, 0.4, 0);
+                                boxMesh(0.28, 0.5, 0.28, 0x201030, 0.25, 0.4, 0);
                             } else if (w.id === 'supreme') {
-                                boxMesh(1.0, 1.3, 0.8, 0x114466, 0, 1.2, 0);
-                                boxMesh(0.9, 0.75, 0.85, 0x22aacc, 0, 2.1, 0);
-                                boxMesh(0.5, 0.2, 0.5, 0x00ffff, 0, 2.55, 0);
+                                // ULTIMATE — crystal cyan titan
+                                boxMesh(1.05, 1.35, 0.85, 0x0a3a55, 0, 1.25, 0, 0x063040, 0.25);
+                                boxMesh(0.95, 0.8, 0.9, 0x22b8d8, 0, 2.2, 0, 0x1188aa, 0.35);
+                                boxMesh(0.55, 0.28, 0.55, 0x00ffff, 0, 2.75, 0, 0x00ccff, 0.7);
+                                boxMesh(0.2, 0.45, 0.2, 0x88eef8, -0.35, 2.95, 0, 0x44ddff, 0.5);
+                                boxMesh(0.2, 0.55, 0.2, 0x88eef8, 0, 3.05, 0, 0x44ddff, 0.6);
+                                boxMesh(0.2, 0.45, 0.2, 0x88eef8, 0.35, 2.95, 0, 0x44ddff, 0.5);
+                                boxMesh(0.16, 0.14, 0.08, 0xffffff, -0.22, 2.25, 0.48, 0xaaffff, 0.8);
+                                boxMesh(0.16, 0.14, 0.08, 0xffffff, 0.22, 2.25, 0.48, 0xaaffff, 0.8);
+                                boxMesh(0.28, 0.7, 0.28, 0x0a4860, -0.7, 1.2, 0);
+                                boxMesh(0.28, 0.7, 0.28, 0x0a4860, 0.7, 1.2, 0);
+                                boxMesh(0.3, 0.55, 0.3, 0x082838, -0.28, 0.4, 0);
+                                boxMesh(0.3, 0.55, 0.3, 0x082838, 0.28, 0.4, 0);
                             } else if (w.id === 'universe') {
-                                boxMesh(0.8, 0.8, 0.8, 0xaa22cc, 0, 1.2, 0);
+                                // UNIVERSE — void sphere + rings
+                                boxMesh(0.95, 0.95, 0.95, 0x7a18aa, 0, 1.35, 0, 0x4a0870, 0.35);
+                                boxMesh(0.35, 0.35, 0.35, 0xff66ff, 0, 1.35, 0.5, 0xff44ff, 0.55);
+                                boxMesh(0.18, 0.18, 0.12, 0xffffff, -0.22, 1.5, 0.55, 0xffaaff, 0.7);
+                                boxMesh(0.18, 0.18, 0.12, 0xffffff, 0.22, 1.5, 0.55, 0xffaaff, 0.7);
                                 const ring = new THREE.Mesh(
-                                    new THREE.TorusGeometry(0.7, 0.08, 6, 20),
-                                    new THREE.MeshBasicMaterial({ color: 0xff66ff })
+                                    new THREE.TorusGeometry(1.05, 0.07, 8, 28),
+                                    new THREE.MeshStandardMaterial({ color: 0xff66ff, emissive: 0xaa22cc, emissiveIntensity: 0.6, flatShading: true })
                                 );
-                                ring.rotation.x = 0.5;
-                                ring.position.y = 1.2;
+                                ring.rotation.x = 0.55;
+                                ring.position.y = 1.35;
                                 models.add(ring);
+                                const ring2 = new THREE.Mesh(
+                                    new THREE.TorusGeometry(0.85, 0.05, 8, 24),
+                                    new THREE.MeshStandardMaterial({ color: 0x66aaff, emissive: 0x2244aa, emissiveIntensity: 0.45, flatShading: true })
+                                );
+                                ring2.rotation.x = 1.2;
+                                ring2.rotation.z = 0.4;
+                                ring2.position.y = 1.35;
+                                models.add(ring2);
                             } else if (w.id === 'cosmic') {
-                                boxMesh(0.7, 0.9, 0.55, 0x2266aa, 0, 1.0, 0);
-                                boxMesh(0.65, 0.55, 0.6, 0x44aaff, 0, 1.7, 0);
-                                boxMesh(0.15, 0.15, 0.1, 0xffffff, -0.15, 1.75, 0.32);
-                                boxMesh(0.15, 0.15, 0.1, 0xffffff, 0.15, 1.75, 0.32);
+                                // COSMIC / DINO vibe
+                                boxMesh(0.85, 1.0, 0.65, 0x1a4a88, 0, 1.1, 0, 0x0a2850, 0.2);
+                                boxMesh(0.75, 0.65, 0.7, 0x3399ee, 0, 1.85, 0, 0x1560aa, 0.25);
+                                boxMesh(0.35, 0.25, 0.5, 0x2266aa, 0, 1.85, 0.45); // snout
+                                boxMesh(0.14, 0.12, 0.08, 0xffee88, -0.2, 1.95, 0.55, 0xffcc44, 0.6);
+                                boxMesh(0.14, 0.12, 0.08, 0xffee88, 0.2, 1.95, 0.55, 0xffcc44, 0.6);
+                                boxMesh(0.12, 0.35, 0.12, 0x44aaff, -0.25, 2.35, -0.1, 0x2288cc, 0.3);
+                                boxMesh(0.12, 0.35, 0.12, 0x44aaff, 0.25, 2.35, -0.1, 0x2288cc, 0.3);
+                                boxMesh(0.22, 0.55, 0.22, 0x185080, -0.55, 1.0, 0);
+                                boxMesh(0.22, 0.55, 0.22, 0x185080, 0.55, 1.0, 0);
+                                boxMesh(0.26, 0.45, 0.26, 0x123858, -0.22, 0.35, 0);
+                                boxMesh(0.26, 0.45, 0.26, 0x123858, 0.22, 0.35, 0);
                             } else if (w.id === 'atomic') {
-                                boxMesh(0.55, 0.55, 0.55, 0x00ff88, 0, 1.3, 0);
-                                const r1 = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.05, 6, 24), new THREE.MeshBasicMaterial({ color: 0x88ffcc }));
-                                r1.rotation.x = Math.PI / 2; r1.position.y = 1.3; models.add(r1);
-                                const r2 = new THREE.Mesh(new THREE.TorusGeometry(0.85, 0.05, 6, 24), new THREE.MeshBasicMaterial({ color: 0x44ffaa }));
-                                r2.rotation.x = 0.4; r2.position.y = 1.3; models.add(r2);
+                                // ATOMIC — core + orbits
+                                boxMesh(0.7, 0.7, 0.7, 0x00ee77, 0, 1.4, 0, 0x00aa44, 0.45);
+                                boxMesh(0.35, 0.35, 0.35, 0xccffee, 0, 1.4, 0, 0x88ffcc, 0.7);
+                                const r1 = new THREE.Mesh(
+                                    new THREE.TorusGeometry(1.0, 0.06, 8, 28),
+                                    new THREE.MeshStandardMaterial({ color: 0x88ffcc, emissive: 0x44aa88, emissiveIntensity: 0.5, flatShading: true })
+                                );
+                                r1.rotation.x = Math.PI / 2; r1.position.y = 1.4; models.add(r1);
+                                const r2 = new THREE.Mesh(
+                                    new THREE.TorusGeometry(1.0, 0.06, 8, 28),
+                                    new THREE.MeshStandardMaterial({ color: 0x44ffaa, emissive: 0x22aa66, emissiveIntensity: 0.45, flatShading: true })
+                                );
+                                r2.rotation.x = 0.45; r2.position.y = 1.4; models.add(r2);
+                                // electrons
+                                boxMesh(0.18, 0.18, 0.18, 0xffff88, 1.0, 1.4, 0, 0xffee44, 0.7);
+                                boxMesh(0.18, 0.18, 0.18, 0xffff88, -0.7, 1.9, 0.5, 0xffee44, 0.7);
                             } else if (w.id === 'error') {
-                                boxMesh(0.75, 1.0, 0.5, 0xff2244, 0, 1.1, 0);
-                                boxMesh(0.7, 0.55, 0.55, 0x111111, 0, 1.85, 0);
-                                boxMesh(0.2, 0.12, 0.1, 0x00ffff, -0.18, 1.9, 0.3);
-                                boxMesh(0.2, 0.12, 0.1, 0xff0033, 0.18, 1.9, 0.3);
+                                // ERROR / GLITCH
+                                boxMesh(0.85, 1.1, 0.55, 0xff2244, 0, 1.15, 0, 0xaa0018, 0.3);
+                                boxMesh(0.8, 0.65, 0.62, 0x1a1a1a, 0, 1.95, 0, 0x080808, 0.1);
+                                boxMesh(0.22, 0.14, 0.1, 0x00ffff, -0.22, 2.0, 0.35, 0x00ccff, 0.9);
+                                boxMesh(0.22, 0.14, 0.1, 0xff0033, 0.22, 2.0, 0.35, 0xff0022, 0.9);
+                                boxMesh(0.4, 0.12, 0.08, 0x00ff88, 0, 1.7, 0.35, 0x00cc66, 0.5);
+                                // glitch offset block
+                                boxMesh(0.35, 0.35, 0.35, 0x00e5ff, 0.55, 1.5, 0.2, 0x00aacc, 0.4);
+                                boxMesh(0.25, 0.55, 0.25, 0xcc1133, -0.55, 1.1, 0);
+                                boxMesh(0.25, 0.55, 0.25, 0xcc1133, 0.55, 1.1, 0);
+                                boxMesh(0.28, 0.45, 0.28, 0x880818, -0.22, 0.35, 0);
+                                boxMesh(0.28, 0.45, 0.28, 0x880818, 0.22, 0.35, 0);
                             } else if (w.id === 'electron') {
-                                boxMesh(0.6, 0.9, 0.5, 0x0088ff, 0, 1.0, 0);
-                                boxMesh(0.55, 0.5, 0.5, 0x44ccff, 0, 1.65, 0);
-                                const e = new THREE.Mesh(new THREE.SphereGeometry(0.2, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffff88 }));
-                                e.position.set(0.7, 1.4, 0); models.add(e);
+                                // ELECTRON — neon energy being
+                                boxMesh(0.75, 1.0, 0.55, 0x0066dd, 0, 1.1, 0, 0x0033aa, 0.35);
+                                boxMesh(0.7, 0.58, 0.6, 0x33aaff, 0, 1.8, 0, 0x1188ee, 0.4);
+                                boxMesh(0.16, 0.14, 0.08, 0xffffaa, -0.18, 1.85, 0.35, 0xffee66, 0.85);
+                                boxMesh(0.16, 0.14, 0.08, 0xffffaa, 0.18, 1.85, 0.35, 0xffee66, 0.85);
+                                boxMesh(0.5, 0.12, 0.1, 0x88eeff, 0, 1.55, 0.35, 0x44ccff, 0.5);
+                                boxMesh(0.22, 0.55, 0.22, 0x0055bb, -0.52, 1.05, 0);
+                                boxMesh(0.22, 0.55, 0.22, 0x0055bb, 0.52, 1.05, 0);
+                                boxMesh(0.24, 0.42, 0.24, 0x004488, -0.2, 0.35, 0);
+                                boxMesh(0.24, 0.42, 0.24, 0x004488, 0.2, 0.35, 0);
+                                // energy orb
+                                const e = new THREE.Mesh(
+                                    new THREE.SphereGeometry(0.28, 10, 10),
+                                    new THREE.MeshStandardMaterial({ color: 0xffff66, emissive: 0xffcc00, emissiveIntensity: 0.85, flatShading: true })
+                                );
+                                e.position.set(0.85, 1.5, 0.2);
+                                models.add(e);
                             } else {
-                                boxMesh(0.7, 0.9, 0.55, w.color, 0, 1.0, 0);
-                                boxMesh(0.6, 0.5, 0.55, 0xffffff, 0, 1.65, 0);
+                                boxMesh(0.75, 0.95, 0.55, w.color, 0, 1.05, 0, w.color, 0.2);
+                                boxMesh(0.65, 0.55, 0.55, 0xffffff, 0, 1.7, 0);
+                                boxMesh(0.14, 0.12, 0.08, 0x111111, -0.16, 1.75, 0.3);
+                                boxMesh(0.14, 0.12, 0.08, 0x111111, 0.16, 1.75, 0.3);
                             }
 
                             // Ẩn models khi khóa (cùng logic lock)
@@ -30368,8 +32120,13 @@ function animate() {
                         hubWorldGroup.add(pad);
                     });
 
-                    // Rào vô hình: không cho đi ra ngoài đảo / vũ trụ
-                    const HUB_RADIUS = 38;
+                    // Pastel expansion (candy · water · tiers · islands)
+                    try { buildHubPastelExpansion(hubWorldGroup); } catch (eExp) { console.warn('hub pastel', eExp); }
+                    try { addHubFishPond(hubWorldGroup); } catch (ePond) {}
+                    try { addHubCloudStairs(hubWorldGroup); } catch (eC) {}
+
+                    // Rào vô hình: mở rộng cho đảo phụ
+                    const HUB_RADIUS = 55;
                     if (typeof collisionObstacles !== 'undefined') {
                         const nWall = 24;
                         for (let w = 0; w < nWall; w++) {
@@ -30446,6 +32203,10 @@ function animate() {
 
                     gameStage = 0;
                     try { if (typeof clearBiomeDecor === 'function') clearBiomeDecor(); } catch (e) {}
+                    try { if (typeof hideRedMobHpBar === 'function') hideRedMobHpBar(); } catch (e) {}
+                    try { setTimeout(function(){ if (typeof ensureReactorMachine === 'function') ensureReactorMachine(); }, 100); } catch (e) {}
+                    try { setTimeout(function(){ if (typeof rebuildHubCloudStairs === 'function') rebuildHubCloudStairs(); }, 150); } catch (e) {}
+                    try { if (typeof setupHubScrollingSky === 'function') setupHubScrollingSky(); } catch (e) {}
                     if (typeof applyWorldSky === "function") applyWorldSky(0);
                     if (typeof setExpandedWorld === 'function') setExpandedWorld(0);
                     if (typeof setBossArenaSkybox === 'function') setBossArenaSkybox(false);
@@ -30963,6 +32724,9 @@ function animate() {
                         const dx = pad.position.x - playerGroup.position.x;
                         const dz = pad.position.z - playerGroup.position.z;
                         const d = Math.hypot(dx, dz);
+                        const needY = (pad.userData.portalHeight != null) ? pad.userData.portalHeight - 1.2 : 0;
+                        // Chỉ tính gần cổng khi đã leo lên gần độ cao cổng
+                        if (playerGroup.position.y < needY) return;
                         if (d < nearestD) { nearestD = d; nearest = pad; }
                     });
                     if (nearest) {
@@ -30973,13 +32737,15 @@ function animate() {
                         const nm = (currentLang === 'en') ? (w && w.nameEn) : (w && w.nameVi);
                         hint.style.display = 'block';
                         hint.innerText = unlocked
-                            ? ((currentLang === 'vi' ? '➤ Bấm [E] để vào: ' : '➤ Press [E] to enter: ') + (nm || ''))
+                            ? ((currentLang === 'vi' ? '➤ Đi vào cổng để vào: ' : '➤ Walk into portal: ') + (nm || ''))
                             : ((currentLang === 'vi' ? '🔒 Chưa mở: ' : '🔒 Locked: ') + (nm || ''));
                         window._hubNearIndex = idx;
                         window._hubNearUnlocked = unlocked;
-                        // Không auto-enter — chỉ [E] mới vào (tránh admin bị kéo Electron)
-                        window._hubAutoIdx = null;
-                        window._hubAutoSince = 0;
+                        window._hubNearDist = nearestD;
+                        // Minecraft-style: đứng trong vòng cổng → auto vào
+                        if (unlocked && nearestD < 2.6) {
+                            try { if (typeof window._hubPortalAutoEnter === 'function') window._hubPortalAutoEnter(); } catch (eA) {}
+                        }
                     } else {
                         hint.style.display = 'none';
                         window._hubNearIndex = null;
@@ -30988,6 +32754,59 @@ function animate() {
                         window._hubAutoSince = 0;
                     }
                 }
+
+                
+                // Auto-enter portal khi đứng trong vòng (Minecraft-style)
+                window._hubPortalAutoEnter = function() {
+                    if (gameStage !== 0) return;
+                    if (performance.now() < (hubPortalCooldownUntil || 0)) return;
+                    const idx = window._hubNearIndex;
+                    if (idx == null) return;
+                    const isAdmin = (typeof secretAdminMode !== 'undefined' && secretAdminMode);
+                    if (!window._hubNearUnlocked && !isAdmin) return;
+                    // Chỉ auto khi rất gần (trong vòng cổng)
+                    if (window._hubNearDist == null || window._hubNearDist > 2.8) return;
+                    hubPortalCooldownUntil = performance.now() + 1200;
+                    try {
+                        if (typeof qolProgress === 'function') qolProgress('portal', 1, idx);
+                        enterHubWorldByIndex(idx);
+                    } catch (err) { console.error(err); }
+                };
+
+                
+                window.openPetBag = function() {
+                    const o = document.getElementById('pet-bag-overlay');
+                    if (!o) return;
+                    o.classList.add('show');
+                    const list = document.getElementById('pet-bag-list');
+                    if (!list) return;
+                    const inv = (typeof petInventory !== 'undefined' && petInventory) ? petInventory : [];
+                    if (!inv.length) {
+                        list.innerHTML = '<div style="opacity:.7;text-align:center;padding:12px">Kho trống — roll pet ở NPC / Reactor</div>';
+                        return;
+                    }
+                    list.innerHTML = inv.map(function(p, i) {
+                        const em = p.tier === 'ultra' ? '💎' : (p.tier === 'rare' ? '👑' : '🟥');
+                        return '<div class="pb-item"><span style="font-size:22px">' + em + '</span>' +
+                            '<div><b>' + (p.name || p.tier) + '</b><br><span style="opacity:.7;font-size:11px">' +
+                            (p.tier || '') + ' · W' + (p.world||1) + '</span></div>' +
+                            '<button type="button" onclick="window.equipPetFromBag&&window.equipPetFromBag(' + i + ')">Equip</button></div>';
+                    }).join('');
+                };
+                window.closePetBag = function() {
+                    const o = document.getElementById('pet-bag-overlay');
+                    if (o) o.classList.remove('show');
+                };
+                window.equipPetFromBag = function(i) {
+                    if (!petInventory || !petInventory[i]) return;
+                    equippedPet = petInventory[i];
+                    try { if (typeof refreshPetMulCache === 'function') refreshPetMulCache(); } catch (e) {}
+                    if (typeof spawnPetFollower === 'function') spawnPetFollower();
+                    if (typeof refreshPetHud === 'function') refreshPetHud();
+                    if (typeof showToast === 'function') showToast('Equipped: ' + (equippedPet.name || equippedPet.tier));
+                    if (typeof saveMegaQol === 'function') saveMegaQol();
+                    openPetBag();
+                };
 
                 function tryEnterHubPortalFromKey() {
                     // Ưu tiên mở shop pet nếu đang gần vendor
@@ -31042,6 +32861,8 @@ function animate() {
 
                 try { buildHubWorld(); } catch (e) { console.error('hub build', e); }
                 try { if (typeof ensurePetVendors === 'function') ensurePetVendors(); } catch (e) {}
+                try { if (typeof ensureReactorMachine === 'function') ensureReactorMachine(); } catch (eR) {}
+                try { if (typeof ensureReactorMachine === 'function') ensureReactorMachine(); } catch (e) {}
                 try { if (typeof refreshPetHud === 'function') refreshPetHud(); } catch (e) {}
                 /* concept disabled */
                 try {
