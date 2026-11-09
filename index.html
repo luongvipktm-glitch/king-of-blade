@@ -2731,8 +2731,32 @@
                     #c07010 100%);
             background-size: 200% 100%;
             box-shadow: 0 0 12px rgba(255, 200, 60, 0.7), inset 0 1px 0 rgba(255,255,255,0.4);
-            transition: none;
+            transition: width .12s linear, box-shadow .2s ease, filter .2s ease;
             position: relative;
+            filter: brightness(1);
+        }
+        /* Glow intensity driven by --ld-pct (0..100) */
+        #ld-bar-fill.ld-glow {
+            box-shadow:
+                0 0 calc(8px + var(--ld-pct, 0) * 0.35px) rgba(255, 210, 80, calc(0.35 + var(--ld-pct, 0) * 0.006)),
+                0 0 calc(18px + var(--ld-pct, 0) * 0.55px) rgba(255, 140, 20, calc(0.2 + var(--ld-pct, 0) * 0.005)),
+                inset 0 1px 0 rgba(255,255,255,0.45);
+            filter: brightness(calc(0.95 + var(--ld-pct, 0) * 0.008));
+        }
+        #ld-bar-fill.ld-glow::before {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 42%;
+            left: -50%;
+            background: linear-gradient(100deg, transparent, rgba(255,255,255,0.65), transparent);
+            animation: ldShineSweep 1.4s ease-in-out infinite;
+            pointer-events: none;
+        }
+        @keyframes ldShineSweep {
+            0% { left: -50%; opacity: 0.3; }
+            40% { opacity: 1; }
+            100% { left: 120%; opacity: 0.3; }
         }
         /* BẮT BUỘC chạy % — không phụ thuộc init game */
         #ld-bar-fill.ld-force-run { /* disabled: width driven by JS % */ width: 0%; }
@@ -4353,7 +4377,7 @@
         </div>
         <div id="multi-room-code" style="display:none;text-align:center;margin:8px 0;padding:10px;background:rgba(0,255,200,0.1);border-radius:8px;border:1px solid #00ffcc;">
             <div style="font-size:11px;color:#aaa;">Room code (copy & share):</div>
-            <div id="multi-code-text" style="font-size:22px;font-weight:900;color:#00ffcc;letter-spacing:2px;user-select:all;cursor:pointer;" title="Click to copy" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText(this.innerText);showToast&amp;&amp;showToast('📋 Đã copy mã phòng!');"></div>
+            <div id="multi-code-text" style="font-size:22px;font-weight:900;color:#00ffcc;letter-spacing:2px;user-select:all;cursor:pointer;" title="Click to copy" onclick="navigator.clipboard&amp;&amp;navigator.clipboard.writeText(this.innerText);showToast&amp;&amp;showToast(currentLang==='vi'?'📋 Đã copy mã phòng!':'📋 Room code copied!');"></div>
             <div id="multi-status" style="font-size:12px;color:#ffcc00;margin-top:6px;">Waiting for player...</div>
         </div>
         <div style="text-align:center;font-size:11px;margin-top:10px;color:#aaa;">
@@ -4559,7 +4583,7 @@
                 fill.style.width = '0%'; // đồng bộ với % số
             }
             let forcePct = 0;
-            const forceMsgs = ['Đang tải…', 'Tải thư viện…', 'Khởi tạo 3D…', 'Xây map…', 'Sắp xong…'];
+            const forceMsgs = (function(){ try { var l=localStorage.getItem('mystic_lang')||'en'; if(l==='en') return ['Loading…','Loading libraries…','Init 3D…','Building map…','Almost ready…']; } catch(e){} return ['Đang tải…','Tải thư viện…','Khởi tạo 3D…','Xây map…','Sắp xong…']; })();
             window._ldForceTimer = setInterval(function() {
                 if (window._gameReady) {
                     try { clearInterval(window._ldForceTimer); } catch (e) {}
@@ -5232,7 +5256,7 @@
                 let cosmicLevel1000Unlocked = false;
                 let luckMultiplier = 1;
                 let gameLoop = 1;
-                let currentLang = 'en';
+                let currentLang = 'en'; // pure English by default
                 try { localStorage.setItem('mystic_lang', 'en'); } catch (e) {}
                 window.currentLang = currentLang;
                 let hasGoDSword = false;
@@ -5803,7 +5827,7 @@
                     const priceEl = document.getElementById('ps-price');
                     if (priceEl) priceEl.textContent = formatPetPrice(price) + ' gold';
                     const lab = document.getElementById('ps-buy-label');
-                    if (lab) lab.textContent = (typeof currentLang !== 'undefined' && currentLang === 'en') ? 'Buy egg' : 'mua trứng';
+                    if (lab) lab.textContent = (typeof currentLang !== 'undefined' && currentLang === 'en') ? 'Buy egg' : 'Mua trứng';
                     const goldEl = document.getElementById('ps-gold');
                     if (goldEl) {
                         const isAd = (typeof secretAdminMode !== 'undefined' && secretAdminMode);
@@ -6265,7 +6289,7 @@
                             q.readyClaim = true;
                             const nm = (typeof currentLang !== 'undefined' && currentLang === 'en') ? q.nameEn : q.nameVi;
                             if (typeof showToast === 'function')
-                                showToast('📜 Quest xong! Mở Menu → nhận thưởng: ' + nm);
+                                showToast(currentLang==='vi'?('📜 Quest xong! Mở Menu → nhận thưởng: '+nm):('📜 Quest complete! Open Menu → claim: '+nm));
                             try { showQuestNotify(false); } catch (e) {}
                         }
                         changed = true;
@@ -7934,8 +7958,8 @@
                     14
                 );
                 dirLight.castShadow = true;
-                dirLight.shadow.mapSize.width = 1024;
-                dirLight.shadow.mapSize.height = 1024;
+                dirLight.shadow.mapSize.width = 2048;
+                dirLight.shadow.mapSize.height = 2048;
                 dirLight.shadow.camera.near = 0.5;
                 dirLight.shadow.camera.far = 180;
                 dirLight.shadow.camera.left = -70;
@@ -7944,7 +7968,7 @@
                 dirLight.shadow.camera.bottom = -70;
                 dirLight.shadow.bias = -0.0003;
                 dirLight.shadow.normalBias = 0.02;
-                dirLight.shadow.radius = 3;
+                dirLight.shadow.radius = 4.5;
                 scene.add(dirLight);
                 const fillLight = new THREE.DirectionalLight(0x8866cc, 0.35);
                 fillLight.position.set(-18, 12, -10);
@@ -8521,6 +8545,143 @@
                         try { buildGrassSystem(); } catch (e) { console.warn('grass build', e); }
                     });
                 });
+                /* ===== GRASS LOD v2 (KOS patch) =====
+                   Trước: ~175.000 lá cỏ vẽ mỗi frame trên toàn bản đồ + upload 11MB buffer mỗi lần sway.
+                   Nay: chỉ vẽ lá trong bán kính theo từng lớp LOD (gần = dày, xa = thưa),
+                   chia ô lưới, upload đúng phần cần thiết. Cỏ gần người chơi giữ NGUYÊN mật độ. */
+                const GRASS_VIS_R = [34, 56, 9999];   /* bán kính hiển thị lớp 0/1/2 */
+                const GRASS_MARGIN = 6;
+                const GRASS_NEAR_SWAY = 18;
+                const GRASS_REBUILD_D2 = 5.0 * 5.0;
+                const GRASS_CS = 6, GRASS_MIN = -84, GRASS_GN = 28;
+                function _grassEnsureData(L) {
+                    if (L._master) return;
+                    const n = L.count;
+                    const mesh = L.mesh;
+                    L._master = new Float32Array(mesh.instanceMatrix.array.subarray(0, n * 16));
+                    L._masterCol = mesh.instanceColor ? new Float32Array(mesh.instanceColor.array.subarray(0, n * 3)) : null;
+                    if (!L._gOrder) {
+                        const GN = GRASS_GN;
+                        const start = new Int32Array(GN * GN + 1);
+                        const cellOf = new Int32Array(n);
+                        for (let i = 0; i < n; i++) {
+                            let gx = ((L.posX[i] - GRASS_MIN) / GRASS_CS) | 0;
+                            let gz = ((L.posZ[i] - GRASS_MIN) / GRASS_CS) | 0;
+                            if (gx < 0) gx = 0; else if (gx >= GN) gx = GN - 1;
+                            if (gz < 0) gz = 0; else if (gz >= GN) gz = GN - 1;
+                            const c = gx * GN + gz;
+                            cellOf[i] = c;
+                            start[c + 1]++;
+                        }
+                        for (let c = 0; c < GN * GN; c++) start[c + 1] += start[c];
+                        const cursor = start.slice(0, GN * GN);
+                        const order = new Int32Array(n);
+                        for (let i = 0; i < n; i++) order[cursor[cellOf[i]]++] = i;
+                        L._gStart = start;
+                        L._gOrder = order;
+                        L._map = new Int32Array(n);
+                    }
+                    L._dirty = true;
+                }
+                function _grassRebuild(L, px, pz) {
+                    const mesh = L.mesh, M = L._master, C = L._masterCol;
+                    const arr = mesh.instanceMatrix.array;
+                    const carr = (mesh.instanceColor && C) ? mesh.instanceColor.array : null;
+                    const map = L._map, order = L._gOrder, start = L._gStart;
+                    const li = L._li;
+                    const R = (GRASS_VIS_R[li] != null ? GRASS_VIS_R[li] : 9999) + GRASS_MARGIN;
+                    const R2 = R * R;
+                    const sw = !!L.lod.sway;
+                    const swR = L.lod.maxDist + GRASS_MARGIN;
+                    const swR2 = sw ? swR * swR : -1;
+                    const GN = GRASS_GN;
+                    let gx0 = Math.floor((px - R - GRASS_MIN) / GRASS_CS), gx1 = Math.floor((px + R - GRASS_MIN) / GRASS_CS);
+                    let gz0 = Math.floor((pz - R - GRASS_MIN) / GRASS_CS), gz1 = Math.floor((pz + R - GRASS_MIN) / GRASS_CS);
+                    if (gx0 < 0) gx0 = 0; if (gz0 < 0) gz0 = 0;
+                    if (gx1 > GN - 1) gx1 = GN - 1; if (gz1 > GN - 1) gz1 = GN - 1;
+                    const b0 = L._b0 || (L._b0 = new Int32Array(L.count));
+                    const b1 = L._b1 || (L._b1 = new Int32Array(L.count));
+                    const b2 = L._b2 || (L._b2 = new Int32Array(L.count));
+                    const nr2 = sw ? GRASS_NEAR_SWAY * GRASS_NEAR_SWAY : -1;
+                    let n0 = 0, n1 = 0, n2 = 0;
+                    for (let gx = gx0; gx <= gx1; gx++) {
+                        for (let gz = gz0; gz <= gz1; gz++) {
+                            const c = gx * GN + gz;
+                            const e = start[c + 1];
+                            for (let s = start[c]; s < e; s++) {
+                                const i = order[s];
+                                const dx = L.posX[i] - px, dz = L.posZ[i] - pz;
+                                const d2 = dx * dx + dz * dz;
+                                if (d2 > R2) continue;
+                                const o = i * 16;
+                                /* lá nằm ngoài bán kính thế giới (scale 0) -> bỏ luôn */
+                                if (M[o] === 0 && M[o + 1] === 0 && M[o + 2] === 0) continue;
+                                if (d2 <= nr2) b0[n0++] = i;
+                                else if (d2 <= swR2) b1[n1++] = i;
+                                else b2[n2++] = i;
+                            }
+                        }
+                    }
+                    let k = 0;
+                    for (let pass = 0; pass < 3; pass++) {
+                        const lst = pass === 0 ? b0 : (pass === 1 ? b1 : b2);
+                        const cnt = pass === 0 ? n0 : (pass === 1 ? n1 : n2);
+                        for (let s = 0; s < cnt; s++) {
+                            const i = lst[s];
+                            const o = i * 16, q = k * 16;
+                            arr[q] = M[o]; arr[q + 1] = M[o + 1]; arr[q + 2] = M[o + 2]; arr[q + 3] = M[o + 3];
+                            arr[q + 4] = M[o + 4]; arr[q + 5] = M[o + 5]; arr[q + 6] = M[o + 6]; arr[q + 7] = M[o + 7];
+                            arr[q + 8] = M[o + 8]; arr[q + 9] = M[o + 9]; arr[q + 10] = M[o + 10]; arr[q + 11] = M[o + 11];
+                            arr[q + 12] = M[o + 12]; arr[q + 13] = M[o + 13]; arr[q + 14] = M[o + 14]; arr[q + 15] = M[o + 15];
+                            if (carr) {
+                                const co = i * 3, cq = k * 3;
+                                carr[cq] = C[co]; carr[cq + 1] = C[co + 1]; carr[cq + 2] = C[co + 2];
+                            }
+                            map[k++] = i;
+                        }
+                    }
+                    L._nearN = n0;
+                    L._swayN = n0 + n1;
+                    L._n = k;
+                    L._cx = px; L._cz = pz;
+                    L._dirty = false;
+                    mesh.count = k;
+                    mesh.instanceMatrix.updateRange.offset = 0;
+                    mesh.instanceMatrix.updateRange.count = Math.max(1, k * 16);
+                    mesh.instanceMatrix.needsUpdate = true;
+                    if (carr) {
+                        mesh.instanceColor.updateRange.offset = 0;
+                        mesh.instanceColor.updateRange.count = Math.max(1, k * 3);
+                        mesh.instanceColor.needsUpdate = true;
+                    }
+                }
+                function _grassSway(L, t, withFar) {
+                    const n = (withFar ? L._swayN : L._nearN) | 0;
+                    if (n <= 0) return;
+                    const arr = L.mesh.instanceMatrix.array, map = L._map;
+                    const pX = L.posX, pZ = L.posZ, bX = L.baseRotX, bY = L.baseRotY, bZ = L.baseRotZ;
+                    const sp = L.speeds, ph = L.phases, am = L.amts, sc = L.scales, sw = L.scaleW;
+                    for (let j = 0; j < n; j++) {
+                        const i = map[j];
+                        const sway = Math.sin(t * sp[i] + ph[i]) * am[i];
+                        const rx = bX[i] + sway * 0.3, ry = bY[i], rz = bZ[i] + sway;
+                        const a = Math.cos(rx), b = Math.sin(rx);
+                        const cc = Math.cos(ry), d = Math.sin(ry);
+                        const e = Math.cos(rz), f = Math.sin(rz);
+                        const ae = a * e, af = a * f, be = b * e, bf = b * f;
+                        const sx = sw[i], sy = sc[i];
+                        const q = j * 16;
+                        arr[q] = cc * e * sx;            arr[q + 1] = (af + be * d) * sx;  arr[q + 2] = (bf - ae * d) * sx;  arr[q + 3] = 0;
+                        arr[q + 4] = -cc * f * sy;       arr[q + 5] = (ae - bf * d) * sy;  arr[q + 6] = (be + af * d) * sy;  arr[q + 7] = 0;
+                        arr[q + 8] = d * sx;             arr[q + 9] = -b * cc * sx;        arr[q + 10] = a * cc * sx;        arr[q + 11] = 0;
+                        arr[q + 12] = pX[i]; arr[q + 13] = 0.05; arr[q + 14] = pZ[i]; arr[q + 15] = 1;
+                    }
+                    const ur = L.mesh.instanceMatrix.updateRange;
+                    const want = n * 16;
+                    if (ur.count === -1 || ur.count < want) { ur.offset = 0; ur.count = want; }
+                    L.mesh.instanceMatrix.needsUpdate = true;
+                }
+                let _grassSwaySlot = -1;
                 function updateGrassLODAndSway() {
                     const layers = window._grassLayers;
                     if (!layers || !layers.length) return;
@@ -8529,36 +8690,41 @@
                         if (playerGroup) { px = playerGroup.position.x; pz = playerGroup.position.z; }
                     } catch (e) {}
                     const t = performance.now() * 0.001;
-                    const dummy = (window._swayGrassData && window._swayGrassData.dummy) || new THREE.Object3D();
                     const st = (typeof gameStage === 'number') ? gameStage : 1;
                     const showGrass = (st === 0 || st === 1 || st === 2 || st === 4
                         || st === 5 || st === 6 || st === 7 || st === 8 || st === 9
                         || st === 11 || st === 12);
-                    layers.forEach(function(L) {
-                        if (!showGrass) {
-                            L.mesh.visible = false;
-                            return;
-                        }
+                    if (!window._grassThemeWrapped && typeof window.applyGrassTheme === 'function') {
+                        window._grassThemeWrapped = true;
+                        const _origTheme = window.applyGrassTheme;
+                        window.applyGrassTheme = function () {
+                            const r = _origTheme.apply(this, arguments);
+                            try { layers.forEach(function (L) { L._master = null; L._masterCol = null; L._dirty = true; }); } catch (e) {}
+                            return r;
+                        };
+                    }
+                    const slot = Math.floor(t * 30);
+                    const swayTick = (slot !== _grassSwaySlot);
+                    if (swayTick) _grassSwaySlot = slot;
+                    const farTick = swayTick && (slot % 3 === 0);
+                    let movedRebuilds = 0;
+                    for (let li = 0; li < layers.length; li++) {
+                        const L = layers[li];
+                        L._li = li;
+                        if (!showGrass) { L.mesh.visible = false; continue; }
                         L.mesh.visible = true;
                         L.mesh.frustumCulled = false;
-                        if (!L.lod.sway) return;
-                        if ((Math.floor(t * 30) & 1) === 0) return;
-                        const maxD2 = L.lod.maxDist * L.lod.maxDist;
-                        let any = false;
-                        for (let i = 0; i < L.count; i++) {
-                            const dx = L.posX[i] - px;
-                            const dz = L.posZ[i] - pz;
-                            if (dx * dx + dz * dz > maxD2) continue;
-                            any = true;
-                            const sway = Math.sin(t * L.speeds[i] + L.phases[i]) * L.amts[i];
-                            dummy.position.set(L.posX[i], 0.05, L.posZ[i]);
-                            dummy.rotation.set(L.baseRotX[i] + sway * 0.3, L.baseRotY[i], L.baseRotZ[i] + sway);
-                            dummy.scale.set(L.scaleW[i], L.scales[i], L.scaleW[i]);
-                            dummy.updateMatrix();
-                            L.mesh.setMatrixAt(i, dummy.matrix);
+                        if (!L._master) _grassEnsureData(L);
+                        const ddx = px - (L._cx || 0), ddz = pz - (L._cz || 0);
+                        let rebuilt = false;
+                        const needMove = (GRASS_VIS_R[li] < 9000) && (ddx * ddx + ddz * ddz > GRASS_REBUILD_D2);
+                        if (L._dirty || L._cx === undefined || (needMove && movedRebuilds === 0)) {
+                            if (!L._dirty && L._cx !== undefined) movedRebuilds++;
+                            _grassRebuild(L, px, pz);
+                            rebuilt = true;
                         }
-                        if (any) L.mesh.instanceMatrix.needsUpdate = true;
-                    });
+                        if (L.lod.sway && (swayTick || rebuilt)) _grassSway(L, t, farTick || rebuilt);
+                    }
                 }
                 window._lastGrassStage = -999;
                 function syncGrassThemeToStage() {
@@ -9909,6 +10075,18 @@
                 window._allTrees = window._allTrees || [];
                 const TREE_CULL_NEAR = 58;
                 const TREE_CULL_FAR  = 100;
+                const TREE_LOD1 = 66, TREE_LOD2 = 84;
+                /* LOD cây: xa thì ẩn chi tiết nhỏ (mấu, rễ, cành) rồi thưa bớt lá — giảm mạnh draw call */
+                function _applyTreeLOD(t, tier) {
+                    const ud = t.userData;
+                    ud._lodTier = tier;
+                    const det = ud._detailMeshes;
+                    if (det) for (let k = 0; k < det.length; k++) det[k].visible = (tier === 0);
+                    const lv = ud._leafMeshes;
+                    if (lv) for (let k = 0; k < lv.length; k++) {
+                        lv[k].visible = (tier === 0) || (tier === 1 ? (k % 3) !== 2 : (k % 2) === 0);
+                    }
+                }
                 let _treeCullFrame = 0;
                 function updateTreeDistanceCulling() {
                     const list = window._allTrees;
@@ -9939,6 +10117,10 @@
                         const d2 = dx * dx + dz * dz;
                         const want = d2 < far2;
                         if (t.visible !== want) t.visible = want;
+                        if (want && t.userData) {
+                            const tier = d2 > TREE_LOD2 * TREE_LOD2 ? 2 : (d2 > TREE_LOD1 * TREE_LOD1 ? 1 : 0);
+                            if (t.userData._lodTier !== tier) _applyTreeLOD(t, tier);
+                        }
                         if (t.userData) {
                             const near = d2 < near2;
                             if (t.userData._shadowOn !== near) {
@@ -9987,6 +10169,7 @@
                     const trunkMat = _treeBarkMats[Math.floor(Math.random() * _treeBarkMats.length)];
                     const trunkMeshes = [];
                     const leafMeshes = [];
+                    const detailMeshes = [];
                     const trunkTotalH = (3.0 + Math.random() * 1.3) * s;
                     const segments = 5;
                     const segH = trunkTotalH / segments;
@@ -10012,7 +10195,7 @@
                                 Math.sin(ka) * w * 0.55
                             );
                             knot.castShadow = false;
-                            group.add(knot);
+                            group.add(knot); detailMeshes.push(knot);
                         }
                     }
                     const nRoots = 4 + ((Math.random() * 2) | 0);
@@ -10025,7 +10208,7 @@
                         root.rotation.z = 0.25 + Math.random() * 0.2;
                         root.castShadow = false;
                         root.frustumCulled = true;
-                        group.add(root);
+                        group.add(root); detailMeshes.push(root);
                     }
                     for (let b = 0; b < 3; b++) {
                         const a = b * 2.1 + Math.random() * 0.5;
@@ -10039,7 +10222,7 @@
                         br.rotation.y = a;
                         br.rotation.z = (b % 2 ? 0.4 : -0.35);
                         br.castShadow = false;
-                        group.add(br);
+                        group.add(br); detailMeshes.push(br);
                     }
                     const canopyBase = trunkTotalH * 0.75;
                     const layers = [
@@ -10117,6 +10300,7 @@
                     group.userData.ph = Math.random() * 6.28;
                     group.userData._trunkMeshes = trunkMeshes;
                     group.userData._leafMeshes = leafMeshes;
+                    group.userData._detailMeshes = detailMeshes;
                     group.userData._shadowOn = true;
                     group.frustumCulled = true;
                     if (typeof registerCollision === 'function')
@@ -11051,6 +11235,11 @@
                             scene.fog.density = 0.0028;
                         }
                     }
+                    // === DYNAMIC STAGE LIGHTING ===
+                    try {
+                        if (typeof window.applyStageLighting === 'function')
+                            window.applyStageLighting(s);
+                    } catch (eL) {}
                 }
                 function setBossArenaSkybox(active) {
                     const s = (typeof gameStage === 'number') ? gameStage : 1;
@@ -12123,12 +12312,12 @@
                         mpSetStatus('✅ Đã kết nối với ' + (data.name || 'Player'));
                         if (data.name) updateRemoteName(data.name);
                         if (mpRemotePlayer) mpRemotePlayer.visible = true;
-                        showToast('👥 ' + (data.name || 'Player') + ' đã vào phòng!');
+                        showToast(currentLang==='vi'?('👥 '+(data.name||'Player')+' đã vào phòng!'):('👥 '+(data.name||'Player')+' joined the room!'));
                     } else if (data.t === 'bye') {
                         mpConnected = false;
                         if (mpRemotePlayer) mpRemotePlayer.visible = false;
                         mpSetStatus('Người chơi đã rời phòng');
-                        showToast('👥 Người chơi đã rời phòng');
+                        showToast(currentLang==='vi'?'👥 Người chơi đã rời phòng':'👥 Player left the room');
                     }
                 }
                 function mpBindConn(conn) {
@@ -12144,7 +12333,7 @@
                         mpConnected = false;
                         if (mpRemotePlayer) mpRemotePlayer.visible = false;
                         mpSetStatus('Mất kết nối');
-                        showToast('👥 Mất kết nối multiplayer');
+                        showToast(currentLang==='vi'?'👥 Mất kết nối multiplayer':'👥 Multiplayer connection lost');
                     });
                     conn.on('error', () => {
                         mpSetStatus('Lỗi kết nối');
@@ -12152,7 +12341,7 @@
                 }
                 window.mpCreateRoom = function() {
                     if (typeof Peer === 'undefined') {
-                        showToast('❌ PeerJS chưa tải — kiểm tra mạng');
+                        showToast(currentLang==='vi'?'❌ PeerJS chưa tải — kiểm tra mạng':'❌ PeerJS not loaded — check network');
                         return;
                     }
                     mpCleanupPeer();
@@ -12165,7 +12354,7 @@
                         if (codeBox) codeBox.style.display = 'block';
                         if (codeText) codeText.innerText = id;
                         mpSetStatus('Đang chờ người chơi thứ 2... (bấm mã để copy)');
-                        showToast('🏠 Phòng riêng đã tạo! Copy mã & gửi bạn chơi');
+                        showToast(currentLang==='vi'?'🏠 Phòng riêng đã tạo! Copy mã & gửi bạn chơi':'🏠 Private room created! Copy code & send to friend');
                         try {
                             if (navigator.clipboard) navigator.clipboard.writeText(id);
                         } catch (e) {}
@@ -12179,7 +12368,7 @@
                                 conn.send({ t: 'bye' });
                                 conn.close();
                             });
-                            showToast('❌ Phòng đã đủ 2 người!');
+                            showToast(currentLang==='vi'?'❌ Phòng đã đủ 2 người!':'❌ Room is full (2 players)!');
                             return;
                         }
                         mpBindConn(conn);
@@ -12187,18 +12376,18 @@
                     });
                     mpPeer.on('error', (err) => {
                         mpSetStatus('Lỗi: ' + (err.type || 'unknown'));
-                        showToast('❌ Lỗi multiplayer');
+                        showToast(currentLang==='vi'?'❌ Lỗi multiplayer':'❌ Multiplayer error');
                     });
                 };
                 window.mpJoinRoom = function() {
                     if (typeof Peer === 'undefined') {
-                        showToast('❌ PeerJS chưa tải — kiểm tra mạng');
+                        showToast(currentLang==='vi'?'❌ PeerJS chưa tải — kiểm tra mạng':'❌ PeerJS not loaded — check network');
                         return;
                     }
                     const input = document.getElementById('multi-join-input');
                     const roomId = (input && input.value || '').trim();
                     if (!roomId) {
-                        showToast('❌ Nhập mã phòng!');
+                        showToast(currentLang==='vi'?'❌ Nhập mã phòng!':'❌ Enter room code!');
                         return;
                     }
                     mpCleanupPeer();
@@ -12216,7 +12405,7 @@
                     });
                     mpPeer.on('error', (err) => {
                         mpSetStatus('Lỗi: ' + (err.type || 'unknown'));
-                        showToast('❌ Không vào được phòng');
+                        showToast(currentLang==='vi'?'❌ Không vào được phòng':'❌ Could not join room');
                     });
                 };
                 window.mpLeaveRoom = function() {
@@ -12225,7 +12414,7 @@
                     }
                     mpCleanupPeer();
                     mpSetStatus('Đã rời phòng');
-                    showToast('👥 Đã rời phòng');
+                    showToast(currentLang==='vi'?'👥 Đã rời phòng':'👥 Left the room');
                     const codeBox = document.getElementById('multi-room-code');
                     if (codeBox) codeBox.style.display = 'none';
                 };
@@ -12233,7 +12422,7 @@
                    If none open → host a new public room so others can find you */
                 window.mpRandomMatch = function() {
                     if (typeof Peer === 'undefined') {
-                        showToast('❌ PeerJS chưa tải — kiểm tra mạng');
+                        showToast(currentLang==='vi'?'❌ PeerJS chưa tải — kiểm tra mạng':'❌ PeerJS not loaded — check network');
                         return;
                     }
                     mpCleanupPeer();
@@ -12242,7 +12431,7 @@
                     const codeBox = document.getElementById('multi-room-code');
                     if (codeBox) codeBox.style.display = 'block';
                     mpSetStatus('🎲 Đang tìm người chơi ngẫu nhiên...');
-                    showToast('🎲 Đang tìm trận ngẫu nhiên...');
+                    showToast(currentLang==='vi'?'🎲 Đang tìm trận ngẫu nhiên...':'🎲 Searching for random match...');
                     const lobbyIds = [];
                     for (let i = 0; i < 30; i++) lobbyIds.push('mt-pub-' + i);
                     for (let i = lobbyIds.length - 1; i > 0; i--) {
@@ -12259,7 +12448,7 @@
                                 const codeText = document.getElementById('multi-code-text');
                                 if (codeText) codeText.innerText = id;
                                 mpSetStatus('🎲 Phòng public — chờ người vào (hoặc chia sẻ mã)...');
-                                showToast('🏠 Chưa có ai — bạn là host public. Chờ hoặc gửi mã!');
+                                showToast(currentLang==='vi'?'🏠 Chưa có ai — bạn là host public. Chờ hoặc gửi mã!':'🏠 No one yet — you are public host. Wait or share code!');
                             });
                             mpPeer.on('connection', (conn) => {
                                 if (mpConn && mpConn.open) {
@@ -12268,7 +12457,7 @@
                                 }
                                 mpBindConn(conn);
                                 mpSetStatus('✅ Đã ghép trận ngẫu nhiên!');
-                                showToast('✅ Ghép trận thành công!');
+                                showToast(currentLang==='vi'?'✅ Ghép trận thành công!':'✅ Match found!');
                             });
                             mpPeer.on('error', (err) => {
                                 if (err && (err.type === 'unavailable-id' || String(err).includes('taken'))) {
@@ -12284,7 +12473,7 @@
                                     });
                                     mpPeer.on('error', () => {
                                         mpSetStatus('Không ghép được — thử lại');
-                                        showToast('❌ Thử lại Random match');
+                                        showToast(currentLang==='vi'?'❌ Thử lại Random match':'❌ Try Random match again');
                                     });
                                 } else {
                                     mpSetStatus('Lỗi: ' + ((err && err.type) || 'unknown'));
@@ -12310,7 +12499,7 @@
                                 const codeText = document.getElementById('multi-code-text');
                                 if (codeText) codeText.innerText = target;
                                 mpSetStatus('✅ Đã ghép trận ngẫu nhiên!');
-                                showToast('✅ Ghép trận thành công!');
+                                showToast(currentLang==='vi'?'✅ Ghép trận thành công!':'✅ Match found!');
                             });
                             conn.on('error', () => {
                                 if (joined) return;
@@ -12978,6 +13167,28 @@
                         try { pmrem.compileEquirectangularShader(); } catch (e) {}
                     }
                 } catch (e) {}
+                // === ENHANCED REFLECTIONS (clearcoat + stronger env) ===
+                try {
+                    if (scene.environment) {
+                        scene.environmentIntensity = 1.15;
+                    }
+                    // Boost reflective materials globally (chrome, water, metals)
+                    scene.traverse(function (o) {
+                        if (!o.isMesh || !o.material) return;
+                        const mats = Array.isArray(o.material) ? o.material : [o.material];
+                        mats.forEach(function (m) {
+                            if (!m) return;
+                            if (m.metalness > 0.6 || (m.clearcoat && m.clearcoat > 0.3)) {
+                                if ('envMapIntensity' in m) m.envMapIntensity = Math.max(m.envMapIntensity || 1, 1.8);
+                                if ('clearcoat' in m) m.clearcoat = Math.max(m.clearcoat || 0, 0.85);
+                                if ('clearcoatRoughness' in m) m.clearcoatRoughness = Math.min(m.clearcoatRoughness != null ? m.clearcoatRoughness : 0.1, 0.12);
+                                if ('roughness' in m && m.metalness > 0.7) m.roughness = Math.min(m.roughness, 0.18);
+                                m.needsUpdate = true;
+                            }
+                        });
+                    });
+                } catch (eRefl) { console.warn('reflection boost', eRefl); }
+
                 function makeCanvasTex(size, draw, repeat) {
                     const c = document.createElement('canvas');
                     c.width = c.height = size;
@@ -14083,7 +14294,7 @@
                     realisticLastPos.copy(playerGroup.position);
                     const moveAmt = Math.min(1, realisticSpeedSmooth / 3);
                     blockyWalkPhase += dt * (4 + Math.min(realisticSpeedSmooth, 14) * 0.9) * (moveAmt > 0.05 ? 1 : 0);
-                    if (blockyAttackT < 1) blockyAttackT = Math.min(1, blockyAttackT + dt * 3.2);
+                    if (blockyAttackT < 1) blockyAttackT = Math.min(1, blockyAttackT + dt * 4.4);
                     animateBlocky(blockyP, blockyWalkPhase, moveAmt, t, {
                         holdSword: swordGroup.visible !== false &&
                             swordGroup.children.some(c => c.visible),
@@ -14094,7 +14305,7 @@
                         if (!window._lastDustT || t - window._lastDustT > 0.12) {
                             window._lastDustT = t;
                             const dust = new THREE.Mesh(
-                                new THREE.SphereGeometry(0.08 + Math.random() * 0.06, 6, 6),
+                                (window.__kosDustGeo || (window.__kosDustGeo = new THREE.SphereGeometry(1, 6, 6))),
                                 new THREE.MeshBasicMaterial({
                                     color: 0xc8b890, transparent: true, opacity: 0.45, depthWrite: false
                                 })
@@ -14104,13 +14315,13 @@
                                 0.05,
                                 playerGroup.position.z + (Math.random() - 0.5) * 0.4
                             );
+                            dust.scale.setScalar(0.08 + Math.random() * 0.06);
                             scene.add(dust);
                             const d0 = performance.now();
                             (function fadeDust() {
                                 const life = (performance.now() - d0) / 400;
                                 if (life >= 1) {
                                     scene.remove(dust);
-                                    dust.geometry.dispose();
                                     dust.material.dispose();
                                     return;
                                 }
@@ -14130,75 +14341,7 @@
                         errorBlockyP.armR.shoulder.rotation.x = -0.3 + Math.sin(t * 1.3) * 0.15;
                         errorBlockyP.armL.shoulder.rotation.x = -0.3 - Math.sin(t * 1.3) * 0.15;
                     }
-                    const gd = window._swayGrassData;
-                    if (gd && gd.layers && playerGroup) {
-                        gd._frame = (gd._frame || 0) + 1;
-                        const px = playerGroup.position.x;
-                        const pz = playerGroup.position.z;
-                        const wind = t * 1.25;
-                        const dummy = gd.dummy;
-                        const doVis = (gd._frame % 8) === 0;
-                        const doSway = (gd._frame % 2) === 0;
-                        for (let L = 0; L < gd.layers.length; L++) {
-                            const layer = gd.layers[L];
-                            const minD2 = layer.minDist * layer.minDist;
-                            const maxD2 = layer.maxDist * layer.maxDist;
-                            const moved = Math.abs(px - layer.lastPx) + Math.abs(pz - layer.lastPz) > 2.5;
-                            if (doVis || moved) {
-                                layer.lastPx = px;
-                                layer.lastPz = pz;
-                                let anyOn = false;
-                                for (let i = 0; i < layer.count; i++) {
-                                    const dx = layer.posX[i] - px;
-                                    const dz = layer.posZ[i] - pz;
-                                    const d2 = dx * dx + dz * dz;
-                                    const on = d2 >= minD2 && d2 <= maxD2;
-                                    if (on !== !!layer.active[i]) {
-                                        layer.active[i] = on ? 1 : 0;
-                                        if (on) {
-                                            dummy.position.set(layer.posX[i], 0.01, layer.posZ[i]);
-                                            dummy.rotation.set(
-                                                layer.baseRotX[i],
-                                                layer.baseRotY[i],
-                                                layer.baseRotZ[i]
-                                            );
-                                            dummy.scale.set(layer.scaleW[i], layer.scales[i], layer.scaleW[i]);
-                                        } else {
-                                            dummy.position.set(layer.posX[i], -80, layer.posZ[i]);
-                                            dummy.scale.set(0, 0, 0);
-                                        }
-                                        dummy.updateMatrix();
-                                        layer.mesh.setMatrixAt(i, dummy.matrix);
-                                    }
-                                    if (on) anyOn = true;
-                                }
-                                layer.mesh.instanceMatrix.needsUpdate = true;
-                                layer.mesh.visible = anyOn;
-                            }
-                            if (layer.sway && doSway && layer.mesh.visible) {
-                                for (let i = 0; i < layer.count; i++) {
-                                    if (!layer.active[i]) continue;
-                                    const s = Math.sin(wind * layer.speeds[i] + layer.phases[i]);
-                                    const c = Math.cos(wind * layer.speeds[i] * 0.65 + layer.phases[i] * 1.2);
-                                    const amt = layer.amts[i];
-                                    dummy.position.set(
-                                        layer.posX[i],
-                                        0.01 + Math.abs(s) * 0.012,
-                                        layer.posZ[i]
-                                    );
-                                    dummy.rotation.set(
-                                        layer.baseRotX[i] + c * amt * 0.45,
-                                        layer.baseRotY[i],
-                                        layer.baseRotZ[i] + s * amt
-                                    );
-                                    dummy.scale.set(layer.scaleW[i], layer.scales[i], layer.scaleW[i]);
-                                    dummy.updateMatrix();
-                                    layer.mesh.setMatrixAt(i, dummy.matrix);
-                                }
-                                layer.mesh.instanceMatrix.needsUpdate = true;
-                            }
-                        }
-                    }
+                    /* (KOS) khối sway cỏ cũ bị lỗi (layer.active undefined) đã gỡ — thay bằng updateGrassLODAndSway */
                 }
                 let dinoNextFireTime = 0;
                 const dinoFireEffects = [];
@@ -16916,29 +17059,18 @@ if (kind === 'common') {
                    LANGUAGE
                 ========================= */
                 function applyLanguageToUI() {
-                    document.getElementById(
-                        'lang-indicator'
-                    ).innerText =
-                        currentLang.toUpperCase();
-                    const elements =
-                        document.querySelectorAll(
-                            '.lang-txt'
-                        );
-                    elements.forEach(el => {
-                        const v = el.getAttribute('data-' + currentLang);
-                        if (v) el.innerText = v;
-                        else if (currentLang === 'en') {
-                            const en = el.getAttribute('data-en');
-                            if (en) el.innerText = en;
-                        }
-                    });
                     try {
                         const ind = document.getElementById('lang-indicator');
-                        if (ind) ind.innerText = currentLang.toUpperCase();
+                        if (ind) ind.innerText = (currentLang || 'en').toUpperCase();
                     } catch (e) {}
-                    const map = currentLang === 'vi' ? {
-                        'val-power-label': 'SỨC MẠNH',
-                    } : {};
+                    const elements = document.querySelectorAll('.lang-txt');
+                    elements.forEach(el => {
+                        // Prefer exact lang attribute; fall back to EN for pure English mode
+                        let v = el.getAttribute('data-' + currentLang);
+                        if (!v && currentLang === 'en') v = el.getAttribute('data-en');
+                        if (!v && currentLang === 'vi') v = el.getAttribute('data-vi');
+                        if (v) el.innerText = v;
+                    });
                     const loginName = document.getElementById('login-name');
                     const loginPass = document.getElementById('login-pass');
                     const loginQuick = document.getElementById('login-input');
@@ -16952,15 +17084,41 @@ if (kind === 'common') {
                         if (loginQuick) loginQuick.placeholder = 'Hoặc nhập nhanh: ten/matkhau';
                     }
                     const multiH = document.querySelector('#multi-modal h3');
-                    if (multiH) multiH.innerText = currentLang === 'vi' ? '👥 2-PLAYER' : '👥 2-PLAYER';
+                    if (multiH) multiH.innerText = '👥 2-PLAYER';
                     const pHint = document.getElementById('press-p-hint');
-                    if (pHint) pHint.innerText = 'press P 🧿';
+                    if (pHint) pHint.innerText = currentLang === 'en' ? 'press P 🧿' : 'nhấn P 🧿';
+                    // Force pure English on common UI labels that may have been left in Vietnamese
+                    if (currentLang === 'en') {
+                        const pureEN = {
+                            'val-power-label': 'POWER',
+                            'val-hp-label': 'HP',
+                            'val-kills-label': 'KILLS',
+                            'val-loop-label': 'LOOP',
+                            'val-world-label': 'WORLD',
+                            'val-level-label': 'LV',
+                            'val-account-label': 'ACC',
+                            'val-gold-label': 'GOLD'
+                        };
+                        Object.keys(pureEN).forEach(function(id) {
+                            const el = document.getElementById(id);
+                            if (el) el.innerText = pureEN[id];
+                        });
+                    }
                     if (typeof renderSkinShop === 'function') {
                         const modal = document.getElementById('color-modal');
                         if (modal && (modal.style.display === 'block' || modal.style.display === 'flex'))
                             renderSkinShop();
                     }
                 }
+                
+                // Pure language toast helper — always respects currentLang
+                window.t = function (en, vi) {
+                    try {
+                        if (typeof currentLang !== 'undefined' && currentLang === 'vi') return vi || en;
+                    } catch (e) {}
+                    return en;
+                };
+
                 function toggleLanguage() {
                     currentLang =
                         currentLang === 'vi'
@@ -17840,7 +17998,7 @@ if (kind === 'common') {
                     if (typeof saveCurrentAccount === 'function') saveCurrentAccount();
                     } catch (err) {
                         console.error('//kill error', err);
-                        showToast('❌ //kill lỗi: ' + (err && err.message ? err.message : 'unknown'));
+                        showToast(currentLang==='vi'?('❌ //kill lỗi: '+(err&&err.message?err.message:'unknown')):('❌ //kill error: '+(err&&err.message?err.message:'unknown')));
                         return;
                     }
                     if (!killed) {
@@ -18374,20 +18532,20 @@ if (kind === 'common') {
                     const input = document.getElementById('king-code-input');
                     const code = (input && input.value || '').trim().toUpperCase().replace(/\s+/g, '');
                     if (!code) {
-                        showToast('❌ Nhập mã kích hoạt KING');
+                        showToast(currentLang==='vi'?'❌ Nhập mã kích hoạt KING':'❌ Enter KING activation code');
                         return;
                     }
                     if (KING_REDEEM_CODES.indexOf(code) >= 0 || code === 'ADMINKING') {
                         grantKingStatus(true);
-                        showToast('👑 [KING] ĐÃ KÍCH HOẠT!');
+                        showToast(currentLang==='vi'?'👑 [KING] ĐÃ KÍCH HOẠT!':'👑 [KING] ACTIVATED!');
                         if (input) input.value = '';
                         try { localStorage.setItem('mystic_king_unlocked', '1'); } catch(e) {}
                     } else {
-                        showToast('❌ Mã không hợp lệ — liên hệ @viluong673 sau khi nạp $2.1');
+                        showToast(currentLang==='vi'?'❌ Mã không hợp lệ — liên hệ @viluong673 sau khi nạp $2.1':'❌ Invalid code — contact @viluong673 after $2.1 top-up');
                     }
                 };
                 window.showKingPayInfo = function() {
-                    showToast('💳 Nạp $2.1 ngoài đời → nhận mã từ @viluong673 → ESC → nhập mã. Admin = free.');
+                    showToast(currentLang==='vi'?'💳 Nạp $2.1 ngoài đời → nhận mã từ @viluong673 → ESC → nhập mã. Admin = free.':'💳 Top-up $2.1 offline → get code from @viluong673 → ESC → enter code. Admin = free.');
                     alert(
                         '[KING] VIP — $2.1\n\n' +
                         'File HTML này KHÔNG thu tiền trực tiếp.\n' +
@@ -18408,7 +18566,7 @@ if (kind === 'common') {
                 }
                 window.setKingOutfit = function(type) {
                     if (!hasKingStatus && !secretAdminMode) {
-                        showToast('🔒 Chỉ [KING] mới đổi trang phục Vua/Công chúa!');
+                        showToast(currentLang==='vi'?'🔒 Chỉ [KING] mới đổi trang phục Vua/Công chúa!':'🔒 Only [KING] can change King/Princess outfit!');
                         return;
                     }
                     kingOutfit = type || 'normal';
@@ -18430,7 +18588,7 @@ if (kind === 'common') {
                 };
                 window.toggleAutoDraft = function() {
                     if (!hasKingStatus && !secretAdminMode) {
-                        showToast('🔒 Auto Draft chỉ dành cho [KING]!');
+                        showToast(currentLang==='vi'?'🔒 Auto Draft chỉ dành cho [KING]!':'🔒 Auto Draft is [KING] only!');
                         return;
                     }
                     kingAutoDraft = !kingAutoDraft;
@@ -18549,7 +18707,7 @@ if (kind === 'common') {
                             (cmd === '//afk' || plain === '//afk' || plain === '/afk' || plain === 'afk')
                         ) {
                             if (!hasKingStatus && !secretAdminMode) {
-                                showToast('🔒 /afk chỉ dành cho [KING]!');
+                                showToast(currentLang==='vi'?'🔒 /afk chỉ dành cho [KING]!':'🔒 /afk is [KING] only!');
                             } else {
                                 kingAfkMode = !kingAfkMode;
                                 showToast(
@@ -19937,6 +20095,10 @@ if (kind === 'common') {
                         if (!Number.isFinite(totalDmg) || totalDmg > Number.MAX_VALUE)
                             totalDmg = Number.MAX_VALUE;
                         totalDmg = Math.max(1, Math.floor(totalDmg));
+                        try {
+                            const skillDmgMul = (typeof window.getSkillDmgMul === 'function') ? window.getSkillDmgMul() : 1;
+                            if (skillDmgMul > 1) totalDmg = Math.max(1, Math.floor(totalDmg * skillDmgMul));
+                        } catch (eSk) {}
                         try {
                             let skillTarget = null;
                             if (gameStage === 1 && typeof redMonster !== 'undefined' && redMonster && redMonster.visible)
@@ -23512,6 +23674,7 @@ if (kind === 'common') {
                 }
                 function triggerHitFlash(root, durationMs) {
                     if (!root || !root.visible) return;
+                    try { if ((typeof playerGroup === 'undefined' || root !== playerGroup) && window.__kosOnMobHit) window.__kosOnMobHit(root); } catch (eKos) {}
                     durationMs = durationMs || HIT_FLASH_MS;
                     const now = performance.now();
                     let entry = _hitFlashStore.get(root);
@@ -25242,7 +25405,7 @@ function animate() {
                             }
                         } catch (e) {}
                     }
-                    const baseMoveSpeed = 0.72; // x1.5 faster than previous 0.36 (was 0.12→0.36→0.54)
+                    const baseMoveSpeed = 1.0; // KOS: nhanh hơn (trước 0.72)
                     const stageMul =
                         (gameStage === 7 || gameStage === 8 || gameStage === 9)
                         ? 2.2
@@ -25257,7 +25420,8 @@ function animate() {
                     const alienXMul = (typeof alienXFormActive !== 'undefined' && alienXFormActive)
                         ? (typeof ALIEN_X_SPEED_MUL === 'number' ? ALIEN_X_SPEED_MUL : 1000)
                         : 1;
-                    const speed = baseMoveSpeed * stageMul * adminMul * kingMul * skinMul * alienXMul;
+                    const skillSpd = (typeof window.getSkillSpeedMul === 'function') ? window.getSkillSpeedMul() : 1;
+                    const speed = baseMoveSpeed * stageMul * adminMul * kingMul * skinMul * alienXMul * skillSpd;
                     let isMoving =
                         false;
                     /*
@@ -28511,6 +28675,370 @@ function animate() {
                         if (p && !p.contains(ev.target)) closePetShop();
                     } catch (e) {}
                 });
+                /* =====================================================================
+                   KOS PATCH v2 — Hiệu năng (không giảm model/đồ họa/địa hình) + đồ họa + chiến đấu
+                   Bật/tắt nhanh trong console:  KOS_PATCH.surfaceDetail = false ...
+                ===================================================================== */
+                (function kosPatchV2() {
+                    const CFG = window.KOS_PATCH = Object.assign({
+                        skipHiddenWorlds: true,   /* bỏ cập nhật ma trận của thế giới đang ẩn */
+                        hitSound: true,           /* âm thanh khi mob/boss bị đánh */
+                        hitKnockback: true,       /* hiệu ứng ngã về sau khi bị đánh */
+                        bossReflection: true,     /* phản quang đẹp hơn cho mob/boss */
+                        surfaceDetail: true,      /* thêm vi chi tiết (bump) cho bề mặt nhám: đá, đất, gỗ */
+                        anisotropy: 8,            /* lọc texture nét hơn khi nhìn xiên */
+                        vignette: true            /* viền tối điện ảnh nhẹ */
+                    }, window.KOS_PATCH || {});
+                    const T = THREE;
+
+                    /* ---------- 1. Bỏ cập nhật ma trận của subtree đang ẩn (chỉ trong lúc render) ---------- */
+                    let _inRender = false;
+                    try {
+                        const OP = T.Object3D.prototype;
+                        if (!OP.__kosUMW) {
+                            OP.__kosUMW = OP.updateMatrixWorld;
+                            OP.updateMatrixWorld = function (force) {
+                                if (_inRender && CFG.skipHiddenWorlds && this.visible === false) {
+                                    this.matrixWorldNeedsUpdate = true;
+                                    return;
+                                }
+                                return OP.__kosUMW.call(this, force);
+                            };
+                        }
+                    } catch (e) { console.warn('[KOS] skipHidden', e); }
+
+                    /* ---------- 2. Âm thanh khi bị đánh ---------- */
+                    let _noiseBuf = null, _lastHitSnd = 0;
+                    function _kosHitSound(heavy) {
+                        if (!CFG.hitSound) return;
+                        const nowMs = performance.now();
+                        if (nowMs - _lastHitSnd < 55) return;
+                        _lastHitSnd = nowMs;
+                        try {
+                            if (typeof audioCtx === 'undefined' || !audioCtx) { if (typeof initAudio === 'function') initAudio(); }
+                            const ac = (typeof audioCtx !== 'undefined') ? audioCtx : null;
+                            if (!ac) return;
+                            if (ac.state === 'suspended') { try { ac.resume(); } catch (e) {} }
+                            const t0 = ac.currentTime;
+                            const pitch = (heavy ? 0.72 : 1.0) * (0.9 + Math.random() * 0.25);
+                            if (!_noiseBuf) {
+                                const len = Math.floor(ac.sampleRate * 0.12);
+                                _noiseBuf = ac.createBuffer(1, len, ac.sampleRate);
+                                const d = _noiseBuf.getChannelData(0);
+                                for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+                            }
+                            const src = ac.createBufferSource();
+                            src.buffer = _noiseBuf;
+                            const lp = ac.createBiquadFilter();
+                            lp.type = 'lowpass';
+                            lp.frequency.setValueAtTime(3400 * pitch, t0);
+                            lp.frequency.exponentialRampToValueAtTime(240, t0 + 0.1);
+                            const ng = ac.createGain();
+                            ng.gain.setValueAtTime(0.30, t0);
+                            ng.gain.exponentialRampToValueAtTime(0.001, t0 + 0.1);
+                            src.connect(lp); lp.connect(ng); ng.connect(ac.destination);
+                            src.start(t0);
+                            const o = ac.createOscillator();
+                            o.type = 'sine';
+                            o.frequency.setValueAtTime(190 * pitch, t0);
+                            o.frequency.exponentialRampToValueAtTime(46, t0 + 0.17);
+                            const og = ac.createGain();
+                            og.gain.setValueAtTime(0.42, t0);
+                            og.gain.exponentialRampToValueAtTime(0.001, t0 + 0.18);
+                            o.connect(og); og.connect(ac.destination);
+                            o.start(t0); o.stop(t0 + 0.2);
+                            const c = ac.createOscillator();
+                            c.type = 'square';
+                            c.frequency.setValueAtTime(880 * pitch, t0);
+                            c.frequency.exponentialRampToValueAtTime(210, t0 + 0.05);
+                            const cg = ac.createGain();
+                            cg.gain.setValueAtTime(0.10, t0);
+                            cg.gain.exponentialRampToValueAtTime(0.001, t0 + 0.06);
+                            c.connect(cg); cg.connect(ac.destination);
+                            c.start(t0); c.stop(t0 + 0.08);
+                        } catch (e) {}
+                    }
+                    /* mở khoá AudioContext ngay lần chạm đầu tiên */
+                    ['pointerdown', 'keydown'].forEach(function (ev) {
+                        window.addEventListener(ev, function () {
+                            try {
+                                if (typeof audioCtx === 'undefined' || !audioCtx) { if (typeof initAudio === 'function') initAudio(); }
+                                if (typeof audioCtx !== 'undefined' && audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                            } catch (e) {}
+                        }, { passive: true });
+                    });
+
+                    /* ---------- 3. Ngã về sau khi bị đánh (chỉ là hiệu ứng lúc vẽ, không đổi toạ độ logic) ---------- */
+                    const knocks = new Map();   /* root -> {s, v, dx, dz, boss, last} */
+                    function _isMob(root) {
+                        try { return root === redMonster || root === octopusMonster; } catch (e) { return false; }
+                    }
+                    window.__kosOnMobHit = function (root) {
+                        try {
+                            if (!root || !root.visible) return;
+                            const boss = !_isMob(root);
+                            _kosHitSound(boss);
+                            if (!CFG.hitKnockback) return;
+                            let dx = 0, dz = 0;
+                            if (typeof playerGroup !== 'undefined' && playerGroup) {
+                                dx = root.position.x - playerGroup.position.x;
+                                dz = root.position.z - playerGroup.position.z;
+                            }
+                            let len = Math.hypot(dx, dz);
+                            if (len < 0.001) { dx = 0; dz = -1; len = 1; }
+                            dx /= len; dz /= len;
+                            let k = knocks.get(root);
+                            if (!k) { k = { s: 0, v: 0, dx: dx, dz: dz, boss: boss, last: performance.now() }; knocks.set(root, k); }
+                            k.dx = dx; k.dz = dz; k.boss = boss;
+                            k.v = Math.min(5.5, k.v + (boss ? 3.1 : 3.8));
+                        } catch (e) {}
+                    };
+                    const _kq = new T.Quaternion(), _kaxis = new T.Vector3();
+                    const _sv = [];   /* trạng thái lưu để khôi phục sau khi vẽ */
+                    function _applyKnocks(now) {
+                        _sv.length = 0;
+                        if (!knocks.size) return;
+                        knocks.forEach(function (k, root) {
+                            if (!root.visible) { knocks.delete(root); return; }
+                            let dt = (now - k.last) / 1000;
+                            k.last = now;
+                            if (dt > 0.05) dt = 0.05;
+                            if (dt > 0) {
+                                /* lò xo giảm chấn: nhanh ngả ra sau rồi lắc nhẹ về vị trí cũ */
+                                const acc = -170 * k.s - 15 * k.v;
+                                k.v += acc * dt;
+                                k.s += k.v * dt;
+                                if (k.s > 0.62) { k.s = 0.62; if (k.v > 0) k.v = 0; }
+                                if (k.s < -0.25) { k.s = -0.25; if (k.v < 0) k.v = 0; }
+                            }
+                            if (Math.abs(k.s) < 0.002 && Math.abs(k.v) < 0.03) { knocks.delete(root); return; }
+                            const tiltScale = k.boss ? 0.55 : 1.0;
+                            const pushScale = k.boss ? 3.2 : 1.7;
+                            _sv.push(root, root.position.x, root.position.y, root.position.z,
+                                root.rotation.x, root.rotation.y, root.rotation.z);
+                            root.position.x += k.dx * k.s * pushScale;
+                            root.position.z += k.dz * k.s * pushScale;
+                            _kaxis.set(k.dz, 0, -k.dx);
+                            _kq.setFromAxisAngle(_kaxis, k.s * tiltScale);
+                            root.quaternion.premultiply(_kq);
+                        });
+                    }
+                    function _restoreKnocks() {
+                        for (let i = 0; i < _sv.length; i += 7) {
+                            const r = _sv[i];
+                            r.position.set(_sv[i + 1], _sv[i + 2], _sv[i + 3]);
+                            r.rotation.set(_sv[i + 4], _sv[i + 5], _sv[i + 6]);
+                        }
+                        _sv.length = 0;
+                    }
+                    try {
+                        const _origRender = renderer.render;
+                        renderer.render = function (s, c) {
+                            const wasIn = _inRender;
+                            try { _applyKnocks(performance.now()); } catch (e) { _sv.length = 0; }
+                            _inRender = true;
+                            try {
+                                return _origRender.call(this, s, c);
+                            } finally {
+                                _inRender = wasIn;
+                                try { _restoreKnocks(); } catch (e) {}
+                            }
+                        };
+                    } catch (e) { console.warn('[KOS] render wrap', e); }
+
+                    /* ---------- 4. Phản quang đẹp hơn cho mob / boss ---------- */
+                    let bossEnv = null;
+                    function _buildBossEnv() {
+                        if (bossEnv) return bossEnv;
+                        try {
+                            const pm = new T.PMREMGenerator(renderer);
+                            const es = new T.Scene();
+                            const cv = document.createElement('canvas');
+                            cv.width = 1024; cv.height = 512;
+                            const cx = cv.getContext('2d');
+                            const g = cx.createLinearGradient(0, 0, 0, 512);
+                            g.addColorStop(0.00, '#dbe8ff');
+                            g.addColorStop(0.30, '#8fa6d6');
+                            g.addColorStop(0.48, '#5a5f86');
+                            g.addColorStop(0.52, '#2a2236');
+                            g.addColorStop(1.00, '#07060c');
+                            cx.fillStyle = g; cx.fillRect(0, 0, 1024, 512);
+                            const tex = new T.CanvasTexture(cv);
+                            tex.encoding = T.sRGBEncoding;
+                            tex.mapping = T.EquirectangularReflectionMapping;
+                            es.add(new T.Mesh(new T.SphereGeometry(60, 48, 24),
+                                new T.MeshBasicMaterial({ map: tex, side: T.BackSide })));
+                            function panel(w, h, x, y, z, r, gg, b, k) {
+                                const m = new T.MeshBasicMaterial({ side: T.DoubleSide });
+                                m.color.setRGB(r * k, gg * k, b * k);
+                                const p = new T.Mesh(new T.PlaneGeometry(w, h), m);
+                                p.position.set(x, y, z); p.lookAt(0, 0, 0);
+                                es.add(p);
+                            }
+                            panel(34, 16, -26, 34, 24, 1.0, 0.97, 0.92, 9);   /* softbox chính, trên-trái-trước */
+                            panel(8, 46, 40, 8, -4, 0.55, 0.78, 1.0, 7);      /* dải sáng xanh lạnh bên phải */
+                            panel(8, 40, -42, 6, -10, 1.0, 0.7, 0.45, 5);     /* dải ấm bên trái */
+                            panel(36, 7, 0, 14, -44, 1.0, 0.85, 0.7, 6);      /* viền sáng phía sau */
+                            panel(30, 12, 8, -26, 20, 0.35, 0.42, 0.7, 1.4);  /* phản xạ nền */
+                            const rt = pm.fromScene(es, 0.035);
+                            bossEnv = rt.texture;
+                        } catch (e) { console.warn('[KOS] bossEnv', e); bossEnv = null; }
+                        return bossEnv;
+                    }
+                    function _bossRoots() {
+                        const out = [];
+                        function add(fn) { try { const o = fn(); if (o && o.isObject3D) out.push(o); } catch (e) {} }
+                        add(function () { return redMonster; });
+                        add(function () { return octopusMonster; });
+                        add(function () { return bossMonster; });
+                        add(function () { return finalBossMonster; });
+                        add(function () { return supremeBossMonster; });
+                        add(function () { return universeBossMonster; });
+                        add(function () { return cosmicBossMonster; });
+                        add(function () { return oldCharacterBossMonster; });
+                        add(function () { return atomicBossMonster; });
+                        add(function () { return cosmicDinoMonster; });
+                        add(function () { return errorBossMonster; });
+                        add(function () { return electronBossMonster; });
+                        return out;
+                    }
+                    function polishBossReflections() {
+                        if (!CFG.bossReflection) return;
+                        const env = _buildBossEnv();
+                        if (!env) return;
+                        _bossRoots().forEach(function (root) {
+                            root.traverse(function (o) {
+                                if (!o.isMesh || !o.material) return;
+                                const mats = Array.isArray(o.material) ? o.material : [o.material];
+                                mats.forEach(function (m) {
+                                    if (!m || !m.isMeshStandardMaterial) return;
+                                    if (!m.userData) m.userData = {};
+                                    if (m.userData._kosEnv) return;
+                                    m.userData._kosEnv = true;
+                                    if (m.transparent && m.opacity < 0.85) return;
+                                    m.envMap = env;
+                                    const metal = m.metalness || 0;
+                                    m.envMapIntensity = Math.max(m.envMapIntensity || 1, metal > 0.4 ? 2.3 : 1.45);
+                                    if (typeof m.roughness === 'number' && m.roughness > 0.34) {
+                                        m.roughness = 0.34 + (m.roughness - 0.34) * 0.5;
+                                    }
+                                    if (m.isMeshPhysicalMaterial) {
+                                        m.clearcoat = Math.max(m.clearcoat || 0, 0.7);
+                                        m.clearcoatRoughness = Math.min(m.clearcoatRoughness != null ? m.clearcoatRoughness : 0.1, 0.08);
+                                    }
+                                    m.needsUpdate = true;
+                                });
+                            });
+                        });
+                    }
+
+                    /* ---------- 5. Chi tiết bề mặt + texture nét hơn ---------- */
+                    let _bumpTex = null;
+                    function _makeBumpTex() {
+                        if (_bumpTex) return _bumpTex;
+                        const N = 256;
+                        const cv = document.createElement('canvas');
+                        cv.width = cv.height = N;
+                        const cx = cv.getContext('2d');
+                        const img = cx.createImageData(N, N);
+                        const lat = {};
+                        function lattice(period) {
+                            const a = new Float32Array(period * period);
+                            for (let i = 0; i < a.length; i++) a[i] = Math.random();
+                            return a;
+                        }
+                        const octs = [[8, 0.5], [16, 0.3], [32, 0.2]];
+                        octs.forEach(function (o) { lat[o[0]] = lattice(o[0]); });
+                        function smooth(t) { return t * t * (3 - 2 * t); }
+                        function sample(period, u, v) {
+                            const a = lat[period];
+                            const x = u * period, y = v * period;
+                            const x0 = Math.floor(x), y0 = Math.floor(y);
+                            const fx = smooth(x - x0), fy = smooth(y - y0);
+                            const xi = x0 % period, yi = y0 % period, xj = (xi + 1) % period, yj = (yi + 1) % period;
+                            const v00 = a[yi * period + xi], v10 = a[yi * period + xj];
+                            const v01 = a[yj * period + xi], v11 = a[yj * period + xj];
+                            return (v00 * (1 - fx) + v10 * fx) * (1 - fy) + (v01 * (1 - fx) + v11 * fx) * fy;
+                        }
+                        for (let y = 0; y < N; y++) {
+                            for (let x = 0; x < N; x++) {
+                                let h = 0;
+                                for (let k = 0; k < octs.length; k++) h += sample(octs[k][0], x / N, y / N) * octs[k][1];
+                                const p = (y * N + x) * 4;
+                                const c = Math.max(0, Math.min(255, Math.round(h * 255)));
+                                img.data[p] = img.data[p + 1] = img.data[p + 2] = c;
+                                img.data[p + 3] = 255;
+                            }
+                        }
+                        cx.putImageData(img, 0, 0);
+                        const tex = new T.CanvasTexture(cv);
+                        tex.wrapS = tex.wrapT = T.RepeatWrapping;
+                        tex.anisotropy = 4;
+                        _bumpTex = tex;
+                        return tex;
+                    }
+                    const _doneMats = new WeakSet();
+                    const _doneTex = new WeakSet();
+                    function _exclusionSet() {
+                        const ex = new WeakSet();
+                        const roots = _bossRoots();
+                        try { if (typeof playerGroup !== 'undefined' && playerGroup) roots.push(playerGroup); } catch (e) {}
+                        roots.forEach(function (r) { if (r && r.traverse) r.traverse(function (o) { ex.add(o); }); });
+                        return ex;
+                    }
+                    function enhanceSurfaces() {
+                        let maxA = 1;
+                        try { maxA = renderer.capabilities.getMaxAnisotropy() || 1; } catch (e) {}
+                        const aniso = Math.max(1, Math.min(CFG.anisotropy || 1, maxA));
+                        const ex = _exclusionSet();
+                        let budget = 260;   /* giới hạn số vật liệu xử lý mỗi lượt để không giật */
+                        scene.traverse(function (o) {
+                            if (budget <= 0) return;
+                            if (!o.isMesh || !o.material || o.isInstancedMesh || o.isSkinnedMesh) return;
+                            const mats = Array.isArray(o.material) ? o.material : [o.material];
+                            const isChar = ex.has(o);
+                            mats.forEach(function (m) {
+                                if (!m || _doneMats.has(m)) return;
+                                _doneMats.add(m);
+                                budget--;
+                                ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'emissiveMap'].forEach(function (key) {
+                                    const tx = m[key];
+                                    if (tx && tx.isTexture && !_doneTex.has(tx) && !tx.isCubeTexture && !tx.isRenderTargetTexture && tx.image) {
+                                        _doneTex.add(tx);
+                                        if (aniso > 1 && tx.anisotropy < aniso && tx.generateMipmaps !== false) {
+                                            tx.anisotropy = aniso;
+                                            tx.needsUpdate = true;
+                                        }
+                                    }
+                                });
+                                if (CFG.surfaceDetail && !isChar && m.isMeshStandardMaterial && m.map && !m.bumpMap && !m.normalMap &&
+                                    !m.transparent && m.roughness >= 0.55 && o.geometry && o.geometry.attributes && o.geometry.attributes.uv) {
+                                    m.bumpMap = _makeBumpTex();
+                                    m.bumpScale = 0.15;
+                                    m.needsUpdate = true;
+                                }
+                            });
+                        });
+                    }
+
+                    /* ---------- 6. Viền tối điện ảnh nhẹ ---------- */
+                    try {
+                        if (CFG.vignette && !document.getElementById('kos-vignette')) {
+                            const v = document.createElement('div');
+                            v.id = 'kos-vignette';
+                            v.style.cssText = 'position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:4;' +
+                                'background:radial-gradient(ellipse at center,rgba(0,0,0,0) 62%,rgba(0,0,0,0.30) 100%);';
+                            document.body.appendChild(v);
+                        }
+                    } catch (e) {}
+
+                    /* ---------- lịch chạy ---------- */
+                    setTimeout(function () { try { polishBossReflections(); } catch (e) { console.warn('[KOS] polish', e); } }, 900);
+                    setInterval(function () { try { polishBossReflections(); } catch (e) {} }, 2500);
+                    setTimeout(function () { try { enhanceSurfaces(); } catch (e) { console.warn('[KOS] surfaces', e); } }, 2200);
+                    setInterval(function () { try { enhanceSurfaces(); } catch (e) {} }, 5000);
+                    console.log('[KOS] Patch v2: grass LOD, tree LOD, hidden-world skip, hit SFX/knockback, boss reflections');
+                })();
                 animate();
                 setTimeout(function() {
                     try {
@@ -30642,7 +31170,939 @@ function animate() {
             window.combatHitFeedback = combatHitFeedback;
             console.log('[Combat] Skills Q/E/R + hit feedback + boss windows ready');
         })();
-        console.log('[Enhanced] Return Hub / Save / BossPattern loaded');
+        
+            // Keep reflections strong on newly spawned chrome / metal objects
+            setInterval(function () {
+                try {
+                    if (!scene || !scene.environment) return;
+                    scene.traverse(function (o) {
+                        if (!o.isMesh || !o.material || o.userData._reflBoosted) return;
+                        const mats = Array.isArray(o.material) ? o.material : [o.material];
+                        let boosted = false;
+                        mats.forEach(function (m) {
+                            if (!m) return;
+                            if ((m.metalness > 0.55) || (m.clearcoat > 0.25) || (m.userData && m.userData._red && m.metalness > 0.4)) {
+                                if ('envMapIntensity' in m) m.envMapIntensity = Math.max(m.envMapIntensity || 1, 1.7);
+                                if ('clearcoat' in m) m.clearcoat = Math.max(m.clearcoat || 0, 0.75);
+                                if ('clearcoatRoughness' in m) m.clearcoatRoughness = Math.min(m.clearcoatRoughness != null ? m.clearcoatRoughness : 0.15, 0.15);
+                                m.needsUpdate = true;
+                                boosted = true;
+                            }
+                        });
+                        if (boosted) o.userData._reflBoosted = true;
+                    });
+                } catch (e) {}
+            }, 4000);
+
+            
+        /* =========================================================
+           STAGE LIGHTING + REFLECTIVE WATER + BLOB SHADOWS + SKILLS Q/R
+           ========================================================= */
+        (function stageFeelPack() {
+            if (window._stageFeelPack) return;
+            window._stageFeelPack = true;
+
+            // ---------- 1. Dynamic lighting per stage ----------
+            window.applyStageLighting = function (stage) {
+                try {
+                    const s = (typeof stage === 'number') ? stage : (typeof gameStage === 'number' ? gameStage : 0);
+                    // Find lights
+                    let dir = null, amb = null, fill = null, moon = null;
+                    scene.traverse(function () {});
+                    // Prefer globals if they exist on window / closure — search scene
+                    scene.children.forEach(function (c) {
+                        if (c.isDirectionalLight) {
+                            if (!dir || c.intensity > (dir.intensity || 0)) dir = c;
+                            else if (!fill) fill = c;
+                        }
+                        if (c.isAmbientLight) amb = c;
+                        if (c.isPointLight && !moon) moon = c;
+                    });
+                    // Also try named refs from outer scope via eval-safe checks
+                    try { if (typeof dirLight !== 'undefined' && dirLight) dir = dirLight; } catch (e) {}
+                    try { if (typeof fillLight !== 'undefined' && fillLight) fill = fillLight; } catch (e) {}
+                    try { if (typeof moonLight !== 'undefined' && moonLight) moon = moonLight; } catch (e) {}
+
+                    // Palettes: [dirColor, dirInt, ambColor, ambInt, fillColor, fillInt, fogColor, fogDensity]
+                    const palettes = {
+                        0:  { dir: 0xffe0b0, di: 1.9, amb: 0x4a3060, ai: 0.42, fill: 0xff88cc, fi: 0.4, fog: 0xffc8e0, fd: 0.0007 }, // hub warm pink-gold
+                        1:  { dir: 0xfff0dd, di: 1.85, amb: 0x3d2a55, ai: 0.38, fill: 0x8866cc, fi: 0.35, fog: 0x87ceeb, fd: 0.0009 },
+                        2:  { dir: 0xffd0a0, di: 1.6, amb: 0x3a2818, ai: 0.4, fill: 0xcc8844, fi: 0.3, fog: 0x2a1810, fd: 0.0025 },
+                        3:  { dir: 0xff4422, di: 1.7, amb: 0x4a1010, ai: 0.45, fill: 0xff2200, fi: 0.5, fog: 0x1a0508, fd: 0.0035 }, // hell
+                        4:  { dir: 0xffd0a0, di: 1.5, amb: 0x3a2818, ai: 0.38, fill: 0xaa6644, fi: 0.28, fog: 0x1a1008, fd: 0.0022 },
+                        5:  { dir: 0xaaccff, di: 1.4, amb: 0x1a2040, ai: 0.35, fill: 0x6688ff, fi: 0.45, fog: 0x000010, fd: 0.0008 }, // final deep
+                        6:  { dir: 0x66ffff, di: 1.5, amb: 0x102030, ai: 0.4, fill: 0x00ccff, fi: 0.5, fog: 0x001018, fd: 0.001 }, // supreme cyan
+                        7:  { dir: 0xff66ff, di: 1.45, amb: 0x2a1040, ai: 0.42, fill: 0xcc44ff, fi: 0.55, fog: 0x100018, fd: 0.0012 }, // universe magenta
+                        8:  { dir: 0x88ccff, di: 1.5, amb: 0x182848, ai: 0.4, fill: 0x4488ff, fi: 0.45, fog: 0x0a1030, fd: 0.001 },
+                        9:  { dir: 0x66ff99, di: 1.55, amb: 0x103020, ai: 0.4, fill: 0x44ff88, fi: 0.5, fog: 0x081810, fd: 0.0011 }, // atomic green
+                        10: { dir: 0xcc88ff, di: 1.4, amb: 0x201030, ai: 0.38, fill: 0xaa66ff, fi: 0.48, fog: 0x100018, fd: 0.001 },
+                        11: { dir: 0xff2244, di: 1.3, amb: 0x100808, ai: 0.3, fill: 0xff0044, fi: 0.6, fog: 0x000000, fd: 0.002 }, // error glitch
+                        12: { dir: 0x4488ff, di: 1.6, amb: 0x101848, ai: 0.45, fill: 0x2266ff, fi: 0.55, fog: 0x0a1030, fd: 0.0015 } // electron
+                    };
+                    const p = palettes[s] || palettes[1];
+                    if (dir) {
+                        dir.color.setHex(p.dir);
+                        dir.intensity = p.di;
+                    }
+                    if (amb) {
+                        amb.color.setHex(p.amb);
+                        amb.intensity = p.ai;
+                    }
+                    if (fill) {
+                        fill.color.setHex(p.fill);
+                        fill.intensity = p.fi;
+                    }
+                    if (moon) {
+                        // tint moon toward stage accent
+                        moon.color.setHex(p.fill);
+                        moon.intensity = Math.min(1.4, 0.8 + p.fi * 0.5);
+                    }
+                    if (scene.fog) {
+                        scene.fog.color.setHex(p.fog);
+                        scene.fog.density = p.fd;
+                    }
+                } catch (e) { console.warn('stage lighting', e); }
+            };
+
+            // Soften shadows globally
+            try {
+                if (typeof renderer !== 'undefined' && renderer && renderer.shadowMap) {
+                    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                    renderer.shadowMap.enabled = true;
+                }
+                if (typeof dirLight !== 'undefined' && dirLight && dirLight.shadow) {
+                    dirLight.shadow.mapSize.width = 2048;
+                    dirLight.shadow.mapSize.height = 2048;
+                    dirLight.shadow.radius = 4.5;
+                    dirLight.shadow.bias = -0.00025;
+                    dirLight.shadow.normalBias = 0.025;
+                }
+            } catch (e) {}
+
+            // ---------- 2. Reflective water planes (hub + a few ponds) ----------
+            function buildReflectiveWater() {
+                if (window._reflWaterDone) return;
+                window._reflWaterDone = true;
+                try {
+                    const waterMat = new THREE.MeshPhysicalMaterial({
+                        color: 0x1a4a6a,
+                        metalness: 0.92,
+                        roughness: 0.04,
+                        clearcoat: 1,
+                        clearcoatRoughness: 0.05,
+                        transparent: true,
+                        opacity: 0.82,
+                        reflectivity: 1,
+                        envMapIntensity: 2.4,
+                        side: THREE.DoubleSide
+                    });
+                    waterMat.userData._red = true; // skip redify
+                    const rimMat = new THREE.MeshBasicMaterial({
+                        color: 0x66e8ff,
+                        transparent: true,
+                        opacity: 0.45,
+                        blending: THREE.AdditiveBlending,
+                        depthWrite: false,
+                        side: THREE.DoubleSide
+                    });
+                    const parent = (typeof hubWorldGroup !== 'undefined' && hubWorldGroup) ? hubWorldGroup
+                        : ((typeof platformGroup !== 'undefined' && platformGroup) ? platformGroup : scene);
+                    const ponds = [
+                        { x: 18, z: 22, r: 5.5 },
+                        { x: -20, z: 16, r: 4.2 },
+                        { x: 12, z: -24, r: 6.0 },
+                        { x: -16, z: -18, r: 3.8 },
+                        { x: 0, z: 28, r: 4.5 }
+                    ];
+                    const group = new THREE.Group();
+                    group.name = 'reflectiveWater';
+                    ponds.forEach(function (p, i) {
+                        const mesh = new THREE.Mesh(new THREE.CircleGeometry(p.r, 48), waterMat.clone());
+                        mesh.rotation.x = -Math.PI / 2;
+                        mesh.position.set(p.x, 0.06, p.z);
+                        mesh.receiveShadow = true;
+                        group.add(mesh);
+                        const rim = new THREE.Mesh(new THREE.RingGeometry(p.r, p.r + 0.28, 48), rimMat);
+                        rim.rotation.x = -Math.PI / 2;
+                        rim.position.set(p.x, 0.07, p.z);
+                        group.add(rim);
+                        // soft caustic shimmer via opacity pulse
+                        mesh.userData.waterPhase = i * 1.3;
+                    });
+                    parent.add(group);
+                    window._waterGroup = group;
+                    // animate shimmer
+                    (function waterTick() {
+                        requestAnimationFrame(waterTick);
+                        if (!group.parent || !group.visible) return;
+                        const t = performance.now() * 0.001;
+                        group.children.forEach(function (c) {
+                            if (c.material && c.material.metalness > 0.5) {
+                                c.material.opacity = 0.75 + Math.sin(t * 1.2 + (c.userData.waterPhase || 0)) * 0.08;
+                                c.material.envMapIntensity = 2.1 + Math.sin(t * 0.8 + (c.userData.waterPhase || 0)) * 0.35;
+                            }
+                        });
+                    })();
+                } catch (e) { console.warn('reflective water', e); }
+            }
+
+            // ---------- 3. Blob / contact soft shadows under player & bosses ----------
+            function makeBlobShadow() {
+                const c = document.createElement('canvas');
+                c.width = c.height = 128;
+                const g = c.getContext('2d');
+                const grd = g.createRadialGradient(64, 64, 4, 64, 64, 62);
+                grd.addColorStop(0, 'rgba(0,0,0,0.55)');
+                grd.addColorStop(0.45, 'rgba(0,0,0,0.28)');
+                grd.addColorStop(1, 'rgba(0,0,0,0)');
+                g.fillStyle = grd;
+                g.fillRect(0, 0, 128, 128);
+                const tex = new THREE.CanvasTexture(c);
+                const mat = new THREE.MeshBasicMaterial({
+                    map: tex, transparent: true, depthWrite: false, opacity: 0.7
+                });
+                const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
+                mesh.rotation.x = -Math.PI / 2;
+                mesh.renderOrder = 1;
+                return mesh;
+            }
+            const blobPool = {};
+            function ensureBlob(name, scale) {
+                if (blobPool[name]) return blobPool[name];
+                const b = makeBlobShadow();
+                b.scale.setScalar(scale || 2.2);
+                scene.add(b);
+                blobPool[name] = b;
+                return b;
+            }
+            function updateBlobShadows() {
+                try {
+                    // Player
+                    if (typeof playerGroup !== 'undefined' && playerGroup && playerGroup.visible) {
+                        const b = ensureBlob('player', 2.4);
+                        b.visible = true;
+                        b.position.set(playerGroup.position.x, 0.04, playerGroup.position.z);
+                        // shrink slightly when jumping
+                        const y = playerGroup.position.y || 0;
+                        const s = Math.max(1.2, 2.4 - y * 0.35);
+                        b.scale.set(s, s, 1);
+                        b.material.opacity = Math.max(0.2, 0.7 - y * 0.12);
+                    }
+                    // Bosses / mobs
+                    const targets = [
+                        ['red', 'redMonster', 3.2],
+                        ['boss', 'bossMonster', 4.5],
+                        ['final', 'finalBossMonster', 5.5],
+                        ['supreme', 'supremeBossMonster', 5.5],
+                        ['universe', 'universeBossMonster', 6],
+                        ['cosmic', 'cosmicBossMonster', 5.5],
+                        ['atomic', 'atomicBossMonster', 5],
+                        ['error', 'errorBossMonster', 4.5],
+                        ['octopus', 'octopusMonster', 4]
+                    ];
+                    targets.forEach(function (t) {
+                        let m = null;
+                        try { m = eval(t[1]); } catch (e) {}
+                        if (m && m.visible) {
+                            const b = ensureBlob(t[0], t[2]);
+                            b.visible = true;
+                            b.position.set(m.position.x, 0.05, m.position.z);
+                            b.scale.set(t[2], t[2], 1);
+                        } else if (blobPool[t[0]]) {
+                            blobPool[t[0]].visible = false;
+                        }
+                    });
+                } catch (e) {}
+            }
+            setInterval(updateBlobShadows, 50);
+
+            // ---------- 4. Hit sparks particles ----------
+            const sparkPool = [];
+            (function initSparks() {
+                const tex = (typeof window._getFlareTex === 'function') ? window._getFlareTex() : null;
+                for (let i = 0; i < 24; i++) {
+                    const mat = new THREE.SpriteMaterial({
+                        map: tex || undefined,
+                        color: 0xffe566,
+                        transparent: true,
+                        opacity: 0,
+                        depthWrite: false,
+                        blending: THREE.AdditiveBlending
+                    });
+                    const s = new THREE.Sprite(mat);
+                    s.visible = false;
+                    s.scale.setScalar(0.35);
+                    scene.add(s);
+                    sparkPool.push({ s: s, vx: 0, vy: 0, vz: 0, life: 0 });
+                }
+            })();
+            function spawnHitSparks(x, y, z, color) {
+                const col = color || 0xffe566;
+                let used = 0;
+                for (let i = 0; i < sparkPool.length && used < 8; i++) {
+                    const p = sparkPool[i];
+                    if (p.life > 0) continue;
+                    p.life = 0.35 + Math.random() * 0.25;
+                    p.s.visible = true;
+                    p.s.position.set(x + (Math.random() - 0.5) * 0.4, y + Math.random() * 0.6, z + (Math.random() - 0.5) * 0.4);
+                    p.s.material.color.setHex(col);
+                    p.s.material.opacity = 1;
+                    p.s.scale.setScalar(0.25 + Math.random() * 0.35);
+                    p.vx = (Math.random() - 0.5) * 6;
+                    p.vy = 2 + Math.random() * 5;
+                    p.vz = (Math.random() - 0.5) * 6;
+                    used++;
+                }
+            }
+            window.spawnHitSparks = spawnHitSparks;
+            (function sparkTick() {
+                requestAnimationFrame(sparkTick);
+                const dt = 0.016;
+                for (let i = 0; i < sparkPool.length; i++) {
+                    const p = sparkPool[i];
+                    if (p.life <= 0) { p.s.visible = false; continue; }
+                    p.life -= dt;
+                    p.s.position.x += p.vx * dt;
+                    p.s.position.y += p.vy * dt;
+                    p.s.position.z += p.vz * dt;
+                    p.vy -= 12 * dt;
+                    p.s.material.opacity = Math.max(0, p.life * 2.2);
+                    p.s.scale.multiplyScalar(0.96);
+                }
+            })();
+
+            // Hook performAttack for sparks + light shake
+            try {
+                const _pa = window.performAttack;
+                if (typeof _pa === 'function') {
+                    window.performAttack = function (isAfk) {
+                        const r = _pa.apply(this, arguments);
+                        try {
+                            if (!isAfk && typeof playerGroup !== 'undefined' && playerGroup) {
+                                const ang = playerGroup.rotation.y || 0;
+                                const fx = playerGroup.position.x - Math.sin(ang) * 1.2;
+                                const fz = playerGroup.position.z - Math.cos(ang) * 1.2;
+                                const fy = (playerGroup.position.y || 0) + 1.1;
+                                let col = 0xffe566;
+                                try {
+                                    if (typeof equippedItemType === 'string') {
+                                        if (equippedItemType === 'legendary') col = 0xffd700;
+                                        else if (equippedItemType === 'epic') col = 0xcc44ff;
+                                        else if (equippedItemType === 'rare') col = 0x4488ff;
+                                    }
+                                } catch (e) {}
+                                spawnHitSparks(fx, fy, fz, col);
+                                // light camera shake
+                                if (typeof camera !== 'undefined' && camera && !window._lightShakeOn) {
+                                    window._lightShakeOn = true;
+                                    const ox = camera.position.x, oy = camera.position.y;
+                                    let i = 0;
+                                    (function sh() {
+                                        if (i++ > 4) { camera.position.x = ox; camera.position.y = oy; window._lightShakeOn = false; return; }
+                                        camera.position.x = ox + (Math.random() - 0.5) * 0.08;
+                                        camera.position.y = oy + (Math.random() - 0.5) * 0.05;
+                                        requestAnimationFrame(sh);
+                                    })();
+                                }
+                            }
+                        } catch (e) {}
+                        return r;
+                    };
+                }
+            } catch (e) {}
+
+            // ---------- 5. Skills Q & R (as requested) ----------
+            // Q: CD 60s, speed*2 + dmg*2 for 4s
+            // R: CD 50s, dmg*10 for 0.5s
+            window._skillState = {
+                qReadyAt: 0,
+                rReadyAt: 0,
+                qActiveUntil: 0,
+                rActiveUntil: 0,
+                speedMul: 1,
+                dmgMul: 1
+            };
+            function refreshSkillMuls() {
+                const now = performance.now();
+                const st = window._skillState;
+                let speed = 1, dmg = 1;
+                if (now < st.qActiveUntil) {
+                    speed *= 2;
+                    dmg *= 2;
+                }
+                if (now < st.rActiveUntil) {
+                    dmg *= 10;
+                }
+                st.speedMul = speed;
+                st.dmgMul = dmg;
+            }
+            window.getSkillSpeedMul = function () {
+                refreshSkillMuls();
+                return window._skillState.speedMul || 1;
+            };
+            window.getSkillDmgMul = function () {
+                refreshSkillMuls();
+                return window._skillState.dmgMul || 1;
+            };
+
+            // Skill HUD (Q / R only)
+            function ensureQRBar() {
+                if (document.getElementById('skill-qr-bar')) return;
+                const bar = document.createElement('div');
+                bar.id = 'skill-qr-bar';
+                bar.style.cssText = 'position:fixed;bottom:78px;left:50%;transform:translateX(-50%);z-index:36;display:flex;gap:10px;pointer-events:none;';
+                ['S|Frenzy|60s', 'R|Overdrive|50s'].forEach(function (spec) {
+                    const parts = spec.split('|');
+                    const el = document.createElement('div');
+                    el.id = 'sk-' + parts[0].toLowerCase();
+                    el.style.cssText = 'width:56px;height:56px;border-radius:14px;background:rgba(12,8,28,0.9);border:2px solid rgba(255,200,80,0.55);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ffe566;font-weight:900;font-size:15px;position:relative;box-shadow:0 4px 14px rgba(0,0,0,0.45);';
+                    el.innerHTML = '<span>' + parts[0] + '</span><span style="font-size:9px;opacity:.75">' + parts[1] + '</span><div class="sk-cd" style="position:absolute;inset:0;background:rgba(0,0,0,0.6);border-radius:12px;display:none;align-items:center;justify-content:center;font-size:12px;color:#fff;"></div>';
+                    bar.appendChild(el);
+                });
+                document.body.appendChild(bar);
+            }
+            function updateQRBar() {
+                ensureQRBar();
+                const now = performance.now();
+                const st = window._skillState;
+                const bar = document.getElementById('skill-qr-bar');
+                if (bar) bar.style.display = (typeof gameStage === 'number' && gameStage !== 0) ? 'flex' : 'none';
+                [['s', st.qReadyAt, st.qActiveUntil, '#ff6644'], ['r', st.rReadyAt, st.rActiveUntil, '#ffcc44']].forEach(function (row) {
+                    const el = document.getElementById('sk-' + row[0]);
+                    if (!el) return;
+                    const cdEl = el.querySelector('.sk-cd');
+                    const left = row[1] - now;
+                    const active = now < row[2];
+                    if (active) {
+                        cdEl.style.display = 'flex';
+                        cdEl.style.background = 'rgba(255,180,40,0.35)';
+                        cdEl.textContent = 'ON';
+                        el.style.borderColor = row[3];
+                        el.style.boxShadow = '0 0 16px ' + row[3];
+                    } else if (left > 0) {
+                        cdEl.style.display = 'flex';
+                        cdEl.style.background = 'rgba(0,0,0,0.6)';
+                        cdEl.textContent = (left / 1000).toFixed(0) + 's';
+                        el.style.borderColor = 'rgba(100,100,120,0.4)';
+                        el.style.boxShadow = 'none';
+                        el.style.opacity = '0.75';
+                    } else {
+                        cdEl.style.display = 'none';
+                        el.style.borderColor = 'rgba(255,200,80,0.55)';
+                        el.style.boxShadow = '0 4px 14px rgba(0,0,0,0.45)';
+                        el.style.opacity = '1';
+                    }
+                });
+            }
+            setInterval(updateQRBar, 200);
+
+            function castQ() {
+                if (typeof gameStage === 'number' && gameStage === 0) return;
+                const now = performance.now();
+                const st = window._skillState;
+                if (now < st.qReadyAt) {
+                    try { showToast((typeof currentLang !== 'undefined' && currentLang === 'vi') ? ('S hồi chiêu: ' + Math.ceil((st.qReadyAt - now) / 1000) + 's') : ('S cooldown: ' + Math.ceil((st.qReadyAt - now) / 1000) + 's')); } catch (e) {}
+                    return;
+                }
+                st.qReadyAt = now + 60000; // 60s
+                st.qActiveUntil = now + 4000; // 4s
+                refreshSkillMuls();
+                try {
+                    showToast((typeof currentLang !== 'undefined' && currentLang === 'vi')
+                        ? '⚡ S FRENZY — Tốc độ x2 · Sát thương x2 (4s)!'
+                        : '⚡ S FRENZY — Speed x2 · Damage x2 (4s)!');
+                } catch (e) {}
+                // visual pulse
+                try {
+                    if (typeof playerGroup !== 'undefined' && playerGroup) {
+                        spawnHitSparks(playerGroup.position.x, playerGroup.position.y + 1, playerGroup.position.z, 0xff6644);
+                    }
+                } catch (e) {}
+            }
+            function castR() {
+                if (typeof gameStage === 'number' && gameStage === 0) return;
+                const now = performance.now();
+                const st = window._skillState;
+                if (now < st.rReadyAt) {
+                    try { showToast((typeof currentLang !== 'undefined' && currentLang === 'vi') ? ('R hồi chiêu: ' + Math.ceil((st.rReadyAt - now) / 1000) + 's') : ('R cooldown: ' + Math.ceil((st.rReadyAt - now) / 1000) + 's')); } catch (e) {}
+                    return;
+                }
+                st.rReadyAt = now + 50000; // 50s
+                st.rActiveUntil = now + 500; // 0.5s
+                refreshSkillMuls();
+                try {
+                    showToast((typeof currentLang !== 'undefined' && currentLang === 'vi')
+                        ? '💥 R OVERDRIVE — Sát thương x10 (0.5s)!'
+                        : '💥 R OVERDRIVE — Damage x10 (0.5s)!');
+                } catch (e) {}
+                try {
+                    if (typeof playerGroup !== 'undefined' && playerGroup) {
+                        spawnHitSparks(playerGroup.position.x, playerGroup.position.y + 1.2, playerGroup.position.z, 0xffcc44);
+                    }
+                    // brief full-screen flash
+                    let flash = document.getElementById('combat-hit-flash');
+                    if (!flash) {
+                        flash = document.createElement('div');
+                        flash.id = 'combat-hit-flash';
+                        flash.style.cssText = 'position:fixed;inset:0;z-index:55;pointer-events:none;background:radial-gradient(circle at center,rgba(255,220,120,0.25),transparent 55%);display:none;';
+                        document.body.appendChild(flash);
+                    }
+                    flash.style.display = 'block';
+                    flash.style.opacity = '1';
+                    setTimeout(function () { flash.style.display = 'none'; }, 120);
+                } catch (e) {}
+            }
+            window.castQ = castQ;
+            window.castR = castR;
+
+            window.addEventListener('keydown', function (e) {
+                if (e.repeat) return;
+                const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+                if (tag === 'input' || tag === 'textarea') return;
+                if (e.code === 'KeyS') { e.preventDefault(); castQ(); }
+                if (e.code === 'KeyR') { e.preventDefault(); castR(); }
+            });
+
+            // Apply skill dmg mul inside damage pipeline
+            try {
+                const _pa2 = window.performAttack;
+                if (typeof _pa2 === 'function') {
+                    // wrap by patching totalDmg after calculation — we intercept via a global multiplier read in performAttack
+                    // Safer: monkey-patch by wrapping and using a flag that performAttack can read if we inject
+                }
+            } catch (e) {}
+
+            // Soften existing combatFeel skills (disable old Q/E/R casts that return early)
+            // already return; in castHeavy etc.
+
+            // Init water + lighting after short delay (hub exists)
+            setTimeout(function () {
+                try { buildReflectiveWater(); } catch (e) {}
+                try { if (typeof applyStageLighting === 'function') applyStageLighting(typeof gameStage === 'number' ? gameStage : 0); } catch (e) {}
+            }, 1800);
+            setTimeout(function () {
+                try { buildReflectiveWater(); } catch (e) {}
+            }, 4000);
+
+            console.log('[StageFeel] Lighting + Water + BlobShadows + Skills Q/R ready');
+        })();
+
+            
+        /* =========================================================
+           COMBAT FX PACK v2 — slash arcs, shockwaves, afterimage,
+           crit bursts, screen pulse, ground cracks, trail ribbons
+           ========================================================= */
+        (function combatFxPack() {
+            if (window._combatFxPackV2) return;
+            window._combatFxPackV2 = true;
+
+            const TAU = Math.PI * 2;
+            let _comboCount = 0;
+            let _comboUntil = 0;
+            let _lastAtk = 0;
+
+            function getFlare() {
+                try { if (typeof window._getFlareTex === 'function') return window._getFlareTex(); } catch (e) {}
+                return null;
+            }
+
+            // ---- reusable pools ----
+            const ringPool = [];
+            const arcPool = [];
+            const ghostPool = [];
+
+            function makeRing() {
+                const geo = new THREE.RingGeometry(0.3, 0.55, 48);
+                const mat = new THREE.MeshBasicMaterial({
+                    color: 0xffe566, transparent: true, opacity: 0.85,
+                    side: THREE.DoubleSide, depthWrite: false,
+                    blending: THREE.AdditiveBlending
+                });
+                const m = new THREE.Mesh(geo, mat);
+                m.rotation.x = -Math.PI / 2;
+                m.visible = false;
+                scene.add(m);
+                return { m: m, life: 0, max: 0.4, grow: 8 };
+            }
+            function makeArc() {
+                // crescent slash using torus segment
+                const geo = new THREE.TorusGeometry(1.4, 0.07, 8, 24, Math.PI * 0.85);
+                const mat = new THREE.MeshBasicMaterial({
+                    color: 0xffee88, transparent: true, opacity: 0.95,
+                    depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+                });
+                const m = new THREE.Mesh(geo, mat);
+                m.visible = false;
+                scene.add(m);
+                // inner glow
+                const glow = new THREE.Mesh(
+                    new THREE.TorusGeometry(1.4, 0.16, 6, 20, Math.PI * 0.85),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xffcc44, transparent: true, opacity: 0.35,
+                        depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+                    })
+                );
+                m.add(glow);
+                return { m: m, life: 0, max: 0.28 };
+            }
+            function makeGhost() {
+                const g = new THREE.Group();
+                const body = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.55, 1.1, 0.35),
+                    new THREE.MeshBasicMaterial({ color: 0xaaddff, transparent: true, opacity: 0.35, depthWrite: false })
+                );
+                body.position.y = 1.0;
+                g.add(body);
+                g.visible = false;
+                scene.add(g);
+                return { g: g, life: 0 };
+            }
+            for (let i = 0; i < 6; i++) ringPool.push(makeRing());
+            for (let i = 0; i < 5; i++) arcPool.push(makeArc());
+            for (let i = 0; i < 4; i++) ghostPool.push(makeGhost());
+
+            let ringIdx = 0, arcIdx = 0, ghostIdx = 0;
+
+            function spawnShockwave(x, z, color, size) {
+                const r = ringPool[ringIdx++ % ringPool.length];
+                r.life = r.max = 0.45;
+                r.grow = size || 10;
+                r.m.visible = true;
+                r.m.position.set(x, 0.08, z);
+                r.m.scale.set(0.4, 0.4, 1);
+                r.m.material.color.setHex(color || 0xffe566);
+                r.m.material.opacity = 0.9;
+            }
+            function spawnSlashArc(px, py, pz, rotY, color, scale) {
+                const a = arcPool[arcIdx++ % arcPool.length];
+                a.life = a.max = 0.32;
+                a.m.visible = true;
+                a.m.position.set(px, py, pz);
+                a.m.rotation.set(0.15, rotY, 0.4);
+                a.m.scale.setScalar(scale || 1);
+                a.m.material.color.setHex(color || 0xffee88);
+                a.m.material.opacity = 1;
+                if (a.m.children[0]) {
+                    a.m.children[0].material.color.setHex(color || 0xffcc44);
+                    a.m.children[0].material.opacity = 0.4;
+                }
+            }
+            function spawnAfterimage(px, py, pz, rotY) {
+                const g = ghostPool[ghostIdx++ % ghostPool.length];
+                g.life = 0.35;
+                g.g.visible = true;
+                g.g.position.set(px, py, pz);
+                g.g.rotation.y = rotY;
+                g.g.children[0].material.opacity = 0.4;
+            }
+
+            // floating combat text (CRIT / COMBO)
+            function floatCombatText(text, color, size) {
+                const el = document.createElement('div');
+                el.style.cssText = 'position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(0.6);z-index:72;pointer-events:none;font-weight:900;font-size:' +
+                    (size || 28) + 'px;color:' + (color || '#ffe566') +
+                    ';text-shadow:0 0 10px #000,0 2px 0 #000,0 0 24px ' + (color || '#ffe566') +
+                    ';transition:transform 0.55s cubic-bezier(.2,.8,.2,1),opacity 0.55s ease;opacity:1;letter-spacing:1px;';
+                el.textContent = text;
+                document.body.appendChild(el);
+                requestAnimationFrame(function () {
+                    el.style.transform = 'translate(-50%,-140%) scale(1.2)';
+                    el.style.opacity = '0';
+                });
+                setTimeout(function () { el.remove(); }, 650);
+            }
+
+            // screen edge combat pulse
+            function screenCombatPulse(intense) {
+                let el = document.getElementById('combat-edge-pulse');
+                if (!el) {
+                    el = document.createElement('div');
+                    el.id = 'combat-edge-pulse';
+                    el.style.cssText = 'position:fixed;inset:0;z-index:54;pointer-events:none;display:none;' +
+                        'background:radial-gradient(ellipse at center,transparent 45%,rgba(255,80,40,0.22) 100%);';
+                    document.body.appendChild(el);
+                }
+                el.style.display = 'block';
+                el.style.opacity = intense ? '1' : '0.55';
+                if (intense) {
+                    el.style.background = 'radial-gradient(ellipse at center,transparent 35%,rgba(255,200,40,0.28) 100%)';
+                } else {
+                    el.style.background = 'radial-gradient(ellipse at center,transparent 50%,rgba(255,100,50,0.18) 100%)';
+                }
+                setTimeout(function () { el.style.display = 'none'; }, intense ? 110 : 70);
+            }
+
+            // vertical slash beam (finisher / skill)
+            function spawnSlashBeam(px, pz, rotY, color) {
+                const mat = new THREE.MeshBasicMaterial({
+                    color: color || 0xffe566, transparent: true, opacity: 0.85,
+                    depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide
+                });
+                const beam = new THREE.Mesh(new THREE.PlaneGeometry(0.35, 4.5), mat);
+                beam.position.set(
+                    px - Math.sin(rotY) * 1.5,
+                    2.2,
+                    pz - Math.cos(rotY) * 1.5
+                );
+                beam.rotation.y = rotY;
+                scene.add(beam);
+                const t0 = performance.now();
+                (function anim() {
+                    const age = (performance.now() - t0) / 1000;
+                    beam.material.opacity = Math.max(0, 0.85 - age * 2.2);
+                    beam.scale.x = 1 + age * 3;
+                    beam.scale.y = 1 + age * 0.5;
+                    if (age < 0.4) requestAnimationFrame(anim);
+                    else {
+                        scene.remove(beam);
+                        beam.geometry.dispose();
+                        mat.dispose();
+                    }
+                })();
+            }
+
+            // debris chunks flying out on heavy hit
+            const debrisPool = [];
+            for (let i = 0; i < 16; i++) {
+                const m = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.12, 0.12, 0.12),
+                    new THREE.MeshBasicMaterial({ color: 0xffcc66, transparent: true, opacity: 0.9, depthWrite: false })
+                );
+                m.visible = false;
+                scene.add(m);
+                debrisPool.push({ m: m, vx: 0, vy: 0, vz: 0, life: 0 });
+            }
+            let debrisIdx = 0;
+            function spawnDebris(x, y, z, color, n) {
+                const count = n || 6;
+                for (let i = 0; i < count; i++) {
+                    const d = debrisPool[debrisIdx++ % debrisPool.length];
+                    d.life = 0.4 + Math.random() * 0.35;
+                    d.m.visible = true;
+                    d.m.position.set(x, y, z);
+                    d.m.material.color.setHex(color || 0xffcc66);
+                    d.m.material.opacity = 1;
+                    d.m.scale.setScalar(0.6 + Math.random() * 1.2);
+                    d.vx = (Math.random() - 0.5) * 8;
+                    d.vy = 3 + Math.random() * 6;
+                    d.vz = (Math.random() - 0.5) * 8;
+                    d.m.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
+                }
+            }
+
+            // main attack FX burst
+            function playAttackFX(isSkill, isCrit) {
+                if (typeof playerGroup === 'undefined' || !playerGroup) return;
+                if (typeof gameStage === 'number' && gameStage === 0) return;
+
+                const now = performance.now();
+                const ang = playerGroup.rotation.y || 0;
+                const px = playerGroup.position.x;
+                const py = playerGroup.position.y || 0;
+                const pz = playerGroup.position.z;
+                const fx = px - Math.sin(ang) * 1.5;
+                const fz = pz - Math.cos(ang) * 1.5;
+                const fy = py + 1.15;
+
+                // combo tracking
+                if (now - _lastAtk < 900) _comboCount = Math.min(9, _comboCount + 1);
+                else _comboCount = 1;
+                _lastAtk = now;
+                _comboUntil = now + 900;
+
+                let col = 0xffe566;
+                try {
+                    if (typeof hasHackSword !== 'undefined' && hasHackSword) col = 0xaa66ff;
+                    else if (typeof hasGoDSword !== 'undefined' && hasGoDSword) col = 0x66ddff;
+                    else if (typeof hasGlitchSword !== 'undefined' && hasGlitchSword) col = 0xff3355;
+                    else if (typeof equippedItemType === 'string') {
+                        if (equippedItemType === 'legendary') col = 0xffd700;
+                        else if (equippedItemType === 'epic') col = 0xcc44ff;
+                        else if (equippedItemType === 'rare') col = 0x4488ff;
+                    }
+                } catch (e) {}
+
+                // slash arc always
+                spawnSlashArc(fx, fy, fz, ang + Math.PI, col, isSkill ? 1.6 : (1 + _comboCount * 0.08));
+                // ground shockwave
+                spawnShockwave(fx, fz, col, isSkill ? 14 : (7 + _comboCount));
+                // sparks
+                try {
+                    if (typeof window.spawnHitSparks === 'function')
+                        window.spawnHitSparks(fx, fy, fz, col);
+                } catch (e) {}
+                // debris
+                spawnDebris(fx, fy * 0.6, fz, col, isSkill ? 10 : 4 + Math.min(4, _comboCount));
+                // afterimage on combo 3+
+                if (_comboCount >= 3 || isSkill) {
+                    spawnAfterimage(px, py, pz, ang);
+                }
+                // screen pulse
+                screenCombatPulse(!!isSkill || _comboCount >= 5);
+                // combo text
+                if (_comboCount >= 3 && _comboCount % 1 === 0) {
+                    floatCombatText('COMBO x' + _comboCount, _comboCount >= 5 ? '#ff6644' : '#ffe566', 22 + _comboCount * 2);
+                }
+                if (isCrit) {
+                    floatCombatText('CRIT!', '#ff3344', 36);
+                    spawnSlashBeam(px, pz, ang, 0xff4466);
+                    spawnShockwave(fx, fz, 0xff2244, 16);
+                }
+                if (isSkill) {
+                    spawnSlashBeam(px, pz, ang, col);
+                    spawnSlashArc(fx, fy + 0.3, fz, ang + Math.PI + 0.3, col, 2.0);
+                }
+                // light camera kick
+                try {
+                    if (typeof camera !== 'undefined' && camera && !window._combatKick) {
+                        window._combatKick = true;
+                        const ox = camera.position.x, oy = camera.position.y, oz = camera.position.z;
+                        const kick = isSkill ? 0.28 : (0.1 + Math.min(0.12, _comboCount * 0.02));
+                        // push camera slightly back
+                        camera.position.x += Math.sin(ang) * kick * 0.3;
+                        camera.position.z += Math.cos(ang) * kick * 0.3;
+                        let i = 0;
+                        (function kickAnim() {
+                            if (i++ > (isSkill ? 10 : 6)) {
+                                camera.position.x = ox; camera.position.y = oy; camera.position.z = oz;
+                                window._combatKick = false; return;
+                            }
+                            camera.position.x = ox + (Math.random() - 0.5) * kick;
+                            camera.position.y = oy + (Math.random() - 0.5) * kick * 0.5;
+                            requestAnimationFrame(kickAnim);
+                        })();
+                    }
+                } catch (e) {}
+                // stronger lunge on high combo
+                try {
+                    if (_comboCount >= 4 && typeof playerGroup !== 'undefined') {
+                        playerGroup.position.x -= Math.sin(ang) * 0.25;
+                        playerGroup.position.z -= Math.cos(ang) * 0.25;
+                    }
+                } catch (e) {}
+            }
+            window.playAttackFX = playAttackFX;
+            window.floatCombatText = floatCombatText;
+
+            // animate pools
+            (function fxTick() {
+                requestAnimationFrame(fxTick);
+                const dt = 0.016;
+                // rings
+                for (let i = 0; i < ringPool.length; i++) {
+                    const r = ringPool[i];
+                    if (r.life <= 0) { r.m.visible = false; continue; }
+                    r.life -= dt;
+                    const t = 1 - r.life / r.max;
+                    const s = 0.4 + t * r.grow;
+                    r.m.scale.set(s, s, 1);
+                    r.m.material.opacity = Math.max(0, (1 - t) * 0.85);
+                }
+                // arcs
+                for (let i = 0; i < arcPool.length; i++) {
+                    const a = arcPool[i];
+                    if (a.life <= 0) { a.m.visible = false; continue; }
+                    a.life -= dt;
+                    const t = 1 - a.life / a.max;
+                    a.m.rotation.z += dt * 2.5;
+                    a.m.scale.multiplyScalar(1 + dt * 1.8);
+                    a.m.material.opacity = Math.max(0, (1 - t) * 1.0);
+                    if (a.m.children[0]) a.m.children[0].material.opacity = Math.max(0, (1 - t) * 0.4);
+                }
+                // ghosts
+                for (let i = 0; i < ghostPool.length; i++) {
+                    const g = ghostPool[i];
+                    if (g.life <= 0) { g.g.visible = false; continue; }
+                    g.life -= dt;
+                    g.g.children[0].material.opacity = Math.max(0, g.life * 1.1);
+                    g.g.position.y += dt * 0.4;
+                }
+                // debris
+                for (let i = 0; i < debrisPool.length; i++) {
+                    const d = debrisPool[i];
+                    if (d.life <= 0) { d.m.visible = false; continue; }
+                    d.life -= dt;
+                    d.m.position.x += d.vx * dt;
+                    d.m.position.y += d.vy * dt;
+                    d.m.position.z += d.vz * dt;
+                    d.vy -= 14 * dt;
+                    d.m.rotation.x += dt * 6;
+                    d.m.rotation.z += dt * 4;
+                    d.m.material.opacity = Math.max(0, d.life * 2);
+                    if (d.m.position.y < 0.05) { d.vy *= -0.3; d.m.position.y = 0.05; }
+                }
+            })();
+
+            // Hook performAttack
+            try {
+                const prev = window.performAttack;
+                if (typeof prev === 'function') {
+                    window.performAttack = function (isAfk) {
+                        const r = prev.apply(this, arguments);
+                        try {
+                            if (!isAfk) {
+                                // crit chance visual ~12% or skill active
+                                let isCrit = Math.random() < 0.12;
+                                let isSkill = false;
+                                try {
+                                    const st = window._skillState;
+                                    if (st) {
+                                        const now = performance.now();
+                                        if (now < st.qActiveUntil || now < st.rActiveUntil) {
+                                            isSkill = true;
+                                            isCrit = true;
+                                        }
+                                    }
+                                } catch (e) {}
+                                playAttackFX(isSkill, isCrit);
+                            }
+                        } catch (e) {}
+                        return r;
+                    };
+                }
+            } catch (e) { console.warn('combat fx hook', e); }
+
+            // Enhance skill casts with bigger FX
+            try {
+                const _cq = window.castQ;
+                if (typeof _cq === 'function') {
+                    window.castQ = function () {
+                        const before = window._skillState && window._skillState.qActiveUntil;
+                        _cq.apply(this, arguments);
+                        try {
+                            if (window._skillState && window._skillState.qActiveUntil !== before) {
+                                playAttackFX(true, true);
+                                floatCombatText('FRENZY!', '#ff6644', 34);
+                                if (typeof playerGroup !== 'undefined' && playerGroup) {
+                                    spawnShockwave(playerGroup.position.x, playerGroup.position.z, 0xff6644, 18);
+                                }
+                            }
+                        } catch (e) {}
+                    };
+                }
+                const _cr = window.castR;
+                if (typeof _cr === 'function') {
+                    window.castR = function () {
+                        const before = window._skillState && window._skillState.rActiveUntil;
+                        _cr.apply(this, arguments);
+                        try {
+                            if (window._skillState && window._skillState.rActiveUntil !== before) {
+                                playAttackFX(true, true);
+                                floatCombatText('OVERDRIVE x10!', '#ffcc44', 38);
+                                if (typeof playerGroup !== 'undefined' && playerGroup) {
+                                    spawnShockwave(playerGroup.position.x, playerGroup.position.z, 0xffcc44, 22);
+                                    spawnSlashBeam(playerGroup.position.x, playerGroup.position.z, playerGroup.rotation.y, 0xffee66);
+                                }
+                            }
+                        } catch (e) {}
+                    };
+                }
+            } catch (e) {}
+
+            console.log('[CombatFX] Slash arcs, shockwaves, afterimages, crit bursts ready');
+        })();
+
+            console.log('[Enhanced] Return Hub / Save / BossPattern + Reflections loaded');
                 /* =========================
                    RESIZE
                 ========================= */
@@ -30686,5 +32146,668 @@ function animate() {
             }
         }</script>
 
+
+
+<script>
+/* ===== KOS SESSION + SKILL PIN + LOADING GLOW ===== */
+(function KOS_SessionSkillLoadFix() {
+    if (window._KOS_SessionSkillFixV2) return;
+    window._KOS_SessionSkillFixV2 = true;
+
+    var SESSION_KEY = 'mystic_temple_last_session_v1';
+
+    function saveSession() {
+        try {
+            var name = (typeof currentAccountName !== 'undefined') ? currentAccountName : null;
+            var pass = (typeof currentAccountPass !== 'undefined') ? currentAccountPass : null;
+            if (!name || !pass) return;
+            localStorage.setItem(SESSION_KEY, JSON.stringify({ name: name, pass: pass, savedAt: Date.now() }));
+        } catch (e) {}
+    }
+    function clearSession() {
+        try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+    }
+    function readSession() {
+        try {
+            var raw = localStorage.getItem(SESSION_KEY);
+            if (!raw) return null;
+            var data = JSON.parse(raw);
+            if (!data || !data.name || !data.pass) return null;
+            return data;
+        } catch (e) { return null; }
+    }
+
+    // ===== RESET về trạng thái ban đầu (guest / không có gì) =====
+    function resetToFreshState() {
+        try {
+            if (typeof power !== 'undefined') power = 10;
+            if (typeof killCount !== 'undefined') killCount = 0;
+            if (typeof swordLevel !== 'undefined') swordLevel = 0;
+            if (typeof playerLevel !== 'undefined') playerLevel = 1;
+            if (typeof playerGold !== 'undefined') playerGold = 0;
+            if (typeof luckMultiplier !== 'undefined') luckMultiplier = 1;
+            if (typeof gameLoop !== 'undefined') gameLoop = 1;
+            if (typeof hasGoDSword !== 'undefined') hasGoDSword = false;
+            if (typeof godSwordCount !== 'undefined') godSwordCount = 0;
+            if (typeof hasHackSword !== 'undefined') hasHackSword = false;
+            if (typeof hackSwordCount !== 'undefined') hackSwordCount = 0;
+            if (typeof hasGlitchSword !== 'undefined') hasGlitchSword = false;
+            if (typeof hasElectronSword !== 'undefined') hasElectronSword = false;
+            if (typeof hasKingStatus !== 'undefined') hasKingStatus = false;
+            if (typeof equippedItemType !== 'undefined') equippedItemType = null;
+            if (typeof secretAdminMode !== 'undefined') secretAdminMode = false;
+            if (typeof isGuestAccount !== 'undefined') isGuestAccount = true;
+            if (typeof displayPlayerName !== 'undefined') displayPlayerName = 'Guest';
+            if (typeof inventory !== 'undefined' && inventory) {
+                inventory.common = 0; inventory.rare = 0; inventory.epic = 0; inventory.legendary = 0;
+            }
+            if (typeof itemLevels !== 'undefined' && itemLevels) {
+                itemLevels.common = 1; itemLevels.rare = 1; itemLevels.epic = 1; itemLevels.legendary = 1;
+            }
+            if (typeof equippedPet !== 'undefined') equippedPet = null;
+            try {
+                if (typeof playerHP !== 'undefined' && typeof playerMaxHP !== 'undefined') {
+                    if (typeof refreshPlayerMaxHP === 'function') refreshPlayerMaxHP();
+                    playerHP = playerMaxHP;
+                }
+            } catch (e) {}
+        } catch (e) { console.warn('reset state', e); }
+
+        // UI
+        try {
+            var acc = document.getElementById('val-account'); if (acc) acc.innerText = '--';
+            var vp = document.getElementById('val-power'); if (vp) vp.innerText = (typeof formatNum === 'function' ? formatNum(10) : '10');
+            var vs = document.getElementById('val-sword'); if (vs) { vs.innerText = '—'; vs.style.color = ''; }
+            if (typeof updateGoldUI === 'function') updateGoldUI();
+            if (typeof updateInventoryUI === 'function') updateInventoryUI();
+            if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
+            if (typeof updatePowerBarUI === 'function') updatePowerBarUI();
+            if (typeof updateKillTally === 'function') updateKillTally();
+            if (typeof updatePlayerSwordVisual === 'function') updatePlayerSwordVisual();
+            if (typeof refreshAccountLabel === 'function') refreshAccountLabel();
+        } catch (e) {}
+
+        // Về hub
+        try {
+            if (typeof returnToHubWorld === 'function') returnToHubWorld();
+            else if (typeof gameStage !== 'undefined') gameStage = 0;
+        } catch (e) {}
+    }
+
+    window.logoutAccount = function () {
+        // 1) Lưu tiến trình acc hiện tại trước khi thoát
+        try { if (typeof saveCurrentAccount === 'function') saveCurrentAccount(); } catch (e) {}
+        // 2) Xóa phiên đăng nhập
+        try {
+            if (typeof currentAccountName !== 'undefined') currentAccountName = null;
+            if (typeof currentAccountPass !== 'undefined') currentAccountPass = null;
+        } catch (e) {}
+        clearSession();
+        // 3) Reset trắng + về hub
+        resetToFreshState();
+        try {
+            if (typeof showToast === 'function') {
+                showToast((typeof currentLang !== 'undefined' && currentLang === 'vi')
+                    ? '👋 Đã đăng xuất — về hub, trạng thái ban đầu (save vẫn còn trên máy)'
+                    : '👋 Logged out — back to hub, fresh state (save kept on device)');
+            }
+        } catch (e) {}
+    };
+
+    function hookLoginSave() {
+        if (typeof window.saveCurrentAccount === 'function' && !window.saveCurrentAccount._kosHooked) {
+            var prev = window.saveCurrentAccount;
+            window.saveCurrentAccount = function () {
+                var r = prev.apply(this, arguments);
+                saveSession();
+                return r;
+            };
+            window.saveCurrentAccount._kosHooked = true;
+        }
+        if (typeof window.loginAccount === 'function' && !window.loginAccount._kosHooked) {
+            var prevLogin = window.loginAccount;
+            window.loginAccount = function () {
+                var r = prevLogin.apply(this, arguments);
+                setTimeout(function () {
+                    try { if (typeof currentAccountName !== 'undefined' && currentAccountName) saveSession(); } catch (e) {}
+                }, 80);
+                return r;
+            };
+            window.loginAccount._kosHooked = true;
+        }
+    }
+
+    function tryAutoLogin() {
+        var sess = readSession();
+        if (!sess) return;
+        if (typeof window.loginAccount !== 'function') { setTimeout(tryAutoLogin, 400); return; }
+        if (typeof currentAccountName !== 'undefined' && currentAccountName) return;
+        try {
+            var quick = document.getElementById('login-input');
+            var nameEl = document.getElementById('login-name');
+            var passEl = document.getElementById('login-pass');
+            if (quick) quick.value = sess.name + '/' + sess.pass;
+            if (nameEl) nameEl.value = sess.name;
+            if (passEl) passEl.value = sess.pass;
+            window.loginAccount();
+            setTimeout(function () {
+                try {
+                    if (typeof showToast === 'function') {
+                        showToast((typeof currentLang !== 'undefined' && currentLang === 'vi')
+                            ? '✅ Đã tự khôi phục tiến trình của ' + String(sess.name).toUpperCase()
+                            : '✅ Auto-restored progress for ' + String(sess.name).toUpperCase());
+                    }
+                } catch (e) {}
+            }, 700);
+        } catch (e) {}
+    }
+
+    function ensureLogoutButton() {
+        var modal = document.getElementById('login-modal');
+        if (!modal || document.getElementById('kos-logout-btn')) return;
+        var btn = document.createElement('button');
+        btn.id = 'kos-logout-btn';
+        btn.type = 'button';
+        btn.textContent = (typeof currentLang !== 'undefined' && currentLang === 'vi') ? 'Đăng xuất (về hub)' : 'Log out (to hub)';
+        btn.style.cssText = 'width:100%;margin-top:8px;background:#552222;color:#ffaaaa;border:1px solid #aa4444;padding:10px;border-radius:8px;font-weight:bold;cursor:pointer;';
+        btn.onclick = function () { window.logoutAccount(); };
+        modal.appendChild(btn);
+    }
+
+    // =========================
+    // SKILL S/R — GHIM CỨNG, LUÔN HIỆN
+    // =========================
+    function buildSkillBar() {
+        var bar = document.createElement('div');
+        bar.id = 'skill-qr-bar';
+        bar.setAttribute('data-kos-pinned', '1');
+        bar.style.cssText = 'position:fixed!important;bottom:78px!important;left:50%!important;transform:translateX(-50%)!important;z-index:99990!important;display:flex!important;gap:10px!important;pointer-events:none!important;visibility:visible!important;opacity:1!important;';
+        [
+            { id: 'sk-s', key: 'S', name: 'Frenzy', color: '#ff6644' },
+            { id: 'sk-r', key: 'R', name: 'Overdrive', color: '#ffcc44' }
+        ].forEach(function (d) {
+            var el = document.createElement('div');
+            el.id = d.id;
+            el.style.cssText = 'width:56px;height:56px;border-radius:14px;background:rgba(12,8,28,0.94);border:2px solid rgba(255,200,80,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#ffe566;font-weight:900;font-size:15px;position:relative;box-shadow:0 4px 14px rgba(0,0,0,0.5);transition:border-color .12s,box-shadow .12s,transform .12s;';
+            el.innerHTML = '<span>' + d.key + '</span><span style="font-size:9px;opacity:.8">' + d.name + '</span><div class="sk-cd" style="position:absolute;inset:0;background:rgba(0,0,0,0.62);border-radius:12px;display:none;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:900;"></div>';
+            bar.appendChild(el);
+        });
+        document.body.appendChild(bar);
+        return bar;
+    }
+
+    function ensurePinnedSkillBar() {
+        var bars = document.querySelectorAll('#skill-qr-bar');
+        var bar = null;
+        if (bars.length) {
+            bar = bars[0];
+            for (var i = 1; i < bars.length; i++) { try { bars[i].remove(); } catch (e) {} }
+        }
+        if (!bar || !document.body.contains(bar)) {
+            bar = buildSkillBar();
+        }
+        // Ép luôn hiện — không được ẩn
+        bar.style.setProperty('display', 'flex', 'important');
+        bar.style.setProperty('visibility', 'visible', 'important');
+        bar.style.setProperty('opacity', '1', 'important');
+        bar.style.setProperty('z-index', '99990', 'important');
+        // Đảm bảo đủ 2 nút
+        if (!document.getElementById('sk-s') || !document.getElementById('sk-r')) {
+            try { bar.remove(); } catch (e) {}
+            bar = buildSkillBar();
+        }
+        return bar;
+    }
+
+    function fixSkillStateShape() {
+        if (!window._skillState) {
+            window._skillState = {
+                qReadyAt: 0, rReadyAt: 0, qActiveUntil: 0, rActiveUntil: 0,
+                sReadyAt: 0, sActiveUntil: 0, speedMul: 1, dmgMul: 1
+            };
+        }
+        var st = window._skillState;
+        if (st.sReadyAt && !st.qReadyAt) st.qReadyAt = st.sReadyAt;
+        if (st.sActiveUntil && !st.qActiveUntil) st.qActiveUntil = st.sActiveUntil;
+        if (st.qReadyAt && !st.sReadyAt) st.sReadyAt = st.qReadyAt;
+        if (st.qActiveUntil && !st.sActiveUntil) st.sActiveUntil = st.qActiveUntil;
+    }
+
+    var _pulseT = 0;
+    function updateSkillBarPinned() {
+        fixSkillStateShape();
+        var bar = ensurePinnedSkillBar();
+        var st = window._skillState || {};
+        var now = performance.now();
+        _pulseT += 0.2;
+
+        var rows = [
+            { id: 'sk-s', ready: Math.max(st.sReadyAt || 0, st.qReadyAt || 0), active: Math.max(st.sActiveUntil || 0, st.qActiveUntil || 0), color: '#ff6644' },
+            { id: 'sk-r', ready: st.rReadyAt || 0, active: st.rActiveUntil || 0, color: '#ffcc44' }
+        ];
+        rows.forEach(function (row) {
+            var el = document.getElementById(row.id);
+            if (!el) return;
+            var cdEl = el.querySelector('.sk-cd');
+            if (!cdEl) return;
+            var left = row.ready - now;
+            var active = now < row.active;
+            if (active) {
+                cdEl.style.display = 'flex';
+                var pulse = 0.35 + 0.25 * Math.abs(Math.sin(_pulseT * 3));
+                cdEl.style.background = 'rgba(255,180,40,' + pulse + ')';
+                cdEl.textContent = 'ON';
+                el.style.borderColor = row.color;
+                el.style.boxShadow = '0 0 ' + (14 + 10 * Math.abs(Math.sin(_pulseT * 3))) + 'px ' + row.color;
+                el.style.transform = 'scale(' + (1.05 + 0.03 * Math.sin(_pulseT * 4)) + ')';
+            } else if (left > 0) {
+                cdEl.style.display = 'flex';
+                cdEl.style.background = 'rgba(0,0,0,0.68)';
+                cdEl.textContent = Math.ceil(left / 1000) + 's';
+                el.style.borderColor = 'rgba(100,100,120,0.5)';
+                el.style.boxShadow = 'none';
+                el.style.transform = 'scale(1)';
+            } else {
+                cdEl.style.display = 'none';
+                el.style.borderColor = 'rgba(255,200,80,0.75)';
+                var g = 12 + 8 * Math.abs(Math.sin(_pulseT * 1.6));
+                el.style.boxShadow = '0 0 ' + g + 'px rgba(255,200,80,0.4)';
+                el.style.transform = 'scale(1)';
+            }
+        });
+    }
+
+    // Chặn mọi code khác ẩn skill bar
+    var _obs = null;
+    function watchSkillBar() {
+        try {
+            if (_obs) return;
+            _obs = new MutationObserver(function () {
+                var bar = document.getElementById('skill-qr-bar');
+                if (!bar || !document.body.contains(bar)) {
+                    ensurePinnedSkillBar();
+                    return;
+                }
+                if (bar.style.display === 'none' || getComputedStyle(bar).display === 'none') {
+                    bar.style.setProperty('display', 'flex', 'important');
+                }
+                if (getComputedStyle(bar).visibility === 'hidden') {
+                    bar.style.setProperty('visibility', 'visible', 'important');
+                }
+            });
+            _obs.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+        } catch (e) {}
+    }
+
+    // =========================
+    // LOADING BAR — sáng theo %
+    // =========================
+    function updateLoadingGlow() {
+        try {
+            var fill = document.getElementById('ld-bar-fill');
+            var pctEl = document.getElementById('ld-pct-num');
+            if (!fill) return;
+            fill.classList.add('ld-glow');
+            var pct = 0;
+            if (pctEl) pct = parseFloat(pctEl.textContent) || 0;
+            // cũng đọc width nếu có
+            var w = parseFloat(fill.style.width);
+            if (!isNaN(w) && w > pct) pct = w;
+            pct = Math.max(0, Math.min(100, pct));
+            fill.style.setProperty('--ld-pct', String(pct));
+            // càng gần 100 càng sáng
+            var bright = 0.9 + (pct / 100) * 0.85;
+            fill.style.filter = 'brightness(' + bright + ') saturate(' + (1 + pct / 120) + ')';
+        } catch (e) {}
+    }
+
+    // Main loop — chạy liên tục, không để skill biến mất
+    setInterval(function () {
+        try {
+            hookLoginSave();
+            ensureLogoutButton();
+            updateSkillBarPinned();
+            updateLoadingGlow();
+        } catch (e) {}
+    }, 100);
+
+    // rAF phụ để skill không chớp tắt
+    (function pinLoop() {
+        requestAnimationFrame(pinLoop);
+        try {
+            var bar = document.getElementById('skill-qr-bar');
+            if (!bar || !document.body.contains(bar)) ensurePinnedSkillBar();
+        } catch (e) {}
+    })();
+
+    watchSkillBar();
+    setTimeout(tryAutoLogin, 1600);
+    setTimeout(tryAutoLogin, 3200);
+    setTimeout(tryAutoLogin, 5500);
+
+    setInterval(function () {
+        try {
+            if (typeof currentAccountName !== 'undefined' && currentAccountName && typeof saveCurrentAccount === 'function') {
+                saveCurrentAccount();
+            }
+        } catch (e) {}
+    }, 15000);
+
+    console.log('[KOS] Logout→hub reset + Skill pinned forever + Loading glow ready');
+})();
+</script>
+
+<!-- Post-processing libs cho bloom -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script>
+/* === KOS MAXIMUM BEAUTY UPGRADE v5 === */
+(function(){
+if(window.__kosV5) return; window.__kosV5 = true;
+const T = THREE;
+
+// ============ 1. RENDERER MAX QUALITY ============
+try{
+  renderer.antialias = true;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = T.PCFSoftShadowMap;
+  renderer.toneMapping = T.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.3;
+  renderer.outputEncoding = T.sRGBEncoding;
+  renderer.physicallyCorrectLights = true;
+}catch(e){}
+
+// ============ 2. POST-PROCESSING BLOOM ============
+let composer = null, bloomPass = null;
+function setupBloom(){
+  try{
+    if(typeof EffectComposer === 'undefined') return;
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    bloomPass = new UnrealBloomPass(new T.Vector2(window.innerWidth, window.innerHeight), 0.55, 0.6, 0.85);
+    composer.addPass(bloomPass);
+  }catch(e){ composer = null; }
+}
+setTimeout(setupBloom, 2000);
+
+// Wrap render để dùng composer
+const origRender = renderer.render.bind(renderer);
+renderer.render = function(scene, camera){
+  if(composer && bloomPass){
+    try{ composer.render(); return; }catch(e){}
+  }
+  return origRender(scene, camera);
+};
+
+// ============ 3. ENVIRONMENT MAP REALISTIC CAO CẤP ============
+let realEnv = null;
+function buildRealEnv(){
+  if(realEnv) return realEnv;
+  try{
+    const pm = new T.PMREMGenerator(renderer);
+    const es = new T.Scene();
+    const cv = document.createElement('canvas');
+    cv.width = 2048; cv.height = 1024;
+    const cx = cv.getContext('2d');
+    // Sky gradient nhiều lớp
+    const g = cx.createLinearGradient(0,0,0,1024);
+    g.addColorStop(0,'#a8c8e8'); g.addColorStop(0.2,'#c8dcf0');
+    g.addColorStop(0.4,'#e8e0d0'); g.addColorStop(0.5,'#d8c8a8');
+    g.addColorStop(0.55,'#8a6a48'); g.addColorStop(0.7,'#4a3828');
+    g.addColorStop(1,'#1a1410');
+    cx.fillStyle=g; cx.fillRect(0,0,2048,1024);
+    // Mặt trời + halo
+    const sg = cx.createRadialGradient(1400,180,10,1400,180,350);
+    sg.addColorStop(0,'rgba(255,252,230,1)');
+    sg.addColorStop(0.15,'rgba(255,230,160,0.9)');
+    sg.addColorStop(0.4,'rgba(255,190,100,0.5)');
+    sg.addColorStop(1,'rgba(255,160,60,0)');
+    cx.fillStyle=sg; cx.fillRect(1000,0,800,500);
+    // Mây
+    cx.fillStyle='rgba(255,255,255,0.35)';
+    for(let i=0;i<40;i++){
+      const x=Math.random()*2048, y=Math.random()*350, r=30+Math.random()*80;
+      cx.beginPath(); cx.arc(x,y,r,0,6.28); cx.fill();
+    }
+    // Đồi núi xa
+    cx.fillStyle='rgba(60,50,40,0.6)';
+    cx.beginPath();
+    cx.moveTo(0,700);
+    for(let x=0;x<=2048;x+=64) cx.lineTo(x, 700 - Math.sin(x*0.01)*60 - Math.random()*30);
+    cx.lineTo(2048,1024); cx.lineTo(0,1024); cx.fill();
+    const tex = new T.CanvasTexture(cv);
+    tex.mapping = T.EquirectangularReflectionMapping;
+    es.add(new T.Mesh(new T.SphereGeometry(100,64,32), new T.MeshBasicMaterial({map:tex, side:T.BackSide})));
+    realEnv = pm.fromScene(es, 0.03).texture;
+  }catch(e){ realEnv = null; }
+  return realEnv;
+}
+
+// ============ 4. NORMAL + ROUGHNESS MAP PROCEDURAL ============
+let noiseNormal = null, noiseRough = null;
+function makeNoiseTextures(){
+  if(noiseNormal) return;
+  const N=256;
+  const cv=document.createElement('canvas'); cv.width=cv.height=N;
+  const cx=cv.getContext('2d');
+  const img=cx.createImageData(N,N);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){
+    const p=(y*N+x)*4;
+    const n=(Math.sin(x*0.15)+Math.sin(y*0.15)+Math.sin((x+y)*0.1))*0.33;
+    const v=Math.floor(128+ n*60 + Math.random()*20);
+    img.data[p]=v; img.data[p+1]=v; img.data[p+2]=255; img.data[p+3]=255;
+  }
+  cx.putImageData(img,0,0);
+  noiseNormal = new T.CanvasTexture(cv);
+  noiseNormal.wrapS=noiseNormal.wrapT=T.RepeatWrapping;
+  noiseRough = new T.CanvasTexture(cv);
+  noiseRough.wrapS=noiseRough.wrapT=T.RepeatWrapping;
+}
+
+// ============ 5. ÁP PBR MAX CHO MỌI MESH ============
+function applyMaxRealistic(root, isChar){
+  if(!root) return;
+  const env = buildRealEnv();
+  makeNoiseTextures();
+  root.traverse(o=>{
+    if(!o.isMesh || !o.material) return;
+    if(o.userData.kosFX) return;
+    const mats = Array.isArray(o.material)?o.material:[o.material];
+    mats.forEach(m=>{
+      if(!m.isMeshStandardMaterial && !m.isMeshPhysicalMaterial) return;
+      if(m.userData.kosMax) return;
+      m.userData.kosMax = true;
+      if(env){ m.envMap = env; m.envMapIntensity = isChar?2.2:3.2; }
+      m.roughness = isChar?0.3:0.18;
+      m.metalness = isChar?0.4:0.65;
+      if(!m.normalMap && !isChar){ m.normalMap = noiseNormal; m.normalScale = new T.Vector2(0.4,0.4); }
+      if(!m.roughnessMap && !isChar){ m.roughnessMap = noiseRough; }
+      if(m.isMeshPhysicalMaterial){
+        m.clearcoat = 0.9;
+        m.clearcoatRoughness = 0.08;
+        m.sheen = 0.3;
+      }
+      m.needsUpdate = true;
+    });
+  });
+}
+
+// ============ 6. ÁNH SÁNG NHIỀU LỚP ============
+function setupRichLighting(){
+  try{
+    // Ambient warm
+    const amb = new T.AmbientLight(0xffe8c8, 0.35);
+    scene.add(amb);
+    // Hemisphere sky/ground
+    const hemi = new T.HemisphereLight(0xbfd8ff, 0x4a3828, 0.6);
+    scene.add(hemi);
+    // Key light (mặt trời)
+    const sun = new T.DirectionalLight(0xfff0d0, 1.4);
+    sun.position.set(30, 50, -20);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048,2048);
+    sun.shadow.camera.near=1; sun.shadow.camera.far=150;
+    sun.shadow.bias = -0.0005;
+    scene.add(sun);
+    // Fill light lạnh
+    const fill = new T.DirectionalLight(0x88aaff, 0.5);
+    fill.position.set(-25, 20, 25);
+    scene.add(fill);
+    // Rim light
+    const rim = new T.DirectionalLight(0xffaa66, 0.7);
+    rim.position.set(0, 15, -40);
+    scene.add(rim);
+    // Điểm sáng ấm quanh hub
+    for(let i=0;i<6;i++){
+      const pl = new T.PointLight(0xffaa44, 0.8, 25, 2);
+      const a = (i/6)*Math.PI*2;
+      pl.position.set(Math.cos(a)*18, 4, Math.sin(a)*18);
+      scene.add(pl);
+    }
+  }catch(e){}
+}
+setTimeout(setupRichLighting, 2500);
+
+// ============ 7. PARTICLE AMBIENCE (bụi + đom đóm) ============
+function setupAmbientParticles(){
+  try{
+    const count = 300;
+    const geo = new T.BufferGeometry();
+    const pos = new Float32Array(count*3);
+    for(let i=0;i<count;i++){
+      pos[i*3] = (Math.random()-0.5)*80;
+      pos[i*3+1] = Math.random()*15;
+      pos[i*3+2] = (Math.random()-0.5)*80;
+    }
+    geo.setAttribute('position', new T.BufferAttribute(pos,3));
+    const mat = new T.PointsMaterial({
+      color:0xffdd88, size:0.15, transparent:true, opacity:0.6,
+      blending:T.AdditiveBlending, depthWrite:false
+    });
+    const pts = new T.Points(geo, mat);
+    pts.name = 'kosAmbientDust';
+    scene.add(pts);
+    // Animation
+    let t=0;
+    function tick(){
+      requestAnimationFrame(tick);
+      t += 0.016;
+      pts.rotation.y = t*0.02;
+      pts.position.y = Math.sin(t*0.5)*0.5;
+    }
+    tick();
+  }catch(e){}
+}
+setTimeout(setupAmbientParticles, 3000);
+
+// ============ 8. FOG + VIGNETTE MỊN ============
+try{
+  if(scene.fog === undefined || !scene.fog){
+    scene.fog = new T.FogExp2(0x2a2018, 0.008);
+  }
+}catch(e){}
+try{
+  if(!document.getElementById('kos-vignette-v5')){
+    const v = document.createElement('div');
+    v.id='kos-vignette-v5';
+    v.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:4;'+
+      'background:radial-gradient(ellipse at center, transparent 55%, rgba(10,5,0,0.35) 100%);'+
+      'mix-blend-mode:multiply;';
+    document.body.appendChild(v);
+  }
+}catch(e){}
+
+// ============ 9. ÁP MAX CHO TẤT CẢ ============
+setTimeout(()=>{
+  applyMaxRealistic(typeof playerGroup!=='undefined'?playerGroup:null, true);
+  ['redMonster','octopusMonster','bossMonster','finalBossMonster',
+   'supremeBossMonster','universeBossMonster','cosmicBossMonster',
+   'atomicBossMonster','errorBossMonster','electronBossMonster']
+  .forEach(n=>{ try{ applyMaxRealistic(window[n], false); }catch(e){} });
+  try{ if(typeof biomeDecorGroup!=='undefined') applyMaxRealistic(biomeDecorGroup, false); }catch(e){}
+  try{ if(typeof platformGroup!=='undefined') applyMaxRealistic(platformGroup, false); }catch(e){}
+  try{ if(typeof worldGroup!=='undefined') applyMaxRealistic(worldGroup, false); }catch(e){}
+}, 3500);
+setInterval(()=>{
+  applyMaxRealistic(typeof playerGroup!=='undefined'?playerGroup:null, true);
+}, 10000);
+
+// ============ 10. NƯỚC PHẢN CHIẾU MAX ============
+setTimeout(()=>{
+  try{
+    if(window.waterGroup){
+      waterGroup.traverse(o=>{
+        if(o.isMesh && o.material){
+          o.material.roughness = 0.05;
+          o.material.metalness = 0.8;
+          o.material.envMapIntensity = 3.5;
+          if(noiseNormal){ o.material.normalMap = noiseNormal; o.material.normalScale = new T.Vector2(0.3,0.3); }
+          o.material.needsUpdate = true;
+        }
+      });
+    }
+  }catch(e){}
+}, 6000);
+
+// ============ 11. UI PREMIUM (giữ từ v3/v4) ============
+const css = `
+#player-hp-bar, #boss-hp-bar {
+  backdrop-filter: blur(10px) saturate(1.5);
+  -webkit-backdrop-filter: blur(10px) saturate(1.5);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.18);
+}
+#player-hp-inner, #boss-hp-inner {
+  background: linear-gradient(90deg,#ff2b2b 0%,#ff7a45 40%,#ffd24a 75%,#fff0a0 100%) !important;
+  box-shadow: 0 0 14px rgba(255,80,40,.8), inset 0 1px 0 rgba(255,255,255,.5);
+  transition: width .18s cubic-bezier(.4,0,.2,1);
+}
+#boss-hp-inner {
+  background: linear-gradient(90deg,#6a0000 0%,#ff2244 35%,#ffaa33 70%,#ffe566 100%) !important;
+  box-shadow: 0 0 18px rgba(255,40,60,.9), inset 0 1px 0 rgba(255,255,255,.4);
+}
+#player-hp-inner::after, #boss-hp-inner::after {
+  content:''; position:absolute; top:0; bottom:0; width:35%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.5), transparent);
+  animation: kosShine 2s ease-in-out infinite;
+}
+@keyframes kosShine { 0%{left:-40%} 100%{left:110%} }
+#skill-qr-bar > div {
+  background: linear-gradient(160deg, rgba(35,25,60,.95), rgba(12,8,28,.98)) !important;
+  border: 2px solid rgba(120,220,255,.55) !important;
+  box-shadow: 0 0 16px rgba(80,200,255,.4), inset 0 1px 0 rgba(255,255,255,.25) !important;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+#skill-qr-bar > div:hover { transform: scale(1.1); box-shadow: 0 0 24px rgba(120,220,255,.6) !important; }
+#val-power, #val-gold {
+  text-shadow: 0 0 12px currentColor, 0 2px 0 rgba(0,0,0,.7);
+  letter-spacing: .6px;
+}`;
+const s = document.createElement('style');
+s.id='kos-ui-v5'; s.textContent=css;
+document.head.appendChild(s);
+
+// ============ 12. SMOOTH CAMERA DELTA-TIME ============
+let lastT = performance.now();
+window.kosDelta = function(){
+  const now = performance.now();
+  const dt = Math.min(0.05,(now-lastT)/1000);
+  lastT = now; return dt;
+};
+const origAnimate = window.animate;
+window.animate = function(){
+  const dt = window.kosDelta();
+  if(typeof camera!=='undefined' && typeof playerGroup!=='undefined' && playerGroup){
+    const t = playerGroup.position;
+    camera.position.x += (t.x - camera.position.x)*Math.min(1,dt*6);
+    camera.position.z += (t.z - camera.position.z)*Math.min(1,dt*6);
+  }
+  return origAnimate ? origAnimate.apply(this,arguments) : undefined;
+};
+})();
+</script>
 </body>
-</html>
