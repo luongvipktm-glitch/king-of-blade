@@ -7156,12 +7156,192 @@
                                 clearBiomeDecor();
                             } else {
                                 buildBiomeForStage(stage);
+                                if (window.__biomeSystemV3) window.__biomeSystemV3(stage);
                                 if (typeof applyWorldPalette === 'function') applyWorldPalette(stage);
                             }
                         } catch (e) { console.warn('biome', e); }
                         return r;
                     };
                 }
+                /* ==== NAMED BIOMES + ENERGY ORBS v3 ==== */
+                (function biomeSystemV3(){
+                    const themes={
+                        1:[['RED MOB RELIC',0x7a1f1f,0xff5555],['CRIMSON ALTAR',0x5a1010,0xff3344],['BLOOD PILLAR',0x3a0808,0xff6677]],
+                        2:[['OCEAN SHRINE',0x0a3a5a,0x44ccff],['TIDAL RELIC',0x104060,0x66e8ff],['KRAKEN MARK',0x0a2040,0x88aaff]],
+                        3:[['DEMON RELIC',0x4a1030,0xff66cc],['HELL GATE',0x3a0818,0xff2244],['INFERNO STONE',0x2a0505,0xff8800]],
+                        4:[['SHADOW KEEP',0x1a1028,0xaa66ff],['DARK OBELISK',0x12081a,0x8844cc],['VOID MARK',0x0a0610,0xcc88ff]],
+                        5:[['GALAXY',0x592aaa,0xbd80ff],['SUN',0x843114,0xffbc42],['STAR',0x172b68,0x88dfff],['SKY',0x377fa4,0xe4faff]],
+                        6:[['CRYSTAL SANCTUM',0x42225f,0xc877ff],['THUNDER TEMPLE',0x163a58,0x55edff],['ANCIENT RUINS',0x56503c,0xffd38a],['VOID GARDEN',0x1b213d,0x8799ff],['NEON FORGE',0x301a4a,0xff66cc]],
+                        7:[['NEBULA CAVERN',0x43234e,0xff88dc],['ORBIT OBSERVATORY',0x263955,0x8ecaff],['METEOR CRATER',0x514138,0xffaa76],['LUNAR VAULT',0x424b64,0xdde8ff],['AURORA RIFT',0x1d4a4a,0x66ffcc],['STARFORGE',0x3a2a5a,0xffd36a]],
+                        8:[['AURORA GROVE',0x164e4b,0x70ffcb],['CORAL CAVERN',0x383064,0xf68bff],['COMET VALLEY',0x224665,0x7ce8ff],['ASTRAL SHRINE',0x3b344f,0xffd97a],['PRISM FOREST',0x24405a,0x88ddff],['GRAVITY WELL',0x2a1a3a,0xaa66ff],['STARLIGHT RUINS',0x40404a,0xffe566]],
+                        9:[['ATOMIC CORE',0x104020,0x44ff88],['NUCLEAR RELIC',0x0a2818,0x66ffaa],['QUANTUM PILLAR',0x183028,0x88ffcc]],
+                        10:[['DINO RELIC',0x3a2810,0xffaa44],['FOSSIL ALTAR',0x2a1a08,0xffcc66],['PRIMAL STONE',0x1a1005,0xffe088]],
+                        11:[['ERROR NODE',0x200808,0xff2244],['GLITCH TOTEM',0x180505,0xff4466],['CORRUPT PILLAR',0x100202,0xff6688],['BUG RELIC',0x280a0a,0xff0033]],
+                        12:[['ELECTRON CORE',0x0a1830,0x4488ff],['QUANTUM GATE',0x081228,0x66aaff],['SPARK RELIC',0x0c2040,0x88ccff]]
+                    };
+                    let root=null, stage=-1, orbs=[], collected=new Set(), target=null, arrow=null, anims=[], done=false;
+                    // Per-world energy progress (KHÔNG dùng chung giữa các stage)
+                    const collectedByStage = {}; // stage -> Set of orb indices
+                    const doneByStage = {};      // stage -> boolean
+                    function loadStageEnergy(st) {
+                        if (!collectedByStage[st]) collectedByStage[st] = new Set();
+                        // Merge saved account progress (F5 / login)
+                        try {
+                          if (window.__energyIdxsByStage && window.__energyIdxsByStage[st]) {
+                            window.__energyIdxsByStage[st].forEach(function(i){ collectedByStage[st].add(i); });
+                          }
+                          if (window.__energyFullByStage && window.__energyFullByStage[st]) {
+                            doneByStage[st] = true;
+                          }
+                        } catch(eL) {}
+                        collected = collectedByStage[st];
+                        done = !!doneByStage[st];
+                    }
+                    function saveStageEnergy(st) {
+                        collectedByStage[st] = collected;
+                        doneByStage[st] = done;
+                    }
+                    const R=42;
+                    function dispose(){ if(root){ scene.remove(root); root.traverse(function(o){ if(o.geometry)o.geometry.dispose(); if(o.material){ if(o.material.map)o.material.map.dispose(); o.material.dispose(); } }); } root=null; orbs=[]; arrow=null; anims=[]; }
+                    function mat(c,glow){ const m=new THREE.MeshStandardMaterial({color:c,roughness:.55,metalness:.15,flatShading:true}); if(glow){ m.emissive=new THREE.Color(c); m.emissiveIntensity=.7; } return m; }
+                    function mesh(g,geo,color,x,y,z,glow){ const m=new THREE.Mesh(geo,mat(color,glow)); m.position.set(x,y,z); g.add(m); return m; }
+                    function ring(g,r,color,y){ const m=mesh(g,new THREE.TorusGeometry(r,.12,8,48),color,0,y||.2,0,true); m.rotation.x=Math.PI/2; return m; }
+                    function label(g,text,color){ const cv=document.createElement('canvas'); cv.width=512; cv.height=96; const ctx=cv.getContext('2d'); ctx.font='bold 40px sans-serif'; ctx.textAlign='center'; ctx.fillStyle='#ffffff'; ctx.shadowColor='#'+color.toString(16).padStart(6,'0'); ctx.shadowBlur=16; ctx.fillText(text,256,60); const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),depthWrite:false})); sp.position.y=16; sp.scale.set(22,4,1); g.add(sp); }
+                    function addProps(g,style,col,accent,seed){
+                        const rnd=function(){ seed=(seed*9301+49297)%233280; return seed/233280; };
+                        if(style==='crystal'){
+                            for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; const r=9+(i%3)*2; const h=3+rnd()*3; const c=mesh(g,new THREE.OctahedronGeometry(.8+rnd()*.6,0),col,Math.cos(a)*r,h*.5,Math.sin(a)*r); c.scale.y=h/2; anims.push(function(t){ c.rotation.y=t*.4+i; }); }
+                        } else if(style==='tech'){
+                            for(let i=0;i<8;i++){ const a=i/8*Math.PI*2; const r=10; const p=mesh(g,new THREE.CylinderGeometry(.5,.7,5,8),col,Math.cos(a)*r,2.5,Math.sin(a)*r); anims.push(function(t){ p.rotation.y=t*.3+i; }); }
+                        } else if(style==='ruin'){
+                            for(let i=0;i<8;i++){ const a=i/8*Math.PI*2; const r=11; const c=mesh(g,new THREE.CylinderGeometry(.7,.9,4+rnd()*2,8),col,Math.cos(a)*r,2,Math.sin(a)*r); if(i%3===0)c.rotation.z=.2; }
+                        } else if(style==='organic'){
+                            for(let i=0;i<10;i++){ const a=i/10*Math.PI*2; const r=9+(i%3)*2; const s=mesh(g,new THREE.SphereGeometry(1.2+rnd(),12,8),col,Math.cos(a)*r,1.5,Math.sin(a)*r); s.scale.y=1.4; anims.push(function(t){ s.position.y=1.5+Math.sin(t*1.2+i)*.2; }); }
+                        } else if(style==='celestial'){
+                            for(let i=0;i<6;i++){ const a=i/6*Math.PI*2; const p=mesh(g,new THREE.SphereGeometry(1.4,16,12),col,Math.cos(a)*12,4,Math.sin(a)*12); const r=ring(g,2.2,accent,p.position.x,p.position.y,p.position.z); anims.push(function(t){ p.position.y=4+Math.sin(t+i)*.5; r.rotation.z=t*.5; }); }
+                        } else if(style==='ice'){
+                            for(let i=0;i<12;i++){ const a=i/12*Math.PI*2; const r=9+(i%3)*2; const h=3+rnd()*3; const c=mesh(g,new THREE.ConeGeometry(.7,h,6),col,Math.cos(a)*r,h*.5,Math.sin(a)*r); c.rotation.x=Math.PI; anims.push(function(t){ c.rotation.z=Math.sin(t+i)*.1; }); }
+                        } else {
+                            for(let i=0;i<8;i++){ const a=i/8*Math.PI*2; const r=10; const c=mesh(g,new THREE.ConeGeometry(1.2,3,6),col,Math.cos(a)*r,1.5,Math.sin(a)*r); anims.push(function(t){ c.scale.y=1+Math.sin(t*2+i)*.1; }); }
+                        }
+                    }
+                    function build(st){
+                        // Lưu progress stage cũ trước khi chuyển
+                        if (stage >= 0) saveStageEnergy(stage);
+                        dispose(); stage=st; target=null;
+                        loadStageEnergy(st); // nạp progress RIÊNG của stage này
+                        if(!themes[st]){
+                            window.__energyHave = 0; window.__energyNeed = 0; window.__energyFull = true;
+                            window.__energyFullStage = st;
+                            return;
+                        }
+                        root=new THREE.Group(); root.name='NamedBiomesV3'; scene.add(root);
+                        const list=themes[st];
+                        list.forEach(function(th,i){
+                            const name=th[0], col=th[1], accent=th[2];
+                            const a=i/list.length*Math.PI*2 - Math.PI/2;
+                            const x=Math.cos(a)*R, z=Math.sin(a)*R;
+                            const g=new THREE.Group(); g.position.set(x,0,z); root.add(g);
+                            g.rotation.y=Math.atan2(-x,-z);
+                            label(g,name,accent);
+                            mesh(g,new THREE.CylinderGeometry(7,7.5,.18,32),col,0,.05,0);
+                            const path=mesh(g,new THREE.BoxGeometry(3.2,.06,10),accent,0,.12,5); path.material.emissiveIntensity=.15;
+                            mesh(g,new THREE.CylinderGeometry(1.1,1.3,.22,12),col,0,.18,0);
+                            const orb=mesh(g,new THREE.SphereGeometry(0.75,16,12),accent,0,1.6,0,true);
+                            orb.userData.idx=i; orbs.push(orb);
+                            // Ẩn orb đã nhặt ở stage NÀY (không liên quan stage khác)
+                            if (collected.has(i)) orb.visible = false;
+                            const beam=mesh(g,new THREE.CylinderGeometry(.2,.2,8,8),accent,0,5,0,true); beam.material.transparent=true; beam.material.opacity=.22;
+                            ring(g,1.5,accent,1.55);
+                            const style=['crystal','tech','ruin','organic','celestial','ice','volcano'][i%7];
+                            addProps(g,style,col,accent,st*100+i*7+3);
+                            for(let k=0;k<10;k++){ const aa=k/10*Math.PI*2; if(Math.sin(aa)>.8)continue; const rr=8.5; const b=mesh(g,new THREE.DodecahedronGeometry(0.7,0),col,Math.cos(aa)*rr,0.6,Math.sin(aa)*rr); b.scale.y=1.1; }
+                        });
+                        arrow=new THREE.ArrowHelper(new THREE.Vector3(0,0,-1), new THREE.Vector3(0,.3,0), 3, 0xffe36a, 1,.6); root.add(arrow);
+                    }
+                    const base=setExpandedWorld;
+                    setExpandedWorld=function(st){ const r=base.apply(this,arguments); build(st); return r; };
+                    window.__biomeSystemV3=build;
+                    setInterval(function(){
+                        if(stage!==gameStage) build(gameStage);
+                        if(!root) return;
+                        const t=performance.now()/1000;
+                        anims.forEach(function(fn){ fn(t); });
+                        if(gameStage===5 && collected.size<orbs.length){
+                            // Chỉ ẩn Final Boss của stage 5 — không ảnh hưởng stage khác
+                            try {
+                              finalBossActive=false;
+                              if (finalBossMonster) finalBossMonster.visible=false;
+                              const bar=document.getElementById('boss-hp-bar'); if(bar)bar.style.display='none';
+                            } catch(e) {}
+                        }
+                        target=null;
+                        for(const o of orbs){ if(!collected.has(o.userData.idx)){ target=o; break; } }
+                        if(target){
+                            const v=target.getWorldPosition(new THREE.Vector3());
+                            const p=playerGroup.position;
+                            const dir=new THREE.Vector3(v.x-p.x,0,v.z-p.z).normalize();
+                            arrow.position.set(p.x,p.y+.25,p.z);
+                            arrow.setDirection(dir);
+                            arrow.visible=true;
+                        } else arrow.visible=false;
+                        for(const o of orbs){
+                            if(collected.has(o.userData.idx)) continue;
+                            const v=o.getWorldPosition(new THREE.Vector3());
+                            const d=Math.hypot(playerGroup.position.x-v.x, playerGroup.position.z-v.z);
+                            if(d<3){ collected.add(o.userData.idx); o.visible=false; if(typeof showToast==='function') showToast('Energy '+collected.size+'/'+orbs.length);
+                              try {
+                                if (!window.__energyIdxsByStage) window.__energyIdxsByStage = {};
+                                window.__energyIdxsByStage[stage] = Array.from(collected);
+                                window.__energyHaveByStage = window.__energyHaveByStage || {};
+                                window.__energyHaveByStage[stage] = collected.size;
+                              } catch(eI) {}
+                            }
+                        }
+                        orbs.forEach(function(o,i){ if(!o.visible)return; o.position.y=1.6+Math.sin(t*2+i)*.15; o.rotation.y=t*.6; });
+                        let hud=document.getElementById('biome-energy-hud');
+                        if(!hud){ hud=document.createElement('div'); hud.id='biome-energy-hud'; hud.style.cssText='position:fixed;top:130px;left:50%;transform:translateX(-50%);z-index:80;background:#101327dc;border:1px solid #9ce8ff;color:white;padding:8px 16px;border-radius:12px;pointer-events:none;display:none;font:600 14px sans-serif'; document.body.appendChild(hud); }
+                        if(themes[gameStage]){
+                          hud.style.display='block';
+                          const _lbl={1:'RED',2:'OCEAN',3:'DEMON',4:'SHADOW',5:'FINAL',6:'SUPREME',7:'UNIVERSE',8:'COSMIC',9:'ATOMIC',10:'DINO',11:'ERROR',12:'ELECTRON'};
+                          hud.textContent=(_lbl[gameStage]||('W'+gameStage))+' — Energy '+collected.size+'/'+orbs.length+(collected.size>=orbs.length?' ✓':'');
+                        } else hud.style.display='none';
+                        if(!done && orbs.length && collected.size===orbs.length){
+                            done=true;
+                            doneByStage[stage] = true;
+                            saveStageEnergy(stage);
+                            window.__energyFullStage = stage;
+                            window.__energyFull = true;
+                            if (!window.__energyFullByStage) window.__energyFullByStage = {};
+                            window.__energyFullByStage[stage] = true;
+                            if(gameStage===5){ finalBossActive=true; finalBossHP=finalBossMaxHP; finalBossMonster.visible=true; finalBossMonster.position.set(0,0,-6); const bar=document.getElementById('boss-hp-bar'); if(bar)bar.style.display='block'; showToast('Đủ Energy — triệu hồi FINAL BOSS!'); }
+                            else {
+                              try {
+                                showToast((typeof currentLang !== 'undefined' && currentLang === 'vi')
+                                  ? '⚡ ĐỦ ENERGY (World '+stage+') — Combat mở khóa!'
+                                  : '⚡ ENERGY FULL (World '+stage+') — Combat unlocked!');
+                              } catch(e) { showToast('Đã thu thập đủ Energy!'); }
+                            }
+                        }
+                        // Progress CHỈ của stage hiện tại — không đụng stage khác
+                        try {
+                          saveStageEnergy(stage);
+                          window.__energyHave = collected.size;
+                          window.__energyNeed = orbs.length || 0;
+                          const fullNow = (orbs.length > 0 && collected.size >= orbs.length);
+                          window.__energyFull = fullNow;
+                          window.__energyFullStage = stage;
+                          // Map per-stage cho gate
+                          if (!window.__energyFullByStage) window.__energyFullByStage = {};
+                          window.__energyFullByStage[stage] = fullNow;
+                          if (!window.__energyHaveByStage) window.__energyHaveByStage = {};
+                          if (!window.__energyNeedByStage) window.__energyNeedByStage = {};
+                          window.__energyHaveByStage[stage] = collected.size;
+                          window.__energyNeedByStage[stage] = orbs.length || 0;
+                        } catch(eE) {}
+                    },60);
+                })();
+
                 const SKIN_CATALOG = [
                     { id: 'default', boss: 'Start', name: 'Trainee', price: 0, speed: 1.0, color: '#1a1a24', emoji: '👤' },
                     { id: 'hooded_mystic', boss: 'Start', name: 'Hooded Mystic', price: 0, speed: 1.05, color: '#2a1848', emoji: '🗡️' },
@@ -7240,28 +7420,13 @@
                 }
                 let collisionObstacles = []; // {x,z,r} trees & rocks
                 function registerCollision(x, z, r) {
-                    collisionObstacles.push({ x: x, z: z, r: r || 0.9 });
+                    // no-op: không đăng ký chướng ngại vật chặn player/cầu thang
+                    return;
                 }
                 function resolveCollisions() {
-                    if (!playerGroup || !collisionObstacles.length) return;
-                    if (gameStage === 11 || gameStage === 12) return; // special worlds
-                    const px = playerGroup.position.x;
-                    const pz = playerGroup.position.z;
-                    for (let i = 0; i < collisionObstacles.length; i++) {
-                        const o = collisionObstacles[i];
-                        if (o.stages && o.stages.indexOf(gameStage) < 0) continue;
-                        const dx = px - o.x;
-                        const dz = pz - o.z;
-                        const d = Math.hypot(dx, dz);
-                        const minD = o.r + 0.55;
-                        if (d < minD && d > 0.001) {
-                            const push = (minD - d) / d;
-                            playerGroup.position.x += dx * push;
-                            playerGroup.position.z += dz * push;
-                        } else if (d < 0.001) {
-                            playerGroup.position.x += minD;
-                        }
-                    }
+                    // DISABLED — collision cây/đá chặn cầu thang & đường đi mỗi thế giới
+                    // Giữ mảng collisionObstacles để decor vẫn spawn, nhưng không đẩy player
+                    return;
                 }
                 let isCosmicSkinOn = false;
                 const inventory = {
@@ -10826,9 +10991,9 @@
                         }
                         if (typeof refreshRedKillBar === 'function') refreshRedKillBar();
                         if (typeof redMonster !== 'undefined' && redMonster)
-                            redMonster.visible = (s === 1);
+                            redMonster.visible = (s === 1) && (typeof window.isEnergyFullForCombat !== 'function' || window.isEnergyFullForCombat());
                         if (typeof octopusMonster !== 'undefined' && octopusMonster)
-                            octopusMonster.visible = (s === 2);
+                            octopusMonster.visible = (s === 2) && (typeof window.isEnergyFullForCombat !== 'function' || window.isEnergyFullForCombat());
                         if (s === 11 || s === 12) {
                             if (typeof redMonster !== 'undefined' && redMonster)
                                 redMonster.visible = false;
@@ -10836,7 +11001,7 @@
                         if (s !== 2 && typeof octopusMonster !== 'undefined' && octopusMonster)
                             octopusMonster.visible = false;
                         if (typeof bossMonster !== 'undefined' && bossMonster)
-                            bossMonster.visible = (s === 3);
+                            bossMonster.visible = (s === 3) && (typeof window.isEnergyFullForCombat !== 'function' || window.isEnergyFullForCombat());
                         if (typeof finalBossMonster !== 'undefined' && finalBossMonster)
                             finalBossMonster.visible = (s === 5);
                         if (typeof supremeBossMonster !== 'undefined' && supremeBossMonster)
@@ -31551,7 +31716,7 @@ function animate() {
                 const bar = document.createElement('div');
                 bar.id = 'skill-qr-bar';
                 bar.style.cssText = 'position:fixed;bottom:78px;left:50%;transform:translateX(-50%);z-index:36;display:flex;gap:10px;pointer-events:none;';
-                ['S|Frenzy|60s', 'R|Overdrive|50s'].forEach(function (spec) {
+                ['Z|Frenzy|60s', 'R|Overdrive|50s'].forEach(function (spec) {
                     const parts = spec.split('|');
                     const el = document.createElement('div');
                     el.id = 'sk-' + parts[0].toLowerCase();
@@ -31601,7 +31766,7 @@ function animate() {
                 const now = performance.now();
                 const st = window._skillState;
                 if (now < st.qReadyAt) {
-                    try { showToast((typeof currentLang !== 'undefined' && currentLang === 'vi') ? ('S hồi chiêu: ' + Math.ceil((st.qReadyAt - now) / 1000) + 's') : ('S cooldown: ' + Math.ceil((st.qReadyAt - now) / 1000) + 's')); } catch (e) {}
+                    try { showToast((typeof currentLang !== 'undefined' && currentLang === 'vi') ? ('Z hồi chiêu: ' + Math.ceil((st.qReadyAt - now) / 1000) + 's') : ('Z cooldown: ' + Math.ceil((st.qReadyAt - now) / 1000) + 's')); } catch (e) {}
                     return;
                 }
                 st.qReadyAt = now + 60000; // 60s
@@ -31609,8 +31774,8 @@ function animate() {
                 refreshSkillMuls();
                 try {
                     showToast((typeof currentLang !== 'undefined' && currentLang === 'vi')
-                        ? '⚡ S FRENZY — Tốc độ x2 · Sát thương x2 (4s)!'
-                        : '⚡ S FRENZY — Speed x2 · Damage x2 (4s)!');
+                        ? '⚡ Z FRENZY — Tốc độ x2 · Sát thương x2 (4s)!'
+                        : '⚡ Z FRENZY — Speed x2 · Damage x2 (4s)!');
                 } catch (e) {}
                 // visual pulse
                 try {
@@ -31659,7 +31824,7 @@ function animate() {
                 if (e.repeat) return;
                 const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
                 if (tag === 'input' || tag === 'textarea') return;
-                if (e.code === 'KeyS') { e.preventDefault(); castQ(); }
+                if (e.code === 'KeyZ') { e.preventDefault(); castQ(); }
                 if (e.code === 'KeyR') { e.preventDefault(); castR(); }
             });
 
@@ -32323,7 +32488,7 @@ function animate() {
         bar.setAttribute('data-kos-pinned', '1');
         bar.style.cssText = 'position:fixed!important;bottom:78px!important;left:50%!important;transform:translateX(-50%)!important;z-index:99990!important;display:flex!important;gap:10px!important;pointer-events:none!important;visibility:visible!important;opacity:1!important;';
         [
-            { id: 'sk-s', key: 'S', name: 'Frenzy', color: '#ff6644' },
+            { id: 'sk-s', key: 'Z', name: 'Frenzy', color: '#ff6644' },
             { id: 'sk-r', key: 'R', name: 'Overdrive', color: '#ffcc44' }
         ].forEach(function (d) {
             var el = document.createElement('div');
@@ -32810,4 +32975,882 @@ window.animate = function(){
 };
 })();
 </script>
+
+<script>
+/* =========================================================
+   KOS FIX v2 — Energy gate ALL stages: NO MOBS until full Energy
+   + Reliable damage to creatures
+   ========================================================= */
+(function KOS_EnergyGateAndDamageFix() {
+  if (window.__kosEnergyGateV2) return;
+  window.__kosEnergyGateV2 = true;
+  window.__kosEnergyGateV1 = true; // skip old if any
+
+  // ALL combat stages (not hub 0)
+  function isCombatStage(s) {
+    s = (typeof s === 'number') ? s : (typeof gameStage === 'number' ? gameStage : 0);
+    return s >= 1 && s <= 12;
+  }
+
+  function getEnergyProgress() {
+    try {
+      const s = (typeof gameStage === 'number') ? gameStage : -1;
+      // Ưu tiên map theo TỪNG stage — không lấy nhầm stage khác
+      if (window.__energyNeedByStage && typeof window.__energyNeedByStage[s] === 'number' && window.__energyNeedByStage[s] > 0) {
+        const have = (window.__energyHaveByStage && typeof window.__energyHaveByStage[s] === 'number') ? window.__energyHaveByStage[s] : 0;
+        const need = window.__energyNeedByStage[s];
+        const full = !!(window.__energyFullByStage && window.__energyFullByStage[s]) || (have >= need);
+        return { have: have, need: need, full: full, stage: s };
+      }
+      // Fallback: globals chỉ hợp lệ nếu đúng stage hiện tại
+      if (typeof window.__energyNeed === 'number' && window.__energyNeed > 0 && window.__energyFullStage === s) {
+        const have = typeof window.__energyHave === 'number' ? window.__energyHave : 0;
+        const need = window.__energyNeed;
+        return { have: have, need: need, full: !!window.__energyFull || have >= need, stage: s };
+      }
+      const hud = document.getElementById('biome-energy-hud');
+      if (hud && hud.style.display !== 'none' && hud.textContent) {
+        const m = hud.textContent.match(/Energy\s+(\d+)\s*\/\s*(\d+)/i);
+        if (m) return { have: +m[1], need: +m[2], full: +m[1] >= +m[2] && +m[2] > 0, stage: s };
+      }
+    } catch (e) {}
+    if (!isCombatStage()) return { have: 1, need: 1, full: true };
+    return { have: 0, need: 1, full: false };
+  }
+
+  window.isEnergyFullForCombat = function () {
+    if (!isCombatStage()) return true;
+    const p = getEnergyProgress();
+    // Chỉ full khi đúng stage hiện tại đã đủ energy
+    return !!p.full;
+  };
+
+  const MOB_GLOBALS = [
+    'redMonster', 'octopusMonster', 'bossMonster', 'finalBossMonster',
+    'supremeBossMonster', 'universeBossMonster', 'cosmicBossMonster',
+    'oldCharacterBossMonster', 'atomicBossMonster', 'cosmicDinoMonster',
+    'errorBossMonster', 'electronBossMonster'
+  ];
+
+  function hideCombatMobsHard() {
+    try { if (typeof redMonster !== 'undefined' && redMonster) redMonster.visible = false; } catch (e) {}
+    try { if (typeof octopusMonster !== 'undefined' && octopusMonster) octopusMonster.visible = false; } catch (e) {}
+    try { if (typeof bossMonster !== 'undefined' && bossMonster) bossMonster.visible = false; } catch (e) {}
+    try {
+      if (typeof finalBossMonster !== 'undefined' && finalBossMonster) {
+        finalBossMonster.visible = false;
+        if (typeof finalBossActive !== 'undefined') finalBossActive = false;
+      }
+    } catch (e) {}
+    try {
+      if (typeof supremeBossMonster !== 'undefined' && supremeBossMonster) {
+        supremeBossMonster.visible = false;
+        if (typeof supremeBossActive !== 'undefined') supremeBossActive = false;
+      }
+    } catch (e) {}
+    try { if (typeof universeBossMonster !== 'undefined' && universeBossMonster) universeBossMonster.visible = false; } catch (e) {}
+    try { if (typeof cosmicBossMonster !== 'undefined' && cosmicBossMonster) cosmicBossMonster.visible = false; } catch (e) {}
+    try { if (typeof oldCharacterBossMonster !== 'undefined' && oldCharacterBossMonster) oldCharacterBossMonster.visible = false; } catch (e) {}
+    try { if (typeof atomicBossMonster !== 'undefined' && atomicBossMonster) atomicBossMonster.visible = false; } catch (e) {}
+    try { if (typeof cosmicDinoMonster !== 'undefined' && cosmicDinoMonster) cosmicDinoMonster.visible = false; } catch (e) {}
+    try { if (typeof errorBossMonster !== 'undefined' && errorBossMonster) errorBossMonster.visible = false; } catch (e) {}
+    try { if (typeof electronBossMonster !== 'undefined' && electronBossMonster) electronBossMonster.visible = false; } catch (e) {}
+    try {
+      ['boss-hp-bar', 'red-mob-hp-bar', 'red-kill-bar'].forEach(function (id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'none';
+      });
+    } catch (e) {}
+  }
+
+  function spawnForStage(s) {
+    try {
+      if (s === 1 && typeof redMonster !== 'undefined' && redMonster) {
+        redMonster.visible = true;
+        if (typeof redMonsterCurrentHP === 'number' && redMonsterCurrentHP <= 0) {
+          redMonsterCurrentHP = (typeof RED_MOB_MAX_HP === 'number') ? RED_MOB_MAX_HP : 100;
+        }
+        if (typeof updateRedMobHPSprite === 'function') updateRedMobHPSprite();
+        if (typeof refreshRedKillBar === 'function') refreshRedKillBar();
+        const bar = document.getElementById('red-mob-hp-bar');
+        if (bar) bar.style.display = 'block';
+      }
+      if (s === 2 && typeof octopusMonster !== 'undefined' && octopusMonster) {
+        octopusMonster.visible = true;
+      }
+      if (s === 3 && typeof bossMonster !== 'undefined' && bossMonster) {
+        bossMonster.visible = true;
+        const bar = document.getElementById('boss-hp-bar');
+        if (bar) bar.style.display = 'block';
+      }
+      if (s === 4 && typeof bossMonster !== 'undefined' && bossMonster) {
+        bossMonster.visible = true;
+      }
+      if (s === 5 && typeof finalBossMonster !== 'undefined' && finalBossMonster) {
+        if (typeof finalBossActive !== 'undefined') finalBossActive = true;
+        if (typeof finalBossHP !== 'undefined' && typeof finalBossMaxHP !== 'undefined') finalBossHP = finalBossMaxHP;
+        finalBossMonster.visible = true;
+        try { finalBossMonster.position.set(0, 0, -6); } catch (e) {}
+        const bar = document.getElementById('boss-hp-bar');
+        if (bar) bar.style.display = 'block';
+      }
+      if (s === 6 && typeof supremeBossMonster !== 'undefined' && supremeBossMonster) {
+        if (typeof supremeBossActive !== 'undefined') supremeBossActive = true;
+        supremeBossMonster.visible = true;
+        const bar = document.getElementById('boss-hp-bar');
+        if (bar) bar.style.display = 'block';
+      }
+      if (s === 7 && typeof universeBossMonster !== 'undefined' && universeBossMonster) {
+        universeBossMonster.visible = true;
+        const bar = document.getElementById('boss-hp-bar');
+        if (bar) bar.style.display = 'block';
+      }
+      if (s === 8) {
+        if (typeof cosmicBossMonster !== 'undefined' && cosmicBossMonster) cosmicBossMonster.visible = true;
+        if (typeof oldCharacterBossMonster !== 'undefined' && oldCharacterBossMonster) oldCharacterBossMonster.visible = true;
+        const bar = document.getElementById('boss-hp-bar');
+        if (bar) bar.style.display = 'block';
+      }
+      if (s === 9 && typeof atomicBossMonster !== 'undefined' && atomicBossMonster) {
+        atomicBossMonster.visible = true;
+        const bar = document.getElementById('boss-hp-bar');
+        if (bar) bar.style.display = 'block';
+      }
+      if (s === 10 && typeof cosmicDinoMonster !== 'undefined' && cosmicDinoMonster) {
+        cosmicDinoMonster.visible = true;
+      }
+      if (s === 11 && typeof errorBossMonster !== 'undefined' && errorBossMonster) {
+        errorBossMonster.visible = true;
+        const bar = document.getElementById('boss-hp-bar');
+        if (bar) bar.style.display = 'block';
+      }
+      if (s === 12 && typeof electronBossMonster !== 'undefined' && electronBossMonster) {
+        electronBossMonster.visible = true;
+        const bar = document.getElementById('boss-hp-bar');
+        if (bar) bar.style.display = 'block';
+      }
+    } catch (e) { console.warn('spawnForStage', e); }
+  }
+
+  function allowStageMob() {
+    if (!window.isEnergyFullForCombat()) {
+      hideCombatMobsHard();
+      return false;
+    }
+    spawnForStage(gameStage);
+    return true;
+  }
+
+  const STAGE_NAMES = {
+    1: { vi: '🔴 RED MOB — Quái đỏ xuất trận!', en: '🔴 RED MOB — Red mobs unleashed!' },
+    2: { vi: '🦑 OCEAN — Kraken / Octopus xuất hiện!', en: '🦑 OCEAN — Octopus appears!' },
+    3: { vi: '😈 DEMON — Boss địa ngục!', en: '😈 DEMON — Hell boss!' },
+    4: { vi: '🌑 SHADOW — Boss bóng tối!', en: '🌑 SHADOW — Dark boss!' },
+    5: { vi: '🌌 FINAL — FINAL BOSS triệu hồi!', en: '🌌 FINAL — FINAL BOSS summoned!' },
+    6: { vi: '💎 SUPREME — Supreme Boss!', en: '💎 SUPREME — Supreme Boss!' },
+    7: { vi: '🪐 UNIVERSE — Universe Boss!', en: '🪐 UNIVERSE — Universe Boss!' },
+    8: { vi: '✨ COSMIC — Cosmic Boss!', en: '✨ COSMIC — Cosmic Boss!' },
+    9: { vi: '⚛️ ATOMIC — Atomic Boss!', en: '⚛️ ATOMIC — Atomic Boss!' },
+    10: { vi: '🦕 DINO — Cosmic Dino!', en: '🦕 DINO — Cosmic Dino!' },
+    11: { vi: '👾 ERROR — Error / Glitch Boss!', en: '👾 ERROR — Error Boss!' },
+    12: { vi: '⚡ ELECTRON — Electron Boss!', en: '⚡ ELECTRON — Electron Boss!' }
+  };
+
+  setInterval(function () {
+    try {
+      if (!isCombatStage()) return;
+      if (!window.isEnergyFullForCombat()) {
+        hideCombatMobsHard();
+      } else {
+        allowStageMob();
+      }
+    } catch (e) {}
+  }, 80);
+
+  try {
+    const prev = window.setExpandedWorld;
+    if (typeof prev === 'function' && !prev._kosEnergyHookV2) {
+      window.setExpandedWorld = function (st) {
+        const r = prev.apply(this, arguments);
+        setTimeout(function () {
+          if (!window.isEnergyFullForCombat()) hideCombatMobsHard();
+        }, 40);
+        setTimeout(function () {
+          if (!window.isEnergyFullForCombat()) hideCombatMobsHard();
+        }, 200);
+        return r;
+      };
+      window.setExpandedWorld._kosEnergyHookV2 = true;
+    }
+  } catch (e) {}
+
+  // Damage: block if energy not full
+  try {
+    const orig = window.performAttack;
+    if (typeof orig === 'function' && !orig._kosDmgHookV2) {
+      window.performAttack = function (isAfk) {
+        if (!window.isEnergyFullForCombat()) {
+          try {
+            if (typeof showToast === 'function' && !isAfk) {
+              const p = getEnergyProgress();
+              showToast((typeof currentLang !== 'undefined' && currentLang === 'vi')
+                ? ('🔒 Cần thu thập Energy ' + p.have + '/' + p.need + ' trước!')
+                : ('🔒 Collect Energy ' + p.have + '/' + p.need + ' first!'));
+            }
+          } catch (e) {}
+          return;
+        }
+        const r = orig.apply(this, arguments);
+        try {
+          if (gameStage === 1 && typeof redMonster !== 'undefined' && redMonster && redMonster.visible) {
+            if (typeof redMonsterCurrentHP !== 'number' || !Number.isFinite(redMonsterCurrentHP)) {
+              redMonsterCurrentHP = (typeof RED_MOB_MAX_HP === 'number') ? RED_MOB_MAX_HP : 100;
+            }
+          }
+        } catch (e) {}
+        return r;
+      };
+      window.performAttack._kosDmgHookV2 = true;
+    }
+  } catch (e) { console.warn('dmg hook', e); }
+
+  // One-shot toast when energy becomes full
+  let _wasFull = {};
+  setInterval(function () {
+    try {
+      const s = gameStage;
+      if (!isCombatStage(s)) return;
+      const full = window.isEnergyFullForCombat();
+      if (full && !_wasFull[s]) {
+        _wasFull[s] = true;
+        allowStageMob();
+        if (typeof showToast === 'function') {
+          const n = STAGE_NAMES[s];
+          const vi = (typeof currentLang !== 'undefined' && currentLang === 'vi');
+          showToast(n ? (vi ? n.vi : n.en) : (vi ? '⚡ ĐỦ ENERGY — Combat mở khóa!' : '⚡ ENERGY FULL — Combat unlocked!'));
+        }
+      }
+      if (!full) _wasFull[s] = false;
+    } catch (e) {}
+  }, 200);
+
+  // HUD label for all stages
+  setInterval(function () {
+    try {
+      const hud = document.getElementById('biome-energy-hud');
+      if (!hud) return;
+      if (!isCombatStage()) { hud.style.display = 'none'; return; }
+      const p = getEnergyProgress();
+      if (p.need > 0) {
+        hud.style.display = 'block';
+        const labels = {
+          1: 'RED', 2: 'OCEAN', 3: 'DEMON', 4: 'SHADOW', 5: 'FINAL',
+          6: 'SUPREME', 7: 'UNIVERSE', 8: 'COSMIC', 9: 'ATOMIC',
+          10: 'DINO', 11: 'ERROR', 12: 'ELECTRON'
+        };
+        hud.textContent = (labels[gameStage] || ('W' + gameStage)) + ' — Energy ' + p.have + '/' + p.need
+          + (p.full ? ' ✓' : '');
+      }
+    } catch (e) {}
+  }, 150);
+
+  console.log('[KOS] Energy gate ALL stages (1–12) + damage safety ready');
+})();
+</script>
+
+
+<script>
+/* KOS: gỡ chướng ngại chặn cầu thang / đường đi mọi thế giới */
+(function(){
+  if (window.__kosClearBlockers) return;
+  window.__kosClearBlockers = true;
+  function clear() {
+    try {
+      if (typeof collisionObstacles !== 'undefined' && Array.isArray(collisionObstacles)) {
+        collisionObstacles.length = 0;
+      }
+      if (typeof window.collisionObstacles !== 'undefined' && Array.isArray(window.collisionObstacles)) {
+        window.collisionObstacles.length = 0;
+      }
+    } catch (e) {}
+  }
+  clear();
+  setInterval(clear, 2000);
+  // Không đẩy player khi đứng trên cầu thang hub
+  try {
+    if (typeof resolveCollisions === 'function') {
+      window.resolveCollisions = function () { return; };
+    }
+  } catch (e) {}
+  console.log('[KOS] Stair/path blockers cleared');
+})();
+</script>
+
+
+<script>
+/* =========================================================
+   KOS MEGA PACK — A→H full feature set
+   Energy FX · Save · Gate · Combat QoL · HUD · Meta · QoL
+   ========================================================= */
+(function KOS_MegaPack() {
+  if (window.__kosMegaPackV1) return;
+  window.__kosMegaPackV1 = true;
+
+  var ENERGY_SAVE_KEY = 'kos_energy_progress_v1';
+  var SAVE_VERSION = 1;
+  var ACH_KEY = 'kos_achievements_v1';
+
+  function isCombatStage(s) {
+    s = (typeof s === 'number') ? s : (typeof gameStage === 'number' ? gameStage : 0);
+    return s >= 1 && s <= 12;
+  }
+
+  function stageLabel(s) {
+    var L = {1:'RED',2:'OCEAN',3:'DEMON',4:'SHADOW',5:'FINAL',6:'SUPREME',7:'UNIVERSE',8:'COSMIC',9:'ATOMIC',10:'DINO',11:'ERROR',12:'ELECTRON'};
+    return L[s] || ('W' + s);
+  }
+
+  function vi() {
+    return (typeof currentLang !== 'undefined' && currentLang === 'vi');
+  }
+
+  // ---------- A2 / F21: Energy save per account ----------
+  function accountKey() {
+    try {
+      if (typeof currentAccountName !== 'undefined' && currentAccountName)
+        return String(currentAccountName).toLowerCase();
+    } catch (e) {}
+    return '__guest__';
+  }
+
+  function loadEnergyStore() {
+    try {
+      var raw = localStorage.getItem(ENERGY_SAVE_KEY);
+      if (!raw) return { v: SAVE_VERSION, accounts: {} };
+      var data = JSON.parse(raw);
+      if (!data || !data.accounts) return { v: SAVE_VERSION, accounts: {} };
+      return data;
+    } catch (e) { return { v: SAVE_VERSION, accounts: {} }; }
+  }
+
+  function saveEnergyStore(store) {
+    try {
+      store.v = SAVE_VERSION;
+      localStorage.setItem(ENERGY_SAVE_KEY, JSON.stringify(store));
+    } catch (e) {}
+  }
+
+  function getAccountEnergyMap() {
+    var store = loadEnergyStore();
+    var k = accountKey();
+    if (!store.accounts[k]) store.accounts[k] = {}; // stage -> {have, need, full, idxs:[]}
+    return store.accounts[k];
+  }
+
+  function persistCurrentStageEnergy() {
+    try {
+      if (!isCombatStage()) return;
+      var s = gameStage;
+      var have = (window.__energyHaveByStage && window.__energyHaveByStage[s]) || window.__energyHave || 0;
+      var need = (window.__energyNeedByStage && window.__energyNeedByStage[s]) || window.__energyNeed || 0;
+      var full = !!(window.__energyFullByStage && window.__energyFullByStage[s]) || !!window.__energyFull;
+      var store = loadEnergyStore();
+      var k = accountKey();
+      if (!store.accounts[k]) store.accounts[k] = {};
+      store.accounts[k][s] = {
+        have: have,
+        need: need,
+        full: full,
+        idxs: (window.__energyIdxsByStage && window.__energyIdxsByStage[s]) ? window.__energyIdxsByStage[s].slice() : []
+      };
+      saveEnergyStore(store);
+    } catch (e) {}
+  }
+
+  function restoreEnergyIntoGlobals() {
+    try {
+      var map = getAccountEnergyMap();
+      window.__energyFullByStage = window.__energyFullByStage || {};
+      window.__energyHaveByStage = window.__energyHaveByStage || {};
+      window.__energyNeedByStage = window.__energyNeedByStage || {};
+      window.__energyIdxsByStage = window.__energyIdxsByStage || {};
+      Object.keys(map).forEach(function (sk) {
+        var s = +sk;
+        var e = map[sk];
+        if (!e) return;
+        window.__energyHaveByStage[s] = e.have || 0;
+        window.__energyNeedByStage[s] = e.need || 0;
+        window.__energyFullByStage[s] = !!e.full;
+        window.__energyIdxsByStage[s] = e.idxs || [];
+      });
+      // apply current stage
+      if (isCombatStage()) {
+        var s = gameStage;
+        window.__energyHave = window.__energyHaveByStage[s] || 0;
+        window.__energyNeed = window.__energyNeedByStage[s] || 0;
+        window.__energyFull = !!window.__energyFullByStage[s];
+        window.__energyFullStage = s;
+      }
+    } catch (e) {}
+  }
+
+  // Hook: after energy progress updates, persist
+  setInterval(function () {
+    try { persistCurrentStageEnergy(); } catch (e) {}
+  }, 2500);
+
+  // Restore on load + after login-ish
+  setTimeout(restoreEnergyIntoGlobals, 1200);
+  setTimeout(restoreEnergyIntoGlobals, 3500);
+
+  // Hook saveCurrentAccount if exists
+  try {
+    if (typeof window.saveCurrentAccount === 'function' && !window.saveCurrentAccount._kosEnergy) {
+      var _sav = window.saveCurrentAccount;
+      window.saveCurrentAccount = function () {
+        try { persistCurrentStageEnergy(); } catch (e) {}
+        return _sav.apply(this, arguments);
+      };
+      window.saveCurrentAccount._kosEnergy = true;
+    }
+  } catch (e) {}
+
+  // Guest logout: keep guest energy in __guest__; account keeps own
+
+  // ---------- A1: Full Energy cinematic FX ----------
+  function playTone(freq, dur, type, vol) {
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!window.__kosAC) window.__kosAC = new AC();
+      var ctx = window.__kosAC;
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.type = type || 'sine';
+      o.frequency.value = freq;
+      g.gain.value = vol || 0.08;
+      o.connect(g); g.connect(ctx.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (dur || 0.3));
+      o.stop(ctx.currentTime + (dur || 0.3) + 0.02);
+    } catch (e) {}
+  }
+
+  function energyFullSFX() {
+    playTone(220, 0.15, 'square', 0.06);
+    setTimeout(function () { playTone(330, 0.15, 'square', 0.07); }, 80);
+    setTimeout(function () { playTone(440, 0.2, 'sawtooth', 0.05); }, 160);
+    setTimeout(function () { playTone(660, 0.35, 'sine', 0.07); }, 260);
+  }
+
+  function screenFlash(color, ms) {
+    var el = document.getElementById('kos-energy-flash');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'kos-energy-flash';
+      el.style.cssText = 'position:fixed;inset:0;z-index:99980;pointer-events:none;opacity:0;transition:opacity .15s ease;';
+      document.body.appendChild(el);
+    }
+    el.style.background = color || 'radial-gradient(circle,rgba(255,230,120,0.55),transparent 65%)';
+    el.style.opacity = '1';
+    setTimeout(function () { el.style.opacity = '0'; }, ms || 280);
+  }
+
+  function spawnShockwave3D(x, z, color) {
+    try {
+      if (typeof THREE === 'undefined' || typeof scene === 'undefined') return;
+      var geo = new THREE.RingGeometry(0.4, 0.7, 48);
+      var mat = new THREE.MeshBasicMaterial({
+        color: color || 0xffe566, transparent: true, opacity: 0.9,
+        side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending
+      });
+      var m = new THREE.Mesh(geo, mat);
+      m.rotation.x = -Math.PI / 2;
+      m.position.set(x || 0, 0.12, z || 0);
+      scene.add(m);
+      var t0 = performance.now();
+      (function anim() {
+        var t = (performance.now() - t0) / 1000;
+        var s = 1 + t * 22;
+        m.scale.set(s, s, 1);
+        m.material.opacity = Math.max(0, 0.9 - t * 1.1);
+        if (t < 0.85) requestAnimationFrame(anim);
+        else { scene.remove(m); geo.dispose(); mat.dispose(); }
+      })();
+      // second ring
+      setTimeout(function () {
+        try {
+          var m2 = new THREE.Mesh(geo.clone(), mat.clone());
+          m2.rotation.x = -Math.PI / 2;
+          m2.position.set(x || 0, 0.14, z || 0);
+          scene.add(m2);
+          var t1 = performance.now();
+          (function a2() {
+            var t = (performance.now() - t1) / 1000;
+            m2.scale.set(1 + t * 16, 1 + t * 16, 1);
+            m2.material.opacity = Math.max(0, 0.6 - t);
+            if (t < 0.7) requestAnimationFrame(a2);
+            else { scene.remove(m2); m2.geometry.dispose(); m2.material.dispose(); }
+          })();
+        } catch (e) {}
+      }, 90);
+    } catch (e) {}
+  }
+
+  function spawnEnergyParticles(x, y, z) {
+    try {
+      if (typeof THREE === 'undefined' || typeof scene === 'undefined') return;
+      for (var i = 0; i < 18; i++) {
+        var mat = new THREE.MeshBasicMaterial({
+          color: [0xffe566, 0x66e8ff, 0xff66cc, 0x88ffaa][i % 4],
+          transparent: true, opacity: 1, depthWrite: false
+        });
+        var m = new THREE.Mesh(new THREE.SphereGeometry(0.12 + Math.random() * 0.15, 6, 6), mat);
+        m.position.set(x, y, z);
+        scene.add(m);
+        var vx = (Math.random() - 0.5) * 8;
+        var vy = 2 + Math.random() * 6;
+        var vz = (Math.random() - 0.5) * 8;
+        (function (mesh, vx, vy, vz) {
+          var life = 0.7 + Math.random() * 0.4;
+          var t0 = performance.now();
+          (function tick() {
+            var dt = 0.016;
+            var age = (performance.now() - t0) / 1000;
+            mesh.position.x += vx * dt;
+            mesh.position.y += vy * dt;
+            mesh.position.z += vz * dt;
+            vy -= 10 * dt;
+            mesh.material.opacity = Math.max(0, 1 - age / life);
+            if (age < life) requestAnimationFrame(tick);
+            else { scene.remove(mesh); mesh.geometry.dispose(); mesh.material.dispose(); }
+          })();
+        })(m, vx, vy, vz);
+      }
+    } catch (e) {}
+  }
+
+  window.kosPlayEnergyFullFX = function (stage) {
+    energyFullSFX();
+    screenFlash('radial-gradient(circle,rgba(255,230,100,0.5),rgba(100,200,255,0.2) 50%,transparent 70%)', 320);
+    try {
+      var px = 0, pz = 0, py = 1;
+      if (typeof playerGroup !== 'undefined' && playerGroup) {
+        px = playerGroup.position.x; py = playerGroup.position.y + 1; pz = playerGroup.position.z;
+      }
+      spawnShockwave3D(px, pz, 0xffe566);
+      spawnEnergyParticles(px, py, pz);
+    } catch (e) {}
+    try {
+      if (typeof showToast === 'function') {
+        showToast(vi()
+          ? ('⚡⚡ ĐỦ ENERGY — ' + stageLabel(stage) + ' MỞ COMBAT!')
+          : ('⚡⚡ ENERGY FULL — ' + stageLabel(stage) + ' COMBAT UNLOCKED!'));
+      }
+    } catch (e) {}
+    try { unlockAchievement('energy_' + stage); } catch (e) {}
+    try { qolEnergyQuest(stage); } catch (e) {}
+  };
+
+  // Detect energy full transition
+  var _fxWasFull = {};
+  setInterval(function () {
+    try {
+      if (!isCombatStage()) return;
+      var s = gameStage;
+      var full = (typeof window.isEnergyFullForCombat === 'function') ? window.isEnergyFullForCombat() : !!window.__energyFull;
+      if (full && !_fxWasFull[s]) {
+        _fxWasFull[s] = true;
+        window.kosPlayEnergyFullFX(s);
+      }
+      if (!full) _fxWasFull[s] = false;
+    } catch (e) {}
+  }, 180);
+
+  // ---------- B5/C12: Block attack & skills if energy not full ----------
+  function blockIfNoEnergy(isAfk) {
+    if (!isCombatStage()) return false;
+    if (typeof window.isEnergyFullForCombat === 'function' && !window.isEnergyFullForCombat()) {
+      if (!isAfk && typeof showToast === 'function') {
+        var h = window.__energyHave || 0, n = window.__energyNeed || '?';
+        showToast(vi() ? ('🔒 Cần Energy ' + h + '/' + n) : ('🔒 Need Energy ' + h + '/' + n));
+      }
+      return true;
+    }
+    return false;
+  }
+
+  try {
+    if (typeof window.performAttack === 'function' && !window.performAttack._kosMega) {
+      var _pa = window.performAttack;
+      window.performAttack = function (isAfk) {
+        if (blockIfNoEnergy(isAfk)) return;
+        // C10: range check soft
+        try {
+          if (!isAfk && isCombatStage()) {
+            var target = null;
+            var list = ['redMonster','octopusMonster','bossMonster','finalBossMonster','supremeBossMonster','universeBossMonster','cosmicBossMonster','atomicBossMonster','errorBossMonster','electronBossMonster'];
+            for (var i = 0; i < list.length; i++) {
+              try {
+                var m = eval(list[i]);
+                if (m && m.visible) { target = m; break; }
+              } catch (e) {}
+            }
+            if (target && typeof playerGroup !== 'undefined' && playerGroup) {
+              var d = Math.hypot(playerGroup.position.x - target.position.x, playerGroup.position.z - target.position.z);
+              if (d > 22) {
+                if (typeof showToast === 'function')
+                  showToast(vi() ? '📏 Quá xa mục tiêu!' : '📏 Too far from target!');
+                // still allow weak hit? skip for realism
+                return;
+              }
+            }
+          }
+        } catch (e) {}
+        return _pa.apply(this, arguments);
+      };
+      window.performAttack._kosMega = true;
+    }
+  } catch (e) {}
+
+  try {
+    ['castQ','castR','castHeavy','castDash','castAoe'].forEach(function (n) {
+      if (typeof window[n] === 'function' && !window[n]._kosMega) {
+        var prev = window[n];
+        window[n] = function () {
+          if (blockIfNoEnergy(false)) return;
+          return prev.apply(this, arguments);
+        };
+        window[n]._kosMega = true;
+      }
+    });
+  } catch (e) {}
+
+  // ---------- B6: Boss bar only when energy full & correct stage ----------
+  setInterval(function () {
+    try {
+      if (!isCombatStage()) return;
+      var full = (typeof window.isEnergyFullForCombat === 'function') ? window.isEnergyFullForCombat() : true;
+      var bar = document.getElementById('boss-hp-bar');
+      var red = document.getElementById('red-mob-hp-bar');
+      if (!full) {
+        if (bar) bar.style.display = 'none';
+        if (red) red.style.display = 'none';
+      }
+    } catch (e) {}
+  }, 200);
+
+  // ---------- B7: Red mob respawn only if energy full ----------
+  // Hook visibility attempts via interval already in energy gate
+
+  // ---------- E17: Energy HUD progress bar ----------
+  function ensureEnergyHUDBar() {
+    var hud = document.getElementById('biome-energy-hud');
+    if (!hud) return;
+    var track = document.getElementById('kos-energy-track');
+    if (!track) {
+      track = document.createElement('div');
+      track.id = 'kos-energy-track';
+      track.style.cssText = 'margin-top:6px;height:8px;border-radius:99px;background:rgba(0,0,0,0.45);overflow:hidden;border:1px solid rgba(156,232,255,0.35);';
+      var fill = document.createElement('div');
+      fill.id = 'kos-energy-fill';
+      fill.style.cssText = 'height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#44ccff,#ffe566 60%,#fff);transition:width .25s ease;box-shadow:0 0 10px rgba(255,220,80,0.6);';
+      track.appendChild(fill);
+      hud.appendChild(track);
+    }
+    var have = window.__energyHave || 0;
+    var need = window.__energyNeed || 1;
+    var pct = need > 0 ? Math.min(100, (have / need) * 100) : 0;
+    var fill = document.getElementById('kos-energy-fill');
+    if (fill) fill.style.width = pct + '%';
+  }
+  setInterval(ensureEnergyHUDBar, 150);
+
+  // ---------- E20: Admin skip energy ----------
+  window.kosSkipEnergy = function () {
+    try {
+      if (!(typeof secretAdminMode !== 'undefined' && secretAdminMode) &&
+          !(typeof hasKingStatus !== 'undefined' && hasKingStatus)) {
+        if (typeof showToast === 'function')
+          showToast(vi() ? '🔒 Chỉ admin / King' : '🔒 Admin / King only');
+        return;
+      }
+      if (!isCombatStage()) return;
+      var s = gameStage;
+      var need = window.__energyNeed || 3;
+      window.__energyHave = need;
+      window.__energyNeed = need;
+      window.__energyFull = true;
+      window.__energyFullStage = s;
+      window.__energyFullByStage = window.__energyFullByStage || {};
+      window.__energyHaveByStage = window.__energyHaveByStage || {};
+      window.__energyNeedByStage = window.__energyNeedByStage || {};
+      window.__energyFullByStage[s] = true;
+      window.__energyHaveByStage[s] = need;
+      window.__energyNeedByStage[s] = need;
+      persistCurrentStageEnergy();
+      if (typeof window.kosPlayEnergyFullFX === 'function') window.kosPlayEnergyFullFX(s);
+      if (typeof showToast === 'function')
+        showToast(vi() ? '👑 Admin skip Energy world ' + s : '👑 Admin skipped Energy world ' + s);
+    } catch (e) {}
+  };
+
+  // ---------- F23: Export / import save ----------
+  window.kosExportSave = function () {
+    try {
+      var payload = {
+        v: SAVE_VERSION,
+        at: Date.now(),
+        account: accountKey(),
+        energy: loadEnergyStore(),
+        achievements: loadAchievements()
+      };
+      try {
+        if (typeof currentAccountName !== 'undefined') payload.name = currentAccountName;
+      } catch (e) {}
+      var str = JSON.stringify(payload);
+      var ta = document.createElement('textarea');
+      ta.value = str;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+      if (typeof showToast === 'function')
+        showToast(vi() ? '📋 Đã copy save JSON vào clipboard' : '📋 Save JSON copied');
+      console.log('[KOS Export]', str);
+      return str;
+    } catch (e) { return null; }
+  };
+
+  window.kosImportSave = function (jsonStr) {
+    try {
+      var data = typeof jsonStr === 'string' ? JSON.parse(jsonStr) : jsonStr;
+      if (!data || !data.energy) throw new Error('bad save');
+      saveEnergyStore(data.energy);
+      if (data.achievements) {
+        try { localStorage.setItem(ACH_KEY, JSON.stringify(data.achievements)); } catch (e) {}
+      }
+      restoreEnergyIntoGlobals();
+      if (typeof showToast === 'function')
+        showToast(vi() ? '✅ Import save OK' : '✅ Save imported');
+      return true;
+    } catch (e) {
+      if (typeof showToast === 'function')
+        showToast(vi() ? '❌ Import lỗi' : '❌ Import failed');
+      return false;
+    }
+  };
+
+  // ---------- H28: Achievements ----------
+  function loadAchievements() {
+    try {
+      var raw = localStorage.getItem(ACH_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+  function unlockAchievement(id) {
+    var a = loadAchievements();
+    if (a[id]) return;
+    a[id] = Date.now();
+    try { localStorage.setItem(ACH_KEY, JSON.stringify(a)); } catch (e) {}
+    if (typeof showToast === 'function')
+      showToast(vi() ? ('🏆 Achievement: ' + id) : ('🏆 Achievement: ' + id));
+  }
+  window.kosAchievements = loadAchievements;
+
+  // ---------- H27: QoL quest hook ----------
+  function qolEnergyQuest(stage) {
+    try {
+      if (typeof qolProgress === 'function') qolProgress('energy_full', 1);
+    } catch (e) {}
+  }
+
+  // ---------- D16: Minimap energy marks (simple HUD dots) ----------
+  function ensureEnergyWorldDots() {
+    var el = document.getElementById('kos-energy-worlds');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'kos-energy-worlds';
+      el.style.cssText = 'position:fixed;left:12px;bottom:130px;z-index:34;display:flex;flex-wrap:wrap;gap:4px;max-width:120px;pointer-events:none;';
+      document.body.appendChild(el);
+    }
+    var html = '';
+    for (var s = 1; s <= 12; s++) {
+      var full = !!(window.__energyFullByStage && window.__energyFullByStage[s]);
+      html += '<span title="W' + s + '" style="width:14px;height:14px;border-radius:4px;font-size:9px;font-weight:900;display:flex;align-items:center;justify-content:center;background:' +
+        (full ? '#ffe566' : 'rgba(40,40,60,0.85)') + ';color:' + (full ? '#221' : '#889') + ';border:1px solid ' +
+        (full ? '#ffd700' : '#445') + ';">' + s + '</span>';
+    }
+    el.innerHTML = html;
+    el.style.display = (typeof gameStage === 'number' && gameStage === 0) ? 'flex' : 'none';
+  }
+  setInterval(ensureEnergyWorldDots, 800);
+
+  // ---------- H29: Soft stage music cue on unlock ----------
+  function stageMusicCue(stage) {
+    // short arpeggio only (no external files)
+    var base = 200 + stage * 20;
+    playTone(base, 0.2, 'sine', 0.05);
+    setTimeout(function () { playTone(base * 1.25, 0.25, 'sine', 0.05); }, 120);
+    setTimeout(function () { playTone(base * 1.5, 0.35, 'triangle', 0.04); }, 240);
+  }
+  var _musicWas = {};
+  setInterval(function () {
+    try {
+      if (!isCombatStage()) return;
+      var s = gameStage;
+      var full = (typeof window.isEnergyFullForCombat === 'function') && window.isEnergyFullForCombat();
+      if (full && !_musicWas[s]) {
+        _musicWas[s] = true;
+        stageMusicCue(s);
+      }
+      if (!full) _musicWas[s] = false;
+    } catch (e) {}
+  }, 300);
+
+  // ---------- A4: Stage mob map sanity log ----------
+  window.kosExpectedMob = function (s) {
+    return ({
+      1: 'redMonster', 2: 'octopusMonster', 3: 'bossMonster', 4: 'bossMonster',
+      5: 'finalBossMonster', 6: 'supremeBossMonster', 7: 'universeBossMonster',
+      8: 'cosmicBossMonster', 9: 'atomicBossMonster', 10: 'cosmicDinoMonster',
+      11: 'errorBossMonster', 12: 'electronBossMonster'
+    })[s] || null;
+  };
+
+  // ---------- Apply restored idxs into biome system if possible ----------
+  // Patch collected sets after biome interval runs
+  setInterval(function () {
+    try {
+      if (!isCombatStage()) return;
+      var s = gameStage;
+      if (!window.__energyIdxsByStage || !window.__energyIdxsByStage[s]) return;
+      // expose for biome internal if it reads globals — also push full flag
+      if (window.__energyFullByStage && window.__energyFullByStage[s]) {
+        window.__energyFull = true;
+        window.__energyFullStage = s;
+      }
+    } catch (e) {}
+  }, 500);
+
+  // Command helper toast once
+  setTimeout(function () {
+    console.log('[KOS Mega] Commands: kosSkipEnergy() | kosExportSave() | kosImportSave(json) | kosAchievements()');
+  }, 2000);
+
+  
+  // Force re-apply energy visuals after restore
+  setTimeout(function () {
+    try {
+      restoreEnergyIntoGlobals();
+      if (typeof window.__biomeSystemV3 === 'function' && typeof gameStage === 'number') {
+        window.__biomeSystemV3(gameStage);
+      }
+    } catch (e) {}
+  }, 4000);
+
+  console.log('[KOS Mega Pack] A–H systems ready');
+})();
+</script>
+
 </body>
