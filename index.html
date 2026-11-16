@@ -14680,7 +14680,7 @@
                         if (!o.isMesh || !o.material) return;
                         const mats = Array.isArray(o.material) ? o.material : [o.material];
                         mats.forEach(function(m) {
-                            if (!m || m.isMeshBasicMaterial) return;
+                            if (!m || m.isMeshBasicMaterial || (m.userData && m.userData._noGloss)) return;
                             if (m.isMeshLambertMaterial || m.isMeshPhongMaterial) {
                                 const nm = new THREE.MeshStandardMaterial({
                                     color: m.color ? m.color.clone() : new THREE.Color(0xffffff),
@@ -15076,80 +15076,27 @@ const redMonster =
                         hasEars: true,
                         hasDiamond: true
                     });
-                /* Cosmic deep-field skin (galaxies / stars) — not purple */
-                (function applyCosmicFinalBossSkin() {
-                    function makeCosmicTex() {
-                        const c = document.createElement('canvas');
-                        c.width = 512; c.height = 512;
-                        const ctx = c.getContext('2d');
-                        // deep space black-blue
-                        const g = ctx.createRadialGradient(256, 256, 20, 256, 256, 320);
-                        g.addColorStop(0, '#1a1030');
-                        g.addColorStop(0.35, '#0a0818');
-                        g.addColorStop(1, '#020208');
-                        ctx.fillStyle = g;
-                        ctx.fillRect(0, 0, 512, 512);
-                        // faint galaxies
-                        for (let i = 0; i < 18; i++) {
-                            const x = Math.random() * 512, y = Math.random() * 512;
-                            const rx = 12 + Math.random() * 40, ry = 6 + Math.random() * 18;
-                            const ang = Math.random() * Math.PI;
-                            ctx.save();
-                            ctx.translate(x, y); ctx.rotate(ang);
-                            const gg = ctx.createRadialGradient(0, 0, 0, 0, 0, rx);
-                            const hue = 200 + Math.random() * 40;
-                            gg.addColorStop(0, 'hsla(' + hue + ',70%,75%,0.55)');
-                            gg.addColorStop(0.4, 'hsla(' + hue + ',60%,45%,0.22)');
-                            gg.addColorStop(1, 'hsla(' + hue + ',40%,20%,0)');
-                            ctx.fillStyle = gg;
-                            ctx.beginPath(); ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
-                            ctx.restore();
-                        }
-                        // stars
-                        for (let i = 0; i < 420; i++) {
-                            const x = Math.random() * 512, y = Math.random() * 512;
-                            const s = Math.random() < 0.08 ? 2.2 : (Math.random() < 0.3 ? 1.4 : 0.7);
-                            const a = 0.45 + Math.random() * 0.55;
-                            ctx.fillStyle = Math.random() < 0.15
-                                ? 'rgba(180,210,255,' + a + ')'
-                                : 'rgba(255,255,255,' + a + ')';
-                            ctx.beginPath(); ctx.arc(x, y, s, 0, Math.PI * 2); ctx.fill();
-                            if (s > 1.5) {
-                                ctx.strokeStyle = 'rgba(200,220,255,' + (a * 0.5) + ')';
-                                ctx.lineWidth = 0.6;
-                                ctx.beginPath();
-                                ctx.moveTo(x - s * 2.5, y); ctx.lineTo(x + s * 2.5, y);
-                                ctx.moveTo(x, y - s * 2.5); ctx.lineTo(x, y + s * 2.5);
-                                ctx.stroke();
-                            }
-                        }
-                        const tex = new THREE.CanvasTexture(c);
-                        tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-                        tex.repeat.set(1.5, 1.5);
-                        tex.needsUpdate = true;
-                        return tex;
-                    }
-                    const cosmicMap = makeCosmicTex();
-                    finalBossMonster.traverse(function(child) {
-                        if (!child.isMesh || !child.material) return;
+                finalBossMonster.traverse(function(child) {
+                    if (child.isMesh && child.material && child.material.color) {
                         child.material = child.material.clone();
-                        if (child.material.color) {
-                            // near-black body with slight blue tint
-                            child.material.color.setHex(0x0a0c18);
+                        const hex = child.material.color.getHex();
+                        if (hex === 0xff6b6b || hex === 0xfff5f8 || hex === 0xffffff) {
+                            child.material.color.setHex(0x5a2ecc);
+                        } else if (hex === 0xff3355 || hex === 0xff4466 || hex === 0xffa0a8) {
+                            child.material.color.setHex(0xcc88ff);
+                            if (child.material.emissive) {
+                                child.material.emissive.setHex(0x4422aa);
+                                child.material.emissiveIntensity = 0.35;
+                            }
+                        } else {
+                            child.material.color.setHex(0x6b4ae0);
                         }
-                        if (child.material.map !== undefined) {
-                            child.material.map = cosmicMap;
-                        }
-                        if (child.material.emissive) {
-                            child.material.emissive.setHex(0x2244aa);
-                            child.material.emissiveIntensity = 0.55;
-                        }
-                        child.material.metalness = 0.35;
-                        child.material.roughness = 0.45;
-                        child.material.envMapIntensity = 1.6;
+                        child.material.metalness = 0.7;
+                        child.material.roughness = 0.25;
+                        child.material.envMapIntensity = 1.25;
                         child.material.needsUpdate = true;
-                    });
-                })();
+                    }
+                });
                 finalBossMonster.position.set(
                     0,
                     0,
@@ -15363,6 +15310,1379 @@ const redMonster =
                     polishBossMaterials(finalBossMonster, { metal: 0.65, rough: 0.28, envInt: 1.2 });
                 if (typeof supremeBossMonster !== 'undefined')
                     polishBossMaterials(supremeBossMonster, { metal: 0.88, rough: 0.16, envInt: 1.4 });
+/* =====================================================================
+   KOS VISUAL OVERHAUL v1
+   - Boss FINAL / ULTIMATE  : hiệp sĩ vũ trụ giáp tím ánh cầu vồng (theo hình 1)
+   - Mob đỏ                  : quái caro hồng-kem, sừng, mắt kép, xích (theo hình 2)
+   - Kiếm                    : mỗi cấp một hình dáng riêng, cấp càng cao càng to / đẹp
+   Mọi vật liệu mới được đánh dấu để các lớp "redify / chrome / glossy" cũ KHÔNG đè màu.
+   ===================================================================== */
+(function KOS_VisualOverhaul() {
+    if (window.__kosOverhaulV1) return;
+    window.__kosOverhaulV1 = true;
+    const T = THREE;
+    const TAU = Math.PI * 2;
+    let _s = 90210;
+    const rnd = function () { _s = (_s * 1664525 + 1013904223) >>> 0; return _s / 4294967296; };
+    const rr = function (a, b) { return a + (b - a) * rnd(); };
+
+    /* ---------------------------------------------------------------
+       Vật liệu (đánh dấu để bỏ qua các lớp xử lý cũ)
+    --------------------------------------------------------------- */
+    function mark(m) {
+        const u = m.userData || (m.userData = {});
+        u._red = u._kosEnv = u._gfxEnhanced = u._noGloss = u._kos = true;
+        return m;
+    }
+    function std(o) { return mark(new T.MeshStandardMaterial(o)); }
+    function phys(o) { return mark(new T.MeshPhysicalMaterial(o)); }
+    function glow(color, op, extra) {
+        const m = new T.MeshBasicMaterial(Object.assign({
+            color: color, transparent: true, opacity: op == null ? 0.85 : op,
+            blending: T.AdditiveBlending, depthWrite: false
+        }, extra || {}));
+        return mark(m);
+    }
+    function flat(color) { return mark(new T.MeshBasicMaterial({ color: color })); }
+
+    /* ---------------------------------------------------------------
+       Texture vẽ bằng canvas
+    --------------------------------------------------------------- */
+    function cTex(w, h, draw, o) {
+        o = o || {};
+        const c = document.createElement('canvas');
+        c.width = w; c.height = h;
+        const x = c.getContext('2d');
+        draw(x, w, h);
+        const t = new T.CanvasTexture(c);
+        t.wrapS = t.wrapT = T.RepeatWrapping;
+        if (o.repeat) t.repeat.set(o.repeat[0], o.repeat[1]);
+        if (o.srgb) t.encoding = T.sRGBEncoding;
+        t.anisotropy = 4;
+        return t;
+    }
+    function reTex(base, rx, ry) {
+        const t = base.clone();
+        t.wrapS = t.wrapT = T.RepeatWrapping;
+        t.repeat.set(rx, ry);
+        t.needsUpdate = true;
+        return t;
+    }
+    let _flare = null;
+    function flareTex() {
+        if (_flare) return _flare;
+        _flare = cTex(128, 128, function (x) {
+            const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+            g.addColorStop(0, 'rgba(255,255,255,1)');
+            g.addColorStop(0.25, 'rgba(255,255,255,0.55)');
+            g.addColorStop(1, 'rgba(255,255,255,0)');
+            x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+        }, { srgb: true });
+        _flare.wrapS = _flare.wrapT = T.ClampToEdgeWrapping;
+        return _flare;
+    }
+    function spriteGlow(color, size, op) {
+        const s = new T.Sprite(new T.SpriteMaterial({
+            map: flareTex(), color: color, transparent: true,
+            opacity: op == null ? 0.8 : op, blending: T.AdditiveBlending, depthWrite: false
+        }));
+        s.scale.set(size, size, 1);
+        s.userData._chromeSkip = true;
+        return s;
+    }
+    function noiseTex(size, base, amp) {
+        return cTex(size, size, function (x, w, h) {
+            const im = x.createImageData(w, h);
+            for (let i = 0; i < im.data.length; i += 4) {
+                const v = Math.max(0, Math.min(255, base + (rnd() - 0.5) * amp));
+                im.data[i] = im.data[i + 1] = im.data[i + 2] = v; im.data[i + 3] = 255;
+            }
+            x.putImageData(im, 0, 0);
+        });
+    }
+    let _noise = null;
+    function sharedNoise() { return _noise || (_noise = noiseTex(128, 128, 120)); }
+
+    /* khung vết nứt dùng chung cho màu + phát sáng */
+    function crackSet(n) {
+        const arr = [];
+        for (let i = 0; i < n; i++) {
+            let px = rr(0, 256), py = rr(0, 256), a = rr(0, TAU);
+            const pts = [[px, py]];
+            const steps = 6 + ((rnd() * 8) | 0);
+            for (let k = 0; k < steps; k++) {
+                a += rr(-0.7, 0.7);
+                px += Math.cos(a) * rr(10, 26);
+                py += Math.sin(a) * rr(10, 26);
+                pts.push([px, py]);
+            }
+            arr.push(pts);
+        }
+        return arr;
+    }
+    function drawCracks(x, set, style, lw) {
+        x.strokeStyle = style; x.lineWidth = lw; x.lineJoin = 'round'; x.lineCap = 'round';
+        set.forEach(function (pts) {
+            x.beginPath();
+            pts.forEach(function (p, i) { if (i) x.lineTo(p[0], p[1]); else x.moveTo(p[0], p[1]); });
+            x.stroke();
+        });
+    }
+
+    /* ---------------------------------------------------------------
+       Hình học tiện ích
+    --------------------------------------------------------------- */
+    /* đối xứng qua trục x=0: half đi từ điểm trên trục (đỉnh/đáy) quanh nửa phải tới điểm trên trục còn lại */
+    function symFull(half) {
+        const out = half.slice();
+        for (let i = half.length - 2; i >= 1; i--) out.push([-half[i][0], half[i][1]]);
+        return out;
+    }
+    function shapeGeo(pts, depth, bevel) {
+        const s = new T.Shape();
+        pts.forEach(function (p, i) { if (i) s.lineTo(p[0], p[1]); else s.moveTo(p[0], p[1]); });
+        s.closePath();
+        const b = bevel || 0;
+        const g = new T.ExtrudeGeometry(s, {
+            depth: depth, bevelEnabled: b > 0, bevelThickness: b, bevelSize: b,
+            bevelOffset: 0, bevelSegments: 1, steps: 1, curveSegments: 4
+        });
+        g.translate(0, 0, -depth / 2);
+        g.computeVertexNormals();
+        return g;
+    }
+    function M(parent, geo, mat, p, r, s) {
+        const m = new T.Mesh(geo, mat);
+        if (p) m.position.set(p[0], p[1], p[2]);
+        if (r) m.rotation.set(r[0], r[1], r[2]);
+        if (s) m.scale.set(s[0], s[1], s[2]);
+        m.castShadow = true; m.receiveShadow = true;
+        if (parent) parent.add(m);
+        return m;
+    }
+    function clearKeepSprites(root) {
+        const rm = [];
+        root.children.forEach(function (ch) { if (!ch.isSprite) rm.push(ch); });
+        rm.forEach(function (ch) {
+            root.remove(ch);
+            ch.traverse(function (o) {
+                try { if (o.geometry) o.geometry.dispose(); } catch (e) {}
+                try {
+                    const ms = Array.isArray(o.material) ? o.material : (o.material ? [o.material] : []);
+                    ms.forEach(function (m) { if (m && m.dispose) m.dispose(); });
+                } catch (e) {}
+            });
+        });
+    }
+    function clearAll(root) {
+        while (root.children.length) {
+            const ch = root.children[0];
+            root.remove(ch);
+        }
+    }
+
+    /* ---------------------------------------------------------------
+       Bộ đếm animation dùng chung (chỉ chạy khi model đang hiện)
+    --------------------------------------------------------------- */
+    const FX = [];
+    function visChain(o) {
+        while (o) { if (o.visible === false) return false; o = o.parent; }
+        return true;
+    }
+    function addFx(obj, fn) { FX.push({ o: obj, fn: fn }); }
+    (function loop() {
+        requestAnimationFrame(loop);
+        const t = performance.now() / 1000;
+        for (let i = 0; i < FX.length; i++) {
+            const f = FX[i];
+            try { if (visChain(f.o)) f.fn(t); } catch (e) {}
+        }
+    })();
+
+    window.__kosKit = { T: T, std: std, phys: phys, glow: glow, flat: flat, cTex: cTex, reTex: reTex, spriteGlow: spriteGlow,
+        symFull: symFull, shapeGeo: shapeGeo, M: M, rnd: rnd, rr: rr, addFx: addFx, noiseTex: noiseTex, sharedNoise: sharedNoise,
+        crackSet: crackSet, drawCracks: drawCracks, clearKeepSprites: clearKeepSprites, clearAll: clearAll, mark: mark, TAU: TAU };
+})();
+
+/* ===================== HIỆP SĨ VŨ TRỤ (boss final / ultimate) ===================== */
+(function KOS_CosmicKnight() {
+    const K = window.__kosKit, T = K.T, TAU = K.TAU;
+    const std = K.std, phys = K.phys, glow = K.glow, flat = K.flat, M = K.M, rr = K.rr, rnd = K.rnd;
+
+    function armorTex(kind) {
+        return K.cTex(256, 256, function (x, w, h) {
+            const g = x.createLinearGradient(0, 0, w, h);
+            if (kind === 'void') { g.addColorStop(0, '#0b0b1c'); g.addColorStop(0.5, '#1f1546'); g.addColorStop(1, '#07060f'); }
+            else if (kind === 'gold') { g.addColorStop(0, '#2c2238'); g.addColorStop(0.5, '#54402e'); g.addColorStop(1, '#1d1727'); }
+            else { g.addColorStop(0, '#1d1238'); g.addColorStop(0.5, '#3b2470'); g.addColorStop(1, '#150e2e'); }
+            x.fillStyle = g; x.fillRect(0, 0, w, h);
+            x.globalCompositeOperation = 'lighter';
+            const hues = kind === 'void' ? [300, 322, 190, 262, 210] : [150, 172, 192, 48, 280];
+            for (let i = 0; i < 80; i++) {
+                const hue = hues[i % 5] + rr(-12, 12);
+                const px = rr(0, w), py = rr(0, h), len = rr(30, 130), ang = rr(-0.95, -0.3);
+                const ex = px + Math.cos(ang) * len, ey = py + Math.sin(ang) * len;
+                const gr = x.createLinearGradient(px, py, ex, ey);
+                gr.addColorStop(0, 'hsla(' + hue + ',85%,55%,0)');
+                gr.addColorStop(0.5, 'hsla(' + hue + ',85%,58%,0.17)');
+                gr.addColorStop(1, 'hsla(' + hue + ',85%,55%,0)');
+                x.strokeStyle = gr; x.lineWidth = rr(2, 10);
+                x.beginPath(); x.moveTo(px, py); x.lineTo(ex, ey); x.stroke();
+            }
+            x.globalCompositeOperation = 'source-over';
+            x.strokeStyle = 'rgba(255,255,255,0.06)'; x.lineWidth = 1;
+            for (let i = 0; i < 100; i++) {
+                const px = rr(0, w), py = rr(0, h), a = rr(-1.2, -0.2), l = rr(6, 30);
+                x.beginPath(); x.moveTo(px, py); x.lineTo(px + Math.cos(a) * l, py + Math.sin(a) * l); x.stroke();
+            }
+        }, { srgb: true });
+    }
+    function trimTex(gold) {
+        const isVoid = gold === 'void';
+        return K.cTex(128, 128, function (x, w, h) {
+            const g = x.createLinearGradient(0, 0, w, h);
+            if (isVoid) { g.addColorStop(0, '#ff7ae8'); g.addColorStop(0.4, '#ffffff'); g.addColorStop(0.7, '#5fe6ff'); g.addColorStop(1, '#b07aff'); }
+            else if (gold) { g.addColorStop(0, '#fff1a0'); g.addColorStop(0.4, '#ffc94a'); g.addColorStop(0.7, '#7af0d8'); g.addColorStop(1, '#ffe27a'); }
+            else { g.addColorStop(0, '#86ff6a'); g.addColorStop(0.35, '#f4e65a'); g.addColorStop(0.65, '#3fe4d2'); g.addColorStop(1, '#a874ff'); }
+            x.fillStyle = g; x.fillRect(0, 0, w, h);
+        }, { srgb: true });
+    }
+    function capeTex() {
+        return K.cTex(256, 256, function (x, w, h) {
+            const g = x.createLinearGradient(0, 0, 0, h);
+            g.addColorStop(0, '#2c1654'); g.addColorStop(0.6, '#4d2b8a'); g.addColorStop(1, '#1b0d36');
+            x.fillStyle = g; x.fillRect(0, 0, w, h);
+            const cols = ['rgba(80,230,220,0.20)', 'rgba(255,120,200,0.16)', 'rgba(255,220,120,0.12)'];
+            for (let i = 0; i < 16; i++) {
+                const cx = rr(0, w), cy = rr(0, h), r = rr(30, 80);
+                const gr = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+                gr.addColorStop(0, cols[i % 3]); gr.addColorStop(1, 'rgba(0,0,0,0)');
+                x.fillStyle = gr; x.fillRect(cx - r, cy - r, r * 2, r * 2);
+            }
+            for (let i = 0; i < 110; i++) {
+                x.fillStyle = 'rgba(255,255,255,' + rr(0.35, 1) + ')';
+                const s = rnd() < 0.15 ? 3 : 1.5;
+                x.fillRect(rr(0, w), rr(0, h), s, s);
+            }
+        }, { srgb: true });
+    }
+    function capeAlpha() {
+        return K.cTex(256, 256, function (x, w, h) {
+            x.fillStyle = '#fff'; x.fillRect(0, 0, w, h);
+            x.fillStyle = '#000';
+            for (let i = 0; i < 16; i++) {
+                const cx = rr(24, w - 24), cy = rr(h * 0.3, h * 0.92), r = rr(5, 17);
+                x.beginPath();
+                const n = 6 + ((rnd() * 4) | 0);
+                for (let k = 0; k < n; k++) {
+                    const a = k / n * TAU, rad = r * rr(0.5, 1.2);
+                    const px = cx + Math.cos(a) * rad, py = cy + Math.sin(a) * rad * 1.4;
+                    if (k) x.lineTo(px, py); else x.moveTo(px, py);
+                }
+                x.closePath(); x.fill();
+            }
+            x.beginPath(); x.moveTo(0, h);
+            for (let px = 0; px <= w; px += 8) x.lineTo(px, h - rr(0, 40));
+            x.lineTo(w, h); x.closePath(); x.fill();
+        });
+    }
+    function chevronTex(c1, c2) {
+        return K.cTex(128, 128, function (x, w, h) {
+            x.clearRect(0, 0, w, h);
+            const g = x.createLinearGradient(0, 0, 0, h);
+            g.addColorStop(0, c1); g.addColorStop(1, c2);
+            x.strokeStyle = g; x.lineWidth = 13; x.lineCap = 'round'; x.lineJoin = 'round';
+            x.shadowColor = c1; x.shadowBlur = 16;
+            for (let k = 0; k < 3; k++) {
+                const y = 26 + k * 26;
+                x.beginPath(); x.moveTo(26, y); x.lineTo(64, y + 28); x.lineTo(102, y); x.stroke();
+            }
+        }, { srgb: true });
+    }
+    function rockTex() {
+        const set = K.crackSet(14);
+        const col = K.cTex(256, 256, function (x, w, h) {
+            x.fillStyle = '#2b2733'; x.fillRect(0, 0, w, h);
+            for (let i = 0; i < 260; i++) {
+                x.fillStyle = 'rgba(' + (30 + rnd() * 50 | 0) + ',' + (28 + rnd() * 40 | 0) + ',' + (40 + rnd() * 50 | 0) + ',0.5)';
+                x.beginPath(); x.arc(rr(0, w), rr(0, h), rr(2, 14), 0, TAU); x.fill();
+            }
+            K.drawCracks(x, set, 'rgba(10,8,14,0.9)', 5);
+        }, { srgb: true });
+        const em = K.cTex(256, 256, function (x, w, h) {
+            x.fillStyle = '#000'; x.fillRect(0, 0, w, h);
+            K.drawCracks(x, set, '#ffb53a', 4);
+            K.drawCracks(x, set, '#fff2b0', 1.5);
+        }, { srgb: true });
+        return { col: col, em: em };
+    }
+
+    function wingGeo(L, W) {
+        return K.shapeGeo([[0, 0], [W * 0.55, L * 0.12], [W, L * 0.62], [W * 0.62, L], [W * 0.18, L * 0.7], [0, L * 0.22]], 0.03, 0.01);
+    }
+
+    window.__kosBuildKnight = function (variant) {
+        const ult = variant === 'ultimate';
+        const vd = variant === 'void';
+        const g = new T.Group();
+        const aT = armorTex(ult ? 'gold' : (vd ? 'void' : 'violet'));
+        const trT = trimTex(ult ? true : (vd ? 'void' : false));
+        const armor = phys({ color: 0xffffff, map: aT, metalness: 0.82, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.25, envMapIntensity: 1.7 });
+        const dark = phys({ color: 0x140b26, metalness: 0.72, roughness: 0.38, envMapIntensity: 1.4 });
+        const trim = phys({ color: 0xffffff, map: trT, emissive: 0xffffff, emissiveMap: trT, emissiveIntensity: 0.5, metalness: 0.9, roughness: 0.22, envMapIntensity: 1.9 });
+        const crystA = phys({ color: vd ? 0xff7ae0 : 0x66f0e0, emissive: vd ? 0xc02aa8 : 0x2fd8c8, emissiveIntensity: 0.9, metalness: 0.2, roughness: 0.15, transparent: true, opacity: 0.82, side: T.DoubleSide });
+        const crystB = phys({ color: vd ? 0x6ad8ff : 0x9a6cff, emissive: vd ? 0x2a7ad8 : 0x5a2cd8, emissiveIntensity: 0.9, metalness: 0.2, roughness: 0.15, transparent: true, opacity: 0.82, side: T.DoubleSide });
+        const eyeCol = ult ? 0xfff2a8 : (vd ? 0xffffff : 0x58f4ff);
+        const eyeMat = flat(eyeCol);
+
+        /* ---------- nền đá vỡ + vết nứt phát sáng dưới chân ---------- */
+        const rk = rockTex();
+        const rockMat = std({ color: 0xffffff, map: rk.col, emissive: 0xffffff, emissiveMap: rk.em, emissiveIntensity: 1.1, roughness: 0.9, metalness: 0.1, flatShading: true, bumpMap: K.sharedNoise(), bumpScale: 2 });
+        const rock = M(g, new T.IcosahedronGeometry(1.0, 1), rockMat, [0, -0.16, 0], [0, 0.4, 0], [1.25, 0.2, 1.2]);
+        rock.castShadow = false;
+        const rockShardMat = phys({ color: 0x9af0ff, emissive: 0x3ac8ff, emissiveIntensity: 1.0, metalness: 0.2, roughness: 0.2, transparent: true, opacity: 0.85 });
+        for (let i = 0; i < 9; i++) {
+            const a = i / 9 * TAU + rr(-0.2, 0.2), d = rr(0.35, 0.95);
+            const sh = M(g, new T.ConeGeometry(rr(0.05, 0.1), rr(0.35, 0.8), 5), (i % 3 === 0) ? K.mark(glow(0xffd36a, 0.85)) : rockShardMat,
+                [Math.cos(a) * d, 0.12, Math.sin(a) * d], [rr(-0.4, 0.4), 0, rr(-0.5, 0.5)]);
+            sh.castShadow = false;
+        }
+        const burst = new T.Mesh(new T.RingGeometry(0.35, 1.05, 40), glow(0xffc94a, 0.5, { side: T.DoubleSide }));
+        burst.rotation.x = -Math.PI / 2; burst.position.y = 0.04; g.add(burst);
+        const footGlow = K.spriteGlow(0xffd27a, 2.2, 0.55); footGlow.position.set(0, 0.2, 0); g.add(footGlow);
+
+        /* ---------- chân ---------- */
+        function makeLeg(side) {
+            const leg = new T.Group(); leg.position.set(side * 0.25, 1.42, 0);
+            M(leg, new T.CylinderGeometry(0.17, 0.125, 0.64, 14), armor, [0, -0.32, 0]);
+            M(leg, new T.BoxGeometry(0.16, 0.5, 0.05), trim, [0, -0.3, 0.15], [0.1, 0, 0]);
+            M(leg, new T.SphereGeometry(0.15, 14, 10), dark, [0, -0.66, 0.06], null, [1, 0.9, 1.15]);
+            M(leg, new T.ConeGeometry(0.06, 0.26, 8), trim, [0, -0.66, 0.27], [Math.PI / 2, 0, 0]);
+            M(leg, new T.CylinderGeometry(0.12, 0.085, 0.66, 14), armor, [0, -0.99, 0]);
+            M(leg, new T.BoxGeometry(0.17, 0.5, 0.07), dark, [0, -0.99, 0.1], [-0.08, 0, 0]);
+            M(leg, new T.BoxGeometry(0.26, 0.17, 0.5), dark, [0, -1.33, 0.09]);
+            M(leg, new T.ConeGeometry(0.1, 0.22, 6), trim, [0, -1.33, 0.4], [Math.PI / 2, 0, 0]);
+            M(leg, new T.BoxGeometry(0.2, 0.05, 0.3), trim, [0, -1.26, 0.12]);
+            g.add(leg);
+            return leg;
+        }
+        const legL = makeLeg(-1), legR = makeLeg(1);
+
+        /* ---------- hông / bụng / ngực ---------- */
+        M(g, new T.SphereGeometry(0.36, 18, 12), armor, [0, 1.48, 0], null, [1.05, 0.62, 0.78]);
+        for (let i = 0; i < 4; i++) {          /* váy giáp phía trước */
+            const x = (i - 1.5) * 0.17;
+            M(g, new T.BoxGeometry(0.16, 0.42, 0.04), (i % 2) ? armor : dark, [x, 1.2, 0.3 - Math.abs(i - 1.5) * 0.03], [0.22, 0, (i - 1.5) * 0.06]);
+        }
+        M(g, new T.CylinderGeometry(0.3, 0.34, 0.34, 18), dark, [0, 1.74, 0], null, [1, 1, 0.78]);
+        M(g, new T.TorusGeometry(0.33, 0.03, 8, 24), trim, [0, 1.58, 0], [Math.PI / 2, 0, 0], [1.02, 0.8, 1]);
+        const beltGem = M(g, new T.OctahedronGeometry(0.09, 0), K.mark(std({ color: 0x9ff7ff, emissive: 0x3ad8ff, emissiveIntensity: 1.2, roughness: 0.1, metalness: 0.3 })), [0, 1.58, 0.28], null, [1, 1.3, 0.6]);
+        M(g, new T.SphereGeometry(0.52, 26, 18), armor, [0, 2.12, 0], null, [0.98, 0.86, 0.7]);
+        M(g, new T.BoxGeometry(0.1, 0.62, 0.1), trim, [0, 2.12, 0.34], [-0.08, 0, 0]);
+        for (const s of [-1, 1]) M(g, new T.BoxGeometry(0.34, 0.5, 0.06), dark, [s * 0.27, 2.1, 0.3], [-0.05, -s * 0.38, s * 0.1]);
+        const chev = new T.Mesh(new T.PlaneGeometry(0.52, 0.52), mark2(new T.MeshBasicMaterial({ map: chevronTex(ult ? '#fff3a8' : (vd ? '#ffffff' : '#a6ff5a'), ult ? '#ffb83a' : (vd ? '#8ae8ff' : '#ffe14a')), transparent: true, blending: T.AdditiveBlending, depthWrite: false })));
+        chev.position.set(0, 2.12, 0.372); g.add(chev);
+        function mark2(m) { return K.mark(m); }
+        M(g, new T.CylinderGeometry(0.2, 0.25, 0.26, 14), dark, [0, 2.5, -0.02]);   /* cổ */
+
+        /* ---------- giáp vai + cánh pha lê ---------- */
+        function shoulderPad(side) {
+            const p = new T.Group(); p.position.set(side * 0.66, 2.4, 0); p.rotation.z = -side * 0.4;
+            M(p, new T.SphereGeometry(0.31, 20, 14, 0, TAU, 0, Math.PI * 0.62), armor, [0, 0, 0], null, [1.2, 0.8, 1.1]);
+            M(p, new T.SphereGeometry(0.27, 18, 12, 0, TAU, 0, Math.PI * 0.55), dark, [side * 0.05, -0.12, 0], null, [1.15, 0.7, 1.05]);
+            M(p, new T.TorusGeometry(0.29, 0.025, 8, 24), trim, [0, 0.02, 0], [Math.PI / 2, 0, 0], [1.2, 1.1, 1]);
+            for (let k = 0; k < 3; k++) {
+                const a = (k - 1) * 0.55;
+                M(p, new T.ConeGeometry(0.06 - k % 2 * 0.012, 0.34 + (k === 1 ? 0.12 : 0), 6), trim, [side * (0.12 + k * 0.03), 0.22 + (k === 1 ? 0.04 : 0), (k - 1) * 0.2], [(k - 1) * 0.3, 0, -side * (0.25 + a * 0.2)]);
+            }
+            g.add(p);
+            /* cánh pha lê sau lưng */
+            [[1.05, 0.42, crystA, 0.5, 0.0], [0.72, 0.3, crystB, 0.85, -0.12]].forEach(function (c) {
+                const w = new T.Mesh(wingGeo(c[0], c[1]), c[2]);
+                w.position.set(side * 0.5, 2.4, -0.3);
+                w.rotation.set(-0.55, side * 0.25, side * c[3] * -1);
+                w.castShadow = false;
+                g.add(w);
+            });
+        }
+        shoulderPad(-1); shoulderPad(1);
+
+        /* ---------- tay ---------- */
+        function makeArm(side, raised) {
+            const arm = new T.Group(); arm.position.set(side * 0.7, 2.34, 0);
+            M(arm, new T.CylinderGeometry(0.115, 0.095, 0.52, 12), armor, [0, -0.28, 0]);
+            const el = new T.Group(); el.position.set(0, -0.56, 0); arm.add(el);
+            M(el, new T.SphereGeometry(0.125, 12, 10), dark);
+            M(el, new T.ConeGeometry(0.05, 0.26, 6), trim, [0, 0, -0.16], [-Math.PI / 2, 0, 0]);
+            M(el, new T.CylinderGeometry(0.1, 0.075, 0.5, 12), armor, [0, -0.28, 0]);
+            M(el, new T.CylinderGeometry(0.115, 0.09, 0.22, 12, 1, true), trim, [0, -0.2, 0]);
+            const hand = new T.Group(); hand.position.set(0, -0.58, 0); el.add(hand);
+            M(hand, new T.BoxGeometry(0.16, 0.2, 0.1), dark, [0, -0.06, 0]);
+            for (let k = 0; k < 4; k++) {
+                M(hand, new T.ConeGeometry(0.026, 0.26, 5), trim, [(k - 1.5) * 0.045, -0.24, 0.02], [Math.PI - 0.35, 0, (k - 1.5) * 0.16]);
+            }
+            M(hand, new T.ConeGeometry(0.026, 0.2, 5), trim, [side * -0.1, -0.1, 0.03], [Math.PI - 0.2, 0, side * 0.9]);
+            if (raised) { arm.rotation.set(-0.3, 0, side * 0.45); el.rotation.x = -2.35; hand.rotation.x = -0.1; }
+            else { arm.rotation.set(0.12, 0, side * 0.2); el.rotation.x = -0.28; }
+            g.add(arm);
+            return arm;
+        }
+        const armL = makeArm(-1, false), armR = makeArm(1, true);
+
+        /* ---------- mũ giáp ---------- */
+        const head = new T.Group(); head.position.set(0, 2.82, 0.02); g.add(head);
+        M(head, new T.SphereGeometry(0.28, 24, 18), armor, [0, 0, 0], null, [0.95, 1.1, 1.05]);
+        M(head, new T.BoxGeometry(0.31, 0.13, 0.22), K.mark(std({ color: 0x05030c, metalness: 0.9, roughness: 0.12, envMapIntensity: 1.8 })), [0, 0.0, 0.17], [0.05, 0, 0]);
+        M(head, new T.BoxGeometry(0.2, 0.16, 0.24), dark, [0, -0.2, 0.1], [0.12, 0, 0]);
+        for (const s of [-1, 1]) {
+            M(head, new T.BoxGeometry(0.1, 0.03, 0.04), eyeMat, [s * 0.085, 0.01, 0.285], [0, 0, -s * 0.28]);
+            const eg = K.spriteGlow(eyeCol, 0.28, 0.9); eg.position.set(s * 0.085, 0.01, 0.3); head.add(eg);
+        }
+        const crownN = vd ? 0 : (ult ? 9 : 7);
+        if (vd) for (const s of [-1, 1]) {
+            M(head, new T.ConeGeometry(0.1, 0.5, 8), trim, [s * 0.2, 0.34, -0.02], [0, 0, -s * 0.7]);
+            M(head, new T.ConeGeometry(0.07, 0.5, 8), trim, [s * 0.46, 0.66, -0.04], [0, 0, -s * 0.2]);
+            M(head, new T.ConeGeometry(0.045, 0.34, 6), trim, [s * 0.54, 1.0, -0.14], [-0.6, 0, -s * 0.1]);
+        }
+        for (let i = 0; i < crownN; i++) {
+            const k = i - (crownN - 1) / 2;
+            M(head, new T.ConeGeometry(ult ? 0.055 : 0.045, (ult ? 0.4 : 0.3) + (3.6 - Math.abs(k)) * (ult ? 0.07 : 0.06), 6), trim,
+                [k * 0.075, 0.3 + (3 - Math.abs(k)) * 0.01, -0.03], [-0.05, 0, -k * 0.13]);
+        }
+        for (const s of [-1, 1]) {
+            const fin = new T.Mesh(K.shapeGeo([[0, 0], [0.12, 0.1], [0.26, 0.5], [0.1, 0.34], [0.04, 0.16]], 0.025, 0.008), s > 0 ? crystA : crystB);
+            fin.position.set(s * 0.26, 0.08, -0.04); fin.rotation.set(0, 0, -s * 0.5); fin.scale.x = s;
+            head.add(fin);
+        }
+
+        /* ---------- áo choàng rách có sao ---------- */
+        const cape = new T.Group(); cape.position.set(0, 2.5, -0.38); g.add(cape);
+        const cg = new T.PlaneGeometry(1.5, 2.1, 14, 18);
+        const pa = cg.attributes.position;
+        for (let i = 0; i < pa.count; i++) {
+            const x = pa.getX(i), y = pa.getY(i) - 1.05;        /* y: 0 (cổ) → -2.1 */
+            const t = Math.min(1, Math.max(0, -y / 2.1));
+            pa.setXYZ(i, x * (1 + 0.5 * t) - 0.4 * t * t, y, -0.1 - 0.5 * t * t + Math.sin(x * 4 + t * 3) * 0.05 * t);
+        }
+        cg.computeVertexNormals();
+        const capeMat = std({ color: 0xffffff, map: capeTex(), alphaMap: capeAlpha(), alphaTest: 0.5, side: T.DoubleSide, roughness: 0.75, metalness: 0.2, emissive: 0x2a1560, emissiveIntensity: 0.25, envMapIntensity: 0.8 });
+        const capeMesh = M(cape, cg, capeMat); capeMesh.castShadow = false;
+
+        /* ---------- hào quang + mảnh vỡ bay quanh ---------- */
+        const aura = K.spriteGlow(ult ? 0xffcf6a : (vd ? 0xff4ad8 : 0x9a6cff), 4.2, 0.4); aura.position.set(0, 2.0, -0.7); g.add(aura);
+        const aura2 = K.spriteGlow(ult ? 0x6af0ff : 0x3fe4d2, 2.6, 0.28); aura2.position.set(0, 2.2, 0.1); g.add(aura2);
+        const orbit = new T.Group(); orbit.position.y = 0.2; g.add(orbit);
+        const deb = [];
+        for (let i = 0; i < 16; i++) {
+            const a = i / 16 * TAU, rad = rr(0.95, 1.4);
+            const d = M(orbit, new T.DodecahedronGeometry(rr(0.04, 0.12), 0), (i % 4 === 0) ? K.mark(glow(0xffd36a, 0.9)) : rockMat,
+                [Math.cos(a) * rad, rr(0.2, 2.6), Math.sin(a) * rad], [rnd() * 3, rnd() * 3, rnd() * 3]);
+            d.castShadow = false; deb.push(d);
+        }
+
+        g.userData.armL = armL; g.userData.armR = armR; g.userData.legL = legL; g.userData.legR = legR;
+        let lx = null, lz = null, ph = 0, amt = 0;
+        g.userData._anim = function (t) {
+            cape.rotation.x = 0.05 + Math.sin(t * 1.3) * 0.06;
+            cape.rotation.z = Math.sin(t * 0.9) * 0.05;
+            orbit.rotation.y = t * 0.35;
+            for (let i = 0; i < deb.length; i++) { deb[i].rotation.x += 0.01 + i * 0.0006; deb[i].rotation.y += 0.014; }
+            aura.material.opacity = 0.34 + Math.sin(t * 2) * 0.1;
+            footGlow.material.opacity = 0.45 + Math.sin(t * 3) * 0.12;
+            burst.material.opacity = 0.35 + Math.sin(t * 2.4) * 0.15;
+            beltGem.rotation.y = t * 1.5;
+            const root = g.parent && g.parent.parent ? g.parent : g;
+            const wp = root.position;
+            if (lx === null) { lx = wp.x; lz = wp.z; }
+            const sp = Math.hypot(wp.x - lx, wp.z - lz); lx = wp.x; lz = wp.z;
+            const target = sp > 0.003 ? 1 : 0;
+            amt += (target - amt) * 0.12;
+            ph += sp * 5 + 0.02;
+            legL.rotation.x = Math.sin(ph * 1.6) * 0.42 * amt;
+            legR.rotation.x = -Math.sin(ph * 1.6) * 0.42 * amt;
+            armL.rotation.x = 0.12 - Math.sin(ph * 1.6) * 0.3 * amt + Math.sin(t * 1.1) * 0.03;
+        };
+        K.addFx(g, g.userData._anim);
+        g.userData.height = 3.2;
+        return g;
+    };
+})();
+
+/* ===================== QUÁI ĐỎ CARO (mob đỏ — theo hình 2) ===================== */
+(function KOS_CheckerDemon() {
+    const K = window.__kosKit, T = K.T, TAU = K.TAU;
+    const std = K.std, glow = K.glow, M = K.M, rr = K.rr, rnd = K.rnd;
+
+    function skinTextures() {
+        const N = 16, S = 32;
+        const cells = [];
+        for (let i = 0; i < N * N; i++) cells.push(rr(-1, 1));
+        const col = K.cTex(512, 512, function (x, w, h) {
+            for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+                const k = (i + j) & 1, v = cells[j * N + i];
+                x.fillStyle = k ? 'hsl(345,50%,' + (58 + v * 6) + '%)' : 'hsl(36,46%,' + (76 + v * 5) + '%)';
+                x.fillRect(i * S, j * S, S, S);
+                const gr = x.createLinearGradient(i * S, j * S, i * S + S, j * S + S);
+                gr.addColorStop(0, 'rgba(255,255,255,0.2)'); gr.addColorStop(1, 'rgba(70,10,30,0.3)');
+                x.fillStyle = gr; x.fillRect(i * S, j * S, S, S);
+                x.strokeStyle = 'rgba(80,24,44,0.6)'; x.lineWidth = 2; x.strokeRect(i * S + 1, j * S + 1, S - 2, S - 2);
+            }
+            for (let i = 0; i < 900; i++) {
+                x.fillStyle = 'rgba(60,20,30,' + rr(0.04, 0.16) + ')';
+                x.fillRect(rr(0, w), rr(0, h), rr(1, 3), rr(1, 3));
+            }
+        }, { srgb: true });
+        const bump = K.cTex(512, 512, function (x, w, h) {
+            x.fillStyle = '#808080'; x.fillRect(0, 0, w, h);
+            for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+                const v = 150 + cells[j * N + i] * 40;
+                x.fillStyle = 'rgb(' + v + ',' + v + ',' + v + ')'; x.fillRect(i * S + 3, j * S + 3, S - 6, S - 6);
+                x.fillStyle = '#303030'; x.fillRect(i * S, j * S, S, 3); x.fillRect(i * S, j * S, 3, S);
+            }
+            for (let i = 0; i < 1200; i++) { x.fillStyle = 'rgba(0,0,0,0.25)'; x.fillRect(rr(0, w), rr(0, h), 2, 2); }
+        });
+        return { col: col, bump: bump };
+    }
+    function hexEyeTex() {
+        return K.cTex(128, 128, function (x, w, h) {
+            x.fillStyle = '#808080'; x.fillRect(0, 0, w, h);
+            x.strokeStyle = '#1a1a1a'; x.lineWidth = 3;
+            for (let j = 0; j < 10; j++) for (let i = 0; i < 10; i++) {
+                const cx = i * 14 + (j % 2) * 7, cy = j * 12;
+                x.beginPath(); x.arc(cx, cy, 6.5, 0, TAU); x.stroke();
+            }
+        });
+    }
+
+    function chainRing(chainMat) {
+        const grp = new T.Group();
+        const linkGeo = new T.TorusGeometry(0.075, 0.02, 6, 12); linkGeo.scale(1.6, 1, 1);
+        const circles = [
+            { cx: 0, cz: 0, r: 2.2, n: 44 }, { cx: 0, cz: 0, r: 1.65, n: 34 },
+            { cx: 0.7, cz: 0, r: 1.5, n: 32 }, { cx: -0.7, cz: 0, r: 1.5, n: 32 }
+        ];
+        let total = 0; circles.forEach(function (c) { total += c.n; });
+        const inst = new T.InstancedMesh(linkGeo, chainMat, total);
+        const dm = new T.Object3D(); dm.rotation.order = 'YXZ';
+        let idx = 0;
+        circles.forEach(function (c) {
+            for (let i = 0; i < c.n; i++) {
+                const a = i / c.n * TAU;
+                dm.position.set(c.cx + Math.cos(a) * c.r, 0.05, c.cz + Math.sin(a) * c.r);
+                dm.rotation.set((i % 2) ? Math.PI / 2 : 0, -(a + Math.PI / 2), 0);
+                dm.updateMatrix(); inst.setMatrixAt(idx++, dm.matrix);
+            }
+        });
+        inst.instanceMatrix.needsUpdate = true;
+        inst.frustumCulled = false; inst.castShadow = false; inst.receiveShadow = true;
+        grp.add(inst);
+        return grp;
+    }
+
+    /* kiếm của quái: cán vàng, lưỡi hồng-bạc (khớp hình mẫu) */
+    window.__kosBuildDemonSword = function () {
+        const s = new T.Group();
+        const steel = K.phys({ color: 0xf1d8e4, metalness: 1, roughness: 0.14, clearcoat: 0.5, envMapIntensity: 2.2 });
+        const gold = K.phys({ color: 0xe2b341, metalness: 1, roughness: 0.2, envMapIntensity: 2 });
+        const half = [[0, 0.1], [0.06, 0.1], [0.075, 0.2], [0.07, 1.1], [0.04, 1.28], [0, 1.4]];
+        M(s, K.shapeGeo(K.symFull(half), 0.035, 0.006), steel).castShadow = false;
+        M(s, K.shapeGeo(K.symFull([[0, 0.14], [0.02, 0.14], [0.02, 1.0], [0, 1.1]]), 0.045, 0), std({ color: 0xb08098, metalness: 0.9, roughness: 0.3 })).castShadow = false;
+        M(s, new T.BoxGeometry(0.34, 0.07, 0.1), gold, [0, 0.06, 0]);
+        for (const sd of [-1, 1]) M(s, new T.ConeGeometry(0.035, 0.12, 5), gold, [sd * 0.19, 0.06, 0], [0, 0, -sd * Math.PI / 2]);
+        M(s, new T.CylinderGeometry(0.04, 0.045, 0.28, 8), std({ color: 0x4a2a20, roughness: 0.7 }), [0, -0.12, 0]);
+        M(s, new T.SphereGeometry(0.06, 10, 8), gold, [0, -0.29, 0]);
+        s.traverse(function (o) { if (o.isMesh) o.castShadow = false; });
+        return s;
+    };
+
+    window.__kosBuildDemon = function () {
+        const root = new T.Group();            /* chứa vòng xích dưới đất (không bị scale 1.3) */
+        const D = new T.Group(); D.scale.setScalar(1.3); root.add(D);
+        const tex = skinTextures();
+        const bumpEye = hexEyeTex();
+        function skin(rx, ry) {
+            return std({ color: 0xffffff, map: K.reTex(tex.col, rx, ry), bumpMap: K.reTex(tex.bump, rx, ry), bumpScale: 1.6, roughness: 0.82, metalness: 0.02, envMapIntensity: 0.6 });
+        }
+        const skinT = skin(1.4, 1.1), skinL = skin(0.4, 0.55), skinH = skin(0.8, 0.8);
+        const bone = std({ color: 0xe9dcc4, roughness: 0.45, metalness: 0.05, bumpMap: K.sharedNoise(), bumpScale: 1.2, envMapIntensity: 0.8 });
+        const boneTip = std({ color: 0xd88aa6, roughness: 0.4, metalness: 0.05 });
+        const mouthMat = std({ color: 0x2a0d16, roughness: 0.9, metalness: 0 });
+        const eyeMat = std({ color: 0x5a3b36, roughness: 0.22, metalness: 0.15, bumpMap: bumpEye, bumpScale: 3, emissive: 0x3a0c0c, emissiveIntensity: 0.25, envMapIntensity: 1.2 });
+        const gemMat = std({ color: 0xff8fd0, emissive: 0xff3fa0, emissiveIntensity: 1.15, roughness: 0.1, metalness: 0.1 });
+        const chainMat = std({ color: 0x8a8794, metalness: 0.9, roughness: 0.38, envMapIntensity: 1.5 });
+
+        /* ---------- thân ---------- */
+        M(D, new T.SphereGeometry(0.34, 18, 12), skinT, [0, 1.22, 0], [0.2, 0, 0], [1, 0.7, 0.8]);
+        M(D, new T.SphereGeometry(0.36, 18, 14), skinT, [0, 1.58, 0.04], [0.15, 0, 0], [0.85, 1.0, 0.7]);
+        M(D, new T.SphereGeometry(0.52, 24, 18), skinT, [0, 2.08, 0.06], [0.22, 0, 0], [0.95, 1.1, 0.72]);
+        for (let i = 0; i < 5; i++) {                         /* sườn nổi */
+            const yy = 1.82 + i * 0.14, dy = (yy - 2.08) / 0.572, f = Math.sqrt(Math.max(0.06, 1 - dy * dy));
+            M(D, new T.TorusGeometry(0.5 * f + 0.01, 0.024, 6, 20, Math.PI), bone, [0, yy, 0.07], [Math.PI / 2, 0, 0], [1, 0.74, 1]);
+        }
+        const gem = M(D, new T.OctahedronGeometry(0.13, 0), gemMat, [0, 1.56, 0.3], null, [1, 1.35, 0.8]);
+        const gemGlow = K.spriteGlow(0xff7fc8, 0.9, 0.7); gemGlow.position.set(0, 1.56, 0.4); D.add(gemGlow);
+        /* xích quấn eo */
+        {
+            const li = new T.TorusGeometry(0.045, 0.012, 6, 10); li.scale(1.5, 1, 1);
+            const n = 30, inst = new T.InstancedMesh(li, chainMat, n), dm = new T.Object3D(); dm.rotation.order = 'YXZ';
+            for (let i = 0; i < n; i++) {
+                const a = i / n * TAU;
+                dm.position.set(Math.cos(a) * 0.4, 1.47 + Math.sin(a * 2) * 0.015, Math.sin(a) * 0.31 + 0.04);
+                dm.rotation.set((i % 2) ? Math.PI / 2 : 0, -(a + Math.PI / 2), 0);
+                dm.updateMatrix(); inst.setMatrixAt(i, dm.matrix);
+            }
+            inst.instanceMatrix.needsUpdate = true; inst.frustumCulled = false; inst.castShadow = true; D.add(inst);
+        }
+        for (let i = 0; i < 6; i++) {                         /* gai sống lưng */
+            M(D, new T.ConeGeometry(0.07 - i * 0.006, 0.34 - i * 0.03, 6), bone, [0, 2.42 - i * 0.22, -0.34 - (i > 2 ? 0.0 : 0.04)], [-1.0 - i * 0.05, 0, 0]);
+        }
+
+        /* ---------- đầu ---------- */
+        M(D, new T.CylinderGeometry(0.14, 0.2, 0.3, 10), skinH, [0, 2.65, 0.2], [0.55, 0, 0]);
+        const head = new T.Group(); head.position.set(0, 2.82, 0.36); head.rotation.x = 0.12; D.add(head);
+        M(head, new T.SphereGeometry(0.3, 22, 16), skinH, [0, 0, 0], null, [0.92, 1.05, 1.15]);
+        M(head, new T.SphereGeometry(0.17, 14, 10), skinH, [0, -0.14, 0.26], null, [0.9, 0.7, 1.0]);
+        M(head, new T.SphereGeometry(0.14, 12, 8), mouthMat, [0, -0.25, 0.22], null, [1.1, 0.4, 1.0]);
+        M(head, new T.SphereGeometry(0.15, 12, 8), skinH, [0, -0.3, 0.2], [-0.2, 0, 0], [0.9, 0.5, 1.0]);
+        for (let i = 0; i < 7; i++) {                         /* răng */
+            const a = (i - 3) / 3;
+            M(head, new T.ConeGeometry(0.014, 0.075, 4), bone, [a * 0.11, -0.27, 0.34 - Math.abs(a) * 0.06], [Math.PI, 0, 0]);
+            M(head, new T.ConeGeometry(0.014, 0.065, 4), bone, [a * 0.1, -0.31, 0.3 - Math.abs(a) * 0.06], [0, 0, 0]);
+        }
+        for (const s of [-1, 1]) {
+            M(head, new T.SphereGeometry(0.13, 16, 12), eyeMat, [s * 0.17, 0.08, 0.22]);
+            const hl = M(head, new T.SphereGeometry(0.025, 6, 6), K.flat(0xffffff), [s * 0.2, 0.14, 0.33]); hl.castShadow = false;
+            M(head, new T.SphereGeometry(0.045, 8, 6), eyeMat, [s * 0.06, 0.24, 0.24]);                       /* mắt phụ */
+            M(head, new T.BoxGeometry(0.2, 0.05, 0.14), skinH, [s * 0.16, 0.2, 0.2], [0.1, 0, -s * 0.3]);  /* gờ mày */
+            /* sừng cong */
+            M(head, new T.ConeGeometry(0.085, 0.42, 8), bone, [s * 0.2, 0.34, -0.02], [0, 0, -s * 0.65]);
+            M(head, new T.ConeGeometry(0.055, 0.34, 8), boneTip, [s * 0.42, 0.62, -0.02], [0, 0, -s * 0.18]);
+            /* hàm kẹp */
+            M(head, new T.ConeGeometry(0.03, 0.22, 5), bone, [s * 0.12, -0.36, 0.3], [-0.4, 0, s * 0.35]);
+        }
+        for (let i = 0; i < 3; i++) M(head, new T.ConeGeometry(0.045, 0.24, 5), bone, [(i - 1) * 0.1, 0.28, -0.2], [-0.8, 0, 0]);
+
+        /* ---------- tay ---------- */
+        function makeArm(side) {
+            const arm = new T.Group(); arm.position.set(side * 0.6, 2.36, 0.02);
+            M(arm, new T.SphereGeometry(0.14, 12, 10), skinL);
+            M(arm, new T.CylinderGeometry(0.095, 0.075, 0.74, 10), skinL, [0, -0.38, 0]);
+            const el = new T.Group(); el.position.set(0, -0.76, 0); el.rotation.x = -0.55; arm.add(el);
+            M(el, new T.SphereGeometry(0.1, 10, 8), skinL);
+            M(el, new T.ConeGeometry(0.045, 0.22, 6), bone, [0, 0, -0.13], [-Math.PI / 2, 0, 0]);
+            M(el, new T.CylinderGeometry(0.075, 0.055, 0.82, 10), skinL, [0, -0.42, 0]);
+            const hand = new T.Group(); hand.position.set(0, -0.86, 0); el.add(hand);
+            M(hand, new T.BoxGeometry(0.13, 0.16, 0.09), skinL, [0, -0.05, 0]);
+            for (let k = 0; k < 3; k++) {
+                M(hand, new T.ConeGeometry(0.03, 0.34, 6), bone, [(k - 1) * 0.05, -0.22, 0.03], [Math.PI - 0.45, 0, (k - 1) * 0.22]);
+                M(hand, new T.ConeGeometry(0.018, 0.12, 5), boneTip, [(k - 1) * 0.07, -0.4, 0.1], [Math.PI - 0.8, 0, (k - 1) * 0.3]);
+            }
+            D.add(arm);
+            arm.userData.hand = hand;
+            return arm;
+        }
+        const armL = makeArm(-1), armR = makeArm(1);
+
+        /* ---------- chân (gập kiểu thú) ---------- */
+        function makeLeg(side) {
+            const leg = new T.Group(); leg.position.set(side * 0.28, 1.28, -0.02);
+            const th = M(leg, new T.CylinderGeometry(0.15, 0.1, 0.64, 10), skinL, [0, -0.28, 0.16], [0.55, 0, 0]);
+            M(leg, new T.SphereGeometry(0.115, 10, 8), skinL, [0, -0.53, 0.325]);
+            M(leg, new T.ConeGeometry(0.045, 0.2, 6), bone, [0, -0.53, 0.43], [Math.PI / 2, 0, 0]);
+            M(leg, new T.CylinderGeometry(0.095, 0.06, 0.72, 10), skinL, [0, -0.89, 0.2], [-0.35, 0, 0]);
+            M(leg, new T.BoxGeometry(0.2, 0.09, 0.4), skinL, [0, -1.2, -0.05]);
+            for (let k = 0; k < 3; k++) M(leg, new T.ConeGeometry(0.03, 0.2, 5), bone, [(k - 1) * 0.07, -1.19, 0.2], [Math.PI / 2, 0, (k - 1) * 0.15]);
+            D.add(leg);
+            return leg;
+        }
+        const legL = makeLeg(-1), legR = makeLeg(1);
+
+        /* ---------- kiếm trong tay phải (khung xoay giữ tên woodSword để code cũ vẫn vung) ---------- */
+        const swordWrap = new T.Group();
+        swordWrap.rotation.set(0.35, 0, -0.15);
+        const inner = window.__kosBuildDemonSword();
+        inner.rotation.x = Math.PI * 0.93;
+        inner.position.set(0, -0.02, 0.02);
+        swordWrap.add(inner);
+        armR.userData.hand.add(swordWrap);
+
+        /* ---------- vòng xích dưới đất ---------- */
+        const ring = chainRing(chainMat);
+        ring.userData.noBox = true;
+        root.add(ring);
+
+        root.userData.armL = armL; root.userData.armR = armR;
+        root.userData.legL = legL; root.userData.legR = legR;
+        root.userData.woodSword = swordWrap;
+        root.userData.isImageRedMob = true;
+        let t0 = rnd() * 6;
+        K.addFx(root, function (t) {
+            gem.rotation.y = t * 1.2;
+            gemGlow.material.opacity = 0.55 + Math.sin(t * 3 + t0) * 0.2;
+            head.rotation.y = Math.sin(t * 0.7 + t0) * 0.12;
+            ring.rotation.y = t * 0.08;
+        });
+        return root;
+    };
+})();
+
+/* ===================== BỘ KIẾM THEO CẤP: Common → Rare → Epic → Legendary → God ===================== */
+(function KOS_Swords() {
+    const K = window.__kosKit, T = K.T, TAU = K.TAU;
+    const std = K.std, phys = K.phys, glow = K.glow, M = K.M, rr = K.rr, rnd = K.rnd, sym = K.symFull, shp = K.shapeGeo;
+
+    function noShadow(g) { g.traverse(function (o) { if (o.isMesh) { o.castShadow = false; o.receiveShadow = false; } }); return g; }
+    function aura(color, w, h, op) {
+        const s = K.spriteGlow(color, 1, op);
+        s.scale.set(w, h, 1);
+        return s;
+    }
+    function wrapGrip(g, matGrip, matWire, y0, y1, rad, n) {
+        const len = y1 - y0;
+        M(g, new T.CylinderGeometry(rad, rad * 1.04, len, 12), matGrip, [0, (y0 + y1) / 2, 0]);
+        for (let i = 0; i < n; i++) {
+            M(g, new T.TorusGeometry(rad * 1.06, rad * 0.2, 6, 14), matWire, [0, y0 + len * (i + 0.5) / n, 0], [Math.PI / 2, 0, 0]);
+        }
+    }
+
+    /* ---------------- COMMON : kiếm gỗ luyện tập ---------------- */
+    function woodTex() {
+        return K.cTex(128, 128, function (x, w, h) {
+            x.fillStyle = '#8b5a2c'; x.fillRect(0, 0, w, h);
+            for (let i = 0; i < 46; i++) {
+                x.strokeStyle = 'rgba(' + (50 + rnd() * 40 | 0) + ',' + (25 + rnd() * 20 | 0) + ',10,' + rr(0.2, 0.55) + ')';
+                x.lineWidth = rr(1, 3);
+                x.beginPath(); let px = rr(0, w); x.moveTo(px, 0);
+                for (let y = 0; y <= h; y += 16) { px += rr(-3, 3); x.lineTo(px, y); }
+                x.stroke();
+            }
+        }, { srgb: true });
+    }
+    function swordCommon() {
+        const g = new T.Group(), L = 1.45, by = 0.14;
+        const wt = woodTex();
+        const wood = std({ color: 0xffffff, map: K.reTex(wt, 6, 0.9), bumpMap: K.reTex(wt, 6, 0.9), bumpScale: 1.5, roughness: 0.88, metalness: 0, envMapIntensity: 0.5 });
+        const woodDark = std({ color: 0x5a3818, roughness: 0.9, metalness: 0, envMapIntensity: 0.4 });
+        const iron = std({ color: 0x5a5f69, metalness: 0.85, roughness: 0.42, envMapIntensity: 1.3 });
+        const leather = std({ color: 0x3a2314, roughness: 0.85, metalness: 0 });
+        const half = [[0, by], [0.095, by], [0.105, by + 0.16], [0.105, by + L * 0.9], [0.07, by + L * 0.97], [0, by + L]];
+        M(g, shp(sym(half), 0.09, 0.008), wood);
+        [by + 0.5, by + 1.0].forEach(function (yy) {
+            M(g, new T.BoxGeometry(0.225, 0.05, 0.115), iron, [0, yy, 0]);
+            for (const s of [-1, 1]) M(g, new T.SphereGeometry(0.014, 6, 5), iron, [s * 0.07, yy, 0.06]);
+        });
+        M(g, new T.BoxGeometry(0.52, 0.08, 0.13), woodDark, [0, 0.08, 0]);
+        for (const s of [-1, 1]) M(g, new T.BoxGeometry(0.06, 0.1, 0.15), iron, [s * 0.27, 0.08, 0]);
+        wrapGrip(g, leather, woodDark, -0.4, 0.04, 0.05, 5);
+        M(g, new T.SphereGeometry(0.075, 10, 8), woodDark, [0, -0.45, 0]);
+        g.userData.bladeLen = L; g.userData.tpScale = 1.45; g.userData.fpLen = 1.25;
+        return noShadow(g);
+    }
+
+    /* ---------------- RARE : kiếm thép băng ---------------- */
+    function swordRare() {
+        const g = new T.Group(), L = 1.8, by = 0.14;
+        const steel = phys({ color: 0xb8d4f5, metalness: 1, roughness: 0.15, clearcoat: 0.6, clearcoatRoughness: 0.1, envMapIntensity: 2.4, emissive: 0x1a4a7a, emissiveIntensity: 0.18 });
+        const ice = phys({ color: 0xc6f3ff, emissive: 0x58c8ff, emissiveIntensity: 0.7, metalness: 0.1, roughness: 0.1, transparent: true, opacity: 0.88 });
+        const iceCore = std({ color: 0xbff4ff, emissive: 0x3ad0ff, emissiveIntensity: 1.3, roughness: 0.2, metalness: 0.2 });
+        const silver = phys({ color: 0xdfe8f2, metalness: 1, roughness: 0.2, envMapIntensity: 2.2 });
+        const navy = std({ color: 0x142340, roughness: 0.75, metalness: 0.05 });
+        const half = [[0, by], [0.08, by], [0.14, by + 0.12], [0.14, by + L * 0.8], [0.11, by + L * 0.92], [0, by + L]];
+        M(g, shp(sym(half), 0.075, 0.008), steel);
+        M(g, shp(sym([[0, by + 0.2], [0.03, by + 0.24], [0.03, by + L * 0.78], [0, by + L * 0.86]]), 0.087, 0), iceCore);
+        for (const s of [-1, 1]) M(g, new T.BoxGeometry(0.012, L * 0.74, 0.085), silver, [s * 0.135, by + 0.12 + L * 0.37, 0]);
+        for (let i = 0; i < 6; i++) {                        /* nhũ băng dọc lưỡi */
+            const s = (i % 2) ? 1 : -1, y = by + 0.35 + i * 0.22;
+            M(g, new T.OctahedronGeometry(0.05, 0), ice, [s * 0.16, y, 0.01 * s], [0, 0, -s * 0.9], [0.6, 2.4 - i * 0.14, 0.6]);
+        }
+        const gh = [[0, 0.17], [0.13, 0.17], [0.3, 0.2], [0.44, 0.1], [0.5, -0.03], [0.4, -0.01], [0.28, 0.04], [0.13, 0.0], [0, 0.0]];
+        M(g, shp(sym(gh), 0.1, 0.01), silver);
+        M(g, new T.OctahedronGeometry(0.08, 0), iceCore, [0, 0.1, 0.07], null, [1, 1.3, 0.8]);
+        wrapGrip(g, navy, silver, -0.42, 0.0, 0.05, 5);
+        const pom = M(g, new T.OctahedronGeometry(0.1, 0), iceCore, [0, -0.52, 0], null, [1, 1.3, 1]);
+        M(g, new T.TorusGeometry(0.075, 0.014, 6, 16), silver, [0, -0.43, 0], [Math.PI / 2, 0, 0]);
+        const au = aura(0x6ad8ff, 0.9, L * 1.25, 0.4); au.position.set(0, by + L * 0.5, 0); g.add(au);
+        const tip = K.spriteGlow(0xe8fbff, 0.4, 0.9); tip.position.set(0, by + L + 0.05, 0); g.add(tip);
+        K.addFx(g, function (t) { tip.material.opacity = 0.6 + Math.sin(t * 5) * 0.3; au.material.opacity = 0.32 + Math.sin(t * 2) * 0.1; pom.rotation.y = t; });
+        g.userData.bladeLen = L; g.userData.tpScale = 1.5; g.userData.fpLen = 1.4;
+        return noShadow(g);
+    }
+
+    /* ---------------- EPIC : lưỡi cưa tím Voidfang ---------------- */
+    function swordEpic() {
+        const g = new T.Group(), L = 2.1, by = 0.15;
+        const blade = phys({ color: 0x3d2470, metalness: 1, roughness: 0.2, clearcoat: 0.7, envMapIntensity: 2.2, emissive: 0x2a0a60, emissiveIntensity: 0.4 });
+        const vein = std({ color: 0xe0b8ff, emissive: 0xa65cff, emissiveIntensity: 1.6, roughness: 0.2, metalness: 0.1 });
+        const darkM = phys({ color: 0x15091f, metalness: 0.9, roughness: 0.3, envMapIntensity: 1.8 });
+        const gemM = std({ color: 0xd9a6ff, emissive: 0x9a3cff, emissiveIntensity: 1.5, roughness: 0.08, metalness: 0.2 });
+        const bend = function (x, y) { return x + 0.2 * Math.pow((y - by) / L, 2); };
+        const pts = [[-0.07, by], [0.07, by], [0.12, by + 0.1]];
+        for (let k = 0; k < 7; k++) { const y = by + 0.25 + k * 0.23; pts.push([0.17 - k * 0.006, y], [0.1, y + 0.13]); }
+        pts.push([0.05, by + L * 0.93], [0.0, by + L]);
+        pts.push([-0.08, by + L * 0.82], [-0.125, by + L * 0.5], [-0.11, by + 0.2]);
+        const bp = pts.map(function (p) { return [bend(p[0], p[1]), p[1]]; });
+        M(g, shp(bp, 0.085, 0.008), blade);
+        for (let k = 0; k < 6; k++) {                          /* mạch năng lượng tím */
+            const y = by + 0.3 + k * 0.28;
+            M(g, new T.BoxGeometry(0.026, 0.22, 0.095), vein, [bend(0.0, y), y, 0], [0, 0, (k % 2 ? 0.3 : -0.3)]);
+        }
+        const gh = [[0, 0.2], [0.14, 0.22], [0.3, 0.3], [0.5, 0.5], [0.44, 0.24], [0.54, 0.04], [0.32, 0.0], [0.14, -0.02], [0, -0.02]];
+        M(g, shp(sym(gh), 0.12, 0.012), darkM);
+        for (const s of [-1, 1]) {
+            M(g, new T.ConeGeometry(0.035, 0.22, 5), vein, [s * 0.5, 0.36, 0], [0, 0, -s * 0.5]);
+            M(g, new T.SphereGeometry(0.035, 8, 6), gemM, [s * 0.26, 0.14, 0.07]);
+        }
+        M(g, new T.OctahedronGeometry(0.1, 0), gemM, [0, 0.12, 0.08], null, [1, 1.4, 0.7]);
+        wrapGrip(g, darkM, vein, -0.42, 0.0, 0.055, 5);
+        M(g, new T.IcosahedronGeometry(0.09, 0), darkM, [0, -0.52, 0]);
+        for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; M(g, new T.ConeGeometry(0.02, 0.1, 5), vein, [Math.cos(a) * 0.09, -0.52, Math.sin(a) * 0.09], [Math.sin(a) * 1.57, 0, -Math.cos(a) * 1.57]); }
+        const shards = [];
+        for (let i = 0; i < 4; i++) shards.push(M(g, new T.OctahedronGeometry(0.06, 0), gemM, [0, by + 0.6 + i * 0.4, 0], null, [0.6, 1.6, 0.6]));
+        const au = aura(0xa65cff, 1.0, L * 1.3, 0.42); au.position.set(bend(0, by + L * 0.5), by + L * 0.5, 0); g.add(au);
+        K.addFx(g, function (t) {
+            for (let i = 0; i < shards.length; i++) {
+                const a = t * 1.6 + i * TAU / shards.length, y = by + 0.5 + i * 0.45;
+                shards[i].position.set(bend(0, y) + Math.cos(a) * 0.34, y + Math.sin(t * 2 + i) * 0.06, Math.sin(a) * 0.34);
+                shards[i].rotation.y = t * 2;
+            }
+            au.material.opacity = 0.34 + Math.sin(t * 2.5) * 0.12;
+        });
+        g.userData.bladeLen = L; g.userData.tpScale = 1.55; g.userData.fpLen = 1.6;
+        return noShadow(g);
+    }
+
+    /* ---------------- LEGENDARY : đại kiếm vàng cánh thiên thần ---------------- */
+    function swordLegendary() {
+        const g = new T.Group(), L = 2.5, by = 0.16;
+        const blade = phys({ color: 0xfff2d2, metalness: 1, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.05, envMapIntensity: 2.6, emissive: 0x6a4a10, emissiveIntensity: 0.22 });
+        const gold = phys({ color: 0xffcf4a, metalness: 1, roughness: 0.18, clearcoat: 0.5, envMapIntensity: 2.4 });
+        const goldD = phys({ color: 0xc98f1c, metalness: 1, roughness: 0.28, envMapIntensity: 2.0 });
+        const glowM = std({ color: 0xfff2b0, emissive: 0xffc43a, emissiveIntensity: 1.3, roughness: 0.2, metalness: 0.2 });
+        const ruby = std({ color: 0xff4a55, emissive: 0xff1428, emissiveIntensity: 1.2, roughness: 0.08, metalness: 0.2 });
+        const leather = std({ color: 0xf1ead8, roughness: 0.7, metalness: 0 });
+        const half = [[0, by], [0.1, by], [0.17, by + 0.14], [0.19, by + 0.18], [0.19, by + L * 0.6], [0.155, by + L * 0.64], [0.155, by + L * 0.8], [0.11, by + L * 0.92], [0, by + L]];
+        M(g, shp(sym(half), 0.1, 0.01), blade);
+        M(g, shp(sym([[0, by + 0.25], [0.04, by + 0.3], [0.04, by + L * 0.82], [0, by + L * 0.9]]), 0.112, 0), glowM);
+        for (const s of [-1, 1]) M(g, new T.BoxGeometry(0.018, L * 0.55, 0.108), gold, [s * 0.172, by + 0.3 + L * 0.275, 0]);
+        for (let i = 0; i < 7; i++) for (const z of [-1, 1]) M(g, new T.BoxGeometry(0.03, 0.03, 0.01), K.mark(glow(0xfff0a0, 0.95)), [0, by + 0.5 + i * 0.26, z * 0.058]);
+        const wh = [[0, 0.2], [0.2, 0.22], [0.4, 0.3], [0.62, 0.46], [0.7, 0.62], [0.58, 0.5], [0.6, 0.36], [0.48, 0.28], [0.58, 0.2], [0.44, 0.12], [0.22, 0.08], [0, 0.05]];
+        M(g, shp(sym(wh), 0.13, 0.012), gold);
+        const wh2 = wh.map(function (p) { return [p[0] * 0.72, p[1] * 0.7 + 0.02]; });
+        for (const z of [-1, 1]) M(g, shp(sym(wh2), 0.05, 0.006), goldD, [0, 0, z * 0.1]);
+        for (const s of [-1, 1]) for (const z of [-1, 1]) M(g, new T.SphereGeometry(0.045, 10, 8), ruby, [s * 0.27, 0.2, z * 0.085]);
+        M(g, new T.OctahedronGeometry(0.1, 0), ruby, [0, 0.19, 0.09], null, [1, 1.4, 0.7]);
+        M(g, new T.OctahedronGeometry(0.1, 0), ruby, [0, 0.19, -0.09], null, [1, 1.4, 0.7]);
+        const halo = M(g, new T.TorusGeometry(0.3, 0.014, 8, 44), gold, [0, by + 0.12, 0]);
+        wrapGrip(g, leather, gold, -0.44, 0.02, 0.058, 6);
+        M(g, new T.SphereGeometry(0.075, 10, 8), gold, [0, -0.17, 0], null, [1, 0.6, 1]);
+        M(g, new T.SphereGeometry(0.1, 14, 10), gold, [0, -0.54, 0]);
+        M(g, new T.OctahedronGeometry(0.06, 0), ruby, [0, -0.54, 0.09], null, [1, 1.3, 0.8]);
+        for (const s of [-1, 1]) M(g, shp(sym([[0, 0], [0.1, 0.04], [0.2, -0.05], [0.12, -0.12], [0.02, -0.08]].slice(0, 5).concat([[0, -0.06]])), 0.03, 0.004), gold, [s * 0.1, -0.52, 0], [0, 0, -s * 0.3]);
+        const au = aura(0xffd36a, 1.5, L * 1.35, 0.42); au.position.set(0, by + L * 0.5, 0); g.add(au);
+        const spark = [];
+        for (let i = 0; i < 9; i++) spark.push(M(g, new T.OctahedronGeometry(0.035, 0), K.mark(glow(0xffe28a, 0.95)), [0, 0, 0]));
+        K.addFx(g, function (t) {
+            for (let i = 0; i < spark.length; i++) {
+                const a = t * 1.2 + i * 0.7, y = by + 0.2 + ((t * 0.25 + i / spark.length) % 1) * (L - 0.1);
+                spark[i].position.set(Math.cos(a) * 0.32, y, Math.sin(a) * 0.32); spark[i].rotation.y = t * 3;
+            }
+            halo.rotation.z = t * 0.6;
+            au.material.opacity = 0.36 + Math.sin(t * 2) * 0.1;
+        });
+        g.userData.bladeLen = L; g.userData.tpScale = 1.6; g.userData.fpLen = 1.85;
+        return noShadow(g);
+    }
+
+    /* ---------------- GOD : thánh kiếm vũ trụ ---------------- */
+    function swordGod() {
+        const g = new T.Group(), L = 3.0, by = 0.18;
+        const bladeM = phys({ color: 0xffffff, emissive: 0x7fd8ff, emissiveIntensity: 1.5, metalness: 0.5, roughness: 0.1, clearcoat: 1, envMapIntensity: 2.4 });
+        const gold = phys({ color: 0xffe08a, metalness: 1, roughness: 0.15, envMapIntensity: 2.6, emissive: 0x7a5410, emissiveIntensity: 0.3 });
+        const white = phys({ color: 0xffffff, metalness: 0.9, roughness: 0.1, envMapIntensity: 2.6 });
+        const half = [[0, by], [0.13, by], [0.22, by + 0.15], [0.3, by + 0.42], [0.2, by + 0.7], [0.31, by + 1.0], [0.22, by + 1.35], [0.3, by + 1.75], [0.2, by + 2.15], [0.27, by + 2.45], [0.14, by + 2.75], [0, by + L]];
+        M(g, shp(sym(half), 0.1, 0.01), bladeM);
+        const halfO = half.map(function (p) { return [p[0] * 1.22, p[1]]; });
+        M(g, shp(sym(halfO), 0.16, 0), glow(0x66e0ff, 0.2)).renderOrder = 2;
+        const core = M(g, new T.CylinderGeometry(0.04, 0.06, L * 0.94, 10), glow(0xffffff, 0.95), [0, by + L * 0.48, 0]);
+        const outer = M(g, new T.CylinderGeometry(0.2, 0.26, L * 0.96, 16, 1, true), glow(0x6ad8ff, 0.18, { side: T.DoubleSide }), [0, by + L * 0.48, 0]);
+        const wh = [[0, 0.22], [0.2, 0.24], [0.5, 0.34], [0.78, 0.52], [0.6, 0.28], [0.46, 0.16], [0.2, 0.08], [0, 0.06]];
+        M(g, shp(sym(wh), 0.13, 0.012), gold);
+        const r1 = M(g, new T.TorusGeometry(0.42, 0.022, 8, 44), gold, [0, 0.18, 0], [Math.PI / 2, 0, 0]);
+        const r2 = M(g, new T.TorusGeometry(0.33, 0.016, 8, 40), white, [0, 0.18, 0]);
+        M(g, new T.OctahedronGeometry(0.12, 0), K.mark(glow(0xffffff, 0.95)), [0, 0.2, 0.1], null, [1, 1.4, 0.7]);
+        wrapGrip(g, white, gold, -0.46, 0.02, 0.06, 6);
+        const star = M(g, new T.OctahedronGeometry(0.14, 0), K.mark(glow(0xbff6ff, 0.95)), [0, -0.58, 0], null, [1, 1.3, 1]);
+        const sg = K.spriteGlow(0xbff6ff, 0.9, 0.7); sg.position.set(0, -0.58, 0); g.add(sg);
+        const au = aura(0x7fe4ff, 1.9, L * 1.4, 0.4); au.position.set(0, by + L * 0.5, 0); g.add(au);
+        const ringsH = [];
+        for (let i = 0; i < 3; i++) ringsH.push(M(g, new T.TorusGeometry(0.46, 0.012, 6, 44), K.mark(glow(i % 2 ? 0xffe28a : 0x9af0ff, 0.8)), [0, 0, 0], [Math.PI / 2, 0, 0]));
+        const stars = [];
+        for (let i = 0; i < 12; i++) stars.push(M(g, new T.OctahedronGeometry(0.04, 0), K.mark(glow(i % 2 ? 0xffffff : 0x9af0ff, 0.95)), [0, 0, 0]));
+        const tipG = K.spriteGlow(0xffffff, 0.7, 0.9); tipG.position.set(0, by + L + 0.06, 0); g.add(tipG);
+        K.addFx(g, function (t) {
+            r1.rotation.z = t * 0.9; r2.rotation.x = t * 1.1; r2.rotation.y = t * 0.5;
+            star.rotation.y = t * 2;
+            for (let i = 0; i < ringsH.length; i++) {
+                const k = ((t * 0.18 + i / ringsH.length) % 1);
+                ringsH[i].position.y = by + 0.2 + k * (L - 0.3);
+                ringsH[i].material.opacity = 0.8 * Math.sin(k * Math.PI);
+                ringsH[i].rotation.z = t * (1 + i * 0.3);
+            }
+            for (let i = 0; i < stars.length; i++) {
+                const a = t * 1.4 + i * 0.52, y = by + 0.2 + ((t * 0.3 + i / stars.length) % 1) * (L - 0.2);
+                stars[i].position.set(Math.cos(a) * 0.4, y, Math.sin(a) * 0.4); stars[i].rotation.y = t * 4;
+            }
+            core.material.opacity = 0.85 + Math.sin(t * 6) * 0.1;
+            outer.material.opacity = 0.16 + Math.sin(t * 3) * 0.06;
+            au.material.opacity = 0.34 + Math.sin(t * 2) * 0.1;
+        });
+        g.userData.bladeLen = L; g.userData.tpScale = 1.55; g.userData.fpLen = 2.1;
+        return noShadow(g);
+    }
+
+    /* ---------------- kiếm năng lượng (FP của hack / error / electron) ---------------- */
+    function swordEnergy(color, core) {
+        const g = new T.Group(), L = 2.6;
+        M(g, new T.CylinderGeometry(0.07, 0.11, L, 14), glow(color, 0.9), [0, 0.2 + L / 2, 0]);
+        M(g, new T.CylinderGeometry(0.02, 0.035, L + 0.1, 8), glow(core, 1), [0, 0.2 + L / 2, 0]);
+        M(g, new T.CylinderGeometry(0.2, 0.26, L, 14, 1, true), glow(color, 0.16, { side: T.DoubleSide }), [0, 0.2 + L / 2, 0]);
+        M(g, new T.ConeGeometry(0.07, 0.4, 12), glow(core, 0.95), [0, 0.2 + L + 0.2, 0]);
+        M(g, new T.BoxGeometry(0.62, 0.09, 0.13), phys({ color: 0x20252e, metalness: 1, roughness: 0.2, emissive: color, emissiveIntensity: 0.6 }), [0, 0.12, 0]);
+        M(g, new T.CylinderGeometry(0.06, 0.065, 0.5, 10), std({ color: 0x12161c, metalness: 0.7, roughness: 0.3 }), [0, -0.15, 0]);
+        const au = aura(color, 1.2, L * 1.3, 0.35); au.position.set(0, 0.2 + L / 2, 0); g.add(au);
+        K.addFx(g, function (t) { au.material.opacity = 0.3 + Math.sin(t * 7) * 0.08; });
+        g.userData.bladeLen = L; g.userData.tpScale = 1.15; g.userData.fpLen = 1.9;
+        return noShadow(g);
+    }
+
+    const BUILDERS = {
+        common: swordCommon, rare: swordRare, epic: swordEpic, legendary: swordLegendary, god: swordGod,
+        hack: function () { return swordEnergy(0x66eaff, 0xffffff); },
+        error: function () { return swordEnergy(0xff3355, 0xffd0d8); },
+        electron: function () { return swordEnergy(0x44ccff, 0xe8ffff); }
+    };
+    window.__kosBuildSword = function (key) {
+        const b = BUILDERS[key] || BUILDERS.common;
+        const m = b();
+        m.userData.kosTier = key;
+        return m;
+    };
+    /* kiếm cho góc nhìn thứ nhất: chuẩn hoá chiều dài theo cấp, cấp cao to hơn */
+    window.__kosMakeFpSword = function (key) {
+        const m = window.__kosBuildSword(key);
+        const k = m.userData.fpLen / m.userData.bladeLen;
+        m.scale.setScalar(k);
+        const holder = new T.Group();
+        holder.add(m);
+        holder.userData.kosTier = key;
+        holder.traverse(function (o) { if (o.isMesh || o.isSprite) { o.frustumCulled = false; o.renderOrder = 1000; } });
+        return holder;
+    };
+})();
+
+/* ===================== LẮP MÔ HÌNH MỚI VÀO GAME ===================== */
+(function KOS_Install() {
+    const K = window.__kosKit, T = K.T;
+    function protect(root) {
+        const u = root.userData;
+        u._outlined = true; u._chromeUp = true; u._detailEnhanced = true; u._calm = true; u._real = true; u._kosModel = true; u._silDone = true;
+    }
+    function swapModel(root, model) {
+        K.clearKeepSprites(root);
+        root.add(model);
+        protect(root);
+    }
+    function safe(fn, name) { try { fn(); } catch (e) { console.warn('[KOS overhaul] ' + name, e); } }
+
+    /* ---- boss FINAL (hình 1) ---- */
+    safe(function () {
+        if (typeof finalBossMonster === 'undefined' || !finalBossMonster) return;
+        const k = window.__kosBuildKnight('final');
+        swapModel(finalBossMonster, k);
+    }, 'finalBoss');
+    /* ---- boss ULTIMATE: cùng hiệp sĩ, biến thể vàng, to hơn ---- */
+    safe(function () {
+        if (typeof supremeBossMonster === 'undefined' || !supremeBossMonster) return;
+        const k = window.__kosBuildKnight('ultimate');
+        k.scale.setScalar(1.55);
+        swapModel(supremeBossMonster, k);
+        const ring = new T.Mesh(new T.TorusGeometry(2.0, 0.035, 8, 64), K.glow(0xffd36a, 0.55));
+        ring.rotation.x = Math.PI / 2; ring.position.y = 3.2;
+        for (let i = 0; i < 6; i++) {
+            const a = i / 6 * Math.PI * 2;
+            const b = new T.Mesh(new T.OctahedronGeometry(0.1, 0), K.glow(0xfff2b0, 0.95));
+            b.position.set(Math.cos(a) * 2.0, Math.sin(a) * 2.0, 0); ring.add(b);
+        }
+        supremeBossMonster.add(ring);
+    }, 'supremeBoss');
+    /* ---- mob đỏ (hình 2) ---- */
+    safe(function () {
+        if (typeof redMonster === 'undefined' || !redMonster) return;
+        const d = window.__kosBuildDemon();
+        swapModel(redMonster, d);
+        redMonster.userData.armL = d.userData.armL; redMonster.userData.armR = d.userData.armR;
+        redMonster.userData.legL = d.userData.legL; redMonster.userData.legR = d.userData.legR;
+        redMonster.userData.woodSword = d.userData.woodSword;
+        redMonster.userData._big = true;      /* tránh bị phóng to méo thêm 1.3x */
+        redMonster.userData.__rad = 1.4;      /* giữ khoảng cách đuổi như cũ dù có vòng xích */
+        if (redMonster.userData.hpSprite) redMonster.userData.hpSprite.position.y = 4.7;
+    }, 'redMonster');
+
+    /* ---- kiếm theo cấp (góc nhìn thứ ba) ---- */
+    const map = [
+        ['common', 'commonSwordGroup'], ['rare', 'rareSwordGroup'], ['epic', 'epicSwordGroup'],
+        ['legendary', 'legendarySwordGroup'], ['god', 'godSwordGroup']
+    ];
+    safe(function () {
+        const groups = {
+            common: typeof commonSwordGroup !== 'undefined' ? commonSwordGroup : null,
+            rare: typeof rareSwordGroup !== 'undefined' ? rareSwordGroup : null,
+            epic: typeof epicSwordGroup !== 'undefined' ? epicSwordGroup : null,
+            legendary: typeof legendarySwordGroup !== 'undefined' ? legendarySwordGroup : null,
+            god: typeof godSwordGroup !== 'undefined' ? godSwordGroup : null
+        };
+        map.forEach(function (p) {
+            const g = groups[p[0]];
+            if (!g) return;
+            K.clearAll(g);
+            const m = window.__kosBuildSword(p[0]);
+            m.scale.setScalar(m.userData.tpScale);
+            g.add(m);
+            g.scale.set(1, 1, 1);
+            g.userData._real = true;
+        });
+    }, 'swords');
+
+    /* ---- góc nhìn thứ nhất: khoá theo cấp kiếm ---- */
+    window.__kosFpTierKey = function () {
+        try { if (typeof hasElectronSword !== 'undefined' && hasElectronSword) return 'electron'; } catch (e) {}
+        try { if ((typeof hasGlitchSword !== 'undefined' && hasGlitchSword) || equippedItemType === 'glitch' || equippedItemType === 'error') return 'error'; } catch (e) {}
+        try { if ((typeof hasHackSword !== 'undefined' && hasHackSword) || equippedItemType === 'hack') return 'hack'; } catch (e) {}
+        try { if ((typeof hasGoDSword !== 'undefined' && hasGoDSword) || equippedItemType === 'god') return 'god'; } catch (e) {}
+        try { if (equippedItemType === 'legendary') return 'legendary'; } catch (e) {}
+        try { if (equippedItemType === 'epic') return 'epic'; } catch (e) {}
+        try { if (equippedItemType === 'rare') return 'rare'; } catch (e) {}
+        return 'common';
+    };
+})();
+
+/* ===================== CÁC BOSS KHÁC: quỷ lửa / bạch tuộc quái / mắt hư không / khủng long xương ===================== */
+(function KOS_MoreBosses() {
+    const K = window.__kosKit, T = K.T, TAU = K.TAU;
+    const std = K.std, phys = K.phys, glow = K.glow, M = K.M, rr = K.rr, rnd = K.rnd;
+    const UP = new T.Vector3(0, 1, 0);
+
+    /* thanh nối giữa 2 điểm */
+    function bar(parent, a, b, r0, r1, mat) {
+        const d = new T.Vector3(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+        const len = d.length();
+        const m = new T.Mesh(new T.CylinderGeometry(r1, r0, len, 8), mat);
+        m.position.set((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2);
+        m.quaternion.setFromUnitVectors(UP, d.normalize());
+        m.castShadow = true;
+        parent.add(m);
+        return m;
+    }
+    function crackSkin(c1, c2, crack, hot) {
+        const set = K.crackSet(18);
+        const col = K.cTex(256, 256, function (x, w, h) {
+            const g = x.createLinearGradient(0, 0, w, h); g.addColorStop(0, c1); g.addColorStop(1, c2);
+            x.fillStyle = g; x.fillRect(0, 0, w, h);
+            for (let i = 0; i < 220; i++) { x.fillStyle = 'rgba(0,0,0,' + rr(0.1, 0.3) + ')'; x.beginPath(); x.arc(rr(0, w), rr(0, h), rr(2, 12), 0, TAU); x.fill(); }
+            K.drawCracks(x, set, 'rgba(0,0,0,0.85)', 6);
+        }, { srgb: true });
+        const em = K.cTex(256, 256, function (x, w, h) {
+            x.fillStyle = '#000'; x.fillRect(0, 0, w, h);
+            K.drawCracks(x, set, crack, 4); K.drawCracks(x, set, hot, 1.5);
+        }, { srgb: true });
+        return { col: col, em: em };
+    }
+    /* đi bộ theo vị trí gốc */
+    function walker(g, legs, amp, arms) {
+        let lx = null, lz = null, ph = 0, amt = 0;
+        return function () {
+            const root = g.parent;
+            if (!root) return;
+            const p = root.position;
+            if (lx === null) { lx = p.x; lz = p.z; }
+            const sp = Math.hypot(p.x - lx, p.z - lz); lx = p.x; lz = p.z;
+            amt += ((sp > 0.003 ? 1 : 0) - amt) * 0.12;
+            ph += sp * 4 + 0.02;
+            for (let i = 0; i < legs.length; i++) legs[i].rotation.x = Math.sin(ph * 1.5 + i * Math.PI) * amp * amt;
+            return amt;
+        };
+    }
+
+    /* ============================ QUỶ LỬA (boss giai đoạn 3) ============================ */
+    window.__kosBuildHellDemon = function () {
+        const g = new T.Group();
+        const sk = crackSkin('#2a0a0a', '#4d1510', '#ff7a1a', '#ffe08a');
+        const skin = std({ color: 0xffffff, map: sk.col, emissive: 0xffffff, emissiveMap: sk.em, emissiveIntensity: 1.0, roughness: 0.8, metalness: 0.1, bumpMap: K.sharedNoise(), bumpScale: 2 });
+        const plate = phys({ color: 0x1b1013, metalness: 0.9, roughness: 0.32, envMapIntensity: 1.7, clearcoat: 0.4 });
+        const gold = phys({ color: 0xd9a23a, metalness: 1, roughness: 0.25, envMapIntensity: 2 });
+        const horn = std({ color: 0xe8d9bd, roughness: 0.45, bumpMap: K.sharedNoise(), bumpScale: 1.5 });
+        const eyeM = K.mark(new T.MeshBasicMaterial({ color: 0xffe14a }));
+        const memb = std({ color: 0x5a1010, roughness: 0.7, metalness: 0.1, side: T.DoubleSide, emissive: 0x330500, emissiveIntensity: 0.6, transparent: true, opacity: 0.93 });
+
+        function makeLeg(s) {
+            const leg = new T.Group(); leg.position.set(s * 0.42, 1.5, 0);
+            M(leg, new T.CylinderGeometry(0.27, 0.19, 0.85, 10), skin, [0, -0.36, 0.2], [0.5, 0, 0]);
+            M(leg, new T.SphereGeometry(0.2, 10, 8), plate, [0, -0.68, 0.42]);
+            M(leg, new T.ConeGeometry(0.07, 0.3, 6), gold, [0, -0.68, 0.6], [Math.PI / 2, 0, 0]);
+            M(leg, new T.CylinderGeometry(0.17, 0.1, 0.95, 10), skin, [0, -1.12, 0.22], [-0.4, 0, 0]);
+            M(leg, new T.BoxGeometry(0.3, 0.14, 0.5), plate, [0, -1.44, 0.02]);
+            for (let k = -1; k <= 1; k += 2) M(leg, new T.ConeGeometry(0.06, 0.28, 5), horn, [k * 0.09, -1.43, 0.34], [Math.PI / 2, 0, 0]);
+            g.add(leg); return leg;
+        }
+        const legL = makeLeg(-1), legR = makeLeg(1);
+        M(g, new T.SphereGeometry(0.5, 16, 12), skin, [0, 1.55, 0], null, [1.15, 0.7, 0.85]);
+        M(g, new T.SphereGeometry(0.55, 18, 14), skin, [0, 1.95, 0.02], null, [1.0, 1.0, 0.78]);
+        M(g, new T.SphereGeometry(0.76, 24, 18), skin, [0, 2.5, 0.0], null, [1.12, 0.95, 0.85]);
+        for (let i = 0; i < 4; i++) M(g, new T.TorusGeometry(0.55 - i * 0.04, 0.035, 6, 20, Math.PI), plate, [0, 2.1 + i * 0.2, 0.05], [Math.PI / 2, 0, 0], [1.1, 0.8, 1]);
+        M(g, new T.BoxGeometry(0.62, 0.1, 0.1), gold, [0, 1.74, 0.38]);
+        const core = M(g, new T.SphereGeometry(0.2, 14, 10), glow(0xff7a1a, 0.95), [0, 2.4, 0.6]);
+        const coreG = K.spriteGlow(0xff6a1a, 1.4, 0.8); coreG.position.set(0, 2.4, 0.7); g.add(coreG);
+        for (let i = 0; i < 6; i++) M(g, new T.ConeGeometry(0.09 - i * 0.007, 0.4 - i * 0.03, 6), horn, [0, 3.0 - i * 0.28, -0.55], [-0.9 - i * 0.04, 0, 0]);
+
+        function makeArm(s) {
+            const arm = new T.Group(); arm.position.set(s * 0.98, 2.8, 0);
+            M(arm, new T.SphereGeometry(0.36, 14, 10, 0, TAU, 0, Math.PI * 0.65), plate, [0, 0.02, 0], null, [1.2, 0.85, 1.1]);
+            for (let k = 0; k < 3; k++) M(arm, new T.ConeGeometry(0.08, 0.5, 6), gold, [s * (0.15 + k * 0.08), 0.3, (k - 1) * 0.18], [(k - 1) * 0.3, 0, -s * (0.4 + k * 0.15)]);
+            M(arm, new T.CylinderGeometry(0.2, 0.16, 0.8, 10), skin, [0, -0.45, 0]);
+            const el = new T.Group(); el.position.set(0, -0.9, 0); el.rotation.x = -0.5; arm.add(el);
+            M(el, new T.SphereGeometry(0.17, 10, 8), plate);
+            M(el, new T.ConeGeometry(0.06, 0.3, 6), gold, [0, 0, -0.2], [-Math.PI / 2, 0, 0]);
+            M(el, new T.CylinderGeometry(0.17, 0.12, 0.8, 10), skin, [0, -0.45, 0]);
+            const hand = new T.Group(); hand.position.set(0, -0.92, 0); el.add(hand);
+            M(hand, new T.BoxGeometry(0.28, 0.3, 0.18), plate, [0, -0.1, 0]);
+            for (let k = 0; k < 4; k++) M(hand, new T.ConeGeometry(0.045, 0.42, 6), horn, [(k - 1.5) * 0.08, -0.4, 0.04], [Math.PI - 0.4, 0, (k - 1.5) * 0.14]);
+            g.add(arm); return arm;
+        }
+        const armL = makeArm(-1), armR = makeArm(1);
+
+        const head = new T.Group(); head.position.set(0, 3.32, 0.12); g.add(head);
+        M(head, new T.SphereGeometry(0.4, 20, 16), skin, [0, 0, 0], null, [0.95, 1.0, 1.1]);
+        M(head, new T.BoxGeometry(0.46, 0.2, 0.34), plate, [0, -0.26, 0.2], [0.15, 0, 0]);
+        for (let i = 0; i < 7; i++) { const a = (i - 3) / 3; M(head, new T.ConeGeometry(0.025, 0.14, 4), horn, [a * 0.18, -0.19, 0.38 - Math.abs(a) * 0.08], [Math.PI, 0, 0]); }
+        const eyeL = M(head, new T.SphereGeometry(0.075, 8, 8), eyeM, [-0.17, 0.08, 0.34], null, [1.5, 0.8, 0.6]);
+        const eyeR = M(head, new T.SphereGeometry(0.075, 8, 8), eyeM, [0.17, 0.08, 0.34], null, [1.5, 0.8, 0.6]);
+        for (const s of [-1, 1]) {
+            const eg = K.spriteGlow(0xffd23a, 0.5, 0.9); eg.position.set(s * 0.17, 0.08, 0.38); head.add(eg);
+            M(head, new T.ConeGeometry(0.12, 0.55, 8), horn, [s * 0.3, 0.3, -0.05], [0, 0, -s * 0.9]);
+            M(head, new T.ConeGeometry(0.085, 0.5, 8), horn, [s * 0.62, 0.62, -0.05], [0, 0, -s * 0.25]);
+            M(head, new T.ConeGeometry(0.05, 0.4, 6), gold, [s * 0.7, 0.98, -0.18], [-0.7, 0, -s * 0.1]);
+            const fl = K.spriteGlow(0xff7a1a, 0.7, 0.8); fl.position.set(s * 0.7, 1.15, -0.25); head.add(fl);
+        }
+
+        const wings = [];
+        for (const s of [-1, 1]) {
+            const wg = new T.Group(); wg.position.set(s * 0.5, 2.9, -0.5); wg.rotation.y = s * 0.65; wg.scale.x = s; g.add(wg);
+            const pts = [[0, 0], [0.9, 0.8], [1.9, 1.6], [2.4, 0.7], [2.0, 0.35], [1.8, -0.7], [1.3, -0.15], [1.1, -1.0], [0.55, -0.25], [0, -0.55]];
+            const mm = new T.Mesh(K.shapeGeo(pts, 0.03, 0.005), memb); mm.castShadow = false; wg.add(mm);
+            bar(wg, [0, 0, 0], [0.9, 0.8, 0], 0.07, 0.05, plate); bar(wg, [0.9, 0.8, 0], [1.9, 1.6, 0], 0.05, 0.035, plate);
+            bar(wg, [1.9, 1.6, 0], [2.4, 0.7, 0], 0.035, 0.02, plate); bar(wg, [0.9, 0.8, 0], [1.8, -0.7, 0], 0.035, 0.02, plate);
+            wings.push(wg);
+        }
+        const tail = new T.Group(); tail.position.set(0, 1.5, -0.35); g.add(tail);
+        let pt = [0, 0, 0];
+        const tp = [[0, 0.1, -0.5], [0, 0.3, -1.0], [0.1, 0.35, -1.5], [0.25, 0.15, -1.95], [0.4, -0.15, -2.2]];
+        tp.forEach(function (p, i) { bar(tail, pt, p, 0.16 - i * 0.025, 0.14 - i * 0.025, skin); pt = p; });
+        M(tail, new T.ConeGeometry(0.16, 0.6, 6), horn, [0.5, -0.3, -2.4], [-Math.PI / 2 - 0.5, 0, 0.1]);
+        const burst = new T.Mesh(new T.RingGeometry(0.5, 1.7, 40), glow(0xff5a1a, 0.4, { side: T.DoubleSide }));
+        burst.rotation.x = -Math.PI / 2; burst.position.y = 0.04; g.add(burst);
+        const aura = K.spriteGlow(0xff5a1a, 4.5, 0.3); aura.position.set(0, 2.2, -0.8); g.add(aura);
+
+        const w = walker(g, [legL, legR], 0.4);
+        K.addFx(g, function (t) {
+            const a = w();
+            wings[0].rotation.z = Math.sin(t * 2.2) * 0.12; wings[1].rotation.z = -Math.sin(t * 2.2) * 0.12;
+            tail.rotation.y = Math.sin(t * 1.4) * 0.25;
+            core.scale.setScalar(1 + Math.sin(t * 4) * 0.15); coreG.material.opacity = 0.6 + Math.sin(t * 4) * 0.2;
+            burst.material.opacity = 0.3 + Math.sin(t * 2.4) * 0.12; aura.material.opacity = 0.26 + Math.sin(t * 2) * 0.08;
+        });
+        g.userData.armL = armL; g.userData.armR = armR; g.userData.legL = legL; g.userData.legR = legR;
+        g.userData.eyeL = eyeL; g.userData.eyeR = eyeR; g.userData.core = core;
+        return g;
+    };
+
+    /* ============================ BẠCH TUỘC QUÁI ============================ */
+    window.__kosBuildKraken = function () {
+        const g = new T.Group();
+        const spots = K.cTex(256, 256, function (x, w, h) {
+            const gr = x.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#1b2a4a'); gr.addColorStop(1, '#3a1d52'); x.fillStyle = gr; x.fillRect(0, 0, w, h);
+            for (let i = 0; i < 40; i++) { x.fillStyle = 'rgba(0,0,0,0.25)'; x.beginPath(); x.arc(rr(0, w), rr(0, h), rr(6, 20), 0, TAU); x.fill(); }
+        }, { srgb: true });
+        const spotE = K.cTex(256, 256, function (x, w, h) {
+            x.fillStyle = '#000'; x.fillRect(0, 0, w, h);
+            for (let i = 0; i < 60; i++) { const cx = rr(0, w), cy = rr(0, h), r = rr(2, 6); const gr = x.createRadialGradient(cx, cy, 0, cx, cy, r * 2); gr.addColorStop(0, '#7ff'); gr.addColorStop(1, 'rgba(0,0,0,0)'); x.fillStyle = gr; x.fillRect(cx - r * 2, cy - r * 2, r * 4, r * 4); }
+        }, { srgb: true });
+        const skin = std({ color: 0xffffff, map: spots, emissive: 0xffffff, emissiveMap: spotE, emissiveIntensity: 1.1, roughness: 0.45, metalness: 0.1, bumpMap: K.sharedNoise(), bumpScale: 2.5, envMapIntensity: 1.0 });
+        const belly = std({ color: 0xb9758f, roughness: 0.55, metalness: 0.05, bumpMap: K.sharedNoise(), bumpScale: 3 });
+        const eyeM = std({ color: 0xffd84a, emissive: 0xff9a1a, emissiveIntensity: 0.8, roughness: 0.15, metalness: 0.2 });
+        const pupil = K.mark(new T.MeshBasicMaterial({ color: 0x050008 }));
+        const beakM = std({ color: 0x2a1a22, roughness: 0.4, metalness: 0.3 });
+
+        M(g, new T.SphereGeometry(0.9, 26, 20), skin, [0, 1.65, -0.05], [-0.15, 0, 0], [1, 1.28, 1.05]);
+        for (let i = 0; i < 5; i++) M(g, new T.ConeGeometry(0.07, 0.32, 6), K.mark(glow(0x6ff, 0.7)), [0, 2.7 - i * 0.18, -0.5 - i * 0.08], [-0.9, 0, 0]);
+        M(g, new T.SphereGeometry(0.62, 18, 14), belly, [0, 0.98, 0.18], null, [1.1, 0.5, 1.0]);
+        for (const s of [-1, 1]) {
+            M(g, new T.SphereGeometry(0.24, 14, 12), eyeM, [s * 0.46, 1.72, 0.62]);
+            M(g, new T.SphereGeometry(0.1, 8, 8), pupil, [s * 0.48, 1.72, 0.82], null, [0.5, 1.5, 0.5]);
+            M(g, new T.BoxGeometry(0.4, 0.07, 0.2), skin, [s * 0.46, 1.95, 0.6], [0.1, 0, -s * 0.35]);
+        }
+        M(g, new T.ConeGeometry(0.13, 0.3, 8), beakM, [0, 1.08, 0.62], [Math.PI * 0.8, 0, 0]);
+        const tents = [];
+        for (let k = 0; k < 8; k++) {
+            const az = new T.Group(); az.rotation.y = k / 8 * TAU + 0.2; az.position.y = 0.95; g.add(az);
+            const root = new T.Group(); root.position.set(0.45, 0, 0); root.rotation.z = 1.05 + (k % 2) * 0.2; az.add(root);
+            let cur = root; const joints = [], segs = 7, sl = 0.34;
+            for (let i = 0; i < segs; i++) {
+                const j = new T.Group(); j.position.y = i ? -sl : 0; cur.add(j);
+                const r1 = 0.2 * (1 - i / segs) + 0.03, r2 = 0.2 * (1 - (i + 1) / segs) + 0.03;
+                M(j, new T.CylinderGeometry(r2, r1, sl * 1.05, 8), skin, [0, -sl / 2, 0]);
+                if (i % 2 === 0 && i < segs - 1) M(j, new T.SphereGeometry(r1 * 0.42, 6, 5), belly, [r1 * 0.55, -sl / 2, r1 * 0.75]);
+                joints.push(j); cur = j;
+            }
+            tents.push({ joints: joints, k: k });
+        }
+        const aura = K.spriteGlow(0x44ddff, 3.6, 0.22); aura.position.set(0, 1.6, -0.5); g.add(aura);
+        K.addFx(g, function (t) {
+            tents.forEach(function (tn) {
+                tn.joints.forEach(function (j, i) {
+                    j.rotation.z = -0.28 + Math.sin(t * 1.8 + i * 0.7 + tn.k) * 0.14;
+                    j.rotation.x = Math.cos(t * 1.5 + i * 0.6 + tn.k * 1.3) * 0.1;
+                });
+            });
+            aura.material.opacity = 0.2 + Math.sin(t * 2) * 0.07;
+        });
+        return g;
+    };
+
+    /* ============================ MẮT HƯ KHÔNG (boss vũ trụ, xoay tròn) ============================ */
+    window.__kosBuildVoidMaw = function () {
+        const g = new T.Group(); const cy = 2.2;
+        const gal = K.cTex(256, 256, function (x, w, h) {
+            x.fillStyle = '#0a0418'; x.fillRect(0, 0, w, h);
+            for (let a = 0; a < 3; a++) for (let i = 0; i < 160; i++) {
+                const ang = i / 160 * 6 + a * 2.1, r = i * 0.7;
+                const px = w / 2 + Math.cos(ang) * r, py = h / 2 + Math.sin(ang) * r * 0.9;
+                const gr = x.createRadialGradient(px, py, 0, px, py, 14);
+                gr.addColorStop(0, ['rgba(255,90,220,0.35)', 'rgba(90,200,255,0.3)', 'rgba(255,200,90,0.28)'][a]); gr.addColorStop(1, 'rgba(0,0,0,0)');
+                x.fillStyle = gr; x.fillRect(px - 14, py - 14, 28, 28);
+            }
+            for (let i = 0; i < 120; i++) { x.fillStyle = 'rgba(255,255,255,' + rr(0.4, 1) + ')'; x.fillRect(rr(0, w), rr(0, h), 1.5, 1.5); }
+        }, { srgb: true });
+        const core = std({ color: 0xffffff, map: gal, emissive: 0xffffff, emissiveMap: gal, emissiveIntensity: 0.8, roughness: 0.5, metalness: 0.3 });
+        const shell = phys({ color: 0x1a0b2e, metalness: 0.9, roughness: 0.28, envMapIntensity: 1.8, clearcoat: 0.5 });
+        const trim = phys({ color: 0xffb84a, metalness: 1, roughness: 0.2, envMapIntensity: 2.2 });
+        const eyeW = K.mark(new T.MeshBasicMaterial({ color: 0xffffff }));
+        M(g, new T.SphereGeometry(1.5, 32, 24), core, [0, cy, 0]);
+        for (let i = 0; i < 14; i++) {                             /* gai giáp quanh thân */
+            const a = i / 14 * TAU, up = (i % 2) ? 0.35 : -0.15;
+            const d = new T.Vector3(Math.cos(a), up, Math.sin(a)).normalize();
+            const sp = M(g, new T.ConeGeometry(0.2, 1.1 + (i % 3) * 0.25, 6), shell, [d.x * 1.75, cy + d.y * 1.75, d.z * 1.75]);
+            sp.quaternion.setFromUnitVectors(UP, d);
+        }
+        for (let i = 0; i < 5; i++) {                              /* sừng vương miện */
+            const a = i / 5 * TAU;
+            M(g, new T.ConeGeometry(0.22, 1.5, 6), trim, [Math.cos(a) * 0.55, cy + 1.7, Math.sin(a) * 0.55], [Math.sin(a) * 0.35, 0, -Math.cos(a) * 0.35]);
+        }
+        M(g, new T.CylinderGeometry(0.85, 1.1, 0.22, 20), shell, [0, cy + 1.35, 0]);
+        const eyes = [];
+        for (let i = 0; i < 8; i++) {                              /* 8 mắt quanh xích đạo */
+            const a = i / 8 * TAU, d = new T.Vector3(Math.cos(a), 0.12, Math.sin(a)).normalize();
+            const e = M(g, new T.SphereGeometry(0.2, 12, 10), eyeW, [d.x * 1.5, cy + d.y * 1.5, d.z * 1.5], null, [1.5, 0.7, 0.5]);
+            e.quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), d);
+            const f = K.spriteGlow(0xcfa6ff, 0.9, 0.85); f.position.set(d.x * 1.62, cy + d.y * 1.62, d.z * 1.62); g.add(f);
+            M(g, new T.TorusGeometry(0.28, 0.035, 6, 16), trim, [d.x * 1.48, cy + d.y * 1.48, d.z * 1.48]).quaternion.setFromUnitVectors(new T.Vector3(0, 0, 1), d);
+            eyes.push(f);
+        }
+        const rings = [];
+        [0xff44ff, 0x44aaff, 0xffaa00].forEach(function (c, i) {
+            const rg = new T.Group(); rg.position.y = cy; rg.rotation.x = Math.PI / 2 + i * 0.4; rg.rotation.y = i * 0.5; g.add(rg);
+            M(rg, new T.TorusGeometry(2.3 + i * 0.45, 0.07, 8, 56), K.mark(glow(c, 0.8)));
+            for (let k = 0; k < 10; k++) { const a = k / 10 * TAU; M(rg, new T.OctahedronGeometry(0.13, 0), trim, [Math.cos(a) * (2.3 + i * 0.45), Math.sin(a) * (2.3 + i * 0.45), 0]); }
+            rings.push(rg);
+        });
+        const rocks = new T.Group(); rocks.position.y = cy; g.add(rocks);
+        const rk = std({ color: 0x2a2433, roughness: 0.9, metalness: 0.1, flatShading: true, emissive: 0x6a2a00, emissiveIntensity: 0.4 });
+        for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; M(rocks, new T.DodecahedronGeometry(rr(0.2, 0.45), 0), rk, [Math.cos(a) * 3.2, rr(-1.2, 1.2), Math.sin(a) * 3.2], [rnd() * 3, rnd() * 3, 0]); }
+        const aura = K.spriteGlow(0xaa55ff, 9, 0.3); aura.position.y = cy; g.add(aura);
+        K.addFx(g, function (t) {
+            rings.forEach(function (r, i) { r.rotation.z = t * (0.5 + i * 0.3) * (i % 2 ? -1 : 1); });
+            rocks.rotation.y = -t * 0.3;
+            eyes.forEach(function (e, i) { e.material.opacity = 0.65 + Math.sin(t * 3 + i) * 0.25; });
+            aura.material.opacity = 0.24 + Math.sin(t * 1.6) * 0.07;
+        });
+        return g;
+    };
+
+    /* ============================ KHỦNG LONG XƯƠNG (hướng đầu về -z như bản cũ) ============================ */
+    window.__kosBuildBoneRex = function () {
+        const g = new T.Group();
+        const sk = crackSkin('#1c0c30', '#3a1456', '#d838ff', '#ffd0ff');
+        const skin = std({ color: 0xffffff, map: sk.col, emissive: 0xffffff, emissiveMap: sk.em, emissiveIntensity: 0.9, roughness: 0.7, metalness: 0.15, bumpMap: K.sharedNoise(), bumpScale: 2.2 });
+        const bone = std({ color: 0xe9ddc7, roughness: 0.5, metalness: 0.05, bumpMap: K.sharedNoise(), bumpScale: 1.5 });
+        const darkM = std({ color: 0x140820, roughness: 0.7, metalness: 0.2 });
+        const eyeM = K.mark(new T.MeshBasicMaterial({ color: 0xffffff }));
+        const spikeM = K.mark(glow(0xff44ff, 0.95));
+        M(g, new T.SphereGeometry(1, 24, 18), skin, [0, 3.4, 0.2], [0.1, 0, 0], [1.3, 1.4, 2.3]);
+        M(g, new T.SphereGeometry(1, 18, 14), darkM, [0, 2.5, -0.1], null, [1.0, 0.9, 1.8]);
+        for (let i = 0; i < 6; i++) for (const s of [-1, 1]) { const z = -0.9 + i * 0.5; bar(g, [s * 0.1, 4.0, z], [s * 1.25, 3.4, z], 0.07, 0.06, bone); bar(g, [s * 1.25, 3.4, z], [s * 1.1, 2.4, z + 0.1], 0.06, 0.035, bone); }
+        const neck = new T.Group(); neck.position.set(0, 4.2, -1.8); neck.rotation.x = 0.5; g.add(neck);
+        M(neck, new T.CylinderGeometry(0.7, 1.0, 1.7, 12), skin, [0, 0.2, 0]);
+        const head = new T.Group(); head.position.set(0, 5.0, -3.6); g.add(head);
+        M(head, new T.SphereGeometry(1, 22, 16), skin, [0, 0, 0.2], null, [1.0, 0.85, 1.55]);
+        M(head, new T.BoxGeometry(1.3, 0.7, 1.7), skin, [0, 0.05, -1.4]);
+        M(head, new T.BoxGeometry(1.0, 0.35, 1.2), bone, [0, 0.3, -1.45]);
+        for (const s of [-1, 1]) {
+            M(head, new T.SphereGeometry(0.2, 10, 8), eyeM, [s * 0.62, 0.38, -0.35], null, [1, 0.6, 1]);
+            const eg = K.spriteGlow(0xffffff, 1.0, 0.8); eg.position.set(s * 0.65, 0.38, -0.42); head.add(eg);
+            M(head, new T.ConeGeometry(0.2, 0.9, 7), bone, [s * 0.55, 0.85, -0.1], [-0.3, 0, -s * 0.4]);
+            M(head, new T.ConeGeometry(0.1, 0.5, 6), bone, [s * 0.5, 0.18, -2.15], [Math.PI, 0, 0]);
+        }
+        const jaw = new T.Group(); jaw.position.set(0, -0.5, -0.2); jaw.rotation.x = 0.22; head.add(jaw);
+        M(jaw, new T.BoxGeometry(1.2, 0.35, 2.0), darkM, [0, 0, -0.9]);
+        for (let i = 0; i < 8; i++) for (const s of [-1, 1]) {
+            M(jaw, new T.ConeGeometry(0.07, 0.34, 5), bone, [s * 0.5, 0.3, -0.2 - i * 0.22]);
+            M(head, new T.ConeGeometry(0.07, 0.36, 5), bone, [s * 0.52, -0.3, -0.5 - i * 0.22], [Math.PI, 0, 0]);
+        }
+        for (let i = 0; i < 9; i++) {                      /* gai lưng phát sáng đến hết đuôi */
+            const z = -1.4 + i * 0.75, y = 4.5 - Math.max(0, i - 3) * 0.28;
+            M(g, new T.ConeGeometry(0.2 - i * 0.012, 0.95 - i * 0.05, 6), spikeM, [0, y, z]);
+        }
+        function makeLeg(s) {
+            const leg = new T.Group(); leg.position.set(s * 1.05, 2.8, 0.5);
+            M(leg, new T.SphereGeometry(0.85, 14, 12), skin, [0, -0.2, 0], null, [0.85, 1.2, 1.0]);
+            bar(leg, [0, -0.6, 0.2], [0, -1.7, -0.5], 0.5, 0.3, skin);
+            bar(leg, [0, -1.7, -0.5], [0, -2.7, 0.2], 0.3, 0.2, skin);
+            M(leg, new T.BoxGeometry(0.6, 0.25, 1.0), darkM, [0, -2.75, -0.1]);
+            for (let k = -1; k <= 1; k++) M(leg, new T.ConeGeometry(0.1, 0.55, 6), bone, [k * 0.2, -2.75, -0.7], [-Math.PI / 2 + 0.2, 0, k * 0.12]);
+            g.add(leg); return leg;
+        }
+        const legL = makeLeg(-1), legR = makeLeg(1);
+        for (const s of [-1, 1]) {
+            bar(g, [s * 0.9, 3.6, -1.7], [s * 1.0, 3.0, -2.4], 0.15, 0.1, skin);
+            for (let k = -1; k <= 1; k++) M(g, new T.ConeGeometry(0.05, 0.4, 5), bone, [s * 1.0 + k * 0.1, 2.85, -2.55], [-Math.PI / 2 + 0.3, 0, k * 0.2]);
+        }
+        const tail = new T.Group(); tail.position.set(0, 3.3, 2.3); g.add(tail);
+        let pt = [0, 0, 0];
+        [[0, -0.05, 1.5], [0.15, -0.2, 3.0], [0.35, -0.35, 4.4], [0.6, -0.45, 5.6]].forEach(function (p, i) { bar(tail, pt, p, 0.95 - i * 0.2, 0.75 - i * 0.18, skin); pt = p; });
+        M(tail, new T.ConeGeometry(0.2, 0.9, 6), bone, [0.7, -0.45, 6.2], [Math.PI / 2, 0, 0]);
+        const aura = K.spriteGlow(0xaa33ff, 9, 0.22); aura.position.set(0, 3.2, 0); g.add(aura);
+        const burst = new T.Mesh(new T.RingGeometry(1.5, 4.2, 40), glow(0xd838ff, 0.3, { side: T.DoubleSide }));
+        burst.rotation.x = -Math.PI / 2; burst.position.y = 0.05; g.add(burst);
+        const w = walker(g, [legL, legR], 0.35);
+        K.addFx(g, function (t) {
+            w();
+            tail.rotation.y = Math.sin(t * 1.5) * 0.2; jaw.rotation.x = 0.2 + Math.sin(t * 2.3) * 0.1; head.rotation.y = Math.sin(t * 0.8) * 0.08;
+            aura.material.opacity = 0.2 + Math.sin(t * 2) * 0.06; burst.material.opacity = 0.26 + Math.sin(t * 2.6) * 0.1;
+        });
+        g.userData.legL = legL; g.userData.legR = legR;
+        return g;
+    };
+})();
+
                 /* =========================
                    DANH HIỆU [BOSS] CẦU VỒNG
                    (hiện phía trên đầu nhân vật
@@ -15837,6 +17157,43 @@ const octopusMonster =
                 }
                 const bossMonster =
                     createStarterRobotBoss();
+/* ===================== LẮP CÁC BOSS KHÁC (không đụng atomic / glitch / error / electron) ===================== */
+(function KOS_InstallMore() {
+    const K = window.__kosKit;
+    function protect(root) {
+        const u = root.userData;
+        u._outlined = true; u._chromeUp = true; u._detailEnhanced = true; u._calm = true; u._real = true; u._kosModel = true; u._silDone = true;
+    }
+    function swap(root, model) { K.clearKeepSprites(root); root.add(model); protect(root); }
+    function safe(fn, n) { try { fn(); } catch (e) { console.warn('[KOS overhaul2] ' + n, e); } }
+
+    safe(function () {                      /* stage 2: bạch tuộc */
+        if (typeof octopusMonster === 'undefined' || !octopusMonster) return;
+        swap(octopusMonster, window.__kosBuildKraken());
+    }, 'octopus');
+    safe(function () {                      /* stage 3: quỷ lửa (giữ cờ isChromeTitan để không bị phóng to thêm) */
+        if (typeof bossMonster === 'undefined' || !bossMonster) return;
+        const d = window.__kosBuildHellDemon();
+        K.clearAll(bossMonster);
+        bossMonster.add(d); bossMonster.userData._outlined = bossMonster.userData._chromeUp = bossMonster.userData._detailEnhanced = bossMonster.userData._calm = bossMonster.userData._real = bossMonster.userData._kosModel = bossMonster.userData._silDone = true;
+        ['armL', 'armR', 'legL', 'legR', 'eyeL', 'eyeR', 'core'].forEach(function (k) { bossMonster.userData[k] = d.userData[k]; });
+    }, 'bossMonster');
+    safe(function () {                      /* stage 7: mắt hư không */
+        if (typeof universeBossMonster === 'undefined' || !universeBossMonster) return;
+        swap(universeBossMonster, window.__kosBuildVoidMaw());
+    }, 'universe');
+    safe(function () {                      /* stage 8 (loại 0): hiệp sĩ hư không */
+        if (typeof cosmicBossMonster === 'undefined' || !cosmicBossMonster) return;
+        const k = window.__kosBuildKnight('void');
+        swap(cosmicBossMonster, k);
+        ['armL', 'armR', 'legL', 'legR'].forEach(function (n) { cosmicBossMonster.userData[n] = k.userData[n]; });
+    }, 'cosmicBoss');
+    safe(function () {                      /* stage 10: khủng long xương */
+        if (typeof cosmicDinoMonster === 'undefined' || !cosmicDinoMonster) return;
+        swap(cosmicDinoMonster, window.__kosBuildBoneRex());
+    }, 'dino');
+})();
+
                 let boss1PatrolDir = 1;
                 let boss1PatrolSpeed = 0.09;
                 const BOSS1_PATROL_X_MIN = -32;
@@ -17334,6 +18691,7 @@ if (kind === 'common') {
                     return { blade: 0xc4a060, core: 0xe8d090, guard: 0x8b6914, handle: 0x6b4423 };
                 }
                 function buildFpItemMesh(cols) {
+                    try { if (window.__kosMakeFpSword && window.__kosFpTierKey) { const kit = window.__kosMakeFpSword(window.__kosFpTierKey()); kit.rotation.set(0.0, 0.2, 0.05); return kit; } } catch (eKos) { console.warn(eKos); }
                     const g = new THREE.Group();
                     const bladeMat = new THREE.MeshBasicMaterial({ color: cols.blade });
                     const coreMat = new THREE.MeshBasicMaterial({ color: cols.core });
@@ -17394,6 +18752,7 @@ if (kind === 'common') {
                     if (!fpItemRoot) return;
                     const cols = getFpSwordColor();
                     let item = fpItemRoot.userData.item;
+                    try { if (window.__kosFpTierKey && item && item.userData.kosTier !== window.__kosFpTierKey()) { while (fpItemRoot.children.length) fpItemRoot.remove(fpItemRoot.children[0]); item = buildFpItemMesh(cols); fpItemRoot.add(item); fpItemRoot.userData.item = item; fpEquipProg = 0; return; } } catch (eKos2) {}
                     if (!item) {
                         while (fpItemRoot.children.length) fpItemRoot.remove(fpItemRoot.children[0]);
                         item = buildFpItemMesh(cols);
@@ -30552,7 +31911,7 @@ function animate() {
                 const CH = [
                     { n: 'redMonster', st: [1], sp: 7, hp: ['redMonsterCurrentHP', 'RED_MOB_MAX_HP'] },
                     { n: 'octopusMonster', st: [2], sp: 0, hp: null },
-                    { n: 'bossMonster', st: [3], sp: 5, hp: ['bossHP', 'currentBossMaxHP'] },
+                    { n: 'bossMonster', st: [3], sp: 0, hp: null },
                     { n: 'finalBossMonster', st: [5], sp: 5.5, hp: ['finalBossHP', 'finalBossMaxHP'] },
                     { n: 'supremeBossMonster', st: [6], sp: 5.5, hp: ['supremeBossHP', 'supremeBossMaxHP'] },
                     { n: 'universeBossMonster', st: [7], sp: 5, hp: ['universeBossHP', 'universeBossMaxHP'] },
@@ -35055,7 +36414,6 @@ window.questDebug = {
     // SKILL S/R — GHIM CỨNG, LUÔN HIỆN
     // =========================
     function buildSkillBar() {
-        return null; /* skills S/R removed */
         var bar = document.createElement('div');
         bar.id = 'skill-qr-bar';
         bar.setAttribute('data-kos-pinned', '1');
@@ -35075,7 +36433,6 @@ window.questDebug = {
     }
 
     function ensurePinnedSkillBar() {
-        return null; /* skills S/R removed */
         var bars = document.querySelectorAll('#skill-qr-bar');
         var bar = null;
         if (bars.length) {
@@ -35114,7 +36471,6 @@ window.questDebug = {
 
     var _pulseT = 0;
     function updateSkillBarPinned() {
-        return; /* skills S/R removed */
         fixSkillStateShape();
         var bar = ensurePinnedSkillBar();
         var st = window._skillState || {};
@@ -35206,7 +36562,7 @@ window.questDebug = {
         try {
             hookLoginSave();
             ensureLogoutButton();
-            /* updateSkillBarPinned(); removed */
+            updateSkillBarPinned();
             updateLoadingGlow();
         } catch (e) {}
     }, 100);
@@ -35428,347 +36784,6 @@ T.Object3D.prototype.updateMatrixWorld = function(force){
   return origUpdateMatrixWorld.call(this, force);
 };
 
-})();
-</script>
-
-<script>
-/* ===== KOS PATCH v7: hide S/R skills, auto-login keep, boss shake + bullets, cosmic final ===== */
-(function KOS_PatchV7() {
-    if (window.__kosPatchV7) return;
-    window.__kosPatchV7 = true;
-
-    /* ---------- 1) XÓA HIỂN THỊ SKILL S / R ---------- */
-    function killSkillBars() {
-        try {
-            document.querySelectorAll('#skill-qr-bar, #skill-bar, #sk-s, #sk-r, #sk-q, #sk-e').forEach(function (el) {
-                try { el.remove(); } catch (e) {}
-            });
-            var style = document.getElementById('kos-hide-skills-css');
-            if (!style) {
-                style = document.createElement('style');
-                style.id = 'kos-hide-skills-css';
-                style.textContent = '#skill-qr-bar,#skill-bar,#sk-s,#sk-r{display:none!important;visibility:hidden!important;opacity:0!important;pointer-events:none!important;}';
-                document.head.appendChild(style);
-            }
-        } catch (e) {}
-    }
-    killSkillBars();
-    // Override builders so nothing recreates the bar
-    window.buildSkillBar = function () { return null; };
-    // Monkey-patch common creators if they appear later
-    var _obsSkill = new MutationObserver(function () { killSkillBars(); });
-    try { _obsSkill.observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
-    setInterval(killSkillBars, 800);
-
-    /* ---------- 2) AUTO-LOGIN / SESSION (đã có sẵn — tăng độ tin cậy) ---------- */
-    // Existing KOS_SessionSkillLoadFix already saves session on login and auto-restores.
-    // Ensure logout still clears session; login still persists. Nothing else required here.
-    // Re-trigger auto-login a few more times in case late init.
-    function retryAutoLogin() {
-        try {
-            if (typeof currentAccountName !== 'undefined' && currentAccountName) return;
-            var raw = localStorage.getItem('mystic_temple_last_session_v1');
-            if (!raw) return;
-            var data = JSON.parse(raw);
-            if (!data || !data.name || !data.pass) return;
-            if (typeof window.loginAccount !== 'function') return;
-            var quick = document.getElementById('login-input');
-            var nameEl = document.getElementById('login-name');
-            var passEl = document.getElementById('login-pass');
-            if (quick) quick.value = data.name + '/' + data.pass;
-            if (nameEl) nameEl.value = data.name;
-            if (passEl) passEl.value = data.pass;
-            window.loginAccount();
-        } catch (e) {}
-    }
-    setTimeout(retryAutoLogin, 2500);
-    setTimeout(retryAutoLogin, 6000);
-    setTimeout(retryAutoLogin, 10000);
-
-    /* ---------- 3) CAMERA / GROUND SHAKE ---------- */
-    var shakeUntil = 0, shakeAmp = 0;
-    function triggerGroundShake(durationMs, amplitude) {
-        shakeUntil = performance.now() + (durationMs || 420);
-        shakeAmp = amplitude || 0.18;
-    }
-    window.kosGroundShake = triggerGroundShake;
-
-    function applyCameraShake() {
-        try {
-            if (typeof camera === 'undefined' || !camera) return;
-            var now = performance.now();
-            if (now >= shakeUntil) return;
-            var t = (shakeUntil - now) / 400;
-            var a = shakeAmp * Math.max(0, Math.min(1, t));
-            camera.position.x += (Math.random() - 0.5) * a;
-            camera.position.y += (Math.random() - 0.5) * a * 0.55;
-            camera.position.z += (Math.random() - 0.5) * a * 0.35;
-        } catch (e) {}
-    }
-
-    /* ---------- 4) BOSS BULLETS — bắn 1 viên / 7s, sát thương ~10% max HP ---------- */
-    var bossBullets = [];
-    var lastBossShot = {}; // id -> timestamp
-    var BOSS_SHOT_CD = 7000; // 7 giây
-    var BULLET_SPEED = 18;
-    var BULLET_LIFE = 4.5; // giây
-
-    function getActiveBosses() {
-        /* Boss đi + rung đất: mọi boss đang hiện */
-        var list = [];
-        function add(root, id) {
-            try {
-                if (root && root.visible && root.position) list.push({ root: root, id: id });
-            } catch (e) {}
-        }
-        try { add(typeof bossMonster !== 'undefined' ? bossMonster : null, 'boss1'); } catch (e) {}
-        try { add(typeof finalBossMonster !== 'undefined' ? finalBossMonster : null, 'final'); } catch (e) {}
-        try { add(typeof supremeBossMonster !== 'undefined' ? supremeBossMonster : null, 'supreme'); } catch (e) {}
-        try { add(typeof universeBossMonster !== 'undefined' ? universeBossMonster : null, 'universe'); } catch (e) {}
-        try { add(typeof cosmicBossMonster !== 'undefined' ? cosmicBossMonster : null, 'cosmic'); } catch (e) {}
-        try { add(typeof atomicBossMonster !== 'undefined' ? atomicBossMonster : null, 'atomic'); } catch (e) {}
-        try { add(typeof cosmicDinoMonster !== 'undefined' ? cosmicDinoMonster : null, 'dino'); } catch (e) {}
-        try { add(typeof octopusMonster !== 'undefined' ? octopusMonster : null, 'octopus'); } catch (e) {}
-        try {
-            if (window.__questWorld && typeof bossOf === 'function' && typeof W !== 'undefined' && W && W.fight) {
-                var qb = bossOf(W.stage);
-                add(qb, 'quest_' + W.stage);
-            }
-        } catch (e) {}
-        return list;
-    }
-    function getShootingBosses() {
-        /* CHỈ Final + Ultimate(supreme) + Universe được bắn đạn 7s */
-        var list = [];
-        function add(root, id) {
-            try {
-                if (root && root.visible && root.position) list.push({ root: root, id: id });
-            } catch (e) {}
-        }
-        try { add(typeof finalBossMonster !== 'undefined' ? finalBossMonster : null, 'final'); } catch (e) {}
-        try { add(typeof supremeBossMonster !== 'undefined' ? supremeBossMonster : null, 'supreme'); } catch (e) {}
-        try { add(typeof universeBossMonster !== 'undefined' ? universeBossMonster : null, 'universe'); } catch (e) {}
-        return list;
-    }
-
-    function spawnBossBullet(from, to) {
-        if (typeof THREE === 'undefined' || typeof scene === 'undefined') return;
-        var geo = new THREE.SphereGeometry(0.28, 10, 8);
-        var mat = new THREE.MeshBasicMaterial({
-            color: 0xff4466,
-            transparent: true,
-            opacity: 0.95
-        });
-        var m = new THREE.Mesh(geo, mat);
-        m.position.copy(from);
-        // glow sprite
-        try {
-            var canvas = document.createElement('canvas');
-            canvas.width = 64; canvas.height = 64;
-            var ctx = canvas.getContext('2d');
-            var grd = ctx.createRadialGradient(32, 32, 2, 32, 32, 30);
-            grd.addColorStop(0, 'rgba(255,220,180,1)');
-            grd.addColorStop(0.35, 'rgba(255,80,60,0.85)');
-            grd.addColorStop(1, 'rgba(255,40,40,0)');
-            ctx.fillStyle = grd; ctx.fillRect(0, 0, 64, 64);
-            var tex = new THREE.CanvasTexture(canvas);
-            var sp = new THREE.Sprite(new THREE.SpriteMaterial({
-                map: tex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false
-            }));
-            sp.scale.set(1.6, 1.6, 1);
-            m.add(sp);
-        } catch (e) {}
-        scene.add(m);
-        var dir = new THREE.Vector3().subVectors(to, from);
-        if (dir.lengthSq() < 0.0001) dir.set(0, 0, 1);
-        dir.normalize();
-        bossBullets.push({
-            mesh: m,
-            vel: dir.multiplyScalar(BULLET_SPEED),
-            life: BULLET_LIFE,
-            hit: false
-        });
-        // light shake when boss fires
-        triggerGroundShake(280, 0.12);
-    }
-
-    function hurtPlayerFromBullet() {
-        try {
-            if (typeof window.isPlayerInvulnerable === 'function' && window.isPlayerInvulnerable()) return;
-            if (typeof playerHP !== 'number' || typeof playerMaxHP !== 'number') return;
-            // "trừ 10" — 10% máu tối đa (hung dữ)
-            var dmg = Math.max(10, Math.floor(playerMaxHP * 0.10));
-            playerHP = Math.max(0, playerHP - dmg);
-            if (typeof updatePlayerHPUI === 'function') updatePlayerHPUI();
-            triggerGroundShake(220, 0.22);
-            try {
-                if (typeof showToast === 'function') {
-                    showToast((typeof currentLang !== 'undefined' && currentLang === 'vi')
-                        ? ('💥 Boss bắn trúng! -' + dmg + ' HP')
-                        : ('💥 Boss shot hit! -' + dmg + ' HP'));
-                }
-            } catch (e) {}
-            // brief red flash
-            var flash = document.getElementById('combat-hit-flash');
-            if (!flash) {
-                flash = document.createElement('div');
-                flash.id = 'combat-hit-flash';
-                flash.style.cssText = 'position:fixed;inset:0;z-index:55;pointer-events:none;display:none;';
-                document.body.appendChild(flash);
-            }
-            flash.style.background = 'radial-gradient(circle at center,rgba(255,40,40,0.35),transparent 55%)';
-            flash.style.display = 'block';
-            setTimeout(function () { flash.style.display = 'none'; }, 120);
-        } catch (e) {}
-    }
-
-    function updateBossBullets(dt) {
-        if (typeof playerGroup === 'undefined' || !playerGroup) return;
-        var px = playerGroup.position.x;
-        var py = playerGroup.position.y + 1.0;
-        var pz = playerGroup.position.z;
-        for (var i = bossBullets.length - 1; i >= 0; i--) {
-            var b = bossBullets[i];
-            b.life -= dt;
-            b.mesh.position.x += b.vel.x * dt;
-            b.mesh.position.y += b.vel.y * dt;
-            b.mesh.position.z += b.vel.z * dt;
-            // slight arc
-            b.vel.y -= 2.5 * dt;
-            if (!b.hit) {
-                var dx = b.mesh.position.x - px;
-                var dy = b.mesh.position.y - py;
-                var dz = b.mesh.position.z - pz;
-                if (dx * dx + dy * dy + dz * dz < 1.35 * 1.35) {
-                    b.hit = true;
-                    hurtPlayerFromBullet();
-                    b.life = 0;
-                }
-            }
-            if (b.life <= 0) {
-                try { scene.remove(b.mesh); b.mesh.traverse(function (c) {
-                    if (c.geometry) c.geometry.dispose();
-                    if (c.material) {
-                        if (c.material.map) c.material.map.dispose();
-                        c.material.dispose();
-                    }
-                }); } catch (e) {}
-                bossBullets.splice(i, 1);
-            }
-        }
-    }
-
-    function tryBossShots(now) {
-        if (typeof gameStage === 'number' && gameStage === 0) return; // hub: no
-        if (typeof playerGroup === 'undefined' || !playerGroup) return;
-        var bosses = getShootingBosses(); // chỉ final / ultimate / universe
-        var target = new THREE.Vector3(
-            playerGroup.position.x,
-            playerGroup.position.y + 1.1,
-            playerGroup.position.z
-        );
-        for (var i = 0; i < bosses.length; i++) {
-            var b = bosses[i];
-            var last = lastBossShot[b.id] || 0;
-            if (now - last < BOSS_SHOT_CD) continue;
-            // only shoot if somewhat near player (aggressive but not infinite range spam from far)
-            var dx = b.root.position.x - playerGroup.position.x;
-            var dz = b.root.position.z - playerGroup.position.z;
-            var dist = Math.hypot(dx, dz);
-            if (dist > 55) continue;
-            lastBossShot[b.id] = now;
-            var from = new THREE.Vector3(
-                b.root.position.x,
-                b.root.position.y + 2.2,
-                b.root.position.z
-            );
-            spawnBossBullet(from, target);
-            // face player roughly
-            try {
-                b.root.rotation.y = Math.atan2(playerGroup.position.x - b.root.position.x, playerGroup.position.z - b.root.position.z);
-            } catch (e) {}
-            // heavier shake on final / supreme
-            if (b.id === 'final' || b.id === 'supreme' || b.id === 'universe') {
-                triggerGroundShake(480, 0.28);
-            } else {
-                triggerGroundShake(320, 0.16);
-            }
-        }
-    }
-
-    /* ---------- 5) BOSS WALK + continuous light rumble when close ---------- */
-    var walkBob = {};
-    function updateBossWalk(now, dt) {
-        var bosses = getActiveBosses();
-        if (typeof playerGroup === 'undefined' || !playerGroup) return;
-        for (var i = 0; i < bosses.length; i++) {
-            var b = bosses[i];
-            var id = b.id;
-            if (!walkBob[id]) walkBob[id] = { t: Math.random() * 10, lastRumble: 0 };
-            var st = walkBob[id];
-            st.t += dt * 4.5;
-            // subtle vertical bob while "walking"
-            try {
-                var baseY = b.root.userData._kosBaseY;
-                if (baseY == null) {
-                    baseY = b.root.position.y;
-                    b.root.userData._kosBaseY = baseY;
-                }
-                b.root.position.y = baseY + Math.abs(Math.sin(st.t)) * 0.12;
-            } catch (e) {}
-            // light ground rumble when near player
-            var dist = Math.hypot(
-                b.root.position.x - playerGroup.position.x,
-                b.root.position.z - playerGroup.position.z
-            );
-            if (dist < 14 && now - st.lastRumble > 900) {
-                st.lastRumble = now;
-                triggerGroundShake(180, 0.07 + (1 - dist / 14) * 0.08);
-            }
-        }
-    }
-
-    /* ---------- 6) Ensure final boss keeps cosmic look if recolored later ---------- */
-    function reinforceCosmicFinal() {
-        try {
-            if (typeof finalBossMonster === 'undefined' || !finalBossMonster) return;
-            if (finalBossMonster.userData._kosCosmic) return;
-            finalBossMonster.userData._kosCosmic = true;
-            // soft nudge materials toward deep space if still purple-ish
-            finalBossMonster.traverse(function (child) {
-                if (!child.isMesh || !child.material || !child.material.color) return;
-                var h = child.material.color.getHex();
-                // detect purple range
-                var r = (h >> 16) & 255, g = (h >> 8) & 255, b = h & 255;
-                if (b > 140 && r > 60 && r < 200 && g < 160) {
-                    child.material.color.setHex(0x0a0c18);
-                    if (child.material.emissive) {
-                        child.material.emissive.setHex(0x2244aa);
-                        child.material.emissiveIntensity = 0.5;
-                    }
-                    child.material.needsUpdate = true;
-                }
-            });
-        } catch (e) {}
-    }
-    setTimeout(reinforceCosmicFinal, 2000);
-    setTimeout(reinforceCosmicFinal, 5000);
-
-    /* ---------- MAIN LOOP ---------- */
-    var lastT = performance.now();
-    function tick() {
-        requestAnimationFrame(tick);
-        var now = performance.now();
-        var dt = Math.min(0.05, (now - lastT) / 1000);
-        lastT = now;
-        try { applyCameraShake(); } catch (e) {}
-        try { updateBossBullets(dt); } catch (e) {}
-        try { tryBossShots(now); } catch (e) {}
-        try { updateBossWalk(now, dt); } catch (e) {}
-    }
-    setTimeout(function () { tick(); }, 2500);
-
-    console.log('[KOS v7] Skills S/R hidden · Auto-login reinforced · Boss shake+bullets(7s) · Cosmic final');
 })();
 </script>
 </body>
