@@ -4411,4 +4411,41 @@ setInterval(()=>{
 },1500);
 })();
 </script>
+
+<script>
+(function(){
+"use strict";
+function boost(){
+ try{
+  if(typeof scene==="undefined"||!scene)return;
+  let n=0;
+  scene.traverse(function(o){
+   if(o&&o.isMesh&&o.material&&!Array.isArray(o.material)){
+    const m=o.material;
+    if(m.isMeshStandardMaterial){
+     if(typeof m.roughness==="number"&&m.roughness>0.95)m.roughness=0.82;
+     if(typeof m.metalness==="number"&&m.metalness>0.92)m.metalness=0.55;
+     if("envMapIntensity" in m)m.envMapIntensity=Math.max(m.envMapIntensity||0,1.2);
+     n++;
+    }
+    if(o.isMesh){o.receiveShadow=true;}
+   }
+  });
+  if(typeof renderer!=="undefined"&&renderer){
+   try{renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;}catch(e){}
+   try{renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.06;}catch(e){}
+  }
+  const v=document.createElement("div");
+  v.id="mt-cinematic-grade";
+  v.style.cssText="position:fixed;inset:0;z-index:99970;pointer-events:none;mix-blend-mode:soft-light;background:radial-gradient(ellipse at center,rgba(255,255,255,0.06) 0%,rgba(0,0,0,0.22) 78%,rgba(0,0,0,0.38) 100%);";
+  document.body.appendChild(v);
+  const grain=document.createElement("div");
+  grain.style.cssText="position:fixed;inset:0;z-index:99971;pointer-events:none;opacity:0.05;background-image:repeating-linear-gradient(0deg,rgba(255,255,255,0.08) 0 1px,transparent 1px 3px);mix-blend-mode:overlay;";
+  document.body.appendChild(grain);
+  console.log("Realism boost applied:",n);
+ }catch(e){console.warn("realism boost",e)}
+}
+if(window.gameReady){setTimeout(boost,2500);}else{const t=setInterval(()=>{if(window.gameReady){clearInterval(t);setTimeout(boost,2500);}},300);}
+})();
+</script>
 </body>
